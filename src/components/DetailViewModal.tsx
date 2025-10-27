@@ -114,11 +114,11 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl glass-card max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl glass-card border-0 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="text-primary">{getIcon()}</div>
-            <DialogTitle className="text-2xl font-bold">{item.title}</DialogTitle>
+            <div className="text-primary opacity-60">{getIcon()}</div>
+            <DialogTitle className="text-xl font-semibold">{item.title}</DialogTitle>
           </div>
         </DialogHeader>
 
@@ -127,7 +127,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
             <img 
               src={item.preview_image_url} 
               alt={item.title}
-              className="w-full rounded-lg shadow-lg"
+              className="w-full rounded-xl shadow-md"
             />
           )}
 
@@ -136,7 +136,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               href={item.content} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline flex items-center gap-2"
+              className="text-sm text-primary hover:underline flex items-center gap-2 smooth-transition"
             >
               <Link2 className="h-4 w-4" />
               Visit Link
@@ -144,17 +144,18 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           )}
 
           <div>
-            <h3 className="font-semibold mb-2">Summary</h3>
-            <p className="text-muted-foreground">{item.summary}</p>
+            <h3 className="font-semibold mb-2 text-sm text-muted-foreground">Summary</h3>
+            <p className="text-[15px] leading-relaxed">{item.summary}</p>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold">Personal Notes</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm text-muted-foreground">Personal Notes</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsEditing(!isEditing)}
+                className="h-8 text-xs font-medium hover:bg-accent smooth-transition"
               >
                 {isEditing ? 'Preview' : 'Edit'}
               </Button>
@@ -164,10 +165,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 value={userNotes}
                 onChange={(e) => setUserNotes(e.target.value)}
                 placeholder="Add your personal notes in markdown..."
-                className="glass-input min-h-[150px]"
+                className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
               />
             ) : (
-              <div className="prose prose-sm max-w-none glass-card p-4 rounded-lg">
+              <div className="prose prose-sm max-w-none glass-card p-4 rounded-xl text-[15px]">
                 {userNotes ? (
                   <ReactMarkdown>{userNotes}</ReactMarkdown>
                 ) : (
@@ -178,30 +179,30 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2">Tags</h3>
+            <h3 className="font-semibold mb-3 text-sm text-muted-foreground">Tags</h3>
             <div className="flex flex-wrap gap-2 mb-3">
               {tags.map((tag, index) => (
                 <div key={index} className="flex items-center gap-1">
-                  <Badge variant="secondary" className="cursor-default">
+                  <Badge variant="secondary" className="cursor-default text-xs font-medium">
                     #{tag}
                   </Badge>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0"
+                    className="h-6 w-6 p-0 hover:bg-destructive/10 smooth-transition"
                     onClick={() => handleRemoveTag(tag)}
                   >
-                    ×
+                    <span className="text-xs text-muted-foreground hover:text-destructive">×</span>
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0"
+                    className="h-6 w-6 p-0 hover:bg-accent smooth-transition"
                     onClick={() => handleGenerateIcon(tag)}
                     disabled={generating}
                     title="Generate custom icon"
                   >
-                    <Sparkles className="h-3 w-3" />
+                    <Sparkles className="h-3 w-3 text-muted-foreground" />
                   </Button>
                 </div>
               ))}
@@ -212,25 +213,26 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                className="glass-input"
+                className="glass-input border-0 h-10 text-[15px]"
               />
-              <Button onClick={handleAddTag} variant="secondary">
+              <Button onClick={handleAddTag} variant="secondary" className="h-10 font-medium">
                 Add
               </Button>
             </div>
           </div>
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-2 pt-4 border-t border-border">
             <Button 
               onClick={handleSave}
-              className="flex-1 bg-gradient-to-r from-primary to-accent"
+              className="flex-1 bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
             >
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
             <Button 
               onClick={handleDelete}
-              variant="destructive"
+              variant="outline"
+              className="h-11 border-destructive/20 text-destructive hover:bg-destructive/10 smooth-transition font-medium"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Delete

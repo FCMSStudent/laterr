@@ -10,9 +10,9 @@ export const FloatingActionButton = ({ onClick }: FloatingActionButtonProps) => 
     <Button
       onClick={onClick}
       size="lg"
-      className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg animate-float glass-card border-2 hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary to-accent"
+      className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg animate-float glass-card hover:scale-105 smooth-transition bg-primary hover:bg-primary/90 border-0"
     >
-      <Plus className="h-8 w-8 text-white" />
+      <Plus className="h-6 w-6 text-white" />
     </Button>
   );
 };

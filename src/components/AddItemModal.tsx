@@ -142,72 +142,72 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md glass-card">
+      <DialogContent className="sm:max-w-md glass-card border-0">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Plant Something New
+          <DialogTitle className="text-2xl font-semibold text-foreground">
+            Add New Item
           </DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="url" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 glass-card">
-            <TabsTrigger value="url" className="gap-2">
+          <TabsList className="grid w-full grid-cols-3 glass-card border-0">
+            <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition">
               <Link2 className="h-4 w-4" />
               URL
             </TabsTrigger>
-            <TabsTrigger value="note" className="gap-2">
+            <TabsTrigger value="note" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition">
               <FileText className="h-4 w-4" />
               Note
             </TabsTrigger>
-            <TabsTrigger value="image" className="gap-2">
+            <TabsTrigger value="image" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition">
               <Image className="h-4 w-4" />
               Image
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="url" className="space-y-4 mt-4">
+          <TabsContent value="url" className="space-y-4 mt-6">
             <Input
               placeholder="Paste a URL..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="glass-input"
+              className="glass-input border-0 h-11 text-[15px]"
             />
             <Button 
               onClick={handleUrlSubmit} 
               disabled={!url || loading}
-              className="w-full bg-gradient-to-r from-primary to-accent"
+              className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add URL"}
             </Button>
           </TabsContent>
 
-          <TabsContent value="note" className="space-y-4 mt-4">
+          <TabsContent value="note" className="space-y-4 mt-6">
             <Textarea
               placeholder="Write your thoughts..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="glass-input min-h-[150px]"
+              className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
             />
             <Button 
               onClick={handleNoteSubmit}
               disabled={!note || loading}
-              className="w-full bg-gradient-to-r from-primary to-accent"
+              className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Note"}
             </Button>
           </TabsContent>
 
-          <TabsContent value="image" className="space-y-4 mt-4">
+          <TabsContent value="image" className="space-y-4 mt-6">
             <Input
               type="file"
               accept="image/*"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="glass-input"
+              className="glass-input border-0 h-11 text-[15px]"
             />
             <Button 
               onClick={handleFileSubmit}
               disabled={!file || loading}
-              className="w-full bg-gradient-to-r from-primary to-accent"
+              className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload Image"}
             </Button>

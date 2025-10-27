@@ -8,48 +8,47 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Soft botanical garden palette */
-    --background: 135 30% 98%;
-    --foreground: 135 15% 20%;
+    /* Apple-inspired neutral palette */
+    --background: 0 0% 99%;
+    --foreground: 0 0% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 135 15% 20%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 135 15% 20%;
+    --popover-foreground: 0 0% 10%;
 
-    /* Sage green primary */
-    --primary: 100 20% 50%;
+    /* Apple blue primary */
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    /* Soft sky blue secondary */
-    --secondary: 200 35% 75%;
-    --secondary-foreground: 200 40% 20%;
+    /* Subtle gray secondary */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
 
-    --muted: 135 20% 92%;
-    --muted-foreground: 135 10% 45%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Lavender accent */
-    --accent: 270 25% 70%;
-    --accent-foreground: 270 30% 25%;
+    /* Refined accent */
+    --accent: 211 100% 95%;
+    --accent-foreground: 211 100% 40%;
 
-    --destructive: 0 70% 60%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 135 15% 88%;
-    --input: 135 15% 88%;
-    --ring: 100 20% 50%;
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 211 100% 50%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
     
-    /* Glassmorphism */
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    /* Refined glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(0, 0, 0, 0.06);
+    --glass-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.08);
     
-    /* Gradients */
-    --gradient-soft: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-    --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+    /* Subtle gradient */
+    --gradient-soft: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(211 100% 60%) 100%);
 
     --sidebar-background: 0 0% 98%;
 
@@ -69,37 +68,37 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 135 20% 12%;
-    --foreground: 135 10% 90%;
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 135 15% 15%;
-    --card-foreground: 135 10% 90%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 135 15% 15%;
-    --popover-foreground: 135 10% 90%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 100 25% 55%;
-    --primary-foreground: 135 20% 12%;
+    --primary: 211 100% 55%;
+    --primary-foreground: 0 0% 10%;
 
-    --secondary: 200 30% 40%;
-    --secondary-foreground: 135 10% 90%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 135 15% 20%;
-    --muted-foreground: 135 10% 60%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 270 20% 50%;
-    --accent-foreground: 135 10% 90%;
+    --accent: 211 100% 20%;
+    --accent-foreground: 211 100% 70%;
 
-    --destructive: 0 65% 55%;
-    --destructive-foreground: 135 10% 90%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 135 15% 25%;
-    --input: 135 15% 25%;
-    --ring: 100 25% 55%;
+    --border: 0 0% 20%;
+    --input: 0 0% 18%;
+    --ring: 211 100% 55%;
     
-    --glass-bg: rgba(20, 25, 30, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --glass-bg: rgba(20, 20, 20, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.5);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -118,29 +117,40 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   .glass-card {
     background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
   }
   
   .glass-input {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
   }
   
   .animate-float {
-    animation: float 3s ease-in-out infinite;
+    animation: float 4s ease-in-out infinite;
   }
   
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%, 100% { 
+      transform: translateY(0px) scale(1); 
+    }
+    50% { 
+      transform: translateY(-8px) scale(1.02); 
+    }
+  }
+  
+  .smooth-transition {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

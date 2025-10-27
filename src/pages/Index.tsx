@@ -73,15 +73,15 @@ const Index = () => {
   const allTags = Array.from(new Set(items.flatMap(item => item.tags || [])));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4 pt-8">
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+        <div className="text-center space-y-3 pt-12 pb-4">
+          <h1 className="text-7xl font-semibold tracking-tight text-foreground">
             Laterr
           </h1>
-          <p className="text-xl text-muted-foreground">
-            Your personal knowledge garden 🌱
+          <p className="text-lg text-muted-foreground font-light">
+            Your personal knowledge garden
           </p>
         </div>
 
@@ -92,13 +92,13 @@ const Index = () => {
 
         {/* Tag Filters */}
         {allTags.length > 0 && (
-          <div className="flex flex-wrap gap-2 justify-center items-center">
-            <span className="text-sm text-muted-foreground">Filter by tag:</span>
+          <div className="flex flex-wrap gap-2 justify-center items-center max-w-4xl mx-auto">
+            <span className="text-sm text-muted-foreground font-medium mr-2">Tags:</span>
             {allTags.map((tag) => (
               <Badge
                 key={tag}
                 variant={selectedTag === tag ? "default" : "outline"}
-                className="cursor-pointer hover:scale-105 transition-transform"
+                className="cursor-pointer hover:scale-105 smooth-transition text-xs font-medium"
                 onClick={() => handleTagClick(tag)}
               >
                 #{tag}
@@ -107,10 +107,10 @@ const Index = () => {
             {selectedTag && (
               <Badge
                 variant="secondary"
-                className="cursor-pointer"
+                className="cursor-pointer text-xs"
                 onClick={() => setSelectedTag(null)}
               >
-                Clear filter
+                Clear
               </Badge>
             )}
           </div>
@@ -118,20 +118,20 @@ const Index = () => {
 
         {/* Items Grid */}
         {loading ? (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="mt-4 text-muted-foreground">Loading your garden...</p>
+          <div className="text-center py-24">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+            <p className="mt-4 text-muted-foreground text-sm">Loading your garden...</p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-20 space-y-4">
-            <Sparkles className="h-16 w-16 mx-auto text-muted-foreground" />
-            <h2 className="text-2xl font-semibold">Your garden is empty</h2>
-            <p className="text-muted-foreground">
-              Click the + button to plant your first item!
+          <div className="text-center py-24 space-y-4">
+            <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50" />
+            <h2 className="text-xl font-semibold">Your garden is empty</h2>
+            <p className="text-muted-foreground text-sm">
+              Click the + button to plant your first item
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-8">
             {filteredItems.map((item) => (
               <ItemCard
                 key={item.id}
