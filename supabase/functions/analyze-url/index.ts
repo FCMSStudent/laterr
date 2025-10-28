@@ -65,36 +65,130 @@ serve(async (req) => {
       throw new Error('Access to private IP ranges is not allowed');
     }
 
+    // Helper function to detect video platform
+    const detectVideoPlatform = (url: string): 'youtube' | 'vimeo' | 'tiktok' | null => {
+      const hostname = url.toLowerCase();
+      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+        return 'youtube';
+      }
+      if (hostname.includes('vimeo.com')) {
+        return 'vimeo';
+      }
+      if (hostname.includes('tiktok.com')) {
+        return 'tiktok';
+      }
+      return null;
+    };
+
+    // Helper function to extract YouTube video ID
+    const extractYoutubeVideoId = (url: string): string | null => {
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+        /youtube\.com\/embed\/([^&\n?#]+)/,
+        /youtube\.com\/v\/([^&\n?#]+)/
+      ];
+      
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match && match[1]) return match[1];
+      }
+      return null;
+    };
+
+    // Helper function to fetch oEmbed data
+    const fetchOembedData = async (url: string, platform: string) => {
+      const oembedUrls: Record<string, string> = {
+        youtube: `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`,
+        vimeo: `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`,
+        tiktok: `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`
+      };
+      
+      const oembedUrl = oembedUrls[platform];
+      if (!oembedUrl) return null;
+      
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(oembedUrl, {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Laterr-Bot/1.0' }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) return null;
+        return await response.json();
+      } catch (error) {
+        console.error(`oEmbed fetch failed for ${platform}:`, error);
+        return null;
+      }
+    };
+
     console.log('Fetching URL:', url);
-    
-    // Fetch the webpage with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
-    const pageResponse = await fetch(url, {
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: {
-        'User-Agent': 'Laterr-Bot/1.0',
-      },
-    });
-    clearTimeout(timeoutId);
-    const html = await pageResponse.text();
-    
-    // Extract Open Graph image
-    const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']*)["']/i);
-    const previewImageUrl = ogImageMatch ? ogImageMatch[1] : null;
-    
-    // Extract page title
-    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-    const pageTitle = titleMatch ? titleMatch[1] : 'Untitled';
-    
-    // Extract meta description
-    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
-    const metaDescription = descMatch ? descMatch[1] : '';
-    
-    // Strip HTML for cleaner text
-    const cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
+
+    // Detect video platform
+    const platform = detectVideoPlatform(url);
+    let pageTitle = '';
+    let previewImageUrl: string | null = null;
+    let metaDescription = '';
+    let authorName = '';
+    let shouldFetchHtml = true;
+
+    // Try oEmbed for video platforms
+    if (platform) {
+      console.log(`Detected ${platform} video, trying oEmbed...`);
+      const oembedData = await fetchOembedData(url, platform);
+      
+      if (oembedData) {
+        pageTitle = oembedData.title || '';
+        previewImageUrl = oembedData.thumbnail_url || null;
+        authorName = oembedData.author_name || '';
+        
+        // For YouTube, try to get maxresdefault thumbnail for better quality
+        if (platform === 'youtube' && previewImageUrl) {
+          const videoId = extractYoutubeVideoId(url);
+          if (videoId) {
+            previewImageUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+          }
+        }
+        
+        shouldFetchHtml = false; // Skip HTML fetching since we have good data
+        console.log('oEmbed data retrieved successfully');
+      } else {
+        console.log('oEmbed failed, falling back to HTML scraping');
+      }
+    }
+
+    // Fallback to HTML scraping if needed
+    let cleanText = '';
+    if (shouldFetchHtml) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const pageResponse = await fetch(url, {
+        signal: controller.signal,
+        redirect: 'follow',
+        headers: { 'User-Agent': 'Laterr-Bot/1.0' }
+      });
+      clearTimeout(timeoutId);
+      const html = await pageResponse.text();
+      
+      // Extract Open Graph image
+      const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']*)["']/i);
+      previewImageUrl = previewImageUrl || (ogImageMatch ? ogImageMatch[1] : null);
+      
+      // Extract page title
+      const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+      pageTitle = pageTitle || (titleMatch ? titleMatch[1] : 'Untitled');
+      
+      // Extract meta description
+      const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
+      metaDescription = descMatch ? descMatch[1] : '';
+      
+      // Strip HTML for cleaner text
+      cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
+    }
     
     console.log('Analyzing content with AI...');
     
@@ -111,11 +205,13 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that analyzes web content. Generate a concise summary (2-3 sentences) and 3-5 relevant tags. Respond in JSON format: {"title": "improved title", "summary": "...", "tags": ["tag1", "tag2"]}'
+            content: 'You are a helpful assistant that analyzes web content. Generate a concise summary (2-3 sentences) and 3-5 relevant topic tags. For videos, focus on content topics, NOT the platform or channel name. Respond in JSON format: {"title": "improved title", "summary": "...", "tags": ["tag1", "tag2"]}'
           },
           {
             role: 'user',
-            content: `Analyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nContent: ${cleanText}`
+            content: platform 
+              ? `Analyze this ${platform} video:\n\nTitle: ${pageTitle}\nChannel: ${authorName}\n\nGenerate a summary and relevant topic tags (exclude platform/channel name from tags).`
+              : `Analyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nContent: ${cleanText}`
           }
         ],
       }),
@@ -144,7 +240,9 @@ serve(async (req) => {
         title: result.title || pageTitle,
         summary: result.summary,
         tags: result.tags || [],
-        previewImageUrl: previewImageUrl
+        previewImageUrl: previewImageUrl,
+        author: authorName || undefined,
+        platform: platform || undefined
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
