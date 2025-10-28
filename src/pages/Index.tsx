@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
@@ -10,21 +10,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Item, UserData } from "@/types";
 
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
-  const [filteredItems, setFilteredItems] = useState<any[]>([]);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [items, setItems] = useState<Item[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('items')
@@ -34,17 +35,17 @@ const Index = () => {
       if (error) throw error;
       setItems(data || []);
       setFilteredItems(data || []);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching items:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to load items",
+        description: error instanceof Error ? error.message : "Failed to load items",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     // Check authentication
@@ -67,7 +68,7 @@ const Index = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, fetchItems]);
 
   useEffect(() => {
     let filtered = items;
@@ -92,7 +93,7 @@ const Index = () => {
     setFilteredItems(filtered);
   }, [searchQuery, selectedTag, items]);
 
-  const handleItemClick = (item: any) => {
+  const handleItemClick = (item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
   };

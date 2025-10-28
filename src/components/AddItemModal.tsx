@@ -61,9 +61,9 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setUrl("");
       onOpenChange(false);
       onItemAdded();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding URL:', error);
-      toast.error(error.message || "Failed to add URL. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to add URL. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -101,9 +101,9 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setNote("");
       onOpenChange(false);
       onItemAdded();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding note:', error);
-      toast.error(error.message || "Failed to add note. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to add note. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -173,9 +173,9 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setFile(null);
       onOpenChange(false);
       onItemAdded();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding image:', error);
-      toast.error(error.message || "Failed to add image. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to add image. Please try again.");
     } finally {
       setLoading(false);
     }

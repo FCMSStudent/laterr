@@ -9,11 +9,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from 'react-markdown';
 import { z } from 'zod';
+import { Item } from "@/types";
 
 interface DetailViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: any;
+  item: Item | null;
   onUpdate: () => void;
 }
 
@@ -57,9 +58,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Changes saved!");
       setIsEditing(false);
       onUpdate();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving:', error);
-      toast.error(error.message || "Failed to save changes.");
+      toast.error(error instanceof Error ? error.message : "Failed to save changes.");
     }
   };
 
@@ -75,9 +76,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Item removed from your garden.");
       onOpenChange(false);
       onUpdate();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting:', error);
-      toast.error(error.message || "Failed to delete item.");
+      toast.error(error instanceof Error ? error.message : "Failed to delete item.");
     }
   };
 
@@ -136,9 +137,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       if (insertError) throw insertError;
 
       toast.success(`Custom icon generated for #${tag}!`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error generating icon:', error);
-      toast.error(error.message || "Failed to generate icon.");
+      toast.error(error instanceof Error ? error.message : "Failed to generate icon.");
     } finally {
       setGenerating(false);
     }
