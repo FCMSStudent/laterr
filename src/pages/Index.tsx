@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { AddItemModal } from "@/components/AddItemModal";
@@ -6,7 +7,9 @@ import { ItemCard } from "@/components/ItemCard";
 import { DetailViewModal } from "@/components/DetailViewModal";
 import { SearchBar } from "@/components/SearchBar";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, LogOut } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -17,6 +20,9 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const fetchItems = async () => {
     try {
@@ -28,26 +34,51 @@ const Index = () => {
       if (error) throw error;
       setItems(data || []);
       setFilteredItems(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching items:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load items",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+    // Check authentication
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate('/auth');
+      } else {
+        setUser(session.user);
+        fetchItems();
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate('/auth');
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     let filtered = items;
 
-    // Filter by search
+    // Filter by search (sanitize input)
     if (searchQuery) {
+      const sanitizedQuery = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.summary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.user_notes?.toLowerCase().includes(searchQuery.toLowerCase())
+        item.title.toLowerCase().includes(sanitizedQuery) ||
+        item.summary?.toLowerCase().includes(sanitizedQuery) ||
+        item.user_notes?.toLowerCase().includes(sanitizedQuery)
       );
     }
 
@@ -72,28 +103,49 @@ const Index = () => {
 
   const allTags = Array.from(new Set(items.flatMap(item => item.tags || [])));
 
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      navigate('/auth');
+    }
+  };
+
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-3 pt-12 pb-4">
-          <h1 className="text-7xl font-semibold tracking-tight text-foreground">
-            Laterr
-          </h1>
-          <p className="text-lg text-muted-foreground font-light">
-            Your personal knowledge garden
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-apple-gray-50 to-apple-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-5xl font-semibold text-apple-gray-900 mb-2">Laterr</h1>
+            <p className="text-apple-gray-600 text-lg">Your personal knowledge garden</p>
+          </div>
+          <Button
+            onClick={handleSignOut}
+            variant="ghost"
+            size="sm"
+            className="text-apple-gray-600 hover:text-apple-gray-900"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
 
-        {/* Search Bar */}
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto mb-8">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        {/* Tag Filters */}
         {allTags.length > 0 && (
-          <div className="flex flex-wrap gap-2 justify-center items-center max-w-4xl mx-auto">
-            <span className="text-sm text-muted-foreground font-medium mr-2">Tags:</span>
+          <div className="flex flex-wrap gap-2 justify-center items-center max-w-4xl mx-auto mb-8">
+            <span className="text-sm text-apple-gray-600 font-medium mr-2">Tags:</span>
             {allTags.map((tag) => (
               <Badge
                 key={tag}
@@ -116,17 +168,16 @@ const Index = () => {
           </div>
         )}
 
-        {/* Items Grid */}
         {loading ? (
           <div className="text-center py-24">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-            <p className="mt-4 text-muted-foreground text-sm">Loading your garden...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-apple-blue border-t-transparent"></div>
+            <p className="mt-4 text-apple-gray-600 text-sm">Loading your garden...</p>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-24 space-y-4">
-            <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50" />
-            <h2 className="text-xl font-semibold">Your garden is empty</h2>
-            <p className="text-muted-foreground text-sm">
+            <Sparkles className="h-12 w-12 mx-auto text-apple-gray-400" />
+            <h2 className="text-xl font-semibold text-apple-gray-900">Your garden is empty</h2>
+            <p className="text-apple-gray-600 text-sm">
               Click the + button to plant your first item
             </p>
           </div>

@@ -7,12 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, FileText, Image, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { z } from "zod";
 
 interface AddItemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onItemAdded: () => void;
 }
+
+const urlSchema = z.string().url('Invalid URL').max(2048, 'URL too long');
+const noteSchema = z.string().min(1, 'Note cannot be empty').max(100000, 'Note too long');
 
 export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalProps) => {
   const [url, setUrl] = useState("");
@@ -21,27 +25,34 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
   const [loading, setLoading] = useState(false);
 
   const handleUrlSubmit = async () => {
-    if (!url) return;
+    // Validate URL
+    const urlResult = urlSchema.safeParse(url.trim());
+    if (!urlResult.success) {
+      toast.error(urlResult.error.errors[0].message);
+      return;
+    }
     
     setLoading(true);
     try {
-      // Call edge function to analyze URL
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase.functions.invoke('analyze-url', {
-        body: { url }
+        body: { url: urlResult.data }
       });
 
       if (error) throw error;
 
-      // Insert into database
       const { error: insertError } = await supabase
         .from('items')
         .insert({
           type: 'url',
           title: data.title,
-          content: url,
+          content: urlResult.data,
           summary: data.summary,
           tags: data.tags,
-          preview_image_url: data.previewImageUrl
+          preview_image_url: data.previewImageUrl,
+          user_id: user.id,
         });
 
       if (insertError) throw insertError;
@@ -50,29 +61,38 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setUrl("");
       onOpenChange(false);
       onItemAdded();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding URL:', error);
-      toast.error("Failed to add URL. Please try again.");
+      toast.error(error.message || "Failed to add URL. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleNoteSubmit = async () => {
-    if (!note) return;
+    // Validate note
+    const noteResult = noteSchema.safeParse(note.trim());
+    if (!noteResult.success) {
+      toast.error(noteResult.error.errors[0].message);
+      return;
+    }
     
     setLoading(true);
     try {
-      const firstLine = note.split('\n')[0].substring(0, 100);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const firstLine = noteResult.data.split('\n')[0].substring(0, 100);
       
       const { error } = await supabase
         .from('items')
         .insert({
           type: 'note',
           title: firstLine || 'Untitled Note',
-          content: note,
-          summary: note.substring(0, 200),
-          tags: ['note']
+          content: noteResult.data,
+          summary: noteResult.data.substring(0, 200),
+          tags: ['note'],
+          user_id: user.id,
         });
 
       if (error) throw error;
@@ -81,21 +101,41 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setNote("");
       onOpenChange(false);
       onItemAdded();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding note:', error);
-      toast.error("Failed to add note. Please try again.");
+      toast.error(error.message || "Failed to add note. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleFileSubmit = async () => {
-    if (!file) return;
+    if (!file) {
+      toast.error('Please select a file');
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Only image files (JPEG, PNG, WebP, GIF) are allowed');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File is too large (max 10MB)');
+      return;
+    }
     
     setLoading(true);
     try {
-      // Upload to storage
-      const fileName = `${Date.now()}-${file.name}`;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Upload to storage with user-specific path
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('item-images')
         .upload(fileName, file);
@@ -123,7 +163,8 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           content: publicUrl,
           summary: data.description,
           tags: data.tags,
-          preview_image_url: publicUrl
+          preview_image_url: publicUrl,
+          user_id: user.id,
         });
 
       if (insertError) throw insertError;
@@ -132,9 +173,9 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setFile(null);
       onOpenChange(false);
       onItemAdded();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding image:', error);
-      toast.error("Failed to add image. Please try again.");
+      toast.error(error.message || "Failed to add image. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -170,6 +211,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               placeholder="Paste a URL..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              maxLength={2048}
               className="glass-input border-0 h-11 text-[15px]"
             />
             <Button 
@@ -186,6 +228,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               placeholder="Write your thoughts..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              maxLength={100000}
               className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
             />
             <Button 
@@ -200,7 +243,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           <TabsContent value="image" className="space-y-4 mt-6">
             <Input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="glass-input border-0 h-11 text-[15px]"
             />

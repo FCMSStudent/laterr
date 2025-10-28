@@ -12,16 +12,73 @@ serve(async (req) => {
   }
 
   try {
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
     const { url } = await req.json();
     
-    if (!url) {
-      throw new Error('URL is required');
+    if (!url || typeof url !== 'string') {
+      throw new Error('Valid URL is required');
+    }
+
+    // Validate URL length
+    if (url.length > 2048) {
+      throw new Error('URL too long (max 2048 characters)');
+    }
+
+    // Validate URL format and block dangerous URLs
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      throw new Error('Invalid URL format');
+    }
+
+    // Only allow http and https protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new Error('Only HTTP and HTTPS protocols are allowed');
+    }
+
+    // Block private IP ranges and localhost
+    const hostname = parsedUrl.hostname.toLowerCase();
+    const blockedHosts = [
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0',
+      '169.254.169.254', // AWS metadata
+      '::1',
+    ];
+    
+    if (blockedHosts.includes(hostname)) {
+      throw new Error('Access to this host is not allowed');
+    }
+
+    // Block private IP ranges
+    if (
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname)
+    ) {
+      throw new Error('Access to private IP ranges is not allowed');
     }
 
     console.log('Fetching URL:', url);
     
-    // Fetch the webpage
-    const pageResponse = await fetch(url);
+    // Fetch the webpage with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const pageResponse = await fetch(url, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Laterr-Bot/1.0',
+      },
+    });
+    clearTimeout(timeoutId);
     const html = await pageResponse.text();
     
     // Extract Open Graph image

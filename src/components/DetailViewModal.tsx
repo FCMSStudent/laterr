@@ -8,6 +8,7 @@ import { Link2, FileText, Image as ImageIcon, Trash2, Save, Sparkles } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from 'react-markdown';
+import { z } from 'zod';
 
 interface DetailViewModalProps {
   open: boolean;
@@ -15,6 +16,8 @@ interface DetailViewModalProps {
   item: any;
   onUpdate: () => void;
 }
+
+const tagSchema = z.string().regex(/^[a-zA-Z0-9-_ ]+$/, 'Invalid characters').max(50, 'Tag too long');
 
 export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailViewModalProps) => {
   const [userNotes, setUserNotes] = useState(item?.user_notes || "");
@@ -34,6 +37,12 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   };
 
   const handleSave = async () => {
+    // Validate notes length
+    if (userNotes.length > 100000) {
+      toast.error('Notes are too long (max 100,000 characters)');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('items')
@@ -48,9 +57,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Changes saved!");
       setIsEditing(false);
       onUpdate();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving:', error);
-      toast.error("Failed to save changes.");
+      toast.error(error.message || "Failed to save changes.");
     }
   };
 
@@ -66,17 +75,36 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Item removed from your garden.");
       onOpenChange(false);
       onUpdate();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting:', error);
-      toast.error("Failed to delete item.");
+      toast.error(error.message || "Failed to delete item.");
     }
   };
 
   const handleAddTag = () => {
-    if (newTag && !tags.includes(newTag)) {
-      setTags([...tags, newTag]);
-      setNewTag("");
+    const trimmedTag = newTag.trim();
+    
+    if (!trimmedTag) return;
+
+    // Validate tag
+    const tagResult = tagSchema.safeParse(trimmedTag);
+    if (!tagResult.success) {
+      toast.error(tagResult.error.errors[0].message);
+      return;
     }
+
+    if (tags.includes(trimmedTag)) {
+      toast.error('Tag already exists');
+      return;
+    }
+
+    if (tags.length >= 20) {
+      toast.error('Maximum 20 tags allowed');
+      return;
+    }
+
+    setTags([...tags, trimmedTag]);
+    setNewTag("");
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
@@ -86,6 +114,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const handleGenerateIcon = async (tag: string) => {
     setGenerating(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const prompt = `a simple, minimalist icon representing "${tag}"`;
       const { data, error } = await supabase.functions.invoke('generate-tag-icon', {
         body: { tagName: tag, prompt }
@@ -98,15 +129,16 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         .from('tag_icons')
         .upsert({
           tag_name: tag,
-          icon_url: data.iconUrl
+          icon_url: data.iconUrl,
+          user_id: user.id,
         });
 
       if (insertError) throw insertError;
 
       toast.success(`Custom icon generated for #${tag}!`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating icon:', error);
-      toast.error("Failed to generate icon.");
+      toast.error(error.message || "Failed to generate icon.");
     } finally {
       setGenerating(false);
     }
@@ -165,6 +197,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 value={userNotes}
                 onChange={(e) => setUserNotes(e.target.value)}
                 placeholder="Add your personal notes in markdown..."
+                maxLength={100000}
                 className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
               />
             ) : (
@@ -213,6 +246,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                maxLength={50}
                 className="glass-input border-0 h-10 text-[15px]"
               />
               <Button onClick={handleAddTag} variant="secondary" className="h-10 font-medium">

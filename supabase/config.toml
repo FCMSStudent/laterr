@@ -1,1 +1,10 @@
 project_id = "opzypedbkufjiprbhogl"
+
+[functions.analyze-url]
+verify_jwt = true
+
+[functions.analyze-image]
+verify_jwt = true
+
+[functions.generate-tag-icon]
+verify_jwt = true
