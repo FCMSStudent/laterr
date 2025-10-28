@@ -7,7 +7,7 @@
 - **esbuild** (moderate): Development-only vulnerability that affects the Vite dev server. This is a development dependency and does not affect production builds.
   - Impact: Only affects local development environment
   - Mitigation: Do not expose dev server to untrusted networks
-  - Resolution: Will be resolved when upgrading to Vite 7.x in a future update
+  - Resolution: Will be resolved in future dependency updates
 
 ## Reporting Security Issues
 
