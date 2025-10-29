@@ -205,13 +205,13 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that analyzes web content. Generate a concise summary (2-3 sentences) and 3-5 relevant topic tags. For videos, focus on content topics, NOT the platform or channel name. Respond in JSON format: {"title": "improved title", "summary": "...", "tags": ["tag1", "tag2"]}'
+            content: 'You are a helpful assistant that analyzes web content and categorizes it. Respond in JSON format: {"title": "improved title", "summary": "2-3 sentence summary", "tags": ["category"], "contentType": "video|article|product|document"}. Use ONLY these categories as tags: "watch later" (videos), "read later" (articles/PDFs/text), "wish list" (shopping/products), "work on" (work-related text). Choose only ONE category tag that best fits the content.'
           },
           {
             role: 'user',
             content: platform 
-              ? `Analyze this ${platform} video:\n\nTitle: ${pageTitle}\nChannel: ${authorName}\n\nGenerate a summary and relevant topic tags (exclude platform/channel name from tags).`
-              : `Analyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nContent: ${cleanText}`
+              ? `Analyze this ${platform} video:\n\nTitle: ${pageTitle}\nChannel: ${authorName}\n\nCategorize appropriately and provide a summary.`
+              : `Analyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nURL: ${url}\n\nContent: ${cleanText}\n\nDetermine if this is a product page, article, document, or work-related content and categorize appropriately.`
           }
         ],
       }),
@@ -239,10 +239,11 @@ serve(async (req) => {
       JSON.stringify({
         title: result.title || pageTitle,
         summary: result.summary,
-        tags: result.tags || [],
+        tags: result.tags || ['read later'],
         previewImageUrl: previewImageUrl,
         author: authorName || undefined,
-        platform: platform || undefined
+        platform: platform || undefined,
+        contentType: result.contentType || 'article'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

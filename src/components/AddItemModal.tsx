@@ -20,6 +20,7 @@ const noteSchema = z.string().min(1, 'Note cannot be empty').max(100000, 'Note t
 
 export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalProps) => {
   const [url, setUrl] = useState("");
+  const [suggestedCategory, setSuggestedCategory] = useState<string>("");
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +44,11 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (error) throw error;
 
+      // Set suggested category from AI
+      if (data.tags && data.tags.length > 0) {
+        setSuggestedCategory(data.tags[0]);
+      }
+
       const { error: insertError } = await supabase
         .from('items')
         .insert({
@@ -50,7 +56,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           title: data.title,
           content: urlResult.data,
           summary: data.summary,
-          tags: data.tags,
+          tags: suggestedCategory ? [suggestedCategory] : (data.tags || ['read later']),
           preview_image_url: data.previewImageUrl,
           user_id: user.id,
         });
@@ -59,6 +65,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       toast.success("URL added to your garden! 🌱");
       setUrl("");
+      setSuggestedCategory("");
       onOpenChange(false);
       onItemAdded();
     } catch (error: any) {
@@ -189,6 +196,26 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
             Add New Item
           </DialogTitle>
         </DialogHeader>
+
+        {loading && suggestedCategory && (
+          <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
+            <p className="text-sm text-muted-foreground mb-2 font-medium">Confirm category:</p>
+            <div className="flex gap-2 flex-wrap">
+              {['watch later', 'read later', 'wish list', 'work on'].map((category) => (
+                <Button
+                  key={category}
+                  type="button"
+                  variant={suggestedCategory === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSuggestedCategory(category)}
+                  className="text-xs"
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         
         <Tabs defaultValue="url" className="w-full">
           <TabsList className="grid w-full grid-cols-3 glass-card border-0">
