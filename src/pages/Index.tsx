@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { AddItemModal } from "@/components/AddItemModal";
 import { ItemCard } from "@/components/ItemCard";
 import { DetailViewModal } from "@/components/DetailViewModal";
 import { SearchBar } from "@/components/SearchBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LogOut } from "lucide-react";
+import { Sparkles, LogOut, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -128,15 +127,24 @@ const Index = () => {
             <h1 className="text-5xl font-semibold text-apple-gray-900 mb-2">Laterr</h1>
             <p className="text-apple-gray-600 text-lg">Your personal knowledge garden</p>
           </div>
-          <Button
-            onClick={handleSignOut}
-            variant="ghost"
-            size="sm"
-            className="text-apple-gray-600 hover:text-apple-gray-900"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setShowAddModal(true)}
+              className="bg-primary hover:bg-primary/90 text-white shadow-sm"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Item
+            </Button>
+            <Button
+              onClick={handleSignOut}
+              variant="ghost"
+              size="sm"
+              className="text-apple-gray-600 hover:text-apple-gray-900"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         <div className="max-w-2xl mx-auto mb-8">
@@ -200,8 +208,6 @@ const Index = () => {
         )}
       </div>
 
-      <FloatingActionButton onClick={() => setShowAddModal(true)} />
-      
       <AddItemModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
