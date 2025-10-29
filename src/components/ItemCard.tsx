@@ -32,10 +32,10 @@ export const ItemCard = ({
   return (
     <div 
       onClick={onClick}
-      className="glass-card rounded-xl p-5 cursor-pointer hover:scale-[1.01] smooth-transition hover:shadow-xl group overflow-hidden"
+      className="glass-card rounded-xl p-4 cursor-pointer hover:scale-[1.01] smooth-transition hover:shadow-xl group overflow-hidden flex gap-4"
     >
       {previewImageUrl && (
-        <div className="relative w-full h-44 mb-4 rounded-lg overflow-hidden bg-muted">
+        <div className="relative w-48 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
           <img 
             src={previewImageUrl} 
             alt={title}
@@ -44,7 +44,7 @@ export const ItemCard = ({
         </div>
       )}
       
-      <div className="space-y-3">
+      <div className="space-y-3 flex-1 min-w-0">
         <div className="flex items-start gap-2">
           <div className="mt-1 text-primary opacity-60">{getIcon()}</div>
           <h3 className="font-semibold text-base line-clamp-2 flex-1 leading-snug">{title}</h3>
