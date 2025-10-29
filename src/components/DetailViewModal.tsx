@@ -155,35 +155,29 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="flex gap-6">
-            {item.preview_image_url && (
-              <div className="flex-shrink-0 w-64">
-                <img 
-                  src={item.preview_image_url} 
-                  alt={item.title}
-                  className="w-full rounded-xl shadow-md object-cover"
-                />
-              </div>
-            )}
-            
-            <div className="flex-1 space-y-4">
-              {item.type === 'url' && (
-                <a 
-                  href={item.content} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-2 smooth-transition"
-                >
-                  <Link2 className="h-4 w-4" />
-                  Visit Link
-                </a>
-              )}
+          {item.preview_image_url && (
+            <img 
+              src={item.preview_image_url} 
+              alt={item.title}
+              className="w-full rounded-xl shadow-md"
+            />
+          )}
 
-              <div>
-                <h3 className="font-semibold mb-2 text-sm text-muted-foreground">Summary</h3>
-                <p className="text-[15px] leading-relaxed">{item.summary}</p>
-              </div>
-            </div>
+          {item.type === 'url' && (
+            <a 
+              href={item.content} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline flex items-center gap-2 smooth-transition"
+            >
+              <Link2 className="h-4 w-4" />
+              Visit Link
+            </a>
+          )}
+
+          <div>
+            <h3 className="font-semibold mb-2 text-sm text-muted-foreground">Summary</h3>
+            <p className="text-[15px] leading-relaxed">{item.summary}</p>
           </div>
 
           <div>
