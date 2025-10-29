@@ -8,8 +8,6 @@ import { Link2, FileText, Image as ImageIcon, Trash2, Save, Sparkles } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
 import { z } from "zod";
 
 const itemSchema = z.object({
@@ -263,9 +261,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               ) : (
                 <div className="prose prose-sm max-w-none glass-card p-4 rounded-xl text-[15px]">
                   {userNotes ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
-                      {userNotes}
-                    </ReactMarkdown>
+                    <ReactMarkdown>{userNotes}</ReactMarkdown>
                   ) : (
                     <p className="text-muted-foreground italic">No personal notes yet.</p>
                   )}
