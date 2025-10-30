@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, FileText, Image, Loader2 } from "lucide-react";
+import { Link2, FileText, File, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -122,16 +122,21 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       return;
     }
 
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    // Validate file type - now accepting images, PDFs, and Word documents
+    const validTypes = [
+      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword' // .doc
+    ];
     if (!validTypes.includes(file.type)) {
-      toast.error('Only image files (JPEG, PNG, WebP, GIF) are allowed');
+      toast.error('Only images, PDFs, and Word documents are allowed');
       return;
     }
 
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('File is too large (max 10MB)');
+    // Validate file size (20MB max for documents)
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('File is too large (max 20MB)');
       return;
     }
     
@@ -154,35 +159,51 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         .from('item-images')
         .getPublicUrl(fileName);
 
-      // Analyze with AI
-      const { data, error } = await supabase.functions.invoke('analyze-image', {
-        body: { imageUrl: publicUrl }
+      // Analyze with AI - using the new analyze-file function
+      const { data, error } = await supabase.functions.invoke('analyze-file', {
+        body: { 
+          fileUrl: publicUrl,
+          fileType: file.type,
+          fileName: file.name
+        }
       });
 
       if (error) throw error;
+
+      // Determine item type based on file type
+      let itemType = 'file';
+      if (file.type.startsWith('image/')) {
+        itemType = 'image';
+      } else if (file.type === 'application/pdf') {
+        itemType = 'document';
+      } else if (file.type.includes('word')) {
+        itemType = 'document';
+      }
 
       // Insert into database
       const { error: insertError } = await supabase
         .from('items')
         .insert({
-          type: 'image',
+          type: itemType,
           title: data.title,
           content: publicUrl,
-          summary: data.description,
+          summary: data.description + (data.extractedText ? `\n\nExtracted text: ${data.extractedText}` : ''),
           tags: data.tags,
-          preview_image_url: publicUrl,
+          preview_image_url: file.type.startsWith('image/') ? publicUrl : null,
           user_id: user.id,
         });
 
       if (insertError) throw insertError;
 
-      toast.success("Image added to your garden! 🖼️");
+      const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : 
+                           file.type === 'application/pdf' ? 'PDF' : 'Document';
+      toast.success(`${fileTypeLabel} added to your garden! 📁`);
       setFile(null);
       onOpenChange(false);
       onItemAdded();
     } catch (error: any) {
-      console.error('Error adding image:', error);
-      toast.error(error.message || "Failed to add image. Please try again.");
+      console.error('Error adding file:', error);
+      toast.error(error.message || "Failed to add file. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -228,8 +249,8 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               Note
             </TabsTrigger>
             <TabsTrigger value="image" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition">
-              <Image className="h-4 w-4" />
-              Image
+              <File className="h-4 w-4" />
+              Files
             </TabsTrigger>
           </TabsList>
 
@@ -268,18 +289,23 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           </TabsContent>
 
           <TabsContent value="image" className="space-y-4 mt-6">
-            <Input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="glass-input border-0 h-11 text-[15px]"
-            />
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/msword,.doc"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="glass-input border-0 h-11 text-[15px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                Supports: Images, PDFs, Word documents (max 20MB)
+              </p>
+            </div>
             <Button 
               onClick={handleFileSubmit}
               disabled={!file || loading}
               className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload Image"}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload File"}
             </Button>
           </TabsContent>
         </Tabs>
