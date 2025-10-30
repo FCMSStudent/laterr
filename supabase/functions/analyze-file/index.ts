@@ -53,7 +53,6 @@ serve(async (req) => {
               ]
             }
           ],
-          temperature: 0.7,
         }),
       });
 
@@ -82,23 +81,24 @@ serve(async (req) => {
       }
 
     } else if (fileType === 'application/pdf' || fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'application/msword') {
-      // For PDFs and Word docs, fetch the file and extract basic info
+      // For PDFs and Word docs, use AI to analyze the filename and suggest metadata
       console.log('Processing document file');
       
       try {
-        const fileResponse = await fetch(fileUrl);
-        if (!fileResponse.ok) {
-          throw new Error('Could not fetch file for processing');
-        }
-
-        // Use Lovable AI to analyze the document type and suggest categorization
+        // Use Lovable AI to analyze the document type and suggest categorization based on filename
         const prompt = `A user has uploaded a ${fileType === 'application/pdf' ? 'PDF' : 'Word document'} file named "${fileName}". 
-Based on the file name and type, suggest:
-1. A descriptive title (if the filename is not descriptive enough, improve it)
-2. A brief description of what type of document this might be
-3. 2-3 relevant tags (like 'document', 'report', 'presentation', 'work', 'personal', etc.)
 
-Return a JSON object with: title, description, tags (array)`;
+Analyze the filename carefully and provide:
+1. A clean, descriptive title (remove file extensions, clean up underscores/hyphens, improve readability, capitalize properly)
+2. A detailed, informative description of what this document likely contains based on the filename (be specific - look for keywords, academic paper identifiers, medical terms, business terminology, etc.)
+3. 3-5 highly relevant tags that would help categorize this document (examples: 'research', 'academic', 'business', 'report', 'article', 'medical', 'technical', 'personal', 'work', 'study', 'science', etc.)
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "title": "improved title here",
+  "description": "detailed description here",
+  "tags": ["tag1", "tag2", "tag3"]
+}`;
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -111,29 +111,46 @@ Return a JSON object with: title, description, tags (array)`;
             messages: [
               { role: "user", content: prompt }
             ],
-            temperature: 0.7,
           }),
         });
 
         if (aiResponse.ok) {
           const data = await aiResponse.json();
           const content = data.choices?.[0]?.message?.content || '';
+          console.log('AI response:', content);
           
           try {
             const jsonMatch = content.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
               const parsed = JSON.parse(jsonMatch[0]);
-              title = parsed.title || title;
+              title = parsed.title || fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
               description = parsed.description || `${fileType === 'application/pdf' ? 'PDF' : 'Word'} document`;
               tags = parsed.tags || ['document'];
+              
+              console.log('Parsed metadata:', { title, description, tags });
+            } else {
+              console.log('No JSON match found in AI response');
+              title = fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
+              description = `${fileType === 'application/pdf' ? 'PDF' : 'Word'} document`;
+              tags = ['document'];
             }
           } catch (e) {
+            console.error('Error parsing AI response:', e);
+            // Fallback: clean up the filename
+            title = fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
             description = `${fileType === 'application/pdf' ? 'PDF' : 'Word'} document`;
             tags = ['document'];
           }
+        } else {
+          const errorText = await aiResponse.text();
+          console.error('AI request failed:', aiResponse.status, errorText);
+          title = fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
+          description = `${fileType === 'application/pdf' ? 'PDF' : 'Word'} document`;
+          tags = ['document'];
         }
       } catch (error) {
         console.error('Error processing document:', error);
+        title = fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
         description = `${fileType === 'application/pdf' ? 'PDF' : 'Word'} document`;
         tags = ['document'];
       }
