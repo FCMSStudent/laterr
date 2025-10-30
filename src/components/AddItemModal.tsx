@@ -162,15 +162,21 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       setStatusStep('extracting');
 
-      // Get public URL
+      // Get public URL (used for storing a reference; may be inaccessible if bucket is private)
       const { data: { publicUrl } } = supabase.storage
         .from('item-images')
         .getPublicUrl(fileName);
 
+      // Create a short-lived signed URL for backend analysis
+      const { data: signed, error: signError } = await supabase.storage
+        .from('item-images')
+        .createSignedUrl(fileName, 60 * 10);
+      if (signError || !signed?.signedUrl) throw (signError || new Error('Failed to create signed URL'));
+
       // Analyze with AI - using the new analyze-file function
       const { data, error } = await supabase.functions.invoke('analyze-file', {
         body: {
-          fileUrl: publicUrl,
+          fileUrl: signed.signedUrl,
           fileType: file.type,
           fileName: file.name
         }
