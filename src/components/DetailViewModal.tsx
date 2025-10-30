@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useCallback, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { z } from "zod";
 const itemSchema = z.object({
   id: z.string(),
   title: z.string(),
-  type: z.enum(["url", "note", "image"]),
+  type: z.string(),
   content: z.string().nullable(),
   summary: z.string().nullable(),
   user_notes: z.string().nullable(),
@@ -40,6 +40,30 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const generateSignedUrl = async () => {
+      try {
+        if (!item?.content) { setSignedUrl(null); return; }
+        const url = item.content;
+        const marker = '/item-images/';
+        const idx = url.indexOf(marker);
+        if (idx === -1) { setSignedUrl(null); return; }
+        const key = url.substring(idx + marker.length);
+        const { data, error } = await supabase.storage
+          .from('item-images')
+          .createSignedUrl(key, 60 * 60);
+        if (error) { console.error('Signed URL error:', error); setSignedUrl(null); return; }
+        setSignedUrl(data?.signedUrl || null);
+      } catch (e) {
+        console.error('Failed to create signed URL', e);
+        setSignedUrl(null);
+      }
+    };
+    generateSignedUrl();
+  }, [item]);
 
   if (!item) return null;
 
@@ -160,11 +184,26 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
             <DialogTitle className="text-xl font-semibold">{item.title}</DialogTitle>
           </div>
         </DialogHeader>
+        <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
         {/* HORIZONTAL LAYOUT */}
         <div className="flex flex-col md:flex-row gap-8 mt-4">
           {/* LEFT COLUMN */}
           <div className="md:w-1/3 flex flex-col gap-4">
+            {(item.type === "document" || (item.content?.toLowerCase().includes(".pdf") ?? false)) && (
+              <div className="rounded-xl overflow-hidden bg-muted">
+                {signedUrl ? (
+                  <iframe src={signedUrl} title="PDF preview" className="w-full h-64 md:h-80" />
+                ) : (
+                  <div className="p-4 text-sm text-muted-foreground">PDF preview unavailable</div>
+                )}
+                {signedUrl && (
+                  <a href={signedUrl} target="_blank" rel="noopener noreferrer" className="block text-xs text-primary hover:underline px-3 py-2">
+                    Open full PDF
+                  </a>
+                )}
+              </div>
+            )}
             {item.preview_image_url && (
               <img
                 src={item.preview_image_url}

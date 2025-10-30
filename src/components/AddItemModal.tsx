@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -242,6 +242,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
             Add New Item
           </DialogTitle>
         </DialogHeader>
+        <DialogDescription className="sr-only">Add a new item</DialogDescription>
 
         {loading && suggestedCategory && (
           <div className="bg-muted/50 p-3 rounded-lg border border-border/50">

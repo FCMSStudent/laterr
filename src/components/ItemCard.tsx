@@ -3,7 +3,7 @@ import { Link2, FileText, Image as ImageIcon } from "lucide-react";
 
 interface ItemCardProps {
   id: string;
-  type: 'url' | 'note' | 'image';
+  type: 'url' | 'note' | 'image' | 'document';
   title: string;
   summary?: string;
   previewImageUrl?: string;
@@ -26,6 +26,7 @@ export const ItemCard = ({
       case 'url': return <Link2 className="h-4 w-4" />;
       case 'note': return <FileText className="h-4 w-4" />;
       case 'image': return <ImageIcon className="h-4 w-4" />;
+      case 'document': return <FileText className="h-4 w-4" />;
     }
   };
 
