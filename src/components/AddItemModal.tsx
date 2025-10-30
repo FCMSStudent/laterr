@@ -24,6 +24,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [statusStep, setStatusStep] = useState<string | null>(null);
 
   const handleUrlSubmit = async () => {
     // Validate URL
@@ -34,6 +35,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     }
     
     setLoading(true);
+    setStatusStep('uploading');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -73,6 +75,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       toast.error(error.message || "Failed to add URL. Please try again.");
     } finally {
       setLoading(false);
+      setStatusStep(null);
     }
   };
 
@@ -85,6 +88,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     }
     
     setLoading(true);
+    setStatusStep('uploading');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -113,6 +117,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       toast.error(error.message || "Failed to add note. Please try again.");
     } finally {
       setLoading(false);
+      setStatusStep(null);
     }
   };
 
@@ -141,6 +146,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     }
     
     setLoading(true);
+    setStatusStep('uploading');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -154,6 +160,8 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (uploadError) throw uploadError;
 
+      setStatusStep('extracting');
+
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('item-images')
@@ -161,7 +169,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Analyze with AI - using the new analyze-file function
       const { data, error } = await supabase.functions.invoke('analyze-file', {
-        body: { 
+        body: {
           fileUrl: publicUrl,
           fileType: file.type,
           fileName: file.name
@@ -169,6 +177,8 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       });
 
       if (error) throw error;
+
+      setStatusStep('summarizing');
 
       // Determine item type based on file type
       let itemType = 'file';
@@ -181,6 +191,8 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       }
 
       // Insert into database
+      setStatusStep('saving');
+
       const { error: insertError } = await supabase
         .from('items')
         .insert({
@@ -195,7 +207,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (insertError) throw insertError;
 
-      const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : 
+      const fileTypeLabel = file.type.startsWith('image/') ? 'Image' :
                            file.type === 'application/pdf' ? 'PDF' : 'Document';
       toast.success(`${fileTypeLabel} added to your garden! 📁`);
       setFile(null);
@@ -203,9 +215,16 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onItemAdded();
     } catch (error: any) {
       console.error('Error adding file:', error);
-      toast.error(error.message || "Failed to add file. Please try again.");
+      if (error.message?.includes('Rate limit')) {
+        toast.error('AI rate limit hit. Please wait a moment and try again.');
+      } else if (error.message?.includes('credits')) {
+        toast.error('AI credits exhausted. Please top up to continue.');
+      } else {
+        toast.error(error.message || "Failed to add file. Please try again.");
+      }
     } finally {
       setLoading(false);
+      setStatusStep(null);
     }
   };
 
@@ -300,13 +319,24 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                 Supports: Images, PDFs, Word documents (max 20MB)
               </p>
             </div>
-            <Button 
-              onClick={handleFileSubmit}
-              disabled={!file || loading}
-              className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload File"}
-            </Button>
+            <div className="space-y-2">
+              <Button
+                onClick={handleFileSubmit}
+                disabled={!file || loading}
+                className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload File"}
+              </Button>
+              {loading && (
+                <p className="text-xs text-muted-foreground text-center">
+                  {statusStep === 'uploading' && 'Uploading file…'}
+                  {statusStep === 'extracting' && 'Extracting text…'}
+                  {statusStep === 'summarizing' && 'Summarizing content…'}
+                  {statusStep === 'saving' && 'Saving to your garden…'}
+                  {!statusStep && 'Processing…'}
+                </p>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>

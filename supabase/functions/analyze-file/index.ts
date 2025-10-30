@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.6.82/legacy/build/pdf.mjs";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 
+const pdfjs = pdfjsLib as unknown as {
+  GlobalWorkerOptions?: { workerSrc: string };
+};
+
+if (pdfjs?.GlobalWorkerOptions) {
+  pdfjs.GlobalWorkerOptions.workerSrc = "https://esm.sh/pdfjs-dist@4.6.82/legacy/build/pdf.worker.mjs";
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -103,6 +111,7 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
       useWorkerFetch: false,
       isEvalSupported: false,
       useSystemFonts: true,
+      disableWorker: true,
     });
     
     const pdf = await loadingTask.promise;
@@ -189,11 +198,13 @@ async function extractDocxText(fileUrl: string): Promise<{ text: string; metadat
       const titleMatch = coreXml.match(/<dc:title>([^<]+)<\/dc:title>/);
       const creatorMatch = coreXml.match(/<dc:creator>([^<]+)<\/dc:creator>/);
       const subjectMatch = coreXml.match(/<dc:subject>([^<]+)<\/dc:subject>/);
-      
+      const keywordsMatch = coreXml.match(/<cp:keywords>([^<]+)<\/cp:keywords>/);
+
       metadata = {
         Title: titleMatch?.[1] || '',
         Creator: creatorMatch?.[1] || '',
         Subject: subjectMatch?.[1] || '',
+        Keywords: keywordsMatch?.[1]?.split(',').map((keyword) => keyword.trim()).filter(Boolean) || [],
       };
       console.log('📝 DOCX metadata:', metadata);
     }
