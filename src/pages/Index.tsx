@@ -125,7 +125,7 @@ const Index = () => {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-5xl font-semibold text-apple-gray-900 mb-2">Laterr</h1>
-            <p className="text-apple-gray-600 text-lg">Your personal knowledge garden</p>
+            <p className="text-apple-gray-600 text-lg">Your personal knowledge dumpster</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
