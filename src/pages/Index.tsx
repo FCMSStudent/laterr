@@ -11,12 +11,11 @@ import { Sparkles, LogOut, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   DEFAULT_ITEM_TAGS,
-  PREVIEW_SIGNED_URL_EXPIRATION,
   SUPABASE_ITEMS_TABLE,
-  SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
-  SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX,
 } from "@/constants";
 import type { Item, User } from "@/types";
+import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
+import { formatError } from "@/lib/error-utils";
 
 type RawItem = Omit<Item, 'tags'> & { tags: string[] | null };
 
@@ -53,34 +52,13 @@ const Index = () => {
         content: item.content ?? null,
       }));
 
-      const itemsWithSignedUrls: Item[] = await Promise.all(
-        normalizedItems.map(async (item) => {
-          if (item.preview_image_url) {
-            try {
-              const marker = SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX;
-              const idx = item.preview_image_url.indexOf(marker);
-              if (idx !== -1) {
-                const key = item.preview_image_url.substring(idx + marker.length);
-                const { data: signedData } = await supabase.storage
-                  .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-                  .createSignedUrl(key, PREVIEW_SIGNED_URL_EXPIRATION); // 1 hour
-                if (signedData?.signedUrl) {
-                  return { ...item, preview_image_url: signedData.signedUrl };
-                }
-              }
-            } catch (e) {
-              console.error('Failed to create signed URL for item:', item.id, e);
-            }
-          }
-          return item;
-        })
-      );
+      const itemsWithSignedUrls = await generateSignedUrlsForItems(normalizedItems);
 
       setItems(itemsWithSignedUrls);
       setFilteredItems(itemsWithSignedUrls);
     } catch (error) {
       console.error('Error fetching items:', error);
-      const message = error instanceof Error ? error.message : "Failed to load items";
+      const message = formatError(error, "Failed to load items");
       toast({
         title: "Error",
         description: message,
@@ -159,7 +137,7 @@ const Index = () => {
     if (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: formatError(error, "Failed to sign out"),
         variant: "destructive",
       });
     } else {

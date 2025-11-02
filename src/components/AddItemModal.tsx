@@ -23,9 +23,10 @@ import {
   SUPABASE_FUNCTION_ANALYZE_FILE,
   SUPABASE_FUNCTION_ANALYZE_URL,
   SUPABASE_ITEMS_TABLE,
-  SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
   FILE_ANALYSIS_SIGNED_URL_EXPIRATION,
 } from "@/constants";
+import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-utils";
+import { formatError, handleSupabaseError } from "@/lib/error-utils";
 
 interface AddItemModalProps {
   open: boolean;
@@ -90,7 +91,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onItemAdded();
     } catch (error) {
       console.error('Error adding URL:', error);
-      const message = error instanceof Error ? error.message : "Failed to add URL. Please try again.";
+      const message = formatError(error, "Failed to add URL. Please try again.");
       toast.error(message);
     } finally {
       setLoading(false);
@@ -133,7 +134,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onItemAdded();
     } catch (error) {
       console.error('Error adding note:', error);
-      const message = error instanceof Error ? error.message : "Failed to add note. Please try again.";
+      const message = formatError(error, "Failed to add note. Please try again.");
       toast.error(message);
     } finally {
       setLoading(false);
@@ -167,31 +168,17 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       if (!user) throw new Error('Not authenticated');
 
       // Upload to storage with user-specific path
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
+      const { fileName, publicUrl } = await uploadFileToStorage(file, user.id);
 
       setStatusStep('extracting');
 
-      // Get public URL (used for storing a reference; may be inaccessible if bucket is private)
-      const { data: { publicUrl } } = supabase.storage
-        .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-        .getPublicUrl(fileName);
-
       // Create a short-lived signed URL for backend analysis
-      const { data: signed, error: signError } = await supabase.storage
-        .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-        .createSignedUrl(fileName, FILE_ANALYSIS_SIGNED_URL_EXPIRATION);
-      if (signError || !signed?.signedUrl) throw (signError || new Error('Failed to create signed URL'));
+      const signedUrl = await createSignedUrlForFile(fileName, FILE_ANALYSIS_SIGNED_URL_EXPIRATION);
 
       // Analyze with AI - using the new analyze-file function
       const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
         body: {
-          fileUrl: signed.signedUrl,
+          fileUrl: signedUrl,
           fileType: file.type,
           fileName: file.name
         }
@@ -238,10 +225,14 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onItemAdded();
     } catch (error) {
       console.error('Error adding file:', error);
-      const message = error instanceof Error ? error.message : "Failed to add file. Please try again.";
-      if (error instanceof Error && error.message.includes('Rate limit')) {
+      const { message, isRateLimitError, isCreditsError } = handleSupabaseError(
+        error,
+        "Failed to add file. Please try again."
+      );
+      
+      if (isRateLimitError) {
         toast.error('AI rate limit hit. Please wait a moment and try again.');
-      } else if (error instanceof Error && error.message.includes('credits')) {
+      } else if (isCreditsError) {
         toast.error('AI credits exhausted. Please top up to continue.');
       } else {
         toast.error(message);
