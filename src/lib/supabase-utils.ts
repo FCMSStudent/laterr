@@ -50,6 +50,9 @@ export async function generateSignedUrl(
  * Generates signed URLs for an array of items with preview images
  * @param items - Array of items to process
  * @returns Array of items with signed URLs for preview images
+ * 
+ * Note: Processes all items concurrently. For very large datasets, consider batching.
+ * Individual failures are caught and logged without affecting other items.
  */
 export async function generateSignedUrlsForItems(items: Item[]): Promise<Item[]> {
   return Promise.all(
@@ -76,57 +79,49 @@ export async function generateSignedUrlsForItems(items: Item[]): Promise<Item[]>
  * Uploads a file to Supabase storage
  * @param file - The file to upload
  * @param userId - The user ID for path organization
- * @returns Object containing the file name and public URL, or error
+ * @returns Object containing the file name and public URL
+ * @throws Error if upload fails
  */
 export async function uploadFileToStorage(
   file: File,
   userId: string
-): Promise<{ fileName: string; publicUrl: string } | { error: Error }> {
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-      .upload(fileName, file);
+): Promise<{ fileName: string; publicUrl: string }> {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
+  
+  const { error: uploadError } = await supabase.storage
+    .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
+    .upload(fileName, file);
 
-    if (uploadError) {
-      return { error: uploadError };
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-      .getPublicUrl(fileName);
-
-    return { fileName, publicUrl };
-  } catch (error) {
-    return { error: error instanceof Error ? error : new Error('Unknown error during file upload') };
+  if (uploadError) {
+    throw uploadError;
   }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
+    .getPublicUrl(fileName);
+
+  return { fileName, publicUrl };
 }
 
 /**
  * Creates a signed URL for a file that was just uploaded
  * @param fileName - The file name in storage
  * @param expiresIn - Number of seconds until the signed URL expires
- * @returns The signed URL or null if generation fails
+ * @returns The signed URL
+ * @throws Error if signed URL creation fails
  */
 export async function createSignedUrlForFile(
   fileName: string,
   expiresIn: number
-): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.storage
-      .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-      .createSignedUrl(fileName, expiresIn);
+): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
+    .createSignedUrl(fileName, expiresIn);
 
-    if (error || !data?.signedUrl) {
-      console.error('Failed to create signed URL:', error);
-      return null;
-    }
-
-    return data.signedUrl;
-  } catch (error) {
-    console.error('Failed to create signed URL:', error);
-    return null;
+  if (error || !data?.signedUrl) {
+    throw error || new Error('Failed to create signed URL');
   }
+
+  return data.signedUrl;
 }

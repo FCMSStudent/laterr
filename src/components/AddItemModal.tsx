@@ -168,16 +168,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       if (!user) throw new Error('Not authenticated');
 
       // Upload to storage with user-specific path
-      const uploadResult = await uploadFileToStorage(file, user.id);
-      if ('error' in uploadResult) throw uploadResult.error;
-
-      const { fileName, publicUrl } = uploadResult;
+      const { fileName, publicUrl } = await uploadFileToStorage(file, user.id);
 
       setStatusStep('extracting');
 
       // Create a short-lived signed URL for backend analysis
       const signedUrl = await createSignedUrlForFile(fileName, FILE_ANALYSIS_SIGNED_URL_EXPIRATION);
-      if (!signedUrl) throw new Error('Failed to create signed URL');
 
       // Analyze with AI - using the new analyze-file function
       const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
