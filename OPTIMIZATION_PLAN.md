@@ -265,7 +265,7 @@ Each step below includes:
 ### Step 14: Implement Pagination or Virtual Scrolling
 - **Priority**: Medium
 - **Effort**: 3-4 hours
-- **Task**: Add pagination or virtual scrolling to handle large datasets efficiently. Use `@tanstack/react-virtual` (already compatible with React Query) or implement cursor-based pagination with Supabase.
+- **Task**: Add pagination or virtual scrolling to handle large datasets efficiently. Use `@tanstack/react-virtual` for virtual scrolling or implement cursor-based pagination with Supabase. Both approaches work well with the existing React Query setup.
 - **Files**:
   - `src/components/ItemGrid.tsx`: Create new component with virtual scrolling or pagination
   - `src/pages/Index.tsx`: Integrate virtual scrolling/pagination for item display
