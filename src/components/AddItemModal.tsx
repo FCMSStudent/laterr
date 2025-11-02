@@ -243,13 +243,13 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         "Failed to add file. Please try again."
       );
       
-      const networkError = new NetworkError(message, typedError);
-      
+      // Use specific error messages for rate limiting and credits issues for better UX
       if (isRateLimitError) {
         toast.error('AI rate limit hit. Please wait a moment and try again.');
       } else if (isCreditsError) {
         toast.error('AI credits exhausted. Please top up to continue.');
       } else {
+        const networkError = new NetworkError(message, typedError);
         toast.error(networkError.message);
       }
     } finally {
