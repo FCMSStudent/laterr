@@ -205,7 +205,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that analyzes web content and categorizes it. Respond in JSON format: {"title": "improved title", "summary": "2-3 sentence summary", "tags": ["category"], "contentType": "video|article|product|document"}. Use ONLY these categories as tags: "watch later" (videos), "read later" (articles/PDFs/text), "wish list" (shopping/products), "work on" (work-related text). Choose only ONE category tag that best fits the content.'
+            content: 'You are a helpful assistant that analyzes web content and categorizes it. Respond in JSON format: {"title": "improved title", "summary": "2-3 sentence summary", "tag": "read later", "contentType": "video|article|product|document"}. Use ONLY one of these tags: "watch later" (videos/entertainment), "read later" (articles/documents/text), or "wishlist" (products/items to buy). Choose only ONE tag that best fits the content.'
           },
           {
             role: 'user',
@@ -239,7 +239,7 @@ serve(async (req) => {
       JSON.stringify({
         title: result.title || pageTitle,
         summary: result.summary,
-        tags: result.tags || ['read later'],
+        tag: result.tag || (platform ? 'watch later' : 'read later'),
         previewImageUrl: previewImageUrl,
         author: authorName || undefined,
         platform: platform || undefined,

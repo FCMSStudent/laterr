@@ -47,8 +47,8 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       if (error) throw error;
 
       // Set suggested category from AI
-      if (data.tags && data.tags.length > 0) {
-        setSuggestedCategory(data.tags[0]);
+      if (data.tag) {
+        setSuggestedCategory(data.tag);
       }
 
       const { error: insertError } = await supabase
@@ -58,7 +58,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           title: data.title,
           content: urlResult.data,
           summary: data.summary,
-          tags: suggestedCategory ? [suggestedCategory] : (data.tags || ['read later']),
+          tags: data.tag ? [data.tag] : ['read later'],
           preview_image_url: data.previewImageUrl,
           user_id: user.id,
         });
@@ -102,7 +102,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           title: firstLine || 'Untitled Note',
           content: noteResult.data,
           summary: noteResult.data.substring(0, 200),
-          tags: ['note'],
+          tags: ['read later'],
           user_id: user.id,
         });
 
@@ -186,14 +186,16 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       setStatusStep('summarizing');
 
-      // Determine item type based on file type
+      // Determine item type and default tag based on file type
       let itemType = 'file';
+      let defaultTag = 'read later';
+      
       if (file.type.startsWith('image/')) {
         itemType = 'image';
-      } else if (file.type === 'application/pdf') {
+        defaultTag = data.tag || 'read later';  // AI chooses for images
+      } else if (file.type === 'application/pdf' || file.type.includes('word')) {
         itemType = 'document';
-      } else if (file.type.includes('word')) {
-        itemType = 'document';
+        defaultTag = 'read later';  // Always read later for documents
       }
 
       // Insert into database
@@ -206,7 +208,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           title: data.title,
           content: publicUrl,
           summary: data.description + (data.extractedText ? `\n\nExtracted text: ${data.extractedText}` : ''),
-          tags: data.tags,
+          tags: [defaultTag],
           preview_image_url: file.type.startsWith('image/') ? publicUrl : null,
           user_id: user.id,
         });

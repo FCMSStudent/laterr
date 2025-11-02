@@ -35,7 +35,7 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: 'Analyze this image and provide: 1) A descriptive title (4-8 words), 2) A detailed description (2-3 sentences), 3) 3-5 relevant tags. Respond in JSON format: {"title": "...", "description": "...", "tags": ["tag1", "tag2"]}'
+                text: 'Analyze this image and categorize it. Provide: 1) A descriptive title (4-8 words), 2) A detailed description (2-3 sentences), 3) ONE tag from these options: "watch later" (for videos/entertainment), "read later" (for articles/documents/text), or "wishlist" (for products/items to buy). Respond in JSON format: {"title": "...", "description": "...", "tag": "watch later"}'
               },
               {
                 type: 'image_url',
@@ -60,7 +60,7 @@ serve(async (req) => {
       result = {
         title: 'Uploaded Image',
         description: 'An image uploaded to your garden',
-        tags: ['image']
+        tag: 'read later'
       };
     }
 
@@ -68,7 +68,7 @@ serve(async (req) => {
       JSON.stringify({
         title: result.title,
         description: result.description,
-        tags: result.tags || []
+        tag: result.tag || 'read later'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

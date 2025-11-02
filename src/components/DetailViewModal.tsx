@@ -2,9 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, Sparkles } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -30,14 +28,10 @@ interface DetailViewModalProps {
   onUpdate: () => void;
 }
 
-const tagSchema = z.string().regex(/^[a-zA-Z0-9-_ ]+$/, "Invalid characters").max(50, "Tag too long");
-
 export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailViewModalProps) => {
   const [userNotes, setUserNotes] = useState(item?.user_notes || "");
-  const [tags, setTags] = useState<string[]>(item?.tags || []);
-  const [newTag, setNewTag] = useState("");
+  const [selectedTag, setSelectedTag] = useState<string>(item?.tags?.[0] || "read later");
   const [isEditing, setIsEditing] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -85,7 +79,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     try {
       const { error } = await supabase
         .from("items")
-        .update({ user_notes: userNotes, tags })
+        .update({ user_notes: userNotes, tags: [selectedTag] })
         .eq("id", item.id);
 
       if (error) throw error;
@@ -114,64 +108,6 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.error(error.message || "Failed to delete item.");
     } finally {
       setDeleting(false);
-    }
-  };
-
-  const handleAddTag = () => {
-    const trimmedTag = newTag.trim();
-    if (!trimmedTag) return;
-
-    const tagResult = tagSchema.safeParse(trimmedTag);
-    if (!tagResult.success) {
-      toast.error(tagResult.error.errors[0].message);
-      return;
-    }
-
-    if (tags.includes(trimmedTag)) {
-      toast.error("Tag already exists");
-      return;
-    }
-
-    if (tags.length >= 20) {
-      toast.error("Maximum 20 tags allowed");
-      return;
-    }
-
-    setTags([...tags, trimmedTag]);
-    setNewTag("");
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
-
-  const handleGenerateIcon = async (tag: string) => {
-    setGenerating(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const prompt = `a simple, minimalist icon representing "${tag}"`;
-      const { data, error } = await supabase.functions.invoke("generate-tag-icon", {
-        body: { tagName: tag, prompt },
-      });
-
-      if (error) throw error;
-
-      const { error: insertError } = await supabase.from("tag_icons").upsert({
-        tag_name: tag,
-        icon_url: data.iconUrl,
-        user_id: user.id,
-      });
-
-      if (insertError) throw insertError;
-
-      toast.success(`Custom icon generated for #${tag}!`);
-    } catch (error: any) {
-      console.error("Error generating icon:", error);
-      toast.error(error.message || "Failed to generate icon.");
-    } finally {
-      setGenerating(false);
     }
   };
 
@@ -224,47 +160,18 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               </a>
             )}
 
-            {/* Tags Section */}
+            {/* Category Tag Section */}
             <div>
-              <h3 className="font-semibold text-sm text-muted-foreground mb-2">Tags</h3>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {tags.map((tag) => (
-                  <div key={tag} className="flex items-center gap-1">
-                    <Badge variant="secondary" className="text-xs font-medium">#{tag}</Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 hover:bg-destructive/10"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      <span className="text-xs text-muted-foreground hover:text-destructive">×</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 hover:bg-accent"
-                      onClick={() => handleGenerateIcon(tag)}
-                      disabled={generating}
-                      title="Generate custom icon"
-                    >
-                      <Sparkles className="h-3 w-3 text-muted-foreground" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new tag..."
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
-                  maxLength={50}
-                  className="glass-input border-0 h-10 text-[15px]"
-                />
-                <Button onClick={handleAddTag} variant="secondary" className="h-10 font-medium">
-                  Add
-                </Button>
-              </div>
+              <h3 className="font-semibold text-sm text-muted-foreground mb-2">Category</h3>
+              <select
+                value={selectedTag}
+                onChange={(e) => setSelectedTag(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="watch later">⏰ Watch Later</option>
+                <option value="read later">📖 Read Later</option>
+                <option value="wishlist">⭐ Wishlist</option>
+              </select>
             </div>
           </div>
 

@@ -111,7 +111,6 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
       useWorkerFetch: false,
       isEvalSupported: false,
       useSystemFonts: true,
-      disableWorker: true,
     });
     
     const pdf = await loadingTask.promise;
