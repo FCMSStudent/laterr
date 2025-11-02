@@ -8,6 +8,24 @@ import { Link2, FileText, File, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  CATEGORY_OPTIONS,
+  DEFAULT_ITEM_TAG,
+  DEFAULT_ITEM_TAGS,
+  ALLOWED_FILE_MIME_TYPES,
+  FILE_INPUT_ACCEPT,
+  FILE_SIZE_LIMIT_BYTES,
+  FILE_SIZE_LIMIT_MB,
+  NOTE_MAX_LENGTH,
+  NOTE_SUMMARY_MAX_LENGTH,
+  NOTE_TITLE_MAX_LENGTH,
+  URL_MAX_LENGTH,
+  SUPABASE_FUNCTION_ANALYZE_FILE,
+  SUPABASE_FUNCTION_ANALYZE_URL,
+  SUPABASE_ITEMS_TABLE,
+  SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
+  FILE_ANALYSIS_SIGNED_URL_EXPIRATION,
+} from "@/constants";
 
 interface AddItemModalProps {
   open: boolean;
@@ -15,8 +33,8 @@ interface AddItemModalProps {
   onItemAdded: () => void;
 }
 
-const urlSchema = z.string().url('Invalid URL').max(2048, 'URL too long');
-const noteSchema = z.string().min(1, 'Note cannot be empty').max(100000, 'Note too long');
+const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
+const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
 
 export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalProps) => {
   const [url, setUrl] = useState("");
@@ -40,7 +58,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.functions.invoke('analyze-url', {
+      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_URL, {
         body: { url: urlResult.data }
       });
 
@@ -52,13 +70,13 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       }
 
       const { error: insertError } = await supabase
-        .from('items')
+        .from(SUPABASE_ITEMS_TABLE)
         .insert({
           type: 'url',
           title: data.title,
           content: urlResult.data,
           summary: data.summary,
-          tags: data.tag ? [data.tag] : ['read later'],
+          tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
           preview_image_url: data.previewImageUrl,
           user_id: user.id,
         });
@@ -93,16 +111,16 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const firstLine = noteResult.data.split('\n')[0].substring(0, 100);
-      
+      const firstLine = noteResult.data.split('\n')[0].substring(0, NOTE_TITLE_MAX_LENGTH);
+
       const { error } = await supabase
-        .from('items')
+        .from(SUPABASE_ITEMS_TABLE)
         .insert({
           type: 'note',
           title: firstLine || 'Untitled Note',
           content: noteResult.data,
-          summary: noteResult.data.substring(0, 200),
-          tags: ['read later'],
+          summary: noteResult.data.substring(0, NOTE_SUMMARY_MAX_LENGTH),
+          tags: [...DEFAULT_ITEM_TAGS],
           user_id: user.id,
         });
 
@@ -128,20 +146,15 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     }
 
     // Validate file type - now accepting images, PDFs, and Word documents
-    const validTypes = [
-      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-      'application/msword' // .doc
-    ];
+    const validTypes = ALLOWED_FILE_MIME_TYPES;
     if (!validTypes.includes(file.type)) {
       toast.error('Only images, PDFs, and Word documents are allowed');
       return;
     }
 
     // Validate file size (20MB max for documents)
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error('File is too large (max 20MB)');
+    if (file.size > FILE_SIZE_LIMIT_BYTES) {
+      toast.error(`File is too large (max ${FILE_SIZE_LIMIT_MB}MB)`);
       return;
     }
     
@@ -155,7 +168,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('item-images')
+        .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
@@ -164,17 +177,17 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Get public URL (used for storing a reference; may be inaccessible if bucket is private)
       const { data: { publicUrl } } = supabase.storage
-        .from('item-images')
+        .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
         .getPublicUrl(fileName);
 
       // Create a short-lived signed URL for backend analysis
       const { data: signed, error: signError } = await supabase.storage
-        .from('item-images')
-        .createSignedUrl(fileName, 60 * 10);
+        .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
+        .createSignedUrl(fileName, FILE_ANALYSIS_SIGNED_URL_EXPIRATION);
       if (signError || !signed?.signedUrl) throw (signError || new Error('Failed to create signed URL'));
 
       // Analyze with AI - using the new analyze-file function
-      const { data, error } = await supabase.functions.invoke('analyze-file', {
+      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
         body: {
           fileUrl: signed.signedUrl,
           fileType: file.type,
@@ -188,21 +201,21 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Determine item type and default tag based on file type
       let itemType = 'file';
-      let defaultTag = 'read later';
-      
+      let defaultTag = DEFAULT_ITEM_TAG;
+
       if (file.type.startsWith('image/')) {
         itemType = 'image';
-        defaultTag = data.tag || 'read later';  // AI chooses for images
+        defaultTag = data.tag || DEFAULT_ITEM_TAG;  // AI chooses for images
       } else if (file.type === 'application/pdf' || file.type.includes('word')) {
         itemType = 'document';
-        defaultTag = 'read later';  // Always read later for documents
+        defaultTag = DEFAULT_ITEM_TAG;  // Always read later for documents
       }
 
       // Insert into database
       setStatusStep('saving');
 
       const { error: insertError } = await supabase
-        .from('items')
+        .from(SUPABASE_ITEMS_TABLE)
         .insert({
           type: itemType,
           title: data.title,
@@ -250,16 +263,16 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
             <p className="text-sm text-muted-foreground mb-2 font-medium">Confirm category:</p>
             <div className="flex gap-2 flex-wrap">
-              {['watch later', 'read later', 'wish list', 'work on'].map((category) => (
+              {CATEGORY_OPTIONS.map(({ value, label }) => (
                 <Button
-                  key={category}
+                  key={value}
                   type="button"
-                  variant={suggestedCategory === category ? "default" : "outline"}
+                  variant={suggestedCategory === value ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSuggestedCategory(category)}
+                  onClick={() => setSuggestedCategory(value)}
                   className="text-xs"
                 >
-                  {category}
+                  {label}
                 </Button>
               ))}
             </div>
@@ -287,7 +300,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               placeholder="Paste a URL..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              maxLength={2048}
+              maxLength={URL_MAX_LENGTH}
               className="glass-input border-0 h-11 text-[15px]"
             />
             <Button 
@@ -304,7 +317,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               placeholder="Write your thoughts..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              maxLength={100000}
+              maxLength={NOTE_MAX_LENGTH}
               className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
             />
             <Button 
@@ -320,12 +333,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
             <div className="space-y-2">
               <Input
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/msword,.doc"
+                accept={FILE_INPUT_ACCEPT}
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="glass-input border-0 h-11 text-[15px]"
               />
               <p className="text-xs text-muted-foreground">
-                Supports: Images, PDFs, Word documents (max 20MB)
+                Supports: Images, PDFs, Word documents (max {FILE_SIZE_LIMIT_MB}MB)
               </p>
             </div>
             <div className="space-y-2">
