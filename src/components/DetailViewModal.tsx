@@ -10,11 +10,10 @@ import { z } from "zod";
 import {
   CATEGORY_OPTIONS,
   DEFAULT_ITEM_TAG,
-  PREVIEW_SIGNED_URL_EXPIRATION,
   SUPABASE_ITEMS_TABLE,
-  SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
-  SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX,
 } from "@/constants";
+import { generateSignedUrl } from "@/lib/supabase-utils";
+import { formatError } from "@/lib/error-utils";
 
 const itemSchema = z.object({
   id: z.string(),
@@ -47,25 +46,17 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const generateSignedUrl = async () => {
-      try {
-        if (!item?.content) { setSignedUrl(null); return; }
-        const url = item.content;
-        const marker = SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX;
-        const idx = url.indexOf(marker);
-        if (idx === -1) { setSignedUrl(null); return; }
-        const key = url.substring(idx + marker.length);
-        const { data, error } = await supabase.storage
-          .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-          .createSignedUrl(key, PREVIEW_SIGNED_URL_EXPIRATION);
-        if (error) { console.error('Signed URL error:', error); setSignedUrl(null); return; }
-        setSignedUrl(data?.signedUrl || null);
-      } catch (e) {
-        console.error('Failed to create signed URL', e);
+    const generateSignedUrlForItem = async () => {
+      if (!item?.content) {
         setSignedUrl(null);
+        return;
       }
+      
+      const url = await generateSignedUrl(item.content);
+      setSignedUrl(url);
     };
-    generateSignedUrl();
+    
+    generateSignedUrlForItem();
   }, [item]);
 
   if (!item) return null;
@@ -104,7 +95,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       onUpdate();
     } catch (error) {
       console.error("Error saving:", error);
-      const message = error instanceof Error ? error.message : "Failed to save changes.";
+      const message = formatError(error, "Failed to save changes.");
       toast.error(message);
     } finally {
       setSaving(false);
@@ -121,7 +112,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       onUpdate();
     } catch (error) {
       console.error("Error deleting:", error);
-      const message = error instanceof Error ? error.message : "Failed to delete item.";
+      const message = formatError(error, "Failed to delete item.");
       toast.error(message);
     } finally {
       setDeleting(false);
