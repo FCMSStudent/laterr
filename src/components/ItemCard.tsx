@@ -1,12 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Link2, FileText, Image as ImageIcon } from "lucide-react";
+import type { ItemType } from "@/types";
 
 interface ItemCardProps {
   id: string;
-  type: 'url' | 'note' | 'image' | 'document';
+  type: ItemType;
   title: string;
-  summary?: string;
-  previewImageUrl?: string;
+  summary?: string | null;
+  previewImageUrl?: string | null;
   tags: string[];
   onClick: () => void;
   onTagClick: (tag: string) => void;
@@ -23,10 +24,16 @@ export const ItemCard = ({
 }: ItemCardProps) => {
   const getIcon = () => {
     switch (type) {
-      case 'url': return <Link2 className="h-4 w-4" />;
-      case 'note': return <FileText className="h-4 w-4" />;
-      case 'image': return <ImageIcon className="h-4 w-4" />;
-      case 'document': return <FileText className="h-4 w-4" />;
+      case 'url':
+        return <Link2 className="h-4 w-4" />;
+      case 'note':
+      case 'document':
+      case 'file':
+        return <FileText className="h-4 w-4" />;
+      case 'image':
+        return <ImageIcon className="h-4 w-4" />;
+      default:
+        return null;
     }
   };
 
