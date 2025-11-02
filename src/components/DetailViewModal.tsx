@@ -59,9 +59,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     generateSignedUrlForItem();
   }, [item]);
 
-  if (!item) return null;
-
   const getIcon = useCallback(() => {
+    if (!item) return null;
     switch (item.type) {
       case "url":
         return <Link2 className="h-5 w-5" />;
@@ -74,7 +73,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       default:
         return null;
     }
-  }, [item.type]);
+  }, [item]);
+
+  if (!item) return null;
 
   const handleSave = async () => {
     if (userNotes.length > 100000) {

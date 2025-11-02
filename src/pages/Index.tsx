@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AddItemModal } from "@/components/AddItemModal";
@@ -32,7 +32,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from(SUPABASE_ITEMS_TABLE)
@@ -67,7 +67,7 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     // Check authentication
@@ -91,7 +91,7 @@ const Index = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, fetchItems]);
 
   useEffect(() => {
     let filtered = items;
