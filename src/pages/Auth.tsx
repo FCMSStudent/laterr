@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { formatError } from '@/lib/error-utils';
+import { AuthError, toTypedError } from '@/types/errors';
 
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(72);
@@ -85,10 +86,16 @@ export default function Auth() {
         });
         setIsLogin(true);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      const authError = new AuthError(
+        formatError(typedError, 'Something went wrong.'),
+        typedError
+      );
+      
       toast({
         title: 'Error',
-        description: formatError(error, 'Something went wrong.'),
+        description: authError.message,
         variant: 'destructive',
       });
     } finally {

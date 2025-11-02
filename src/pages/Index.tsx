@@ -16,6 +16,7 @@ import {
 import type { Item, User } from "@/types";
 import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
+import { AuthError, NetworkError, toTypedError } from "@/types/errors";
 
 type RawItem = Omit<Item, 'tags'> & { tags: string[] | null };
 
@@ -56,12 +57,17 @@ const Index = () => {
 
       setItems(itemsWithSignedUrls);
       setFilteredItems(itemsWithSignedUrls);
-    } catch (error) {
-      console.error('Error fetching items:', error);
-      const message = formatError(error, "Failed to load items");
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      const networkError = new NetworkError(
+        formatError(typedError, "Failed to load items"),
+        typedError
+      );
+      
+      console.error('Error fetching items:', networkError);
       toast({
         title: "Error",
-        description: message,
+        description: networkError.message,
         variant: "destructive",
       });
     } finally {
@@ -135,9 +141,13 @@ const Index = () => {
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
+      const authError = new AuthError(
+        formatError(error, "Failed to sign out"),
+        error instanceof Error ? error : undefined
+      );
       toast({
         title: "Error",
-        description: formatError(error, "Failed to sign out"),
+        description: authError.message,
         variant: "destructive",
       });
     } else {
