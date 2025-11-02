@@ -1,0 +1,55 @@
+:root {
+  /* Tune these to recolor the glow */
+  --gradient-accent: 330 90% 86%;      /* pink */
+  --gradient-accent-2: 330 85% 80%;
+  --gradient-bg: 0 0% 100%;            /* page base for light mode */
+}
+
+.dark {
+  --gradient-accent: 330 70% 40%;
+  --gradient-accent-2: 280 70% 38%;  /* hint of purple in dark mode */
+  --gradient-bg: 240 10% 6%;
+}
+
+html, body {
+  background: hsl(var(--gradient-bg));
+}
+
+/* Main glow layer */
+.gradient-bg {
+  position: fixed;
+  inset: -20% 0 0 0;          /* extend upward so glow origin sits "above" the viewport */
+  z-index: -1;
+  pointer-events: none;
+
+  /* Multiple soft radial glows + a solid base to prevent transparency */
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, hsl(var(--gradient-accent) / 0.85) 0%, transparent 60%),
+    radial-gradient(900px 500px at 0% 0%,       hsl(var(--gradient-accent-2) / 0.55) 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%,     hsl(var(--gradient-accent-2) / 0.55) 0%, transparent 60%),
+    linear-gradient(hsl(var(--gradient-bg)), hsl(var(--gradient-bg)));
+  filter: blur(28px) saturate(110%);
+
+  /* Fade the gradient away toward the bottom */
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+}
+
+/* Subtle noise to reduce color banding (tiny inline SVG) */
+.gradient-noise {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* Optional: pages can tone down the effect by placing .has-subtle-bg on body or a layout wrapper */
+.has-subtle-bg .gradient-bg {
+  filter: blur(20px) saturate(105%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 90%);
+  mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 90%);
+}

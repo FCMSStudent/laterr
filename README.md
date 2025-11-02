@@ -71,3 +71,25 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Gradient Background
+
+This app includes a fixed, masked radial gradient with a noise overlay for a soft, elegant visual effect.
+
+### Theming
+- Edit CSS variables in `src/styles/gradient.css`:
+  - `--gradient-accent`, `--gradient-accent-2`: glow colors (HSL).
+  - `--gradient-bg`: base page background.
+- Dark mode is controlled by the `.dark` class on the root element; tune values in the `.dark` block.
+
+### Toggling
+- Add `.has-subtle-bg` to the `<body>` or a root wrapper to reduce intensity.
+- To disable entirely on a view, conditionally render `GradientBackground`.
+
+### Performance notes
+- Keep `blur()` under ~40px for smoother performance on low-end devices.
+- Layers are `position: fixed` with `pointer-events: none` and `z-index: -1`.
+
+### Safari masking fallback
+- Older Safari versions may ignore `mask-image`. If detection is necessary, reduce reliance on masking by slightly lowering gradient opacity and extending the base linear-gradient coverage.
+
