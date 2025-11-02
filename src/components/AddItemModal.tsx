@@ -27,6 +27,7 @@ import {
 } from "@/constants";
 import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-utils";
 import { formatError, handleSupabaseError } from "@/lib/error-utils";
+import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 
 interface AddItemModalProps {
   open: boolean;
@@ -89,10 +90,15 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setSuggestedCategory("");
       onOpenChange(false);
       onItemAdded();
-    } catch (error) {
-      console.error('Error adding URL:', error);
-      const message = formatError(error, "Failed to add URL. Please try again.");
-      toast.error(message);
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      const networkError = new NetworkError(
+        formatError(typedError, "Failed to add URL. Please try again."),
+        typedError
+      );
+      
+      console.error('Error adding URL:', networkError);
+      toast.error(networkError.message);
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -132,10 +138,15 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setNote("");
       onOpenChange(false);
       onItemAdded();
-    } catch (error) {
-      console.error('Error adding note:', error);
-      const message = formatError(error, "Failed to add note. Please try again.");
-      toast.error(message);
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      const networkError = new NetworkError(
+        formatError(typedError, "Failed to add note. Please try again."),
+        typedError
+      );
+      
+      console.error('Error adding note:', networkError);
+      toast.error(networkError.message);
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -223,19 +234,23 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setFile(null);
       onOpenChange(false);
       onItemAdded();
-    } catch (error) {
-      console.error('Error adding file:', error);
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      console.error('Error adding file:', typedError);
+      
       const { message, isRateLimitError, isCreditsError } = handleSupabaseError(
-        error,
+        typedError,
         "Failed to add file. Please try again."
       );
       
+      // Use specific error messages for rate limiting and credits issues for better UX
       if (isRateLimitError) {
         toast.error('AI rate limit hit. Please wait a moment and try again.');
       } else if (isCreditsError) {
         toast.error('AI credits exhausted. Please top up to continue.');
       } else {
-        toast.error(message);
+        const networkError = new NetworkError(message, typedError);
+        toast.error(networkError.message);
       }
     } finally {
       setLoading(false);

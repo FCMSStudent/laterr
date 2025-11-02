@@ -14,6 +14,7 @@ import {
 } from "@/constants";
 import { generateSignedUrl } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
+import { NetworkError, toTypedError } from "@/types/errors";
 
 const itemSchema = z.object({
   id: z.string(),
@@ -94,10 +95,15 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Changes saved!");
       setIsEditing(false);
       onUpdate();
-    } catch (error) {
-      console.error("Error saving:", error);
-      const message = formatError(error, "Failed to save changes.");
-      toast.error(message);
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      const networkError = new NetworkError(
+        formatError(typedError, "Failed to save changes."),
+        typedError
+      );
+      
+      console.error("Error saving:", networkError);
+      toast.error(networkError.message);
     } finally {
       setSaving(false);
     }
@@ -111,10 +117,15 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Item removed from your garden.");
       onOpenChange(false);
       onUpdate();
-    } catch (error) {
-      console.error("Error deleting:", error);
-      const message = formatError(error, "Failed to delete item.");
-      toast.error(message);
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      const networkError = new NetworkError(
+        formatError(typedError, "Failed to delete item."),
+        typedError
+      );
+      
+      console.error("Error deleting:", networkError);
+      toast.error(networkError.message);
     } finally {
       setDeleting(false);
     }
