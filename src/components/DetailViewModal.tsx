@@ -28,6 +28,7 @@ const itemSchema = z.object({
 });
 
 type Item = z.infer<typeof itemSchema>;
+import type { Item } from "@/types";
 
 interface DetailViewModalProps {
   open: boolean;
@@ -71,10 +72,16 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   const getIcon = useCallback(() => {
     switch (item.type) {
-      case "url": return <Link2 className="h-5 w-5" />;
-      case "note": return <FileText className="h-5 w-5" />;
-      case "image": return <ImageIcon className="h-5 w-5" />;
-      default: return null;
+      case "url":
+        return <Link2 className="h-5 w-5" />;
+      case "note":
+      case "document":
+      case "file":
+        return <FileText className="h-5 w-5" />;
+      case "image":
+        return <ImageIcon className="h-5 w-5" />;
+      default:
+        return null;
     }
   }, [item.type]);
 
@@ -95,9 +102,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Changes saved!");
       setIsEditing(false);
       onUpdate();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving:", error);
-      toast.error(error.message || "Failed to save changes.");
+      const message = error instanceof Error ? error.message : "Failed to save changes.";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -111,9 +119,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Item removed from your garden.");
       onOpenChange(false);
       onUpdate();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting:", error);
-      toast.error(error.message || "Failed to delete item.");
+      const message = error instanceof Error ? error.message : "Failed to delete item.";
+      toast.error(message);
     } finally {
       setDeleting(false);
     }

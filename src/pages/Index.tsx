@@ -16,17 +16,20 @@ import {
   SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
   SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX,
 } from "@/constants";
+import type { Item, User } from "@/types";
+
+type RawItem = Omit<Item, 'tags'> & { tags: string[] | null };
 
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
-  const [filteredItems, setFilteredItems] = useState<any[]>([]);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [items, setItems] = useState<Item[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -38,10 +41,20 @@ const Index = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       // Generate signed URLs for preview images
-      const itemsWithSignedUrls = await Promise.all(
-        (data || []).map(async (item) => {
+      const rawItems = ((data ?? []) as RawItem[]);
+      const normalizedItems: Item[] = rawItems.map((item) => ({
+        ...item,
+        tags: item.tags ?? [],
+        preview_image_url: item.preview_image_url ?? null,
+        summary: item.summary ?? null,
+        user_notes: item.user_notes ?? null,
+        content: item.content ?? null,
+      }));
+
+      const itemsWithSignedUrls: Item[] = await Promise.all(
+        normalizedItems.map(async (item) => {
           if (item.preview_image_url) {
             try {
               const marker = SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX;
@@ -65,11 +78,12 @@ const Index = () => {
 
       setItems(itemsWithSignedUrls);
       setFilteredItems(itemsWithSignedUrls);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching items:', error);
+      const message = error instanceof Error ? error.message : "Failed to load items";
       toast({
         title: "Error",
-        description: error.message || "Failed to load items",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -80,10 +94,11 @@ const Index = () => {
   useEffect(() => {
     // Check authentication
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+      const currentUser = session?.user ?? null;
+      if (!currentUser) {
         navigate('/auth');
       } else {
-        setUser(session.user);
+        setUser(currentUser);
         fetchItems();
       }
     });
@@ -93,7 +108,7 @@ const Index = () => {
       if (!session) {
         navigate('/auth');
       } else {
-        setUser(session.user);
+        setUser(session.user ?? null);
       }
     });
 
@@ -123,7 +138,7 @@ const Index = () => {
     setFilteredItems(filtered);
   }, [searchQuery, selectedTag, items]);
 
-  const handleItemClick = (item: any) => {
+  const handleItemClick = (item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
   };
@@ -236,7 +251,7 @@ const Index = () => {
                 title={item.title}
                 summary={item.summary}
                 previewImageUrl={item.preview_image_url}
-                tags={item.tags || []}
+                tags={item.tags}
                 onClick={() => handleItemClick(item)}
                 onTagClick={handleTagClick}
               />
