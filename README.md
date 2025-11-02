@@ -91,5 +91,8 @@ This app includes a fixed, masked radial gradient with a noise overlay for a sof
 - Layers are `position: fixed` with `pointer-events: none` and `z-index: -1`.
 
 ### Safari masking fallback
-- Older Safari versions may ignore `mask-image`. If detection is necessary, reduce reliance on masking by slightly lowering gradient opacity and extending the base linear-gradient coverage.
+- Safari versions prior to 15.4 may have limited `mask-image` support. If targeting older Safari versions, you can reduce reliance on masking by:
+  - Lowering the gradient opacity values (e.g., reduce from 0.85 to 0.6)
+  - Extending the base `linear-gradient` coverage to ensure a solid background
+  - Testing on the target Safari version to verify appearance
 
