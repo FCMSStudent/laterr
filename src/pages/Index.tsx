@@ -31,8 +31,33 @@ const Index = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setItems(data || []);
-      setFilteredItems(data || []);
+      
+      // Generate signed URLs for preview images
+      const itemsWithSignedUrls = await Promise.all(
+        (data || []).map(async (item) => {
+          if (item.preview_image_url) {
+            try {
+              const marker = '/item-images/';
+              const idx = item.preview_image_url.indexOf(marker);
+              if (idx !== -1) {
+                const key = item.preview_image_url.substring(idx + marker.length);
+                const { data: signedData } = await supabase.storage
+                  .from('item-images')
+                  .createSignedUrl(key, 60 * 60); // 1 hour
+                if (signedData?.signedUrl) {
+                  return { ...item, preview_image_url: signedData.signedUrl };
+                }
+              }
+            } catch (e) {
+              console.error('Failed to create signed URL for item:', item.id, e);
+            }
+          }
+          return item;
+        })
+      );
+
+      setItems(itemsWithSignedUrls);
+      setFilteredItems(itemsWithSignedUrls);
     } catch (error: any) {
       console.error('Error fetching items:', error);
       toast({
