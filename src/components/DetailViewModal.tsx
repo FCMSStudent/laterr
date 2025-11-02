@@ -6,20 +6,7 @@ import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
-import { z } from "zod";
-
-const itemSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  type: z.string(),
-  content: z.string().nullable(),
-  summary: z.string().nullable(),
-  user_notes: z.string().nullable(),
-  tags: z.array(z.string()).default([]),
-  preview_image_url: z.string().nullable(),
-});
-
-type Item = z.infer<typeof itemSchema>;
+import type { Item } from "@/types";
 
 interface DetailViewModalProps {
   open: boolean;
@@ -63,10 +50,16 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   const getIcon = useCallback(() => {
     switch (item.type) {
-      case "url": return <Link2 className="h-5 w-5" />;
-      case "note": return <FileText className="h-5 w-5" />;
-      case "image": return <ImageIcon className="h-5 w-5" />;
-      default: return null;
+      case "url":
+        return <Link2 className="h-5 w-5" />;
+      case "note":
+      case "document":
+      case "file":
+        return <FileText className="h-5 w-5" />;
+      case "image":
+        return <ImageIcon className="h-5 w-5" />;
+      default:
+        return null;
     }
   }, [item.type]);
 
@@ -87,9 +80,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Changes saved!");
       setIsEditing(false);
       onUpdate();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving:", error);
-      toast.error(error.message || "Failed to save changes.");
+      const message = error instanceof Error ? error.message : "Failed to save changes.";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -103,9 +97,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       toast.success("Item removed from your garden.");
       onOpenChange(false);
       onUpdate();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting:", error);
-      toast.error(error.message || "Failed to delete item.");
+      const message = error instanceof Error ? error.message : "Failed to delete item.";
+      toast.error(message);
     } finally {
       setDeleting(false);
     }

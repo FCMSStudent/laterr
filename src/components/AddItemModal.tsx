@@ -70,9 +70,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setSuggestedCategory("");
       onOpenChange(false);
       onItemAdded();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding URL:', error);
-      toast.error(error.message || "Failed to add URL. Please try again.");
+      const message = error instanceof Error ? error.message : "Failed to add URL. Please try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -112,9 +113,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setNote("");
       onOpenChange(false);
       onItemAdded();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding note:', error);
-      toast.error(error.message || "Failed to add note. Please try again.");
+      const message = error instanceof Error ? error.message : "Failed to add note. Please try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -221,14 +223,15 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       setFile(null);
       onOpenChange(false);
       onItemAdded();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding file:', error);
-      if (error.message?.includes('Rate limit')) {
+      const message = error instanceof Error ? error.message : "Failed to add file. Please try again.";
+      if (error instanceof Error && error.message.includes('Rate limit')) {
         toast.error('AI rate limit hit. Please wait a moment and try again.');
-      } else if (error.message?.includes('credits')) {
+      } else if (error instanceof Error && error.message.includes('credits')) {
         toast.error('AI credits exhausted. Please top up to continue.');
       } else {
-        toast.error(error.message || "Failed to add file. Please try again.");
+        toast.error(message);
       }
     } finally {
       setLoading(false);
