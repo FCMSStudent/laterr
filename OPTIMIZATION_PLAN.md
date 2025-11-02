@@ -140,7 +140,7 @@ Each step below includes:
 - **User Instructions**: None
 - **Success Criteria**: No React Hooks linting errors; all hooks follow rules of hooks
 
-### 🛑Step 5: Fix Empty Interface Issues
+### Step 5: Fix Empty Interface Issues
 - **Priority**: Low
 - **Effort**: 30 minutes
 - **Task**: Replace empty interfaces with proper type definitions or remove unnecessary interface declarations.
