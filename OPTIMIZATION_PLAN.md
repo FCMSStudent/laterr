@@ -66,9 +66,31 @@ Here is my detailed review of the current codebase:
 
 # Optimization Plan
 
+## How to Use This Plan
+
+Each step below includes:
+- **Priority**: High (critical issues), Medium (important improvements), Low (nice to have)
+- **Effort**: Estimated time in hours
+- **Files**: Specific files to modify
+- **Dependencies**: Prerequisites from other steps
+- **Success Criteria**: How to verify completion
+
+**Recommended Implementation Order**: Follow the steps in sequence, but High priority items can be expedited if needed.
+
+## Priority Summary
+
+| Priority | Count | Total Effort | Steps |
+|----------|-------|--------------|-------|
+| High | 7 | 20-24 hours | 1, 3, 4, 7, 11, 17, 22 |
+| Medium | 10 | 24-28 hours | 2, 6, 9, 10, 12, 14, 15, 19, 20 |
+| Low | 7 | 18-23 hours | 5, 8, 13, 16, 18, 21, 23, 24 |
+| **Total** | **24** | **62-75 hours** | - |
+
 ## Code Structure & Organization
 
 ### Step 1: Create Shared Type Definitions
+- **Priority**: High
+- **Effort**: 3-4 hours
 - **Task**: Create a centralized types file to define Item, User, and other core data structures, replacing all `any` types with proper TypeScript interfaces.
 - **Files**:
   - `src/types/index.ts`: Create new file with Item, User, Tag, and other core type definitions
@@ -82,6 +104,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: TypeScript compiles without any `any` type errors in main application code
 
 ### Step 2: Extract Shared Constants
+- **Priority**: Medium
+- **Effort**: 2 hours
 - **Task**: Create a constants file for hardcoded values like categories, tags, file types, and configuration values.
 - **Files**:
   - `src/constants/index.ts`: Create new file with category options, default tags, file type configurations, etc.
@@ -93,6 +117,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: All hardcoded strings and magic numbers are defined in constants file
 
 ### Step 3: Create Utility Functions for Common Operations
+- **Priority**: High
+- **Effort**: 3 hours
 - **Task**: Extract repeated logic into utility functions, particularly for signed URL generation and error handling.
 - **Files**:
   - `src/lib/supabase-utils.ts`: Create utility functions for signed URL generation, file uploads, and common Supabase operations
@@ -104,6 +130,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: No duplicated Supabase logic; consistent error handling
 
 ### Step 4: Fix React Hooks Violations
+- **Priority**: High
+- **Effort**: 1-2 hours
 - **Task**: Fix the conditional useCallback call in DetailViewModal and add missing dependencies in Index.tsx useEffect.
 - **Files**:
   - `src/components/DetailViewModal.tsx`: Move useCallback outside conditional, make it always run
@@ -113,6 +141,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: No React Hooks linting errors; all hooks follow rules of hooks
 
 ### Step 5: Fix Empty Interface Issues
+- **Priority**: Low
+- **Effort**: 30 minutes
 - **Task**: Replace empty interfaces with proper type definitions or remove unnecessary interface declarations.
 - **Files**:
   - `src/components/ui/command.tsx`: Replace empty interface with proper type or remove
@@ -124,6 +154,8 @@ Here is my detailed review of the current codebase:
 ## Code Quality & Best Practices
 
 ### Step 6: Implement Proper Error Types
+- **Priority**: Medium
+- **Effort**: 2-3 hours
 - **Task**: Replace `any` type in catch blocks with proper Error types and create custom error classes for different error scenarios.
 - **Files**:
   - `src/types/errors.ts`: Create custom error types (AuthError, NetworkError, ValidationError)
@@ -136,6 +168,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: All error handling uses typed errors; better error messages
 
 ### Step 7: Optimize Bundle Size with Code Splitting
+- **Priority**: High
+- **Effort**: 2 hours
 - **Task**: Implement dynamic imports for routes and large components to reduce initial bundle size.
 - **Files**:
   - `src/App.tsx`: Convert route components to lazy-loaded with React.lazy and Suspense
@@ -146,6 +180,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: Initial bundle size reduced below 500KB; faster initial page load
 
 ### Step 8: Fix Fast Refresh Warnings
+- **Priority**: Low
+- **Effort**: 1-2 hours
 - **Task**: Separate component exports from utility/constant exports to maintain Fast Refresh functionality.
 - **Files**:
   - `src/components/ui/badge.tsx`: Move badgeVariants to separate utils file
@@ -160,6 +196,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: No Fast Refresh warnings; all components properly separated
 
 ### Step 9: Add Search Debouncing
+- **Priority**: Medium
+- **Effort**: 1 hour
 - **Task**: Implement debounced search to improve performance and reduce unnecessary filtering operations.
 - **Files**:
   - `src/hooks/useDebounce.ts`: Create custom debounce hook
@@ -169,6 +207,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: Search waits 300ms before filtering; better performance with large datasets
 
 ### Step 10: Implement Proper Loading States
+- **Priority**: Medium
+- **Effort**: 2 hours
 - **Task**: Add consistent loading states across all async operations and create a loading component.
 - **Files**:
   - `src/components/LoadingSpinner.tsx`: Create reusable loading component
@@ -182,6 +222,8 @@ Here is my detailed review of the current codebase:
 ## UI/UX Improvements
 
 ### Step 11: Enhance Accessibility
+- **Priority**: High
+- **Effort**: 4-5 hours
 - **Task**: Add proper ARIA labels, keyboard navigation, and focus management throughout the application.
 - **Files**:
   - `src/components/ItemCard.tsx`: Add ARIA labels and keyboard handlers
@@ -194,6 +236,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: Application is keyboard navigable; screen reader friendly; meets WCAG 2.1 AA standards
 
 ### Step 12: Improve Error Messages
+- **Priority**: Medium
+- **Effort**: 2 hours
 - **Task**: Create user-friendly, actionable error messages instead of generic errors.
 - **Files**:
   - `src/lib/error-messages.ts`: Create error message mapping and helper functions
@@ -206,6 +250,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: All error messages are clear, helpful, and actionable
 
 ### Step 13: Add Keyboard Shortcuts
+- **Priority**: Low
+- **Effort**: 2-3 hours
 - **Task**: Implement keyboard shortcuts for common actions (add item, search focus, close modals).
 - **Files**:
   - `src/hooks/useKeyboardShortcuts.ts`: Create keyboard shortcut hook
@@ -217,16 +263,20 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: Users can navigate and perform actions via keyboard; shortcuts documented
 
 ### Step 14: Implement Pagination or Virtual Scrolling
-- **Task**: Add pagination or virtual scrolling to handle large datasets efficiently.
+- **Priority**: Medium
+- **Effort**: 3-4 hours
+- **Task**: Add pagination or virtual scrolling to handle large datasets efficiently. Use `@tanstack/react-virtual` (already compatible with React Query) or implement cursor-based pagination with Supabase.
 - **Files**:
-  - `src/components/ItemGrid.tsx`: Create new component with virtual scrolling using react-window
-  - `src/pages/Index.tsx`: Integrate virtual scrolling for item display
-  - `package.json`: Add react-window dependency if needed
+  - `src/components/ItemGrid.tsx`: Create new component with virtual scrolling or pagination
+  - `src/pages/Index.tsx`: Integrate virtual scrolling/pagination for item display
+  - `package.json`: Add `@tanstack/react-virtual` if using virtual scrolling approach
 - **Step Dependencies**: Step 1, Step 2
 - **User Instructions**: None
 - **Success Criteria**: Application performs well with 1000+ items; smooth scrolling
 
 ### Step 15: Optimize Image Loading
+- **Priority**: Medium
+- **Effort**: 2 hours
 - **Task**: Implement lazy loading for images and optimize preview image sizes.
 - **Files**:
   - `src/components/ItemCard.tsx`: Add lazy loading to images with loading="lazy"
@@ -237,6 +287,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: Images load only when needed; better performance
 
 ### Step 16: Enhanced Tag Management
+- **Priority**: Low
+- **Effort**: 3 hours
 - **Task**: Allow users to create custom tags and manage them from the UI.
 - **Files**:
   - `src/components/TagManager.tsx`: Create new component for tag management
@@ -247,6 +299,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: Users can create, edit, and delete tags; better organization
 
 ### Step 17: Mobile Responsiveness Improvements
+- **Priority**: High
+- **Effort**: 3-4 hours
 - **Task**: Enhance mobile experience with touch-friendly interactions and optimized layouts.
 - **Files**:
   - `src/components/ItemCard.tsx`: Improve touch targets and mobile layout
@@ -255,10 +309,17 @@ Here is my detailed review of the current codebase:
   - `src/pages/Index.tsx`: Optimize grid and spacing for mobile
   - `src/index.css`: Add mobile-specific styles and breakpoints
 - **Step Dependencies**: None
-- **User Instructions**: Test on mobile devices or browser DevTools
-- **Success Criteria**: Application is fully functional on mobile; touch-friendly
+- **User Instructions**: Test on mobile devices or browser DevTools with viewports: 375px (mobile), 768px (tablet), 1024px (desktop)
+- **Success Criteria**: 
+  - All touch targets are at least 44x44px
+  - No horizontal scrolling on mobile
+  - Modals are fullscreen on mobile
+  - Performance: First Contentful Paint < 2s on 3G
+  - All interactive elements work with touch gestures
 
 ### Step 18: Add Progressive Web App Support
+- **Priority**: Low
+- **Effort**: 4-5 hours
 - **Task**: Implement service worker for offline support and PWA capabilities.
 - **Files**:
   - `public/manifest.json`: Create PWA manifest
@@ -273,6 +334,8 @@ Here is my detailed review of the current codebase:
 ## Performance Optimization
 
 ### Step 19: Implement Memoization for Expensive Computations
+- **Priority**: Medium
+- **Effort**: 2 hours
 - **Task**: Use React.memo, useMemo, and useCallback to prevent unnecessary re-renders.
 - **Files**:
   - `src/components/ItemCard.tsx`: Wrap in React.memo
@@ -283,6 +346,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: Reduced re-renders; better performance with many items
 
 ### Step 20: Add Data Fetching Optimization
+- **Priority**: Medium
+- **Effort**: 3-4 hours
 - **Task**: Implement proper caching and optimistic updates using React Query features.
 - **Files**:
   - `src/hooks/useItems.ts`: Create custom hook for item CRUD with React Query
@@ -295,6 +360,8 @@ Here is my detailed review of the current codebase:
 ## Security Enhancements
 
 ### Step 21: Add Rate Limiting Feedback
+- **Priority**: Low
+- **Effort**: 2 hours
 - **Task**: Improve rate limiting error handling and provide clear user feedback.
 - **Files**:
   - `src/lib/rate-limit-utils.ts`: Create utilities for rate limit detection and retry logic
@@ -305,6 +372,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: Clear feedback when rate limited; automatic retry with backoff
 
 ### Step 22: Enhance Input Sanitization
+- **Priority**: High
+- **Effort**: 2-3 hours
 - **Task**: Add additional input sanitization and XSS protection beyond current validation.
 - **Files**:
   - `src/lib/sanitization.ts`: Create sanitization utilities
@@ -318,6 +387,8 @@ Here is my detailed review of the current codebase:
 ## Testing & Documentation
 
 ### Step 23: Add JSDoc Documentation
+- **Priority**: Low
+- **Effort**: 3-4 hours
 - **Task**: Add JSDoc comments to all public functions, components, and utilities.
 - **Files**:
   - `src/types/index.ts`: Document all type definitions
@@ -329,6 +400,8 @@ Here is my detailed review of the current codebase:
 - **Success Criteria**: All public APIs documented; better IDE autocomplete
 
 ### Step 24: Create User Documentation
+- **Priority**: Low
+- **Effort**: 2-3 hours
 - **Task**: Create comprehensive user guide and keyboard shortcut reference.
 - **Files**:
   - `docs/USER_GUIDE.md`: Create user guide with features and usage
