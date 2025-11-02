@@ -6,6 +6,28 @@ import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { z } from "zod";
+import {
+  CATEGORY_OPTIONS,
+  DEFAULT_ITEM_TAG,
+  PREVIEW_SIGNED_URL_EXPIRATION,
+  SUPABASE_ITEMS_TABLE,
+  SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
+  SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX,
+} from "@/constants";
+
+const itemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  type: z.string(),
+  content: z.string().nullable(),
+  summary: z.string().nullable(),
+  user_notes: z.string().nullable(),
+  tags: z.array(z.string()).default([]),
+  preview_image_url: z.string().nullable(),
+});
+
+type Item = z.infer<typeof itemSchema>;
 import type { Item } from "@/types";
 
 interface DetailViewModalProps {
@@ -17,7 +39,7 @@ interface DetailViewModalProps {
 
 export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailViewModalProps) => {
   const [userNotes, setUserNotes] = useState(item?.user_notes || "");
-  const [selectedTag, setSelectedTag] = useState<string>(item?.tags?.[0] || "read later");
+  const [selectedTag, setSelectedTag] = useState<string>(item?.tags?.[0] || DEFAULT_ITEM_TAG);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -29,13 +51,13 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       try {
         if (!item?.content) { setSignedUrl(null); return; }
         const url = item.content;
-        const marker = '/item-images/';
+        const marker = SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX;
         const idx = url.indexOf(marker);
         if (idx === -1) { setSignedUrl(null); return; }
         const key = url.substring(idx + marker.length);
         const { data, error } = await supabase.storage
-          .from('item-images')
-          .createSignedUrl(key, 60 * 60);
+          .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
+          .createSignedUrl(key, PREVIEW_SIGNED_URL_EXPIRATION);
         if (error) { console.error('Signed URL error:', error); setSignedUrl(null); return; }
         setSignedUrl(data?.signedUrl || null);
       } catch (e) {
@@ -71,7 +93,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     setSaving(true);
     try {
       const { error } = await supabase
-        .from("items")
+        .from(SUPABASE_ITEMS_TABLE)
         .update({ user_notes: userNotes, tags: [selectedTag] })
         .eq("id", item.id);
 
@@ -92,7 +114,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const { error } = await supabase.from("items").delete().eq("id", item.id);
+      const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
       if (error) throw error;
       toast.success("Item removed from your garden.");
       onOpenChange(false);
@@ -163,9 +185,14 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 onChange={(e) => setSelectedTag(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="watch later">⏰ Watch Later</option>
-                <option value="read later">📖 Read Later</option>
-                <option value="wishlist">⭐ Wishlist</option>
+                {CATEGORY_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+                {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
+                  <option value={selectedTag}>{selectedTag}</option>
+                )}
               </select>
             </div>
           </div>
