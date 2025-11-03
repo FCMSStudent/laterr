@@ -165,7 +165,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-apple-gray-50 to-apple-gray-100">
+    <div className="min-h-screen">
       {/* Skip Navigation Link */}
       <a 
         href="#main-content" 

@@ -17,18 +17,6 @@ import { generateSignedUrl } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
 import { NetworkError, toTypedError } from "@/types/errors";
 
-const itemSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  type: z.string(),
-  content: z.string().nullable(),
-  summary: z.string().nullable(),
-  user_notes: z.string().nullable(),
-  tags: z.array(z.string()).default([]),
-  preview_image_url: z.string().nullable(),
-});
-
-type Item = z.infer<typeof itemSchema>;
 import type { Item } from "@/types";
 
 interface DetailViewModalProps {
@@ -69,45 +57,6 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     };
     
     generateSignedUrlForItem();
-  }, [item]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if modal is open
-      if (!open) return;
-      
-      // Save shortcut: Ctrl+S or Cmd+S
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleSave();
-      }
-      
-      // Delete shortcut: Ctrl+D or Cmd+D
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-        e.preventDefault();
-        handleDelete();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, handleSave, handleDelete]);
-
-  const getIcon = useCallback(() => {
-    if (!item) return null;
-    switch (item.type) {
-      case "url":
-        return <Link2 className="h-5 w-5" />;
-      case "note":
-      case "document":
-      case "file":
-        return <FileText className="h-5 w-5" />;
-      case "image":
-        return <ImageIcon className="h-5 w-5" />;
-      default:
-        return null;
-    }
   }, [item]);
 
   const handleSave = useCallback(async () => {
@@ -164,6 +113,45 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       setDeleting(false);
     }
   }, [item, onOpenChange, onUpdate]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if modal is open
+      if (!open) return;
+      
+      // Save shortcut: Ctrl+S or Cmd+S
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      
+      // Delete shortcut: Ctrl+D or Cmd+D
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        handleDelete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, handleSave, handleDelete]);
+
+  const getIcon = useCallback(() => {
+    if (!item) return null;
+    switch (item.type) {
+      case "url":
+        return <Link2 className="h-5 w-5" />;
+      case "note":
+      case "document":
+      case "file":
+        return <FileText className="h-5 w-5" />;
+      case "image":
+        return <ImageIcon className="h-5 w-5" />;
+      default:
+        return null;
+    }
+  }, [item]);
 
   if (!item) return null;
 

@@ -161,7 +161,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
     // Validate file type - now accepting images, PDFs, and Word documents
     const validTypes = ALLOWED_FILE_MIME_TYPES;
-    if (!validTypes.includes(file.type)) {
+    if (!(validTypes as readonly string[]).includes(file.type)) {
       toast.error('Only images, PDFs, and Word documents are allowed');
       return;
     }
