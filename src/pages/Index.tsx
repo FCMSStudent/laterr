@@ -17,8 +17,8 @@ import { formatError } from "@/lib/error-utils";
 import { AuthError, NetworkError, toTypedError } from "@/types/errors";
 
 // Lazy load modal components for better code splitting
-const AddItemModal = lazy(() => import("@/components/AddItemModal").then(module => ({ default: module.AddItemModal })));
-const DetailViewModal = lazy(() => import("@/components/DetailViewModal").then(module => ({ default: module.DetailViewModal })));
+const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({ AddItemModal }) => ({ default: AddItemModal })));
+const DetailViewModal = lazy(() => import("@/components/DetailViewModal").then(({ DetailViewModal }) => ({ default: DetailViewModal })));
 
 type RawItem = Omit<Item, 'tags'> & { tags: string[] | null };
 
