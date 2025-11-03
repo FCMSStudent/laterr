@@ -237,7 +237,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           content: publicUrl,
           summary: data.description + (data.extractedText ? `\n\nExtracted text: ${data.extractedText}` : ''),
           tags: [defaultTag],
-          preview_image_url: file.type.startsWith('image/') ? publicUrl : null,
+          preview_image_url: file.type.startsWith('image/') ? publicUrl : (data.previewImageUrl || null),
           user_id: user.id,
         });
 
