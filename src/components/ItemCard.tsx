@@ -25,21 +25,49 @@ export const ItemCard = ({
   const getIcon = () => {
     switch (type) {
       case 'url':
-        return <Link2 className="h-4 w-4" />;
+        return <Link2 className="h-4 w-4" aria-hidden="true" />;
       case 'note':
       case 'document':
       case 'file':
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="h-4 w-4" aria-hidden="true" />;
       case 'image':
-        return <ImageIcon className="h-4 w-4" />;
+        return <ImageIcon className="h-4 w-4" aria-hidden="true" />;
       default:
         return null;
     }
   };
 
+  const getTypeLabel = () => {
+    switch (type) {
+      case 'url':
+        return 'URL';
+      case 'note':
+        return 'Note';
+      case 'document':
+        return 'Document';
+      case 'file':
+        return 'File';
+      case 'image':
+        return 'Image';
+      default:
+        return 'Item';
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div 
+      role="article"
+      tabIndex={0}
+      aria-label={`${getTypeLabel()}: ${title}${summary ? `. ${summary}` : ''}`}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       className="glass-card rounded-xl p-5 cursor-pointer hover:scale-[1.01] smooth-transition hover:shadow-xl group overflow-hidden"
     >
       {previewImageUrl && (
@@ -68,16 +96,28 @@ export const ItemCard = ({
               key={index}
               variant="secondary"
               className="cursor-pointer hover:bg-accent smooth-transition text-xs font-medium"
+              role="button"
+              tabIndex={0}
+              aria-label={`Filter by tag ${tag}`}
               onClick={(e) => {
                 e.stopPropagation();
                 onTagClick(tag);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onTagClick(tag);
+                }
               }}
             >
               #{tag}
             </Badge>
           ))}
           {tags.length > 3 && (
-            <Badge variant="outline" className="text-xs">+{tags.length - 3}</Badge>
+            <Badge variant="outline" className="text-xs" aria-label={`${tags.length - 3} more tags`}>
+              +{tags.length - 3}
+            </Badge>
           )}
         </div>
       </div>

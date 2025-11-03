@@ -166,18 +166,27 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-apple-gray-50 to-apple-gray-100">
+      {/* Skip Navigation Link */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md"
+      >
+        Skip to main content
+      </a>
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex items-center justify-between">
+        <header className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-5xl font-semibold text-apple-gray-900 mb-2">Laterr</h1>
             <p className="text-apple-gray-600 text-lg">Your personal knowledge dumpster</p>
           </div>
-          <div className="flex items-center gap-3">
+          <nav aria-label="Main navigation" className="flex items-center gap-3">
             <Button
               onClick={() => setShowAddModal(true)}
               className="bg-primary hover:bg-primary/90 text-white shadow-sm"
+              aria-label="Add new item to your collection"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
               Add Item
             </Button>
             <Button
@@ -185,19 +194,20 @@ const Index = () => {
               variant="ghost"
               size="sm"
               className="text-apple-gray-600 hover:text-apple-gray-900"
+              aria-label="Sign out of your account"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
               Sign Out
             </Button>
-          </div>
-        </div>
+          </nav>
+        </header>
 
         <div className="max-w-2xl mx-auto mb-8">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
         {allTags.length > 0 && (
-          <div className="flex flex-wrap gap-2 justify-center items-center max-w-4xl mx-auto mb-8">
+          <nav aria-label="Filter by tags" className="flex flex-wrap gap-2 justify-center items-center max-w-4xl mx-auto mb-8">
             <span className="text-sm text-apple-gray-600 font-medium mr-2">Tags:</span>
             {allTags.map((tag) => (
               <Badge
@@ -205,6 +215,16 @@ const Index = () => {
                 variant={selectedTag === tag ? "default" : "outline"}
                 className="cursor-pointer hover:scale-105 smooth-transition text-xs font-medium"
                 onClick={() => handleTagClick(tag)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Filter by tag ${tag}`}
+                aria-pressed={selectedTag === tag}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleTagClick(tag);
+                  }
+                }}
               >
                 #{tag}
               </Badge>
@@ -214,42 +234,60 @@ const Index = () => {
                 variant="secondary"
                 className="cursor-pointer text-xs"
                 onClick={() => setSelectedTag(null)}
+                role="button"
+                tabIndex={0}
+                aria-label="Clear tag filter"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedTag(null);
+                  }
+                }}
               >
                 Clear
               </Badge>
             )}
-          </div>
+          </nav>
         )}
 
-        {loading ? (
-          <div className="text-center py-24">
-            <LoadingSpinner size="md" text="Loading your garden..." />
+        <main id="main-content">
+          {/* Screen reader announcement for filtered results */}
+          <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
           </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="text-center py-24 space-y-4">
-            <Sparkles className="h-12 w-12 mx-auto text-apple-gray-400" />
-            <h2 className="text-xl font-semibold text-apple-gray-900">Your garden is empty</h2>
-            <p className="text-apple-gray-600 text-sm">
-              Click the + button to plant your first item
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-8">
-            {filteredItems.map((item) => (
-              <ItemCard
-                key={item.id}
-                id={item.id}
-                type={item.type}
-                title={item.title}
-                summary={item.summary}
-                previewImageUrl={item.preview_image_url}
-                tags={item.tags}
-                onClick={() => handleItemClick(item)}
-                onTagClick={handleTagClick}
-              />
-            ))}
-          </div>
+
+          {loading ? (
+            <div className="text-center py-24">
+              <LoadingSpinner size="md" text="Loading your garden..." />
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-24 space-y-4">
+              <Sparkles className="h-12 w-12 mx-auto text-apple-gray-400" aria-hidden="true" />
+              <h2 className="text-xl font-semibold text-apple-gray-900">Your garden is empty</h2>
+              <p className="text-apple-gray-600 text-sm">
+                Click the + button to plant your first item
+              </p>
+            </div>
+          ) : (
+            <section aria-label="Items collection">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-8">
+                {filteredItems.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  id={item.id}
+                  type={item.type}
+                  title={item.title}
+                  summary={item.summary}
+                  previewImageUrl={item.preview_image_url}
+                  tags={item.tags}
+                  onClick={() => handleItemClick(item)}
+                  onTagClick={handleTagClick}
+                />
+              ))}
+            </div>
+          </section>
         )}
+        </main>
       </div>
 
       <Suspense fallback={null}>
