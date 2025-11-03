@@ -326,7 +326,14 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
               aria-label="Add URL to collection"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add URL"}
+              {loading ? (
+                <span role="status" aria-live="polite">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  <span className="sr-only">Adding URL...</span>
+                </span>
+              ) : (
+                "Add URL"
+              )}
             </Button>
           </TabsContent>
 
@@ -351,7 +358,14 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
               aria-label="Save note to collection"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Note"}
+              {loading ? (
+                <span role="status" aria-live="polite">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  <span className="sr-only">Saving note...</span>
+                </span>
+              ) : (
+                "Save Note"
+              )}
             </Button>
           </TabsContent>
 
@@ -378,7 +392,14 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                 className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
                 aria-label="Upload file to collection"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload File"}
+                {loading ? (
+                  <span role="status" aria-live="polite">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    <span className="sr-only">Uploading file...</span>
+                  </span>
+                ) : (
+                  "Upload File"
+                )}
               </Button>
               {loading && (
                 <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">

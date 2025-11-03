@@ -25,13 +25,13 @@ export const ItemCard = ({
   const getIcon = () => {
     switch (type) {
       case 'url':
-        return <Link2 className="h-4 w-4" />;
+        return <Link2 className="h-4 w-4" aria-hidden="true" />;
       case 'note':
       case 'document':
       case 'file':
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="h-4 w-4" aria-hidden="true" />;
       case 'image':
-        return <ImageIcon className="h-4 w-4" />;
+        return <ImageIcon className="h-4 w-4" aria-hidden="true" />;
       default:
         return null;
     }
