@@ -1,9 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AddItemModal } from "@/components/AddItemModal";
 import { ItemCard } from "@/components/ItemCard";
-import { DetailViewModal } from "@/components/DetailViewModal";
 import { SearchBar } from "@/components/SearchBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +15,10 @@ import type { Item, User } from "@/types";
 import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
 import { AuthError, NetworkError, toTypedError } from "@/types/errors";
+
+// Lazy load modal components for better code splitting
+const AddItemModal = lazy(() => import("@/components/AddItemModal").then(module => ({ default: module.AddItemModal })));
+const DetailViewModal = lazy(() => import("@/components/DetailViewModal").then(module => ({ default: module.DetailViewModal })));
 
 type RawItem = Omit<Item, 'tags'> & { tags: string[] | null };
 
@@ -248,20 +250,22 @@ const Index = () => {
         )}
       </div>
 
-      <AddItemModal
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
-        onItemAdded={fetchItems}
-      />
-
-      {selectedItem && (
-        <DetailViewModal
-          open={showDetailModal}
-          onOpenChange={setShowDetailModal}
-          item={selectedItem}
-          onUpdate={fetchItems}
+      <Suspense fallback={null}>
+        <AddItemModal
+          open={showAddModal}
+          onOpenChange={setShowAddModal}
+          onItemAdded={fetchItems}
         />
-      )}
+
+        {selectedItem && (
+          <DetailViewModal
+            open={showDetailModal}
+            onOpenChange={setShowDetailModal}
+            item={selectedItem}
+            onUpdate={fetchItems}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };
