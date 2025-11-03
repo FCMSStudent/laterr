@@ -17,6 +17,7 @@ import type { Item, User } from "@/types";
 import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
 import { AuthError, NetworkError, toTypedError } from "@/types/errors";
+import { AUTH_ERRORS, getNetworkErrorMessage } from "@/lib/error-messages";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({ AddItemModal }) => ({ default: AddItemModal })));
@@ -63,15 +64,16 @@ const Index = () => {
       setItems(itemsWithSignedUrls);
       setFilteredItems(itemsWithSignedUrls);
     } catch (error: unknown) {
+      const errorMessage = getNetworkErrorMessage('fetch');
       const typedError = toTypedError(error);
       const networkError = new NetworkError(
-        formatError(typedError, "Failed to load items"),
+        errorMessage.message,
         typedError
       );
       
       console.error('Error fetching items:', networkError);
       toast({
-        title: "Error",
+        title: errorMessage.title,
         description: networkError.message,
         variant: "destructive",
       });
@@ -147,11 +149,11 @@ const Index = () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       const authError = new AuthError(
-        formatError(error, "Failed to sign out"),
+        AUTH_ERRORS.SIGN_OUT_FAILED.message,
         error instanceof Error ? error : undefined
       );
       toast({
-        title: "Error",
+        title: AUTH_ERRORS.SIGN_OUT_FAILED.title,
         description: authError.message,
         variant: "destructive",
       });

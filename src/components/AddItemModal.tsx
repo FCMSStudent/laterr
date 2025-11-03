@@ -28,6 +28,7 @@ import {
 import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-utils";
 import { formatError, handleSupabaseError } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
+import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
 
 interface AddItemModalProps {
   open: boolean;
@@ -50,7 +51,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     // Validate URL
     const urlResult = urlSchema.safeParse(url.trim());
     if (!urlResult.success) {
-      toast.error(urlResult.error.errors[0].message);
+      const errorMsg = urlResult.error.errors[0].message.toLowerCase().includes('invalid') 
+        ? ITEM_ERRORS.URL_INVALID 
+        : ITEM_ERRORS.URL_TOO_LONG;
+      toast.error(errorMsg.title, { description: errorMsg.message });
       return;
     }
     
@@ -91,14 +95,15 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
+      const errorMessage = getItemErrorMessage(error, 'url');
       const typedError = toTypedError(error);
       const networkError = new NetworkError(
-        formatError(typedError, "Failed to add URL. Please try again."),
+        errorMessage.message,
         typedError
       );
       
       console.error('Error adding URL:', networkError);
-      toast.error(networkError.message);
+      toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -109,7 +114,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     // Validate note
     const noteResult = noteSchema.safeParse(note.trim());
     if (!noteResult.success) {
-      toast.error(noteResult.error.errors[0].message);
+      const errorMsg = noteResult.error.errors[0].message.toLowerCase().includes('empty') 
+        ? ITEM_ERRORS.NOTE_EMPTY 
+        : ITEM_ERRORS.NOTE_TOO_LONG;
+      toast.error(errorMsg.title, { description: errorMsg.message });
       return;
     }
     
@@ -139,14 +147,15 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
+      const errorMessage = getItemErrorMessage(error, 'note');
       const typedError = toTypedError(error);
       const networkError = new NetworkError(
-        formatError(typedError, "Failed to add note. Please try again."),
+        errorMessage.message,
         typedError
       );
       
       console.error('Error adding note:', networkError);
-      toast.error(networkError.message);
+      toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -155,20 +164,26 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
   const handleFileSubmit = async () => {
     if (!file) {
-      toast.error('Please select a file');
+      toast.error(ITEM_ERRORS.FILE_NOT_SELECTED.title, { 
+        description: ITEM_ERRORS.FILE_NOT_SELECTED.message 
+      });
       return;
     }
 
     // Validate file type - now accepting images, PDFs, and Word documents
     const validTypes = ALLOWED_FILE_MIME_TYPES;
     if (!(validTypes as readonly string[]).includes(file.type)) {
-      toast.error('Only images, PDFs, and Word documents are allowed');
+      toast.error(ITEM_ERRORS.FILE_INVALID_TYPE.title, { 
+        description: ITEM_ERRORS.FILE_INVALID_TYPE.message 
+      });
       return;
     }
 
     // Validate file size (20MB max for documents)
     if (file.size > FILE_SIZE_LIMIT_BYTES) {
-      toast.error(`File is too large (max ${FILE_SIZE_LIMIT_MB}MB)`);
+      toast.error(ITEM_ERRORS.FILE_TOO_LARGE.title, { 
+        description: ITEM_ERRORS.FILE_TOO_LARGE.message 
+      });
       return;
     }
     
@@ -245,12 +260,16 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       
       // Use specific error messages for rate limiting and credits issues for better UX
       if (isRateLimitError) {
-        toast.error('AI rate limit hit. Please wait a moment and try again.');
+        toast.error(ITEM_ERRORS.AI_RATE_LIMIT.title, { 
+          description: ITEM_ERRORS.AI_RATE_LIMIT.message 
+        });
       } else if (isCreditsError) {
-        toast.error('AI credits exhausted. Please top up to continue.');
+        toast.error(ITEM_ERRORS.AI_CREDITS_EXHAUSTED.title, { 
+          description: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message 
+        });
       } else {
-        const networkError = new NetworkError(message, typedError);
-        toast.error(networkError.message);
+        const errorMessage = getItemErrorMessage(typedError, 'file');
+        toast.error(errorMessage.title, { description: errorMessage.message });
       }
     } finally {
       setLoading(false);
