@@ -209,15 +209,25 @@ async function generatePdfThumbnail(
     }).promise;
     
     // Convert canvas to PNG buffer
-    const pngData = await canvas.encode('png');
+    let pngData;
+    try {
+      pngData = await canvas.encode('png');
+    } catch (encodeError) {
+      console.error('❌ Canvas encoding failed:', encodeError);
+      throw new Error('Failed to encode canvas to PNG');
+    }
     
     // Upload to Supabase storage
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing required environment variables for storage upload');
+    }
     
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    const fileName = `${userId}/thumbnails/${Date.now()}-${crypto.randomUUID()}.png`;
+    const fileName = `${userId}/thumbnails/${crypto.randomUUID()}.png`;
     
     const { error: uploadError } = await supabase.storage
       .from('item-images')
