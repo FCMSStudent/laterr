@@ -62,6 +62,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       } catch (error) {
         console.error('Error generating signed URL:', error);
         setSignedUrl(null);
+        toast.error('Failed to load PDF preview');
       } finally {
         setLoadingSignedUrl(false);
       }
