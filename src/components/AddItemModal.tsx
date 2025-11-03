@@ -164,8 +164,8 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
   const handleFileSubmit = async () => {
     if (!file) {
-      toast.error('No File Selected', { 
-        description: 'Please select a file to upload' 
+      toast.error(ITEM_ERRORS.FILE_NOT_SELECTED.title, { 
+        description: ITEM_ERRORS.FILE_NOT_SELECTED.message 
       });
       return;
     }

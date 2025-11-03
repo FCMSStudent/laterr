@@ -103,6 +103,10 @@ export const ITEM_ERRORS = {
     title: 'Note Too Long',
     message: 'Your note exceeds the maximum length. Please shorten it and try again.',
   },
+  FILE_NOT_SELECTED: {
+    title: 'No File Selected',
+    message: 'Please select a file to upload.',
+  },
   FILE_INVALID_TYPE: {
     title: 'Invalid File Type',
     message: 'Only images (JPG, PNG, GIF, WebP), PDFs, and Word documents are supported.',
@@ -118,6 +122,10 @@ export const ITEM_ERRORS = {
   FILE_ANALYSIS_FAILED: {
     title: 'Analysis Failed',
     message: 'Unable to analyze this file. It may be corrupted or in an unsupported format.',
+  },
+  PDF_LOAD_FAILED: {
+    title: 'PDF Load Failed',
+    message: 'Unable to load PDF preview. The file may be unavailable.',
   },
   AI_RATE_LIMIT: {
     title: 'Too Many Requests',

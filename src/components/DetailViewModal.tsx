@@ -16,7 +16,7 @@ import {
 import { generateSignedUrl } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
 import { NetworkError, toTypedError } from "@/types/errors";
-import { UPDATE_ERRORS, getUpdateErrorMessage } from "@/lib/error-messages";
+import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/lib/error-messages";
 
 import type { Item } from "@/types";
 
@@ -51,8 +51,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       } catch (error) {
         console.error('Error generating signed URL:', error);
         setSignedUrl(null);
-        toast.error('PDF Load Failed', { 
-          description: 'Unable to load PDF preview. The file may be unavailable.' 
+        toast.error(ITEM_ERRORS.PDF_LOAD_FAILED.title, { 
+          description: ITEM_ERRORS.PDF_LOAD_FAILED.message 
         });
       } finally {
         setLoadingSignedUrl(false);
