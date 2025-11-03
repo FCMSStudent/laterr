@@ -51,8 +51,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       } catch (error) {
         console.error('Error generating signed URL:', error);
         setSignedUrl(null);
-        toast.error('Unable to load PDF preview. The file may be unavailable.', { 
-          description: 'PDF Load Failed' 
+        toast.error('PDF Load Failed', { 
+          description: 'Unable to load PDF preview. The file may be unavailable.' 
         });
       } finally {
         setLoadingSignedUrl(false);
@@ -65,8 +65,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const handleSave = useCallback(async () => {
     if (!item) return;
     if (userNotes.length > 100000) {
-      toast.error(UPDATE_ERRORS.NOTES_TOO_LONG.message, { 
-        description: UPDATE_ERRORS.NOTES_TOO_LONG.title 
+      toast.error(UPDATE_ERRORS.NOTES_TOO_LONG.title, { 
+        description: UPDATE_ERRORS.NOTES_TOO_LONG.message 
       });
       return;
     }
@@ -91,7 +91,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       );
       
       console.error("Error saving:", networkError);
-      toast.error(errorMessage.message, { description: errorMessage.title });
+      toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setSaving(false);
     }
@@ -115,7 +115,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       );
       
       console.error("Error deleting:", networkError);
-      toast.error(errorMessage.message, { description: errorMessage.title });
+      toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setDeleting(false);
     }

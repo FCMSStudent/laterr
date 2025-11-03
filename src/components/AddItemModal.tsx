@@ -54,7 +54,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       const errorMsg = urlResult.error.errors[0].message.toLowerCase().includes('invalid') 
         ? ITEM_ERRORS.URL_INVALID 
         : ITEM_ERRORS.URL_TOO_LONG;
-      toast.error(errorMsg.message, { description: errorMsg.title });
+      toast.error(errorMsg.title, { description: errorMsg.message });
       return;
     }
     
@@ -103,7 +103,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       );
       
       console.error('Error adding URL:', networkError);
-      toast.error(errorMessage.message, { description: errorMessage.title });
+      toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -117,7 +117,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       const errorMsg = noteResult.error.errors[0].message.toLowerCase().includes('empty') 
         ? ITEM_ERRORS.NOTE_EMPTY 
         : ITEM_ERRORS.NOTE_TOO_LONG;
-      toast.error(errorMsg.message, { description: errorMsg.title });
+      toast.error(errorMsg.title, { description: errorMsg.message });
       return;
     }
     
@@ -155,7 +155,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       );
       
       console.error('Error adding note:', networkError);
-      toast.error(errorMessage.message, { description: errorMessage.title });
+      toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -164,8 +164,8 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
   const handleFileSubmit = async () => {
     if (!file) {
-      toast.error(ITEM_ERRORS.FILE_INVALID_TYPE.message, { 
-        description: 'No File Selected' 
+      toast.error('No File Selected', { 
+        description: 'Please select a file to upload' 
       });
       return;
     }
@@ -173,16 +173,16 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     // Validate file type - now accepting images, PDFs, and Word documents
     const validTypes = ALLOWED_FILE_MIME_TYPES;
     if (!(validTypes as readonly string[]).includes(file.type)) {
-      toast.error(ITEM_ERRORS.FILE_INVALID_TYPE.message, { 
-        description: ITEM_ERRORS.FILE_INVALID_TYPE.title 
+      toast.error(ITEM_ERRORS.FILE_INVALID_TYPE.title, { 
+        description: ITEM_ERRORS.FILE_INVALID_TYPE.message 
       });
       return;
     }
 
     // Validate file size (20MB max for documents)
     if (file.size > FILE_SIZE_LIMIT_BYTES) {
-      toast.error(ITEM_ERRORS.FILE_TOO_LARGE.message, { 
-        description: ITEM_ERRORS.FILE_TOO_LARGE.title 
+      toast.error(ITEM_ERRORS.FILE_TOO_LARGE.title, { 
+        description: ITEM_ERRORS.FILE_TOO_LARGE.message 
       });
       return;
     }
@@ -260,16 +260,16 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       
       // Use specific error messages for rate limiting and credits issues for better UX
       if (isRateLimitError) {
-        toast.error(ITEM_ERRORS.AI_RATE_LIMIT.message, { 
-          description: ITEM_ERRORS.AI_RATE_LIMIT.title 
+        toast.error(ITEM_ERRORS.AI_RATE_LIMIT.title, { 
+          description: ITEM_ERRORS.AI_RATE_LIMIT.message 
         });
       } else if (isCreditsError) {
-        toast.error(ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message, { 
-          description: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.title 
+        toast.error(ITEM_ERRORS.AI_CREDITS_EXHAUSTED.title, { 
+          description: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message 
         });
       } else {
         const errorMessage = getItemErrorMessage(typedError, 'file');
-        toast.error(errorMessage.message, { description: errorMessage.title });
+        toast.error(errorMessage.title, { description: errorMessage.message });
       }
     } finally {
       setLoading(false);
