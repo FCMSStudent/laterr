@@ -16,6 +16,7 @@ import {
 import { generateSignedUrl } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
 import { NetworkError, toTypedError } from "@/types/errors";
+import { UPDATE_ERRORS, getUpdateErrorMessage } from "@/lib/error-messages";
 
 import type { Item } from "@/types";
 
@@ -50,7 +51,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       } catch (error) {
         console.error('Error generating signed URL:', error);
         setSignedUrl(null);
-        toast.error('Failed to load PDF preview');
+        toast.error('Unable to load PDF preview. The file may be unavailable.', { 
+          description: 'PDF Load Failed' 
+        });
       } finally {
         setLoadingSignedUrl(false);
       }
@@ -62,7 +65,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const handleSave = useCallback(async () => {
     if (!item) return;
     if (userNotes.length > 100000) {
-      toast.error("Notes are too long (max 100,000 characters)");
+      toast.error(UPDATE_ERRORS.NOTES_TOO_LONG.message, { 
+        description: UPDATE_ERRORS.NOTES_TOO_LONG.title 
+      });
       return;
     }
     setSaving(true);
@@ -78,14 +83,15 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       setIsEditing(false);
       onUpdate();
     } catch (error: unknown) {
+      const errorMessage = getUpdateErrorMessage(error);
       const typedError = toTypedError(error);
       const networkError = new NetworkError(
-        formatError(typedError, "Failed to save changes."),
+        errorMessage.message,
         typedError
       );
       
       console.error("Error saving:", networkError);
-      toast.error(networkError.message);
+      toast.error(errorMessage.message, { description: errorMessage.title });
     } finally {
       setSaving(false);
     }
@@ -101,14 +107,15 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       onOpenChange(false);
       onUpdate();
     } catch (error: unknown) {
+      const errorMessage = getUpdateErrorMessage(error);
       const typedError = toTypedError(error);
       const networkError = new NetworkError(
-        formatError(typedError, "Failed to delete item."),
+        errorMessage.message,
         typedError
       );
       
       console.error("Error deleting:", networkError);
-      toast.error(networkError.message);
+      toast.error(errorMessage.message, { description: errorMessage.title });
     } finally {
       setDeleting(false);
     }

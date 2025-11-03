@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { formatError } from '@/lib/error-utils';
 import { AuthError, toTypedError } from '@/types/errors';
+import { AUTH_ERRORS, getAuthErrorMessage } from '@/lib/error-messages';
 
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(72);
@@ -36,8 +37,8 @@ export default function Auth() {
 
     if (!emailResult.success) {
       toast({
-        title: 'Invalid email',
-        description: emailResult.error.errors[0].message,
+        title: AUTH_ERRORS.INVALID_EMAIL.title,
+        description: AUTH_ERRORS.INVALID_EMAIL.message,
         variant: 'destructive',
       });
       return;
@@ -45,8 +46,8 @@ export default function Auth() {
 
     if (!passwordResult.success) {
       toast({
-        title: 'Invalid password',
-        description: passwordResult.error.errors[0].message,
+        title: AUTH_ERRORS.INVALID_PASSWORD.title,
+        description: AUTH_ERRORS.INVALID_PASSWORD.message,
         variant: 'destructive',
       });
       return;
@@ -87,14 +88,15 @@ export default function Auth() {
         setIsLogin(true);
       }
     } catch (error: unknown) {
+      const errorMessage = getAuthErrorMessage(error);
       const typedError = toTypedError(error);
       const authError = new AuthError(
-        formatError(typedError, 'Something went wrong.'),
+        errorMessage.message,
         typedError
       );
       
       toast({
-        title: 'Error',
+        title: errorMessage.title,
         description: authError.message,
         variant: 'destructive',
       });
