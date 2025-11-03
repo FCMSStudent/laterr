@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, LogOut, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   DEFAULT_ITEM_TAGS,
   SUPABASE_ITEMS_TABLE,
@@ -34,6 +35,7 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const fetchItems = useCallback(async () => {
     try {
@@ -105,8 +107,8 @@ const Index = () => {
     let filtered = items;
 
     // Filter by search (sanitize input)
-    if (searchQuery) {
-      const sanitizedQuery = searchQuery.toLowerCase().trim();
+    if (debouncedSearchQuery) {
+      const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
       filtered = filtered.filter(item =>
         item.title.toLowerCase().includes(sanitizedQuery) ||
         item.summary?.toLowerCase().includes(sanitizedQuery) ||
@@ -122,7 +124,7 @@ const Index = () => {
     }
 
     setFilteredItems(filtered);
-  }, [searchQuery, selectedTag, items]);
+  }, [debouncedSearchQuery, selectedTag, items]);
 
   const handleItemClick = (item: Item) => {
     setSelectedItem(item);
