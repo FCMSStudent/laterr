@@ -305,34 +305,51 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           </TabsList>
 
           <TabsContent value="url" className="space-y-4 mt-6">
-            <Input
-              placeholder="Paste a URL..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              maxLength={URL_MAX_LENGTH}
-              className="glass-input border-0 h-11 text-[15px]"
-            />
+            <div>
+              <label htmlFor="url-input" className="sr-only">URL to add</label>
+              <Input
+                id="url-input"
+                type="url"
+                placeholder="Paste a URL..."
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                maxLength={URL_MAX_LENGTH}
+                className="glass-input border-0 h-11 text-[15px]"
+                aria-required="true"
+                aria-describedby="url-helper-text"
+              />
+              <p id="url-helper-text" className="sr-only">Enter a valid URL to add to your collection</p>
+            </div>
             <Button 
               onClick={handleUrlSubmit} 
               disabled={!url || loading}
               className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
+              aria-label="Add URL to collection"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add URL"}
             </Button>
           </TabsContent>
 
           <TabsContent value="note" className="space-y-4 mt-6">
-            <Textarea
-              placeholder="Write your thoughts..."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              maxLength={NOTE_MAX_LENGTH}
-              className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
-            />
+            <div>
+              <label htmlFor="note-textarea" className="sr-only">Note content</label>
+              <Textarea
+                id="note-textarea"
+                placeholder="Write your thoughts..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={NOTE_MAX_LENGTH}
+                className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
+                aria-required="true"
+                aria-describedby="note-helper-text"
+              />
+              <p id="note-helper-text" className="sr-only">Enter your note content (up to {NOTE_MAX_LENGTH} characters)</p>
+            </div>
             <Button 
               onClick={handleNoteSubmit}
               disabled={!note || loading}
               className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
+              aria-label="Save note to collection"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Note"}
             </Button>
@@ -340,13 +357,17 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
           <TabsContent value="image" className="space-y-4 mt-6">
             <div className="space-y-2">
+              <label htmlFor="file-input" className="sr-only">File to upload</label>
               <Input
+                id="file-input"
                 type="file"
                 accept={FILE_INPUT_ACCEPT}
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="glass-input border-0 h-11 text-[15px]"
+                aria-required="true"
+                aria-describedby="file-helper-text"
               />
-              <p className="text-xs text-muted-foreground">
+              <p id="file-helper-text" className="text-xs text-muted-foreground">
                 Supports: Images, PDFs, Word documents (max {FILE_SIZE_LIMIT_MB}MB)
               </p>
             </div>
@@ -355,11 +376,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                 onClick={handleFileSubmit}
                 disabled={!file || loading}
                 className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
+                aria-label="Upload file to collection"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload File"}
               </Button>
               {loading && (
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">
                   {statusStep === 'uploading' && 'Uploading file…'}
                   {statusStep === 'extracting' && 'Extracting text…'}
                   {statusStep === 'summarizing' && 'Summarizing content…'}

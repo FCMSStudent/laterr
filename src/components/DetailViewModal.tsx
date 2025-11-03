@@ -71,6 +71,29 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     generateSignedUrlForItem();
   }, [item]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if modal is open
+      if (!open) return;
+      
+      // Save shortcut: Ctrl+S or Cmd+S
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      
+      // Delete shortcut: Ctrl+D or Cmd+D
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        handleDelete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, handleSave, handleDelete]);
+
   const getIcon = useCallback(() => {
     if (!item) return null;
     switch (item.type) {
@@ -87,9 +110,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     }
   }, [item]);
 
-  if (!item) return null;
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
+    if (!item) return;
     if (userNotes.length > 100000) {
       toast.error("Notes are too long (max 100,000 characters)");
       return;
@@ -118,9 +140,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     } finally {
       setSaving(false);
     }
-  };
+  }, [userNotes, selectedTag, item, onUpdate]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
+    if (!item) return;
     setDeleting(true);
     try {
       const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
@@ -140,7 +163,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     } finally {
       setDeleting(false);
     }
-  };
+  }, [item, onOpenChange, onUpdate]);
+
+  if (!item) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,11 +222,13 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
             {/* Category Tag Section */}
             <div>
-              <h3 className="font-semibold text-sm text-muted-foreground mb-2">Category</h3>
+              <label htmlFor="category-select" className="font-semibold text-sm text-muted-foreground mb-2 block">Category</label>
               <select
+                id="category-select"
                 value={selectedTag}
                 onChange={(e) => setSelectedTag(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Select category for this item"
               >
                 {CATEGORY_OPTIONS.map(({ value, label }) => (
                   <option key={value} value={value}>
@@ -231,21 +258,28 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   size="sm"
                   onClick={() => setIsEditing(!isEditing)}
                   className="h-8 text-xs font-medium hover:bg-accent"
+                  aria-label={isEditing ? "Preview notes" : "Edit notes"}
                 >
                   {isEditing ? "Preview" : "Edit"}
                 </Button>
               </div>
 
               {isEditing ? (
-                <Textarea
-                  value={userNotes}
-                  onChange={(e) => setUserNotes(e.target.value)}
-                  placeholder="Add your personal notes in markdown..."
-                  maxLength={100000}
-                  className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
-                />
+                <div>
+                  <label htmlFor="user-notes-textarea" className="sr-only">Personal notes in markdown format</label>
+                  <Textarea
+                    id="user-notes-textarea"
+                    value={userNotes}
+                    onChange={(e) => setUserNotes(e.target.value)}
+                    placeholder="Add your personal notes in markdown..."
+                    maxLength={100000}
+                    className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
+                    aria-describedby="notes-helper-text"
+                  />
+                  <p id="notes-helper-text" className="sr-only">You can use markdown formatting in your notes</p>
+                </div>
               ) : (
-                <div className="prose prose-sm max-w-none glass-card p-4 rounded-xl text-[15px]">
+                <div className="prose prose-sm max-w-none glass-card p-4 rounded-xl text-[15px]" role="region" aria-label="Note preview">
                   {userNotes ? (
                     <ReactMarkdown>{userNotes}</ReactMarkdown>
                   ) : (
@@ -261,8 +295,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 onClick={handleSave}
                 disabled={saving}
                 className="flex-1 bg-primary hover:bg-primary/90 h-11 font-medium transition-all"
+                aria-label="Save changes (Ctrl+S or Cmd+S)"
               >
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 mr-2" aria-hidden="true" />
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
               <Button
@@ -270,8 +305,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 disabled={deleting}
                 variant="outline"
                 className="h-11 border-destructive/20 text-destructive hover:bg-destructive/10 font-medium transition-all"
+                aria-label="Delete item (Ctrl+D or Cmd+D)"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
                 {deleting ? "Deleting..." : "Delete"}
               </Button>
             </div>
