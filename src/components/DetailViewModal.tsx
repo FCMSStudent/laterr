@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
@@ -53,8 +55,16 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         return;
       }
       
-      const url = await generateSignedUrl(item.content);
-      setSignedUrl(url);
+      setLoadingSignedUrl(true);
+      try {
+        const url = await generateSignedUrl(item.content);
+        setSignedUrl(url);
+      } catch (error) {
+        console.error('Error generating signed URL:', error);
+        setSignedUrl(null);
+      } finally {
+        setLoadingSignedUrl(false);
+      }
     };
     
     generateSignedUrlForItem();
@@ -148,12 +158,16 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           <div className="md:w-1/3 flex flex-col gap-4">
             {(item.type === "document" || (item.content?.toLowerCase().includes(".pdf") ?? false)) && (
               <div className="rounded-xl overflow-hidden bg-muted">
-                {signedUrl ? (
+                {loadingSignedUrl ? (
+                  <div className="p-4 h-64 md:h-80 flex items-center justify-center">
+                    <LoadingSpinner size="sm" text="Loading PDF preview..." />
+                  </div>
+                ) : signedUrl ? (
                   <iframe src={signedUrl} title="PDF preview" className="w-full h-64 md:h-80" />
                 ) : (
                   <div className="p-4 text-sm text-muted-foreground">PDF preview unavailable</div>
                 )}
-                {signedUrl && (
+                {signedUrl && !loadingSignedUrl && (
                   <a href={signedUrl} target="_blank" rel="noopener noreferrer" className="block text-xs text-primary hover:underline px-3 py-2">
                     Open full PDF
                   </a>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ItemCard } from "@/components/ItemCard";
 import { SearchBar } from "@/components/SearchBar";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, LogOut, Plus } from "lucide-react";
@@ -222,8 +223,7 @@ const Index = () => {
 
         {loading ? (
           <div className="text-center py-24">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-apple-blue border-t-transparent"></div>
-            <p className="mt-4 text-apple-gray-600 text-sm">Loading your garden...</p>
+            <LoadingSpinner size="md" text="Loading your garden..." />
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-24 space-y-4">
