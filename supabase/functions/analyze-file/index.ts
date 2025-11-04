@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.6.82/legacy/build/pdf.mjs";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
-import { Canvas } from "https://deno.land/x/skia_canvas@0.5.4/mod.ts";
+
 
 const pdfjs = pdfjsLib as unknown as {
   GlobalWorkerOptions?: { workerSrc: string };
@@ -169,90 +169,13 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
   }
 }
 
-// Generate thumbnail from PDF first page
+// Generate thumbnail from PDF first page (disabled - skia_canvas not supported in Edge runtime)
 async function generatePdfThumbnail(
   fileUrl: string,
   userId: string
 ): Promise<string | null> {
-  try {
-    console.log('🖼️ Generating PDF thumbnail...');
-    
-    // Fetch PDF bytes
-    const response = await fetch(fileUrl);
-    if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status}`);
-    
-    const arrayBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    
-    // Load PDF document
-    const loadingTask = pdfjsLib.getDocument({
-      data: uint8Array,
-      useWorkerFetch: false,
-      isEvalSupported: false,
-      useSystemFonts: true,
-    });
-    
-    const pdf = await loadingTask.promise;
-    
-    // Get the first page
-    const page = await pdf.getPage(1);
-    const viewport = page.getViewport({ scale: 1.5 }); // Scale for better quality
-    
-    // Create a canvas using skia_canvas
-    const canvas = new Canvas(viewport.width, viewport.height);
-    const context = canvas.getContext('2d');
-    
-    // Render the page to the canvas
-    await page.render({
-      canvasContext: context,
-      viewport: viewport,
-    }).promise;
-    
-    // Convert canvas to PNG buffer
-    let pngData;
-    try {
-      pngData = await canvas.encode('png');
-    } catch (encodeError) {
-      console.error('❌ Canvas encoding failed:', encodeError);
-      throw new Error('Failed to encode canvas to PNG');
-    }
-    
-    // Upload to Supabase storage
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Missing required environment variables for storage upload');
-    }
-    
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    
-    const fileName = `${userId}/thumbnails/${crypto.randomUUID()}.png`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from('item-images')
-      .upload(fileName, pngData, {
-        contentType: 'image/png',
-        upsert: false,
-      });
-    
-    if (uploadError) {
-      console.error('❌ Thumbnail upload error:', uploadError);
-      return null;
-    }
-    
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('item-images')
-      .getPublicUrl(fileName);
-    
-    console.log('✅ Thumbnail generated and uploaded:', publicUrl);
-    return publicUrl;
-  } catch (error) {
-    console.error('❌ PDF thumbnail generation failed:', error);
-    // Don't throw - thumbnail is optional
-    return null;
-  }
+  console.log('🖼️ Skipping PDF thumbnail generation in this environment');
+  return null;
 }
 
 // Extract text from DOCX
