@@ -89,17 +89,35 @@ export async function uploadFileToStorage(
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
   
+  console.log('Attempting to upload file to storage:', {
+    fileName,
+    bucket: SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
+    fileSize: file.size,
+    fileType: file.type
+  });
+  
   const { error: uploadError } = await supabase.storage
     .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
     .upload(fileName, file);
 
   if (uploadError) {
+    console.error('Storage upload error:', {
+      error: uploadError,
+      message: uploadError.message,
+      fileName,
+      userId
+    });
     throw uploadError;
   }
 
   const { data: { publicUrl } } = supabase.storage
     .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
     .getPublicUrl(fileName);
+
+  console.log('File uploaded successfully:', {
+    fileName,
+    publicUrl
+  });
 
   return { fileName, publicUrl };
 }

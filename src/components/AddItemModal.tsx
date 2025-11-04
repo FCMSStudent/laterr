@@ -194,11 +194,14 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       if (!user) throw new Error('Not authenticated');
 
       // Upload to storage with user-specific path
+      console.log('Uploading file:', file.name, 'for user:', user.id);
       const { fileName, publicUrl } = await uploadFileToStorage(file, user.id);
+      console.log('Upload successful. Public URL:', publicUrl);
 
       setStatusStep('extracting');
 
       // Analyze with AI - using the new analyze-file function with public URL
+      console.log('Starting AI analysis for file:', file.name);
       const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
         body: {
           fileUrl: publicUrl,
@@ -207,7 +210,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('AI analysis error:', error);
+        throw error;
+      }
+      
+      console.log('AI analysis complete:', data);
 
       setStatusStep('summarizing');
 
@@ -225,6 +233,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Insert into database
       setStatusStep('saving');
+      
+      console.log('Inserting item into database:', {
+        type: itemType,
+        title: data.title,
+        user_id: user.id,
+      });
 
       const { error: insertError } = await supabase
         .from(SUPABASE_ITEMS_TABLE)
@@ -238,7 +252,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           user_id: user.id,
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        throw insertError;
+      }
+      
+      console.log('Item successfully added to database');
 
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' :
                            file.type === 'application/pdf' ? 'PDF' : 'Document';
