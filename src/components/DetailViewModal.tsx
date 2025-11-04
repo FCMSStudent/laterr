@@ -244,17 +244,15 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               <h3 className="font-semibold text-sm text-muted-foreground mb-3">Personal Notes</h3>
 
               <div>
-                <label htmlFor="user-notes-textarea" className="sr-only">Personal notes in markdown format</label>
+                <label htmlFor="user-notes-textarea" className="sr-only">Personal notes</label>
                 <Textarea
                   id="user-notes-textarea"
                   value={userNotes}
                   onChange={(e) => setUserNotes(e.target.value)}
-                  placeholder="Add your personal notes in markdown..."
+                  placeholder="Add your personal notes..."
                   maxLength={100000}
                   className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
-                  aria-describedby="notes-helper-text"
                 />
-                <p id="notes-helper-text" className="sr-only">You can use markdown formatting in your notes</p>
               </div>
             </div>
 
