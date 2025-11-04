@@ -558,6 +558,33 @@ Use the analyze_file function to provide structured output.`;
           tags = ['pdf', 'document'];
           description = `PDF document with ${pageCount} pages`;
         }
+
+        // Fallback: ensure we have a non-empty summary for PDFs
+        if ((!summary || summary.trim().length < 5) && extractedText && extractedText.trim().length > 0) {
+          try {
+            const fallbackPrompt = `Write a concise 2-3 sentence summary of this PDF content. Focus on the main topic and purpose.\n\n${sampleText(extractedText, 1500)}`;
+            const sumResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: [{ role: "user", content: fallbackPrompt }],
+              }),
+            });
+            if (sumResp.ok) {
+              const sumData = await sumResp.json();
+              const sumText = sumData.choices?.[0]?.message?.content?.trim();
+              if (sumText) summary = sumText;
+            } else {
+              console.warn('⚠️ Fallback summary failed with status', sumResp.status);
+            }
+          } catch (e) {
+            console.warn('⚠️ Fallback PDF summary error:', e);
+          }
+        }
         
         // Generate thumbnail from first page if userId is available
         if (userId) {
