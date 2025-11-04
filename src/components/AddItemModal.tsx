@@ -194,9 +194,9 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       if (!user) throw new Error('Not authenticated');
 
       // Upload to storage with user-specific path
-      console.log('Uploading file:', file.name, 'for user:', user.id);
+      console.log('Uploading file:', file.name);
       const { fileName, publicUrl } = await uploadFileToStorage(file, user.id);
-      console.log('Upload successful. Public URL:', publicUrl);
+      console.log('Upload successful');
 
       setStatusStep('extracting');
 
@@ -237,7 +237,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       console.log('Inserting item into database:', {
         type: itemType,
         title: data.title,
-        user_id: user.id,
       });
 
       const { error: insertError } = await supabase

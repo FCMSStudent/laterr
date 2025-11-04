@@ -9,6 +9,8 @@ DROP POLICY IF EXISTS "Users can delete own images" ON storage.objects;
 
 -- Create new policies that work with public bucket
 -- Allow authenticated users to upload to their own folder
+-- Note: This relies on the user ID being the first folder in the path (userId/filename.ext)
+-- The uploadFileToStorage function enforces this pattern
 CREATE POLICY "Authenticated users can upload to own folder" ON storage.objects
   FOR INSERT WITH CHECK (
     bucket_id = 'item-images' AND 

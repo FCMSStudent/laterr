@@ -90,7 +90,6 @@ export async function uploadFileToStorage(
   const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
   
   console.log('Attempting to upload file to storage:', {
-    fileName,
     bucket: SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
     fileSize: file.size,
     fileType: file.type
@@ -104,8 +103,6 @@ export async function uploadFileToStorage(
     console.error('Storage upload error:', {
       error: uploadError,
       message: uploadError.message,
-      fileName,
-      userId
     });
     throw uploadError;
   }
@@ -114,10 +111,7 @@ export async function uploadFileToStorage(
     .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
     .getPublicUrl(fileName);
 
-  console.log('File uploaded successfully:', {
-    fileName,
-    publicUrl
-  });
+  console.log('File uploaded successfully');
 
   return { fileName, publicUrl };
 }
