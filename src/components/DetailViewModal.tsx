@@ -6,15 +6,12 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import { z } from "zod";
 import {
   CATEGORY_OPTIONS,
   DEFAULT_ITEM_TAG,
   SUPABASE_ITEMS_TABLE,
 } from "@/constants";
 import { generateSignedUrl } from "@/lib/supabase-utils";
-import { formatError } from "@/lib/error-utils";
 import { NetworkError, toTypedError } from "@/types/errors";
 import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/lib/error-messages";
 
@@ -30,7 +27,6 @@ interface DetailViewModalProps {
 export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailViewModalProps) => {
   const [userNotes, setUserNotes] = useState(item?.user_notes || "");
   const [selectedTag, setSelectedTag] = useState<string>(item?.tags?.[0] || DEFAULT_ITEM_TAG);
-  const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
@@ -80,7 +76,6 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       if (error) throw error;
 
       toast.success("Changes saved!");
-      setIsEditing(false);
       onUpdate();
     } catch (error: unknown) {
       const errorMessage = getUpdateErrorMessage(error);
@@ -246,42 +241,19 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
             {/* Notes Section */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm text-muted-foreground">Personal Notes</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="h-8 text-xs font-medium hover:bg-accent"
-                  aria-label={isEditing ? "Preview notes" : "Edit notes"}
-                >
-                  {isEditing ? "Preview" : "Edit"}
-                </Button>
-              </div>
+              <h3 className="font-semibold text-sm text-muted-foreground mb-3">Personal Notes</h3>
 
-              {isEditing ? (
-                <div>
-                  <label htmlFor="user-notes-textarea" className="sr-only">Personal notes in markdown format</label>
-                  <Textarea
-                    id="user-notes-textarea"
-                    value={userNotes}
-                    onChange={(e) => setUserNotes(e.target.value)}
-                    placeholder="Add your personal notes in markdown..."
-                    maxLength={100000}
-                    className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
-                    aria-describedby="notes-helper-text"
-                  />
-                  <p id="notes-helper-text" className="sr-only">You can use markdown formatting in your notes</p>
-                </div>
-              ) : (
-                <div className="prose prose-sm max-w-none glass-card p-4 rounded-xl text-[15px]" role="region" aria-label="Note preview">
-                  {userNotes ? (
-                    <ReactMarkdown>{userNotes}</ReactMarkdown>
-                  ) : (
-                    <p className="text-muted-foreground italic">No personal notes yet.</p>
-                  )}
-                </div>
-              )}
+              <div>
+                <label htmlFor="user-notes-textarea" className="sr-only">Personal notes</label>
+                <Textarea
+                  id="user-notes-textarea"
+                  value={userNotes}
+                  onChange={(e) => setUserNotes(e.target.value)}
+                  placeholder="Add your personal notes..."
+                  maxLength={100000}
+                  className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
+                />
+              </div>
             </div>
 
             {/* Action Buttons */}
