@@ -198,13 +198,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       setStatusStep('extracting');
 
-      // Create a short-lived signed URL for backend analysis
-      const signedUrl = await createSignedUrlForFile(fileName, FILE_ANALYSIS_SIGNED_URL_EXPIRATION);
-
-      // Analyze with AI - using the new analyze-file function
+      // Analyze with AI - using the new analyze-file function with public URL
       const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
         body: {
-          fileUrl: signedUrl,
+          fileUrl: publicUrl,
           fileType: file.type,
           fileName: file.name
         }
