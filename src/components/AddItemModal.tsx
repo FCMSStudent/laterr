@@ -30,14 +30,17 @@ import { formatError, handleSupabaseError } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
 
+const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
+const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
+
+// Character counter warning threshold (show red when 90% full)
+const CHAR_WARNING_THRESHOLD = 0.9;
+
 interface AddItemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onItemAdded: () => void;
 }
-
-const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
-const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
 
 export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalProps) => {
   const [url, setUrl] = useState("");
@@ -354,7 +357,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           </TabsContent>
 
           <TabsContent value="note" className="space-y-4 mt-6">
-            <div>
+            <div className="space-y-2">
               <label htmlFor="note-textarea" className="sr-only">Note content</label>
               <Textarea
                 id="note-textarea"
@@ -364,9 +367,24 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                 maxLength={NOTE_MAX_LENGTH}
                 className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
                 aria-required="true"
-                aria-describedby="note-helper-text"
+                aria-describedby="note-helper-text note-char-count"
               />
-              <p id="note-helper-text" className="sr-only">Enter your note content (up to {NOTE_MAX_LENGTH} characters)</p>
+              <div className="flex justify-between items-center">
+                <p id="note-helper-text" className="text-xs text-muted-foreground">
+                  Write your thoughts and ideas
+                </p>
+                <p 
+                  id="note-char-count" 
+                  className={`text-xs font-medium transition-colors ${
+                    note.length > NOTE_MAX_LENGTH * CHAR_WARNING_THRESHOLD 
+                      ? 'text-destructive' 
+                      : 'text-muted-foreground'
+                  }`}
+                  aria-live="polite"
+                >
+                  {note.length} / {NOTE_MAX_LENGTH}
+                </p>
+              </div>
             </div>
             <Button 
               onClick={handleNoteSubmit}
