@@ -243,7 +243,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
             <div>
               <h3 className="font-semibold text-sm text-muted-foreground mb-3">Personal Notes</h3>
 
-              <div>
+              <div className="space-y-2">
                 <label htmlFor="user-notes-textarea" className="sr-only">Personal notes</label>
                 <Textarea
                   id="user-notes-textarea"
@@ -252,7 +252,21 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   placeholder="Add your personal notes..."
                   maxLength={100000}
                   className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
+                  aria-describedby="notes-char-count"
                 />
+                <div className="flex justify-end">
+                  <p 
+                    id="notes-char-count" 
+                    className={`text-xs font-medium transition-colors ${
+                      userNotes.length > 90000 
+                        ? 'text-destructive' 
+                        : 'text-muted-foreground'
+                    }`}
+                    aria-live="polite"
+                  >
+                    {userNotes.length.toLocaleString()} / {(100000).toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
 

@@ -153,4 +153,17 @@ All colors MUST be HSL.
   .smooth-transition {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  
+  /* Improved focus indicators for accessibility */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
