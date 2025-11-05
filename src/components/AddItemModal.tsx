@@ -30,14 +30,17 @@ import { formatError, handleSupabaseError } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
 
+const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
+const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
+
+// Character counter warning threshold (show red when 90% full)
+const CHAR_WARNING_THRESHOLD = 0.9;
+
 interface AddItemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onItemAdded: () => void;
 }
-
-const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
-const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
 
 export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalProps) => {
   const [url, setUrl] = useState("");
@@ -373,7 +376,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                 <p 
                   id="note-char-count" 
                   className={`text-xs font-medium transition-colors ${
-                    note.length > NOTE_MAX_LENGTH * 0.9 
+                    note.length > NOTE_MAX_LENGTH * CHAR_WARNING_THRESHOLD 
                       ? 'text-destructive' 
                       : 'text-muted-foreground'
                   }`}

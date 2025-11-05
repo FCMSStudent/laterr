@@ -27,6 +27,10 @@ import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/lib/error-m
 
 import type { Item } from "@/types";
 
+// Character counter constants
+const USER_NOTES_MAX_LENGTH = 100000;
+const CHAR_WARNING_THRESHOLD = 0.9;
+
 interface DetailViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -71,7 +75,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   const handleSave = useCallback(async () => {
     if (!item) return;
-    if (userNotes.length > 100000) {
+    if (userNotes.length > USER_NOTES_MAX_LENGTH) {
       toast.error(UPDATE_ERRORS.NOTES_TOO_LONG.title, { 
         description: UPDATE_ERRORS.NOTES_TOO_LONG.message 
       });
@@ -262,7 +266,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   value={userNotes}
                   onChange={(e) => setUserNotes(e.target.value)}
                   placeholder="Add your personal notes..."
-                  maxLength={100000}
+                  maxLength={USER_NOTES_MAX_LENGTH}
                   className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
                   aria-describedby="notes-char-count"
                 />
@@ -270,13 +274,13 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   <p 
                     id="notes-char-count" 
                     className={`text-xs font-medium transition-colors ${
-                      userNotes.length > 90000 
+                      userNotes.length > USER_NOTES_MAX_LENGTH * CHAR_WARNING_THRESHOLD 
                         ? 'text-destructive' 
                         : 'text-muted-foreground'
                     }`}
                     aria-live="polite"
                   >
-                    {userNotes.length.toLocaleString()} / {(100000).toLocaleString()}
+                    {userNotes.length.toLocaleString()} / {USER_NOTES_MAX_LENGTH.toLocaleString()}
                   </p>
                 </div>
               </div>
