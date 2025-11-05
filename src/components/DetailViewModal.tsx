@@ -1,5 +1,15 @@
 import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -30,6 +40,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
@@ -95,6 +106,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const handleDelete = useCallback(async () => {
     if (!item) return;
     setDeleting(true);
+    setShowDeleteAlert(false);
     try {
       const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
       if (error) throw error;
@@ -282,7 +294,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
               <Button
-                onClick={handleDelete}
+                onClick={() => setShowDeleteAlert(true)}
                 disabled={deleting}
                 variant="outline"
                 className="h-11 border-destructive/20 text-destructive hover:bg-destructive/10 font-medium transition-all"
@@ -295,6 +307,27 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           </div>
         </div>
       </DialogContent>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent className="glass-card border-0">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{item?.title}" from your garden. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="glass-input">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
