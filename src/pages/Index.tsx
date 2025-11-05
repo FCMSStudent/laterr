@@ -176,16 +176,16 @@ const Index = () => {
         Skip to main content
       </a>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header className="mb-8 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <header className="mb-10 flex items-center justify-between">
           <div>
-            <h1 className="text-5xl font-semibold text-apple-gray-900 mb-2">Laterr</h1>
-            <p className="text-apple-gray-600 text-lg">Your personal knowledge dumpster</p>
+            <h1 className="text-6xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
+            <p className="text-muted-foreground text-lg font-medium">Your personal knowledge garden</p>
           </div>
           <nav aria-label="Main navigation" className="flex items-center gap-3">
             <Button
               onClick={() => setShowAddModal(true)}
-              className="bg-primary hover:bg-primary/90 text-white shadow-sm"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
               aria-label="Add new item to your collection"
             >
               <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -195,7 +195,7 @@ const Index = () => {
               onClick={handleSignOut}
               variant="ghost"
               size="sm"
-              className="text-apple-gray-600 hover:text-apple-gray-900"
+              className="text-muted-foreground hover:text-foreground smooth-transition"
               aria-label="Sign out of your account"
             >
               <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -204,18 +204,18 @@ const Index = () => {
           </nav>
         </header>
 
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-2xl mx-auto mb-10">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
         {allTags.length > 0 && (
-          <nav aria-label="Filter by tags" className="flex flex-wrap gap-2 justify-center items-center max-w-4xl mx-auto mb-8">
-            <span className="text-sm text-apple-gray-600 font-medium mr-2">Tags:</span>
+          <nav aria-label="Filter by tags" className="flex flex-wrap gap-2.5 justify-center items-center max-w-4xl mx-auto mb-10">
+            <span className="text-sm text-muted-foreground font-semibold mr-2">Filter:</span>
             {allTags.map((tag) => (
               <Badge
                 key={tag}
                 variant={selectedTag === tag ? "default" : "outline"}
-                className="cursor-pointer hover:scale-105 smooth-transition text-xs font-medium"
+                className="cursor-pointer hover:scale-110 premium-transition text-sm font-medium px-3 py-1.5 shadow-sm"
                 onClick={() => handleTagClick(tag)}
                 role="button"
                 tabIndex={0}
@@ -234,7 +234,7 @@ const Index = () => {
             {selectedTag && (
               <Badge
                 variant="secondary"
-                className="cursor-pointer text-xs"
+                className="cursor-pointer text-sm shadow-sm premium-transition hover:scale-110"
                 onClick={() => setSelectedTag(null)}
                 role="button"
                 tabIndex={0}
@@ -259,20 +259,20 @@ const Index = () => {
           </div>
 
           {loading ? (
-            <div className="text-center py-24">
+            <div className="text-center py-32">
               <LoadingSpinner size="md" text="Loading your garden..." />
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="text-center py-24 space-y-4">
-              <Sparkles className="h-12 w-12 mx-auto text-apple-gray-400" aria-hidden="true" />
-              <h2 className="text-xl font-semibold text-apple-gray-900">Your garden is empty</h2>
-              <p className="text-apple-gray-600 text-sm">
-                Click the + button to plant your first item
+            <div className="text-center py-32 space-y-5">
+              <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Your garden is empty</h2>
+              <p className="text-muted-foreground text-base max-w-md mx-auto">
+                Start cultivating your knowledge by adding your first item
               </p>
             </div>
           ) : (
             <section aria-label="Items collection">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-10">
                 {filteredItems.map((item) => (
                 <ItemCard
                   key={item.id}
