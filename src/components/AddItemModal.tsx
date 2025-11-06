@@ -92,7 +92,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (insertError) throw insertError;
 
-      toast.success("URL added to your garden! 🌱");
+      toast.success("URL added to your space! 🌱");
       setUrl("");
       setSuggestedCategory("");
       onOpenChange(false);
@@ -145,7 +145,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (error) throw error;
 
-      toast.success("Note planted in your garden! 📝");
+      toast.success("Note planted in your space! 📝");
       setNote("");
       onOpenChange(false);
       onItemAdded();
@@ -245,7 +245,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' :
                            file.type === 'application/pdf' ? 'PDF' : 'Document';
-      toast.success(`${fileTypeLabel} added to your garden! 📁`);
+      toast.success(`${fileTypeLabel} added to your space! 📁`);
       setFile(null);
       onOpenChange(false);
       onItemAdded();
@@ -440,7 +440,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                   {statusStep === 'uploading' && 'Uploading file…'}
                   {statusStep === 'extracting' && 'Extracting text…'}
                   {statusStep === 'summarizing' && 'Summarizing content…'}
-                  {statusStep === 'saving' && 'Saving to your garden…'}
+                  {statusStep === 'saving' && 'Saving to your space…'}
                   {!statusStep && 'Processing…'}
                 </p>
               )}

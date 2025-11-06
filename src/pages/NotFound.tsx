@@ -19,7 +19,7 @@ const NotFound = () => {
         <h1 className="text-7xl font-bold text-foreground mb-4 tracking-tight">404</h1>
         <h2 className="text-3xl font-bold text-foreground mb-4 tracking-tight">Page Not Found</h2>
         <p className="text-muted-foreground mb-10 text-lg leading-relaxed max-w-lg mx-auto">
-          Oops! The page you're looking for seems to have wandered off into the garden.
+          Oops! The page you're looking for seems to have wandered off into space.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -41,7 +41,7 @@ const NotFound = () => {
           >
             <Link to="/">
               <Search className="h-5 w-5" aria-hidden="true" />
-              Search Your Garden
+              Search Your Space
             </Link>
           </Button>
         </div>

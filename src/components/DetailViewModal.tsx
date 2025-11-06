@@ -114,7 +114,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     try {
       const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
       if (error) throw error;
-      toast.success("Item removed from your garden.");
+      toast.success("Item removed from your space.");
       onOpenChange(false);
       onUpdate();
     } catch (error: unknown) {
@@ -318,7 +318,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{item?.title}" from your garden. This action cannot be undone.
+              This will permanently delete "{item?.title}" from your space. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

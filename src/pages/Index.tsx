@@ -180,7 +180,7 @@ const Index = () => {
         <header className="mb-12 flex items-center justify-between">
           <div>
             <h1 className="text-6xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
-            <p className="text-muted-foreground text-lg font-medium">Your personal knowledge garden</p>
+            <p className="text-muted-foreground text-lg font-medium">Your personal knowledge space</p>
           </div>
           <nav aria-label="Main navigation" className="flex items-center gap-4">
             <Button
@@ -260,14 +260,14 @@ const Index = () => {
 
           {loading ? (
             <div className="text-center py-32">
-              <LoadingSpinner size="md" text="Loading your garden..." />
+              <LoadingSpinner size="md" text="Loading your space..." />
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-32 space-y-5">
               <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Your garden is empty</h2>
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
               <p className="text-muted-foreground text-base max-w-md mx-auto">
-                Start cultivating your knowledge by adding your first item
+                Start building your knowledge by adding your first item
               </p>
             </div>
           ) : (
