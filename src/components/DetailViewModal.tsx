@@ -252,7 +252,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           <div className="md:flex-1 flex flex-col gap-6">
             <div>
               <h3 className="font-semibold text-sm text-muted-foreground mb-2">Summary</h3>
-              <p className="text-[15px] leading-relaxed">{item.summary}</p>
+              <p className="text-base leading-body prose-wide">{item.summary}</p>
             </div>
 
             {/* Notes Section */}
@@ -267,7 +267,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   onChange={(e) => setUserNotes(e.target.value)}
                   placeholder="Add your personal notes..."
                   maxLength={USER_NOTES_MAX_LENGTH}
-                  className="glass-input border-0 min-h-[150px] text-[15px] resize-none"
+                  className="glass-input border-0 min-h-[150px] text-base leading-body resize-none"
                   aria-describedby="notes-char-count"
                 />
                 <div className="flex justify-end">
