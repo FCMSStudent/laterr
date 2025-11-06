@@ -110,13 +110,13 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="glass-card rounded-3xl p-8 shadow-apple">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-semibold text-apple-gray-900 mb-2">Laterr</h1>
-            <p className="text-apple-gray-600">Your personal knowledge garden</p>
+        <div className="glass-card rounded-3xl p-10 shadow-apple animate-float">
+          <div className="text-center mb-10">
+            <h1 className="text-5xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
+            <p className="text-muted-foreground text-base">Your personal knowledge garden</p>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-4">
+          <form onSubmit={handleAuth} className="space-y-5">
             <div>
               <Input
                 type="email"
@@ -125,7 +125,7 @@ export default function Auth() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 maxLength={255}
-                className="glass-input"
+                className="glass-input h-12 text-base"
               />
             </div>
             
@@ -137,7 +137,7 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 maxLength={72}
-                className="glass-input pr-10"
+                className="glass-input pr-12 h-12 text-base"
                 aria-label="Password"
               />
               <Button
@@ -145,7 +145,7 @@ export default function Auth() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 hover:bg-muted"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted/50 rounded-lg smooth-transition"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -165,16 +165,16 @@ export default function Auth() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-apple-blue hover:bg-apple-blue/90 text-white py-6 rounded-xl font-medium transition-all duration-200"
+              className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]"
             >
               {loading ? 'Loading...' : isLogin ? 'Sign In' : 'Sign Up'}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-apple-blue hover:underline text-sm font-medium"
+              className="text-primary hover:text-primary/80 text-sm font-medium smooth-transition hover:underline"
             >
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </button>

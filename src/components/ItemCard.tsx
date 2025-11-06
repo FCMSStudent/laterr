@@ -68,34 +68,35 @@ export const ItemCard = ({
       aria-label={`${getTypeLabel()}: ${title}${summary ? `. ${summary}` : ''}`}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className="glass-card rounded-xl p-5 cursor-pointer hover:scale-[1.01] smooth-transition hover:shadow-xl group overflow-hidden"
+      className="glass-card rounded-2xl p-6 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden"
     >
       {previewImageUrl && (
-        <div className="relative w-full h-44 mb-4 rounded-lg overflow-hidden bg-muted">
+        <div className="relative w-full h-48 mb-5 rounded-xl overflow-hidden bg-muted/50">
           <img 
             src={previewImageUrl} 
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 smooth-transition"
+            className="w-full h-full object-cover group-hover:scale-110 premium-transition"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 premium-transition"></div>
         </div>
       )}
       
-      <div className="space-y-3">
-        <div className="flex items-start gap-2">
-          <div className="mt-1 text-primary opacity-60">{getIcon()}</div>
-          <h3 className="font-semibold text-base line-clamp-2 flex-1 leading-snug">{title}</h3>
+      <div className="space-y-3.5">
+        <div className="flex items-start gap-3">
+          <div className="mt-1 text-primary/70">{getIcon()}</div>
+          <h3 className="font-bold text-base line-clamp-2 flex-1 leading-snug tracking-tight">{title}</h3>
         </div>
         
         {summary && (
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{summary}</p>
         )}
         
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2 pt-1">
           {tags.slice(0, 3).map((tag, index) => (
             <Badge 
               key={index}
               variant="secondary"
-              className="cursor-pointer hover:bg-accent smooth-transition text-xs font-medium"
+              className="cursor-pointer hover:bg-accent premium-transition text-xs font-semibold shadow-sm"
               role="button"
               tabIndex={0}
               aria-label={`Filter by tag ${tag}`}
@@ -115,7 +116,7 @@ export const ItemCard = ({
             </Badge>
           ))}
           {tags.length > 3 && (
-            <Badge variant="outline" className="text-xs" aria-label={`${tags.length - 3} more tags`}>
+            <Badge variant="outline" className="text-xs font-medium" aria-label={`${tags.length - 3} more tags`}>
               +{tags.length - 3}
             </Badge>
           )}
