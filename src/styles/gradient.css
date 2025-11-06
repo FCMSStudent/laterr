@@ -38,6 +38,20 @@ html, body {
   mask-image: linear-gradient(to bottom, black 0%, black 35%, black 60%, transparent 100%);
 }
 
+/* Performance optimization: reduce blur on low-end devices */
+@media (max-width: 768px), (hover: none) {
+  .gradient-bg {
+    filter: blur(20px) saturate(110%);
+  }
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .gradient-bg {
+    filter: blur(16px) saturate(105%);
+  }
+}
+
 /* Enhanced noise texture for premium feel */
 .gradient-noise {
   position: fixed;
