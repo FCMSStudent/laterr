@@ -177,12 +177,12 @@ const Index = () => {
       </a>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <header className="mb-10 flex items-center justify-between">
+        <header className="mb-12 flex items-center justify-between">
           <div>
             <h1 className="text-6xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
             <p className="text-muted-foreground text-lg font-medium">Your personal knowledge garden</p>
           </div>
-          <nav aria-label="Main navigation" className="flex items-center gap-3">
+          <nav aria-label="Main navigation" className="flex items-center gap-4">
             <Button
               onClick={() => setShowAddModal(true)}
               className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
@@ -209,7 +209,7 @@ const Index = () => {
         </div>
 
         {allTags.length > 0 && (
-          <nav aria-label="Filter by tags" className="flex flex-wrap gap-2.5 justify-center items-center max-w-4xl mx-auto mb-10">
+          <nav aria-label="Filter by tags" className="flex flex-wrap gap-3 justify-center items-center max-w-4xl mx-auto mb-12">
             <span className="text-sm text-muted-foreground font-semibold mr-2">Filter:</span>
             {allTags.map((tag) => (
               <Badge
@@ -272,7 +272,7 @@ const Index = () => {
             </div>
           ) : (
             <section aria-label="Items collection">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
                 {filteredItems.map((item) => (
                 <ItemCard
                   key={item.id}
