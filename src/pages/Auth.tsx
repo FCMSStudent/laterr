@@ -110,7 +110,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="glass-card rounded-3xl p-10 shadow-apple animate-float">
+        <div className="glass-card rounded-3xl p-10 shadow-apple">
           <div className="text-center mb-10">
             <h1 className="text-5xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
             <p className="text-muted-foreground text-base">Your personal knowledge garden</p>
