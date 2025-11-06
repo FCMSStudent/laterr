@@ -221,7 +221,7 @@ All colors MUST be HSL.
   }
   
   /* Maximum line length for readability (65-75 characters) */
-  .prose, .prose-content {
+  .prose {
     max-width: 65ch;
   }
   

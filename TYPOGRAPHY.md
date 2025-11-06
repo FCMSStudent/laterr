@@ -72,7 +72,7 @@ This ensures headings remain legible without overwhelming small screens.
 
 For optimal readability, text blocks should be limited to 65-75 characters per line:
 
-- `.prose` or `.prose-content`: 65 characters (ideal)
+- `.prose`: 65 characters (ideal)
 - `.prose-narrow`: 55 characters (for sidebars)
 - `.prose-wide`: 75 characters (maximum)
 

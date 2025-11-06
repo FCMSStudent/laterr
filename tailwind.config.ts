@@ -25,10 +25,10 @@ export default {
        */
       fontSize: {
         // Base text sizes with optimal line heights
-        'xs': ['0.75rem', { lineHeight: '1rem', letterSpacing: '0em' }],      // 12px
-        'sm': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0em' }],  // 14px
-        'base': ['1rem', { lineHeight: '1.5rem', letterSpacing: '0em' }],     // 16px - body text
-        'lg': ['1.125rem', { lineHeight: '1.75rem', letterSpacing: '0em' }],  // 18px
+        'xs': ['0.75rem', { lineHeight: '1rem' }],      // 12px
+        'sm': ['0.875rem', { lineHeight: '1.25rem' }],  // 14px
+        'base': ['1rem', { lineHeight: '1.5rem' }],     // 16px - body text
+        'lg': ['1.125rem', { lineHeight: '1.75rem' }],  // 18px
         'xl': ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em' }], // 20px
         
         // Display text sizes with tighter line heights and letter spacing for headings
