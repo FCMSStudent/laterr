@@ -10,10 +10,15 @@ const STORAGE_KEY = 'glass-intensity-preference';
  */
 export const useGlassIntensity = () => {
   const [intensity, setIntensityState] = useState<GlassIntensity>(() => {
-    // Check localStorage for saved preference
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'reduced' || saved === 'minimal') {
-      return saved;
+    // Check localStorage for saved preference with error handling
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === 'reduced' || saved === 'minimal') {
+        return saved;
+      }
+    } catch (error) {
+      // localStorage not available (SSR, private browsing, etc.)
+      console.warn('localStorage not available:', error);
     }
     return 'standard';
   });
@@ -30,7 +35,12 @@ export const useGlassIntensity = () => {
 
   const setIntensity = (newIntensity: GlassIntensity) => {
     setIntensityState(newIntensity);
-    localStorage.setItem(STORAGE_KEY, newIntensity);
+    try {
+      localStorage.setItem(STORAGE_KEY, newIntensity);
+    } catch (error) {
+      // localStorage not available (SSR, private browsing, etc.)
+      console.warn('Failed to save glass intensity preference:', error);
+    }
   };
 
   return { intensity, setIntensity };
