@@ -68,10 +68,10 @@ export const ItemCard = ({
       aria-label={`${getTypeLabel()}: ${title}${summary ? `. ${summary}` : ''}`}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className="glass-card rounded-2xl p-6 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden"
+      className="glass-card rounded-2xl p-7 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden"
     >
       {previewImageUrl && (
-        <div className="relative w-full h-48 mb-5 rounded-xl overflow-hidden bg-muted/50">
+        <div className="relative w-full h-48 mb-6 rounded-xl overflow-hidden bg-muted/50">
           <img 
             src={previewImageUrl} 
             alt={title}
@@ -81,7 +81,7 @@ export const ItemCard = ({
         </div>
       )}
       
-      <div className="space-y-3.5">
+      <div className="space-y-4">
         <div className="flex items-start gap-3">
           <div className="mt-1 text-primary/70">{getIcon()}</div>
           <h3 className="font-bold text-base line-clamp-2 flex-1 leading-snug tracking-tight">{title}</h3>
@@ -91,7 +91,7 @@ export const ItemCard = ({
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{summary}</p>
         )}
         
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex flex-wrap gap-2 pt-2">
           {tags.slice(0, 3).map((tag, index) => (
             <Badge 
               key={index}

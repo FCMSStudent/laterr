@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
+import tailwindcssContainerQueries from "@tailwindcss/container-queries";
 
 export default {
   darkMode: ["class"],
@@ -13,6 +15,19 @@ export default {
       },
     },
     extend: {
+      /**
+       * Spacing Scale - 4px Base Unit
+       * All spacing follows a consistent 4px base unit for visual harmony.
+       * Refer to SPACING.md for detailed usage guidelines.
+       * 
+       * Standard spacing values:
+       * - gap-3 (12px): Tags, badges, tight horizontal layouts
+       * - gap-4 (16px): Form fields, button groups, default spacing
+       * - gap-6 (24px): Card grids, comfortable spacing (RECOMMENDED for grids)
+       * - mb-10/mb-12 (40-48px): Section spacing between major areas
+       * - p-6/p-7 (24-28px): Card/component internal padding
+       * - p-8 (32px): Modal/dialog content padding
+       */
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
@@ -146,5 +161,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate, tailwindcssContainerQueries],
 } satisfies Config;
