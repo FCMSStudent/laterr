@@ -138,7 +138,6 @@ All colors MUST be HSL.
   
   /* Glassmorphism with browser fallbacks and performance optimization */
   .glass-card {
-    background: var(--glass-bg);
     /* Fallback for older browsers that don't support backdrop-filter */
     background-color: rgba(255, 255, 255, 0.92);
     border: 1px solid var(--glass-border);
@@ -221,7 +220,6 @@ All colors MUST be HSL.
   }
   
   .glass-input {
-    background: rgba(255, 255, 255, 0.7);
     /* Fallback for browsers without backdrop-filter */
     background-color: rgba(255, 255, 255, 0.85);
     border: 1px solid var(--glass-border);

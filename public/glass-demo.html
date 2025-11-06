@@ -87,7 +87,7 @@
 
     /* Standard glassmorphism card */
     .glass-card {
-      background: var(--glass-bg);
+      /* Fallback for older browsers that don't support backdrop-filter */
       background-color: rgba(255, 255, 255, 0.92);
       border: 1px solid var(--glass-border);
       box-shadow: var(--glass-shadow);
@@ -328,15 +328,15 @@
         // Add active class to clicked button
         btn.classList.add('active');
         
-        // Remove all intensity classes
-        document.body.classList.remove('glass-reduced', 'glass-minimal');
+        // Remove all intensity classes from html element
+        document.documentElement.classList.remove('glass-reduced', 'glass-minimal');
         
-        // Add selected intensity class
+        // Add selected intensity class to html element
         const intensity = btn.dataset.intensity;
         if (intensity === 'reduced') {
-          document.body.classList.add('glass-reduced');
+          document.documentElement.classList.add('glass-reduced');
         } else if (intensity === 'minimal') {
-          document.body.classList.add('glass-minimal');
+          document.documentElement.classList.add('glass-minimal');
         }
       });
     });
