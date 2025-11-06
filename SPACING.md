@@ -19,6 +19,7 @@ Our spacing scale follows Tailwind's default spacing with specific usage guideli
 | `gap-4` / `p-4` / `m-4` | 1rem | 1rem | 16px | **Standard spacing** (recommended default) |
 | `gap-5` / `p-5` / `m-5` | 1.25rem | 1.25rem | 20px | Comfortable spacing |
 | `gap-6` / `p-6` / `m-6` | 1.5rem | 1.5rem | 24px | **Card/component internal spacing** |
+| `p-7` / `m-7` | 1.75rem | 1.75rem | 28px | **Enhanced card padding** (for less cramped feel) |
 | `gap-8` / `p-8` / `m-8` | 2rem | 2rem | 32px | Section spacing |
 | `gap-10` / `p-10` / `m-10` | 2.5rem | 2.5rem | 40px | Large section spacing |
 | `gap-12` / `p-12` / `m-12` | 3rem | 3rem | 48px | Extra large section spacing |
@@ -46,14 +47,14 @@ Our spacing scale follows Tailwind's default spacing with specific usage guideli
 ### Component Internal Spacing
 
 #### Cards (ItemCard, DetailViewModal, etc.)
-- **Outer padding**: `p-6` (24px) for comfortable content area
+- **Outer padding**: `p-6` (24px) or `p-7` (28px) for enhanced breathing room
 - **Internal spacing**: `space-y-4` (16px) between content blocks
-- **Image margins**: `mb-5` (20px) below preview images
+- **Image margins**: `mb-5` (20px) or `mb-6` (24px) below preview images
 
 ```tsx
 // ✅ ItemCard spacing
-<div className="glass-card rounded-2xl p-6">
-  {previewImage && <div className="mb-5">...</div>}
+<div className="glass-card rounded-2xl p-7">
+  {previewImage && <div className="mb-6">...</div>}
   <div className="space-y-4">
     <div>Title</div>
     <div>Summary</div>
