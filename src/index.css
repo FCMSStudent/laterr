@@ -27,7 +27,7 @@ All colors MUST be HSL.
     --secondary-foreground: 0 0% 15%;
 
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 40%;
+    --muted-foreground: 0 0% 35%;
 
     /* Sophisticated accent */
     --accent: 212 100% 96%;
@@ -35,6 +35,16 @@ All colors MUST be HSL.
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+    
+    /* Semantic colors for success, warning, and info states */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
 
     --border: 0 0% 92%;
     --input: 0 0% 97%;
@@ -77,13 +87,23 @@ All colors MUST be HSL.
     --secondary-foreground: 0 0% 92%;
 
     --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 62%;
+    --muted-foreground: 0 0% 65%;
 
     --accent: 212 100% 18%;
     --accent-foreground: 212 100% 68%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 96%;
+    
+    /* Semantic colors for success, warning, and info states (dark mode) */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 96%;
+    
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 10%;
+    
+    --info: 199 89% 55%;
+    --info-foreground: 0 0% 96%;
 
     --border: 0 0% 18%;
     --input: 0 0% 15%;
@@ -152,17 +172,33 @@ All colors MUST be HSL.
     transition: all 0.4s cubic-bezier(0.34, 1.25, 0.64, 1);
   }
   
-  /* Improved focus indicators for accessibility */
+  /* Improved focus indicators for accessibility - WCAG compliant */
   *:focus-visible {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 3px;
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
     border-radius: 6px;
   }
   
   button:focus-visible,
-  a:focus-visible {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 3px;
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  
+  /* High contrast focus for keyboard navigation */
+  @media (prefers-contrast: high) {
+    *:focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline-width: 4px;
+      outline-offset: 3px;
+    }
   }
   
   /* Premium text styles */
