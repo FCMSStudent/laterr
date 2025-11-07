@@ -30,6 +30,7 @@ interface ItemCardProps {
   isSelected?: boolean;
   onSelectionChange?: (id: string, selected: boolean) => void;
   onDelete?: (id: string) => void;
+  onCopyId?: (id: string, success: boolean) => void;
 }
 
 export const ItemCard = ({ 
@@ -49,6 +50,7 @@ export const ItemCard = ({
   isSelected = false,
   onSelectionChange,
   onDelete,
+  onCopyId,
 }: ItemCardProps) => {
   const [showAllTags, setShowAllTags] = useState(false);
   
@@ -94,8 +96,9 @@ export const ItemCard = ({
   const formatDate = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch {
-      return '';
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date unavailable';
     }
   };
 
@@ -156,7 +159,15 @@ export const ItemCard = ({
                 {isBookmarked ? 'Remove bookmark' : 'Bookmark'}
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={(e) => handleMenuAction(e, () => navigator.clipboard.writeText(id))}>
+            <DropdownMenuItem onClick={(e) => handleMenuAction(e, async () => {
+              try {
+                await navigator.clipboard.writeText(id);
+                onCopyId?.(id, true);
+              } catch (error) {
+                console.error('Failed to copy ID:', error);
+                onCopyId?.(id, false);
+              }
+            })}>
               <Copy className="mr-2 h-4 w-4" />
               Copy ID
             </DropdownMenuItem>

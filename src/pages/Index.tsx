@@ -53,6 +53,16 @@ const Index = () => {
     }
   }, []);
 
+  // Save bookmarks to localStorage with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (bookmarkedItems.size > 0 || localStorage.getItem('bookmarkedItems')) {
+        localStorage.setItem('bookmarkedItems', JSON.stringify(Array.from(bookmarkedItems)));
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [bookmarkedItems]);
+
   const handleBookmarkToggle = useCallback((itemId: string) => {
     setBookmarkedItems((prev) => {
       const newSet = new Set(prev);
@@ -61,10 +71,17 @@ const Index = () => {
       } else {
         newSet.add(itemId);
       }
-      localStorage.setItem('bookmarkedItems', JSON.stringify(Array.from(newSet)));
       return newSet;
     });
   }, []);
+
+  const handleCopyId = useCallback((id: string, success: boolean) => {
+    toast({
+      title: success ? "Success" : "Error",
+      description: success ? "ID copied to clipboard" : "Failed to copy ID",
+      variant: success ? "default" : "destructive",
+    });
+  }, [toast]);
 
   const handleDeleteItem = useCallback(async (itemId: string) => {
     try {
@@ -342,6 +359,7 @@ const Index = () => {
                   isBookmarked={bookmarkedItems.has(item.id)}
                   onBookmarkToggle={handleBookmarkToggle}
                   onDelete={handleDeleteItem}
+                  onCopyId={handleCopyId}
                   onClick={() => handleItemClick(item)}
                   onTagClick={handleTagClick}
                 />
