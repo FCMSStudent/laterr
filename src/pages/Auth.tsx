@@ -129,7 +129,7 @@ export default function Auth() {
               />
             </div>
             
-            <div className="relative flex items-center">
+            <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
@@ -137,23 +137,21 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 maxLength={72}
-                className="glass-input pr-12 h-12 text-base w-full"
+                className="glass-input pr-12 h-12 text-base"
                 aria-label="Password"
               />
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 h-8 w-8 p-0 hover:bg-muted/50 rounded-lg smooth-transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground smooth-transition"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <Eye className="h-4 w-4" aria-hidden="true" />
                 )}
-              </Button>
+              </button>
             </div>
             
             {!isLogin && (
