@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, FileText, File, Loader2 } from "lucide-react";
+import { Link2, FileText, File } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -339,21 +340,17 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               />
               <p id="url-helper-text" className="sr-only">Enter a valid URL to add to your collection</p>
             </div>
-            <Button 
+            <LoadingButton 
               onClick={handleUrlSubmit} 
-              disabled={!url || loading}
-              className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
+              loading={loading}
+              disabled={!url}
+              loadingText="Adding..."
+              size="lg"
+              className="w-full"
               aria-label="Add URL to collection"
             >
-              {loading ? (
-                <span role="status" aria-live="polite">
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span className="sr-only">Adding URL...</span>
-                </span>
-              ) : (
-                "Add URL"
-              )}
-            </Button>
+              Add URL
+            </LoadingButton>
           </TabsContent>
 
           <TabsContent value="note" className="space-y-4 mt-6">
@@ -386,21 +383,17 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                 </p>
               </div>
             </div>
-            <Button 
+            <LoadingButton 
               onClick={handleNoteSubmit}
-              disabled={!note || loading}
-              className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
+              loading={loading}
+              disabled={!note}
+              loadingText="Saving..."
+              size="lg"
+              className="w-full"
               aria-label="Save note to collection"
             >
-              {loading ? (
-                <span role="status" aria-live="polite">
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span className="sr-only">Saving note...</span>
-                </span>
-              ) : (
-                "Save Note"
-              )}
-            </Button>
+              Save Note
+            </LoadingButton>
           </TabsContent>
 
           <TabsContent value="image" className="space-y-4 mt-6">
@@ -420,21 +413,17 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               </p>
             </div>
             <div className="space-y-2">
-              <Button
+              <LoadingButton
                 onClick={handleFileSubmit}
-                disabled={!file || loading}
-                className="w-full bg-primary hover:bg-primary/90 h-11 smooth-transition font-medium"
+                loading={loading}
+                disabled={!file}
+                loadingText="Uploading..."
+                size="lg"
+                className="w-full"
                 aria-label="Upload file to collection"
               >
-                {loading ? (
-                  <span role="status" aria-live="polite">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    <span className="sr-only">Uploading file...</span>
-                  </span>
-                ) : (
-                  "Upload File"
-                )}
-              </Button>
+                Upload File
+              </LoadingButton>
               {loading && (
                 <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">
                   {statusStep === 'uploading' && 'Uploading file…'}
