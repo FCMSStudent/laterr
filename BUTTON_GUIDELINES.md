@@ -16,7 +16,7 @@
   - Tag controls and chips
   - Compact toolbars
 
-- **lg (h-11-12)**: Larger buttons for emphasis
+- **lg (h-11)**: Larger buttons for emphasis
   - Primary call-to-action buttons
   - Modal submit buttons
   - Hero section actions

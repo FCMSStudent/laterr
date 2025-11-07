@@ -1,5 +1,8 @@
 import { useCallback, MouseEvent } from "react";
 
+// Animation duration in milliseconds - should match CSS animation
+const RIPPLE_DURATION = 600;
+
 /**
  * Hook to create Material-style ripple effect on elements
  * 
@@ -31,21 +34,24 @@ export const useRipple = () => {
       height: ${size}px;
       left: ${x}px;
       top: ${y}px;
-      animation: ripple-effect 600ms ease-out;
+      animation: ripple-effect ${RIPPLE_DURATION}ms ease-out;
       transform: scale(0);
     `;
     
-    // Ensure parent has position relative
-    if (getComputedStyle(button).position === 'static') {
+    // Ensure parent has required styles for positioning
+    const computedStyle = getComputedStyle(button);
+    if (computedStyle.position === 'static') {
       button.style.position = 'relative';
     }
-    button.style.overflow = 'hidden';
+    if (computedStyle.overflow === 'visible') {
+      button.style.overflow = 'hidden';
+    }
     
     button.appendChild(ripple);
     
-    // Remove ripple after animation
+    // Remove ripple after animation completes
     setTimeout(() => {
       ripple.remove();
-    }, 600);
+    }, RIPPLE_DURATION);
   }, []);
 };
