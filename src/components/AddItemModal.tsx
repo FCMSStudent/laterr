@@ -330,7 +330,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               onChange={(e) => setUrl(e.target.value)}
               maxLength={URL_MAX_LENGTH}
               className="glass-input border-0 h-11 text-[15px]"
-              prefixIcon="search"
               showClearButton={true}
               onClear={() => setUrl('')}
               autoComplete="url"

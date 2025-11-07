@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -34,8 +34,8 @@ export default function Auth() {
     });
   }, [navigate]);
   
-  // Inline validation
-  const validateEmail = (value: string) => {
+  // Inline validation with useCallback to stabilize function reference
+  const validateEmail = useCallback((value: string) => {
     if (!touched.email) return;
     
     if (!value) {
@@ -49,9 +49,9 @@ export default function Auth() {
     } else {
       setEmailError(undefined);
     }
-  };
+  }, [touched.email]);
   
-  const validatePassword = (value: string) => {
+  const validatePassword = useCallback((value: string) => {
     if (!touched.password) return;
     
     if (!value) {
@@ -65,15 +65,15 @@ export default function Auth() {
     } else {
       setPasswordError(undefined);
     }
-  };
+  }, [touched.password]);
   
   useEffect(() => {
     validateEmail(email);
-  }, [email, touched.email]);
+  }, [email, validateEmail]);
   
   useEffect(() => {
     validatePassword(password);
-  }, [password, touched.password]);
+  }, [password, validatePassword]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
