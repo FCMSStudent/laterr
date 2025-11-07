@@ -129,7 +129,7 @@ export default function Auth() {
               />
             </div>
             
-            <div className="relative">
+            <div className="relative flex items-center">
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
@@ -137,7 +137,7 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 maxLength={72}
-                className="glass-input pr-12 h-12 text-base"
+                className="glass-input pr-12 h-12 text-base w-full"
                 aria-label="Password"
               />
               <Button
@@ -145,7 +145,7 @@ export default function Auth() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted/50 rounded-lg smooth-transition"
+                className="absolute right-2 h-8 w-8 p-0 hover:bg-muted/50 rounded-lg smooth-transition"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
