@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
@@ -288,24 +289,26 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-4 border-t border-border">
-              <Button
+              <LoadingButton
                 onClick={handleSave}
-                disabled={saving}
-                className="flex-1 bg-primary hover:bg-primary/90 h-11 font-medium transition-all"
+                loading={saving}
+                size="lg"
+                className="flex-1"
                 aria-label="Save changes (Ctrl+S or Cmd+S)"
               >
                 <Save className="h-4 w-4 mr-2" aria-hidden="true" />
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
+                Save Changes
+              </LoadingButton>
               <Button
                 onClick={() => setShowDeleteAlert(true)}
                 disabled={deleting}
                 variant="outline"
-                className="h-11 border-destructive/20 text-destructive hover:bg-destructive/10 font-medium transition-all"
+                size="lg"
+                className="border-destructive/20 text-destructive hover:bg-destructive/10"
                 aria-label="Delete item (Ctrl+D or Cmd+D)"
               >
                 <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
-                {deleting ? "Deleting..." : "Delete"}
+                Delete
               </Button>
             </div>
           </div>
