@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { EnhancedInput } from "@/components/ui/input";
+import { EnhancedTextarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, FileText, File } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,9 +33,6 @@ import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
 
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
-
-// Character counter warning threshold (show red when 90% full)
-const CHAR_WARNING_THRESHOLD = 0.9;
 
 interface AddItemModalProps {
   open: boolean;
@@ -325,21 +322,20 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           </TabsList>
 
           <TabsContent value="url" className="space-y-4 mt-6">
-            <div>
-              <label htmlFor="url-input" className="sr-only">URL to add</label>
-              <Input
-                id="url-input"
-                type="url"
-                placeholder="Paste a URL..."
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                maxLength={URL_MAX_LENGTH}
-                className="glass-input border-0 h-11 text-[15px]"
-                aria-required="true"
-                aria-describedby="url-helper-text"
-              />
-              <p id="url-helper-text" className="sr-only">Enter a valid URL to add to your collection</p>
-            </div>
+            <EnhancedInput
+              id="url-input"
+              type="url"
+              placeholder="Paste a URL..."
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              maxLength={URL_MAX_LENGTH}
+              className="glass-input border-0 h-11 text-[15px]"
+              prefixIcon="search"
+              showClearButton={true}
+              onClear={() => setUrl('')}
+              autoComplete="url"
+              aria-label="URL to add"
+            />
             <LoadingButton 
               onClick={handleUrlSubmit} 
               loading={loading}
@@ -354,35 +350,17 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           </TabsContent>
 
           <TabsContent value="note" className="space-y-4 mt-6">
-            <div className="space-y-2">
-              <label htmlFor="note-textarea" className="sr-only">Note content</label>
-              <Textarea
-                id="note-textarea"
-                placeholder="Write your thoughts..."
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                maxLength={NOTE_MAX_LENGTH}
-                className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
-                aria-required="true"
-                aria-describedby="note-helper-text note-char-count"
-              />
-              <div className="flex justify-between items-center">
-                <p id="note-helper-text" className="text-xs text-muted-foreground">
-                  Write your thoughts and ideas
-                </p>
-                <p 
-                  id="note-char-count" 
-                  className={`text-xs font-medium transition-colors ${
-                    note.length > NOTE_MAX_LENGTH * CHAR_WARNING_THRESHOLD 
-                      ? 'text-destructive' 
-                      : 'text-muted-foreground'
-                  }`}
-                  aria-live="polite"
-                >
-                  {note.length} / {NOTE_MAX_LENGTH}
-                </p>
-              </div>
-            </div>
+            <EnhancedTextarea
+              id="note-textarea"
+              placeholder="Write your thoughts..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={NOTE_MAX_LENGTH}
+              className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
+              showCharacterCount={true}
+              helperText="Write your thoughts and ideas"
+              aria-label="Note content"
+            />
             <LoadingButton 
               onClick={handleNoteSubmit}
               loading={loading}
@@ -399,7 +377,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           <TabsContent value="image" className="space-y-4 mt-6">
             <div className="space-y-2">
               <label htmlFor="file-input" className="sr-only">File to upload</label>
-              <Input
+              <EnhancedInput
                 id="file-input"
                 type="file"
                 accept={FILE_INPUT_ACCEPT}
