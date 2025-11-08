@@ -48,6 +48,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [statusStep, setStatusStep] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleUrlSubmit = async () => {
     // Validate URL
@@ -276,6 +277,34 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     }
   };
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
@@ -375,21 +404,74 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           </TabsContent>
 
           <TabsContent value="image" className="space-y-4 mt-6">
-            <div className="space-y-2">
-              <label htmlFor="file-input" className="sr-only">File to upload</label>
-              <EnhancedInput
-                id="file-input"
-                type="file"
-                accept={FILE_INPUT_ACCEPT}
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="glass-input border-0 h-11 text-[15px]"
-                aria-required="true"
-                aria-describedby="file-helper-text"
-              />
-              <p id="file-helper-text" className="text-xs text-muted-foreground">
-                Supports: Images, PDFs, Word documents (max {FILE_SIZE_LIMIT_MB}MB)
-              </p>
+            <div
+              className={`
+                relative border-2 border-dashed rounded-xl p-8 transition-all duration-200
+                ${isDragging 
+                  ? 'border-primary bg-primary/5 scale-[1.02]' 
+                  : 'border-border/50 hover:border-border hover:bg-muted/30'
+                }
+              `}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <div className="flex flex-col items-center justify-center space-y-3 text-center">
+                <div className={`
+                  rounded-full p-4 transition-all duration-200
+                  ${isDragging ? 'bg-primary/10 scale-110' : 'bg-muted'}
+                `}>
+                  <File className={`h-8 w-8 transition-colors duration-200 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+                </div>
+                
+                {file ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-foreground">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFile(null)}
+                      className="text-xs"
+                    >
+                      Remove file
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-foreground">
+                        {isDragging ? 'Drop your file here' : 'Drag & drop your file here'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">or</p>
+                    </div>
+                    
+                    <label htmlFor="file-input" className="cursor-pointer">
+                      <div className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                        Browse files
+                      </div>
+                      <input
+                        id="file-input"
+                        type="file"
+                        accept={FILE_INPUT_ACCEPT}
+                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        className="sr-only"
+                        aria-required="true"
+                        aria-describedby="file-helper-text"
+                      />
+                    </label>
+                  </>
+                )}
+              </div>
             </div>
+            
+            <p id="file-helper-text" className="text-xs text-muted-foreground text-center">
+              Supports: Images, PDFs, Word documents (max {FILE_SIZE_LIMIT_MB}MB)
+            </p>
             <div className="space-y-2">
               <LoadingButton
                 onClick={handleFileSubmit}
