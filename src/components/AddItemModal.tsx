@@ -277,7 +277,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md glass-card border-0">
+      <DialogContent className="sm:max-w-md z-[60] bg-background border border-border shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground">
             Add New Item
@@ -306,7 +306,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         )}
         
         <Tabs defaultValue="url" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 glass-card border-0">
+          <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
             <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition">
               <Link2 className="h-4 w-4" />
               URL
