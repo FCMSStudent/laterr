@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ItemCard } from "@/components/ItemCard";
+import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
 import { SearchBar } from "@/components/SearchBar";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
@@ -35,9 +36,78 @@ const Index = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { toast } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Load bookmarks from localStorage
+  useEffect(() => {
+    const savedBookmarks = localStorage.getItem('bookmarkedItems');
+    if (savedBookmarks) {
+      try {
+        setBookmarkedItems(new Set(JSON.parse(savedBookmarks)));
+      } catch (e) {
+        console.error('Error loading bookmarks:', e);
+      }
+    }
+  }, []);
+
+  // Save bookmarks to localStorage with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (bookmarkedItems.size > 0 || localStorage.getItem('bookmarkedItems')) {
+        localStorage.setItem('bookmarkedItems', JSON.stringify(Array.from(bookmarkedItems)));
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [bookmarkedItems]);
+
+  const handleBookmarkToggle = useCallback((itemId: string) => {
+    setBookmarkedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleCopyId = useCallback((id: string, success: boolean) => {
+    toast({
+      title: success ? "Success" : "Error",
+      description: success ? "ID copied to clipboard" : "Failed to copy ID",
+      variant: success ? "default" : "destructive",
+    });
+  }, [toast]);
+
+  const handleDeleteItem = useCallback(async (itemId: string) => {
+    try {
+      const { error } = await supabase
+        .from(SUPABASE_ITEMS_TABLE)
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Item deleted successfully",
+      });
+      
+      fetchItems();
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      console.error('Error deleting item:', typedError);
+      toast({
+        title: "Error",
+        description: "Failed to delete item",
+        variant: "destructive",
+      });
+    }
+  }, [toast, fetchItems]);
 
   const fetchItems = useCallback(async () => {
     try {
@@ -259,8 +329,10 @@ const Index = () => {
           </div>
 
           {loading ? (
-            <div className="text-center py-32">
-              <LoadingSpinner size="md" text="Loading your space..." />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <ItemCardSkeleton key={index} />
+              ))}
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-32 space-y-5">
@@ -282,6 +354,12 @@ const Index = () => {
                   summary={item.summary}
                   previewImageUrl={item.preview_image_url}
                   tags={item.tags}
+                  createdAt={item.created_at}
+                  updatedAt={item.updated_at}
+                  isBookmarked={bookmarkedItems.has(item.id)}
+                  onBookmarkToggle={handleBookmarkToggle}
+                  onDelete={handleDeleteItem}
+                  onCopyId={handleCopyId}
                   onClick={() => handleItemClick(item)}
                   onTagClick={handleTagClick}
                 />

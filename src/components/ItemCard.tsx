@@ -1,6 +1,17 @@
 import { Badge } from "@/components/ui/badge";
-import { Link2, FileText, Image as ImageIcon } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Bookmark, Copy, Trash2 } from "lucide-react";
 import type { ItemType } from "@/types";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 
 interface ItemCardProps {
   id: string;
@@ -9,19 +20,40 @@ interface ItemCardProps {
   summary?: string | null;
   previewImageUrl?: string | null;
   tags: string[];
+  createdAt: string;
+  updatedAt?: string;
   onClick: () => void;
   onTagClick: (tag: string) => void;
+  isBookmarked?: boolean;
+  onBookmarkToggle?: (id: string) => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onSelectionChange?: (id: string, selected: boolean) => void;
+  onDelete?: (id: string) => void;
+  onCopyId?: (id: string, success: boolean) => void;
 }
 
 export const ItemCard = ({ 
+  id,
   type, 
   title, 
   summary, 
   previewImageUrl, 
   tags,
+  createdAt,
+  updatedAt,
   onClick,
-  onTagClick
+  onTagClick,
+  isBookmarked = false,
+  onBookmarkToggle,
+  isSelectionMode = false,
+  isSelected = false,
+  onSelectionChange,
+  onDelete,
+  onCopyId,
 }: ItemCardProps) => {
+  const [showAllTags, setShowAllTags] = useState(false);
+  
   const getIcon = () => {
     switch (type) {
       case 'url':
@@ -61,6 +93,20 @@ export const ItemCard = ({
     }
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date unavailable';
+    }
+  };
+
+  const handleMenuAction = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
+
   return (
     <div 
       role="article"
@@ -68,17 +114,93 @@ export const ItemCard = ({
       aria-label={`${getTypeLabel()}: ${title}${summary ? `. ${summary}` : ''}`}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className="glass-card rounded-2xl p-7 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden"
+      onMouseEnter={() => setShowAllTags(true)}
+      onMouseLeave={() => setShowAllTags(false)}
+      className="glass-card rounded-2xl p-7 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden relative focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:outline-none"
     >
-      {previewImageUrl && (
-        <div className="relative w-full h-48 mb-6 rounded-xl overflow-hidden bg-muted/50">
-          <img 
-            src={previewImageUrl} 
-            alt={title}
-            className="w-full h-full object-cover group-hover:scale-110 premium-transition"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 premium-transition"></div>
+      {/* Bookmark indicator */}
+      {isBookmarked && (
+        <div className="absolute top-4 right-4 z-10">
+          <Bookmark className="h-5 w-5 text-warning fill-warning" aria-label="Bookmarked" />
         </div>
+      )}
+
+      {/* Selection checkbox */}
+      {isSelectionMode && (
+        <div 
+          className="absolute top-4 left-4 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(checked) => onSelectionChange?.(id, checked as boolean)}
+            aria-label={`Select ${title}`}
+          />
+        </div>
+      )}
+
+      {/* Actions menu */}
+      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 premium-transition">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="h-8 w-8 p-0 rounded-full bg-background/80 hover:bg-background"
+              aria-label="Card actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {onBookmarkToggle && (
+              <DropdownMenuItem onClick={(e) => handleMenuAction(e, () => onBookmarkToggle(id))}>
+                <Bookmark className="mr-2 h-4 w-4" />
+                {isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={(e) => handleMenuAction(e, async () => {
+              try {
+                await navigator.clipboard.writeText(id);
+                onCopyId?.(id, true);
+              } catch (error) {
+                console.error('Failed to copy ID:', error);
+                onCopyId?.(id, false);
+              }
+            })}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy ID
+            </DropdownMenuItem>
+            {onDelete && (
+              <DropdownMenuItem 
+                onClick={(e) => handleMenuAction(e, () => onDelete(id))}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {previewImageUrl ? (
+        <AspectRatio ratio={16 / 9} className="mb-6">
+          <div className="relative w-full h-full rounded-xl overflow-hidden bg-muted/50">
+            <img 
+              src={previewImageUrl} 
+              alt={title}
+              className="w-full h-full object-cover group-hover:scale-110 premium-transition"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 premium-transition"></div>
+          </div>
+        </AspectRatio>
+      ) : (
+        <AspectRatio ratio={16 / 9} className="mb-6">
+          <div className="flex items-center justify-center w-full h-full rounded-xl bg-muted/30">
+            <div className="text-muted-foreground/40">{getIcon()}</div>
+          </div>
+        </AspectRatio>
       )}
       
       <div className="space-y-4">
@@ -91,8 +213,18 @@ export const ItemCard = ({
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{summary}</p>
         )}
         
+        {/* Date display */}
+        <div className="text-xs text-muted-foreground/70">
+          {updatedAt && updatedAt !== createdAt ? (
+            <span>Updated {formatDate(updatedAt)}</span>
+          ) : (
+            <span>Created {formatDate(createdAt)}</span>
+          )}
+        </div>
+        
+        {/* Tags section with overflow handling */}
         <div className="flex flex-wrap gap-2 pt-2">
-          {tags.slice(0, 3).map((tag, index) => (
+          {(showAllTags ? tags : tags.slice(0, 3)).map((tag, index) => (
             <Badge 
               key={index}
               variant="secondary"
@@ -115,7 +247,7 @@ export const ItemCard = ({
               #{tag}
             </Badge>
           ))}
-          {tags.length > 3 && (
+          {!showAllTags && tags.length > 3 && (
             <Badge variant="outline" className="text-xs font-medium" aria-label={`${tags.length - 3} more tags`}>
               +{tags.length - 3}
             </Badge>
