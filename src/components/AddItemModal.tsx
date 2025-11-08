@@ -41,6 +41,7 @@ interface AddItemModalProps {
 }
 
 export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalProps) => {
+  // Modal for adding URLs, notes, and files to your space
   const [url, setUrl] = useState("");
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
   const [note, setNote] = useState("");
