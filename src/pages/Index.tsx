@@ -83,6 +83,32 @@ const Index = () => {
     });
   }, [toast]);
 
+  const handleDeleteItem = useCallback(async (itemId: string) => {
+    try {
+      const { error } = await supabase
+        .from(SUPABASE_ITEMS_TABLE)
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Item deleted successfully",
+      });
+      
+      fetchItems();
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      console.error('Error deleting item:', typedError);
+      toast({
+        title: "Error",
+        description: "Failed to delete item",
+        variant: "destructive",
+      });
+    }
+  }, [toast, fetchItems]);
+
   const fetchItems = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -125,32 +151,6 @@ const Index = () => {
       setLoading(false);
     }
   }, [toast]);
-
-  const handleDeleteItem = useCallback(async (itemId: string) => {
-    try {
-      const { error } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .delete()
-        .eq('id', itemId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Item deleted successfully",
-      });
-      
-      fetchItems();
-    } catch (error: unknown) {
-      const typedError = toTypedError(error);
-      console.error('Error deleting item:', typedError);
-      toast({
-        title: "Error",
-        description: "Failed to delete item",
-        variant: "destructive",
-      });
-    }
-  }, [toast, fetchItems]);
 
   useEffect(() => {
     // Check authentication
