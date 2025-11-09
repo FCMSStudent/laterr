@@ -24,12 +24,14 @@ import { AUTH_ERRORS, getNetworkErrorMessage } from "@/lib/error-messages";
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({ AddItemModal }) => ({ default: AddItemModal })));
 const DetailViewModal = lazy(() => import("@/components/DetailViewModal").then(({ DetailViewModal }) => ({ default: DetailViewModal })));
+const EditItemModal = lazy(() => import("@/components/EditItemModal").then(({ EditItemModal }) => ({ default: EditItemModal })));
 
 type RawItem = Omit<Item, 'tags'> & { tags: string[] | null };
 
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
@@ -138,6 +140,14 @@ const Index = () => {
       });
     }
   }, [toast, fetchItems]);
+
+  const handleEditItem = useCallback((itemId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+      setSelectedItem(item);
+      setShowEditModal(true);
+    }
+  }, [items]);
 
   useEffect(() => {
     // Check authentication
@@ -390,6 +400,7 @@ const Index = () => {
                   isBookmarked={bookmarkedItems.has(item.id)}
                   onBookmarkToggle={handleBookmarkToggle}
                   onDelete={handleDeleteItem}
+                  onEdit={handleEditItem}
                   onClick={() => handleItemClick(item)}
                   onTagClick={handleTagClick}
                 />
@@ -408,12 +419,21 @@ const Index = () => {
         />
 
         {selectedItem && (
-          <DetailViewModal
-            open={showDetailModal}
-            onOpenChange={setShowDetailModal}
-            item={selectedItem}
-            onUpdate={fetchItems}
-          />
+          <>
+            <DetailViewModal
+              open={showDetailModal}
+              onOpenChange={setShowDetailModal}
+              item={selectedItem}
+              onUpdate={fetchItems}
+            />
+
+            <EditItemModal
+              open={showEditModal}
+              onOpenChange={setShowEditModal}
+              item={selectedItem}
+              onItemUpdated={fetchItems}
+            />
+          </>
         )}
       </Suspense>
     </div>

@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2 } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit } from "lucide-react";
 import type { ItemType } from "@/types";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,6 +30,7 @@ interface ItemCardProps {
   isSelected?: boolean;
   onSelectionChange?: (id: string, selected: boolean) => void;
   onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
 }
 
 export const ItemCard = ({ 
@@ -47,6 +48,7 @@ export const ItemCard = ({
   isSelected = false,
   onSelectionChange,
   onDelete,
+  onEdit,
 }: ItemCardProps) => {
   const [showAllTags, setShowAllTags] = useState(false);
   
@@ -142,6 +144,14 @@ export const ItemCard = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            {onEdit && (
+              <DropdownMenuItem 
+                onClick={(e) => handleMenuAction(e, () => onEdit(id))}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+            )}
             {onDelete && (
               <DropdownMenuItem 
                 onClick={(e) => handleMenuAction(e, () => onDelete(id))}
