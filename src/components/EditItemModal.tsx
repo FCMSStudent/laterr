@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toast-with-animation";
 import { SUPABASE_ITEMS_TABLE } from "@/constants";
 import type { Item } from "@/types";
+import { SaveStatusIndicator, type SaveStatus } from "@/components/SaveStatusIndicator";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface EditItemModalProps {
   open: boolean;
@@ -24,6 +27,11 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(item.tags || []);
   const [loading, setLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  
+  // Debounce title and summary for auto-save
+  const debouncedTitle = useDebounce(title, 2000);
+  const debouncedSummary = useDebounce(summary, 2000);
 
   // Reset form when item changes
   useEffect(() => {
@@ -32,8 +40,43 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
       setSummary(item.summary || "");
       setTags(item.tags || []);
       setTagInput("");
+      setSaveStatus("idle");
     }
   }, [item, open]);
+
+  // Auto-save when title or summary changes
+  const autoSave = useCallback(async () => {
+    if (!open || !title.trim()) return;
+    
+    setSaveStatus("saving");
+    try {
+      const { error } = await supabase
+        .from(SUPABASE_ITEMS_TABLE)
+        .update({
+          title: title.trim(),
+          summary: summary.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', item.id);
+
+      if (error) throw error;
+
+      setSaveStatus("saved");
+      // Reset to idle after 2 seconds
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (error) {
+      console.error('Error auto-saving item:', error);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  }, [item.id, title, summary, open]);
+
+  // Trigger auto-save when debounced values change
+  useEffect(() => {
+    if (debouncedTitle !== item.title || debouncedSummary !== (item.summary || "")) {
+      autoSave();
+    }
+  }, [debouncedTitle, debouncedSummary, autoSave, item.title, item.summary]);
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim()) {
@@ -72,7 +115,7 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
 
       if (error) throw error;
 
-      toast.success("Item updated successfully! ✨");
+      toastSuccess("Item updated successfully! ✨");
       onOpenChange(false);
       onItemUpdated();
     } catch (error) {
@@ -89,11 +132,14 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-foreground">
-            Edit Item
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl font-semibold text-foreground">
+              Edit Item
+            </DialogTitle>
+            <SaveStatusIndicator status={saveStatus} />
+          </div>
           <DialogDescription className="text-muted-foreground">
-            Update the title, summary, or tags for this item
+            Update the title, summary, or tags for this item. Changes save automatically.
           </DialogDescription>
         </DialogHeader>
 

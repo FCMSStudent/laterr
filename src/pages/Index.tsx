@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, LogOut, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
 import { FilterBar, type SortOption, type QuickFilter } from "@/components/FilterBar";
 import {
@@ -116,30 +117,60 @@ const Index = () => {
   }, [toast]);
 
   const handleDeleteItem = useCallback(async (itemId: string) => {
-    try {
-      const { error } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .delete()
-        .eq('id', itemId);
+    // Find the item to delete for potential undo
+    const itemToDelete = items.find(i => i.id === itemId);
+    if (!itemToDelete) return;
 
-      if (error) throw error;
+    // Optimistically remove from UI
+    setItems(prevItems => prevItems.filter(i => i.id !== itemId));
+    setFilteredItems(prevItems => prevItems.filter(i => i.id !== itemId));
 
-      toast({
-        title: "Success",
-        description: "Item deleted successfully",
-      });
-      
-      fetchItems();
-    } catch (error: unknown) {
-      const typedError = toTypedError(error);
-      console.error('Error deleting item:', typedError);
-      toast({
-        title: "Error",
-        description: "Failed to delete item",
-        variant: "destructive",
-      });
+    let isUndone = false;
+
+    // Show toast with undo action
+    sonnerToast.success("Item deleted", {
+      description: "The item has been removed from your space",
+      action: {
+        label: "Undo",
+        onClick: () => {
+          isUndone = true;
+          // Restore item in UI
+          setItems(prevItems => [itemToDelete, ...prevItems]);
+          setFilteredItems(prevItems => [itemToDelete, ...prevItems]);
+          sonnerToast.success("Item restored");
+        },
+      },
+      duration: 5000,
+    });
+
+    // Wait a bit before actually deleting from database
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // If not undone, delete from database
+    if (!isUndone) {
+      try {
+        const { error } = await supabase
+          .from(SUPABASE_ITEMS_TABLE)
+          .delete()
+          .eq('id', itemId);
+
+        if (error) throw error;
+      } catch (error: unknown) {
+        const typedError = toTypedError(error);
+        console.error('Error deleting item:', typedError);
+        
+        // Restore item if deletion failed
+        setItems(prevItems => [itemToDelete, ...prevItems]);
+        setFilteredItems(prevItems => [itemToDelete, ...prevItems]);
+        
+        toast({
+          title: "Error",
+          description: "Failed to delete item. It has been restored.",
+          variant: "destructive",
+        });
+      }
     }
-  }, [toast, fetchItems]);
+  }, [items, toast]);
 
   const handleEditItem = useCallback((itemId: string) => {
     const item = items.find(i => i.id === itemId);

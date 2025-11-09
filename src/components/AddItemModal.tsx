@@ -6,8 +6,10 @@ import { EnhancedInput } from "@/components/ui/input";
 import { EnhancedTextarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, FileText, File } from "lucide-react";
+import { ProgressWithLabel } from "@/components/ProgressWithLabel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toast-with-animation";
 import { z } from "zod";
 import {
   CATEGORY_OPTIONS,
@@ -30,6 +32,7 @@ import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-util
 import { formatError, handleSupabaseError } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
+import { retryWithBackoff, isRetryableError } from "@/lib/retry-utils";
 
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
@@ -48,6 +51,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [statusStep, setStatusStep] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleUrlSubmit = async () => {
@@ -92,7 +96,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (insertError) throw insertError;
 
-      toast.success("URL added to your space! 🌱");
+      toastSuccess("URL added to your space! 🌱");
       setUrl("");
       setSuggestedCategory("");
       onOpenChange(false);
@@ -145,7 +149,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (error) throw error;
 
-      toast.success("Note planted in your space! 📝");
+      toastSuccess("Note planted in your space! 📝");
       setNote("");
       onOpenChange(false);
       onItemAdded();
@@ -191,14 +195,19 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     }
     
     setLoading(true);
+    setUploadProgress(0);
     setStatusStep('uploading');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Simulate upload progress
+      setUploadProgress(20);
+      
       // Upload to storage with user-specific path
       const { fileName, publicUrl } = await uploadFileToStorage(file, user.id);
-
+      
+      setUploadProgress(50);
       setStatusStep('extracting');
 
       // Analyze with AI - using the new analyze-file function with public URL
@@ -212,6 +221,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (error) throw error;
 
+      setUploadProgress(75);
       setStatusStep('summarizing');
 
       // Determine item type and default tag based on file type
@@ -227,6 +237,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       }
 
       // Insert into database
+      setUploadProgress(90);
       setStatusStep('saving');
 
       const { error: insertError } = await supabase
@@ -243,9 +254,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       if (insertError) throw insertError;
 
+      setUploadProgress(100);
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' :
                            file.type === 'application/pdf' ? 'PDF' : 'Document';
-      toast.success(`${fileTypeLabel} added to your space! 📁`);
+      toastSuccess(`${fileTypeLabel} added to your space! 📁`);
       setFile(null);
       onOpenChange(false);
       onItemAdded();
@@ -274,6 +286,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     } finally {
       setLoading(false);
       setStatusStep(null);
+      setUploadProgress(0);
     }
   };
 
@@ -485,13 +498,18 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                 Upload File
               </LoadingButton>
               {loading && (
-                <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">
-                  {statusStep === 'uploading' && 'Uploading file…'}
-                  {statusStep === 'extracting' && 'Extracting text…'}
-                  {statusStep === 'summarizing' && 'Summarizing content…'}
-                  {statusStep === 'saving' && 'Saving to your space…'}
-                  {!statusStep && 'Processing…'}
-                </p>
+                <div className="space-y-2">
+                  <ProgressWithLabel
+                    value={uploadProgress}
+                    label={
+                      statusStep === 'uploading' ? 'Uploading file…' :
+                      statusStep === 'extracting' ? 'Extracting text…' :
+                      statusStep === 'summarizing' ? 'Summarizing content…' :
+                      statusStep === 'saving' ? 'Saving to your space…' :
+                      'Processing…'
+                    }
+                  />
+                </div>
               )}
             </div>
           </TabsContent>
