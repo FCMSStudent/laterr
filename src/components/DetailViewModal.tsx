@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -174,13 +175,32 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   if (!item) return null;
 
+  const breadcrumbItems = [
+    { label: "Home", onClick: () => onOpenChange(false) },
+    ...(selectedTag ? [{ label: selectedTag }] : []),
+    { label: item.title },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto border-0 glass-card">
         <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="text-primary opacity-60">{getIcon()}</div>
-            <DialogTitle className="text-xl font-semibold">{item.title}</DialogTitle>
+          <Breadcrumbs items={breadcrumbItems} />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="text-primary opacity-60">{getIcon()}</div>
+              <DialogTitle className="text-xl font-semibold">{item.title}</DialogTitle>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Go back to list"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
           </div>
         </DialogHeader>
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
