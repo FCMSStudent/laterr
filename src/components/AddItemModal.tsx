@@ -110,7 +110,19 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       );
       
       console.error('Error adding URL:', networkError);
-      toast.error(errorMessage.title, { description: errorMessage.message });
+      
+      // Show retry option for network errors
+      if (isRetryableError(error)) {
+        toast.error(errorMessage.title, {
+          description: errorMessage.message,
+          action: {
+            label: "Retry",
+            onClick: () => handleUrlSubmit(),
+          },
+        });
+      } else {
+        toast.error(errorMessage.title, { description: errorMessage.message });
+      }
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -281,7 +293,19 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         });
       } else {
         const errorMessage = getItemErrorMessage(typedError, 'file');
-        toast.error(errorMessage.title, { description: errorMessage.message });
+        
+        // Show retry option for network errors
+        if (isRetryableError(error)) {
+          toast.error(errorMessage.title, {
+            description: errorMessage.message,
+            action: {
+              label: "Retry",
+              onClick: () => handleFileSubmit(),
+            },
+          });
+        } else {
+          toast.error(errorMessage.title, { description: errorMessage.message });
+        }
       }
     } finally {
       setLoading(false);
