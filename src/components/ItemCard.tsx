@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Bookmark, Copy, Trash2 } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2 } from "lucide-react";
 import type { ItemType } from "@/types";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,8 +43,6 @@ export const ItemCard = ({
   updatedAt,
   onClick,
   onTagClick,
-  isBookmarked = false,
-  onBookmarkToggle,
   isSelectionMode = false,
   isSelected = false,
   onSelectionChange,
@@ -115,12 +113,6 @@ export const ItemCard = ({
       onMouseLeave={() => setShowAllTags(false)}
       className="glass-card rounded-2xl p-7 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden relative focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:outline-none"
     >
-      {/* Bookmark indicator */}
-      {isBookmarked && (
-        <div className="absolute top-4 right-4 z-10">
-          <Bookmark className="h-5 w-5 text-warning fill-warning" aria-label="Bookmarked" />
-        </div>
-      )}
 
       {/* Selection checkbox */}
       {isSelectionMode && (
@@ -150,16 +142,6 @@ export const ItemCard = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            {onBookmarkToggle && (
-              <DropdownMenuItem onClick={(e) => handleMenuAction(e, () => onBookmarkToggle(id))}>
-                <Bookmark className="mr-2 h-4 w-4" />
-                {isBookmarked ? 'Remove bookmark' : 'Bookmark'}
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={(e) => handleMenuAction(e, () => navigator.clipboard.writeText(id))}>
-              <Copy className="mr-2 h-4 w-4" />
-              Copy ID
-            </DropdownMenuItem>
             {onDelete && (
               <DropdownMenuItem 
                 onClick={(e) => handleMenuAction(e, () => onDelete(id))}
