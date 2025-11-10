@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,20 +9,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Filter, X, Clock, FileText, Link2, Image as ImageIcon } from "lucide-react";
+import { ArrowUpDown, Filter, X, FileText, Link2, Image as ImageIcon, ChevronDown, ChevronUp } from "lucide-react";
 import type { ItemType } from "@/types";
+import { CATEGORY_OPTIONS } from "@/constants";
 
 export type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc" | "type";
-export type QuickFilter = "all" | "recent" | "watch-later" | "read-later" | "wishlist";
 
 interface FilterBarProps {
   selectedTag: string | null;
   selectedSort: SortOption;
-  selectedQuickFilter: QuickFilter;
   selectedTypeFilter: ItemType | null;
-  onTagClear: () => void;
+  onTagSelect: (tag: string | null) => void;
   onSortChange: (sort: SortOption) => void;
-  onQuickFilterChange: (filter: QuickFilter) => void;
   onTypeFilterChange: (type: ItemType | null) => void;
   onClearAll: () => void;
 }
@@ -29,15 +28,14 @@ interface FilterBarProps {
 export const FilterBar = ({
   selectedTag,
   selectedSort,
-  selectedQuickFilter,
   selectedTypeFilter,
-  onTagClear,
+  onTagSelect,
   onSortChange,
-  onQuickFilterChange,
   onTypeFilterChange,
   onClearAll,
 }: FilterBarProps) => {
-  const hasActiveFilters = selectedTag || selectedQuickFilter !== "all" || selectedTypeFilter;
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const hasActiveFilters = selectedTag || selectedTypeFilter;
 
   const getSortLabel = (sort: SortOption) => {
     switch (sort) {
@@ -71,120 +69,118 @@ export const FilterBar = ({
 
   return (
     <div className="space-y-4">
-      {/* Quick Filters and Sort */}
+      {/* Tag Filter Buttons */}
       <div className="flex flex-wrap gap-3 items-center justify-center">
-        {/* Quick Filter Buttons */}
         <div className="flex gap-2 items-center">
-          <span className="text-sm text-muted-foreground font-semibold">Quick:</span>
+          <span className="text-sm text-muted-foreground font-semibold">Tags:</span>
           <Button
-            variant={selectedQuickFilter === "all" ? "default" : "outline"}
+            variant={!selectedTag ? "default" : "outline"}
             size="sm"
-            onClick={() => onQuickFilterChange("all")}
+            onClick={() => onTagSelect(null)}
             className="h-8"
           >
             All
           </Button>
-          <Button
-            variant={selectedQuickFilter === "recent" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onQuickFilterChange("recent")}
-            className="h-8"
-          >
-            <Clock className="h-3 w-3 mr-1" />
-            Recent
-          </Button>
-          <Button
-            variant={selectedQuickFilter === "read-later" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onQuickFilterChange("read-later")}
-            className="h-8"
-          >
-            📖 Read Later
-          </Button>
-          <Button
-            variant={selectedQuickFilter === "watch-later" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onQuickFilterChange("watch-later")}
-            className="h-8"
-          >
-            ⏰ Watch Later
-          </Button>
-          <Button
-            variant={selectedQuickFilter === "wishlist" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onQuickFilterChange("wishlist")}
-            className="h-8"
-          >
-            ⭐ Wishlist
-          </Button>
-        </div>
-
-        {/* Type Filter Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          {CATEGORY_OPTIONS.map((category) => (
             <Button
-              variant={selectedTypeFilter ? "default" : "outline"}
+              key={category.value}
+              variant={selectedTag === category.value ? "default" : "outline"}
               size="sm"
+              onClick={() => onTagSelect(category.value)}
               className="h-8"
             >
-              <Filter className="h-3 w-3 mr-1" />
-              {selectedTypeFilter ? selectedTypeFilter.charAt(0).toUpperCase() + selectedTypeFilter.slice(1) : "Type"}
+              {category.label}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onTypeFilterChange(null)}>
-              All Types
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeFilterChange("url")}>
-              <Link2 className="h-3 w-3 mr-2" />
-              URL
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeFilterChange("note")}>
-              <FileText className="h-3 w-3 mr-2" />
-              Note
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeFilterChange("document")}>
-              <FileText className="h-3 w-3 mr-2" />
-              Document
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeFilterChange("image")}>
-              <ImageIcon className="h-3 w-3 mr-2" />
-              Image
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          ))}
+        </div>
 
-        {/* Sort Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8">
-              <ArrowUpDown className="h-3 w-3 mr-1" />
-              {getSortLabel(selectedSort)}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>Sort By</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
-              Newest First
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
-              Oldest First
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
-              Title (A-Z)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
-              Title (Z-A)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange("type")}>
-              By Type
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Toggle More Filters */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowMoreFilters(!showMoreFilters)}
+          className="h-8"
+        >
+          <Filter className="h-3 w-3 mr-1" />
+          More Filters
+          {showMoreFilters ? (
+            <ChevronUp className="h-3 w-3 ml-1" />
+          ) : (
+            <ChevronDown className="h-3 w-3 ml-1" />
+          )}
+        </Button>
       </div>
+
+      {/* Collapsible More Filters Section */}
+      {showMoreFilters && (
+        <div className="flex flex-wrap gap-3 items-center justify-center animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Type Filter Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={selectedTypeFilter ? "default" : "outline"}
+                size="sm"
+                className="h-8"
+              >
+                <Filter className="h-3 w-3 mr-1" />
+                {selectedTypeFilter ? selectedTypeFilter.charAt(0).toUpperCase() + selectedTypeFilter.slice(1) : "Type"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onTypeFilterChange(null)}>
+                All Types
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTypeFilterChange("url")}>
+                <Link2 className="h-3 w-3 mr-2" />
+                URL
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTypeFilterChange("note")}>
+                <FileText className="h-3 w-3 mr-2" />
+                Note
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTypeFilterChange("document")}>
+                <FileText className="h-3 w-3 mr-2" />
+                Document
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTypeFilterChange("image")}>
+                <ImageIcon className="h-3 w-3 mr-2" />
+                Image
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Sort Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8">
+                <ArrowUpDown className="h-3 w-3 mr-1" />
+                {getSortLabel(selectedSort)}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
+                Newest First
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
+                Oldest First
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
+                Title (A-Z)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
+                Title (Z-A)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSortChange("type")}>
+                By Type
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
 
       {/* Active Filter Pills */}
       {hasActiveFilters && (
@@ -195,23 +191,9 @@ export const FilterBar = ({
             <Badge
               variant="secondary"
               className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs"
-              onClick={onTagClear}
+              onClick={() => onTagSelect(null)}
             >
               #{selectedTag}
-              <X className="h-3 w-3 ml-1" />
-            </Badge>
-          )}
-          
-          {selectedQuickFilter !== "all" && (
-            <Badge
-              variant="secondary"
-              className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs"
-              onClick={() => onQuickFilterChange("all")}
-            >
-              {selectedQuickFilter === "recent" && "Recent"}
-              {selectedQuickFilter === "read-later" && "📖 Read Later"}
-              {selectedQuickFilter === "watch-later" && "⏰ Watch Later"}
-              {selectedQuickFilter === "wishlist" && "⭐ Wishlist"}
               <X className="h-3 w-3 ml-1" />
             </Badge>
           )}

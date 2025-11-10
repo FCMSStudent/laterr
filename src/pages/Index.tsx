@@ -5,14 +5,12 @@ import { ItemCard } from "@/components/ItemCard";
 import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
 import { SearchBar } from "@/components/SearchBar";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, LogOut, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
-import { FilterBar, type SortOption, type QuickFilter } from "@/components/FilterBar";
+import { FilterBar, type SortOption } from "@/components/FilterBar";
 import {
-  DEFAULT_ITEM_TAGS,
   SUPABASE_ITEMS_TABLE,
 } from "@/constants";
 import type { Item, User, ItemType } from "@/types";
@@ -38,7 +36,6 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
   const [typeFilter, setTypeFilter] = useState<ItemType | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -193,23 +190,6 @@ const Index = () => {
       );
     }
 
-    // Filter by quick filter
-    if (quickFilter !== "all") {
-      if (quickFilter === "recent") {
-        // Show items from last 7 days
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        filtered = filtered.filter(item => 
-          new Date(item.created_at) >= sevenDaysAgo
-        );
-      } else {
-        // Filter by category tag
-        filtered = filtered.filter(item =>
-          item.tags?.includes(quickFilter)
-        );
-      }
-    }
-
     // Filter by type
     if (typeFilter) {
       filtered = filtered.filter(item => item.type === typeFilter);
@@ -236,29 +216,17 @@ const Index = () => {
     }
 
     setFilteredItems(sorted);
-  }, [debouncedSearchQuery, selectedTag, items, quickFilter, typeFilter, sortOption]);
+  }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption]);
 
   const handleItemClick = (item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
   };
 
-  const handleTagClick = (tag: string) => {
-    setSelectedTag(selectedTag === tag ? null : tag);
-  };
-
   const handleClearAllFilters = () => {
     setSelectedTag(null);
-    setQuickFilter("all");
     setTypeFilter(null);
   };
-
-  const allTags = Array.from(
-    new Set([
-      ...items.flatMap(item => item.tags || []),
-      ...DEFAULT_ITEM_TAGS,
-    ])
-  );
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -327,41 +295,13 @@ const Index = () => {
           <FilterBar
             selectedTag={selectedTag}
             selectedSort={sortOption}
-            selectedQuickFilter={quickFilter}
             selectedTypeFilter={typeFilter}
-            onTagClear={() => setSelectedTag(null)}
+            onTagSelect={setSelectedTag}
             onSortChange={setSortOption}
-            onQuickFilterChange={setQuickFilter}
             onTypeFilterChange={setTypeFilter}
             onClearAll={handleClearAllFilters}
           />
         </div>
-
-        {allTags.length > 0 && (
-          <nav aria-label="Filter by tags" className="flex flex-wrap gap-3 justify-center items-center max-w-4xl mx-auto mb-12">
-            <span className="text-sm text-muted-foreground font-semibold mr-2">Tags:</span>
-            {allTags.map((tag) => (
-              <Badge
-                key={tag}
-                variant={selectedTag === tag ? "default" : "outline"}
-                className="cursor-pointer hover:scale-110 premium-transition text-sm font-medium px-3 py-1.5 shadow-sm"
-                onClick={() => handleTagClick(tag)}
-                role="button"
-                tabIndex={0}
-                aria-label={`Filter by tag ${tag}`}
-                aria-pressed={selectedTag === tag}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleTagClick(tag);
-                  }
-                }}
-              >
-                #{tag}
-              </Badge>
-            ))}
-          </nav>
-        )}
 
         <main id="main-content">
           {/* Screen reader announcement for filtered results */}
@@ -402,7 +342,7 @@ const Index = () => {
                   onDelete={handleDeleteItem}
                   onEdit={handleEditItem}
                   onClick={() => handleItemClick(item)}
-                  onTagClick={handleTagClick}
+                  onTagClick={setSelectedTag}
                 />
               ))}
             </div>
