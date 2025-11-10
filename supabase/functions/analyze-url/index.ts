@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { cleanMetadataFields, validateAndParseAiJson } from "../_shared/metadata-utils.ts";
+import { parseHTML } from "npm:linkedom@0.18.5";
+import { Readability } from "npm:@mozilla/readability@0.5.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -187,8 +189,29 @@ serve(async (req) => {
       const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
       metaDescription = descMatch ? descMatch[1] : '';
       
-      // Strip HTML for cleaner text
-      cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
+      // Use Readability to extract main article content
+      try {
+        const { document } = parseHTML(html);
+        const reader = new Readability(document, { 
+          url: url,
+          keepClasses: false 
+        });
+        const article = reader.parse();
+        
+        if (article && article.textContent) {
+          // Use the extracted article text content (already cleaned by Readability)
+          cleanText = article.textContent.trim().replace(/\s+/g, ' ').substring(0, 3000);
+          console.log('Successfully extracted article content using Readability');
+        } else {
+          // Fallback to simple HTML stripping if Readability fails
+          cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
+          console.log('Readability extraction failed, using fallback HTML stripping');
+        }
+      } catch (error) {
+        // Fallback to simple HTML stripping on error
+        console.error('Error using Readability:', error);
+        cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
+      }
     }
     
     console.log('Analyzing content with AI...');
@@ -212,7 +235,7 @@ serve(async (req) => {
             role: 'user',
             content: platform 
               ? `**Extract factual information only from the provided data.**\n\nAnalyze this ${platform} video:\n\nTitle: ${pageTitle}\nChannel: ${authorName}\n\nCategorize based strictly on this information and provide a summary.`
-              : `**Extract factual information only from the provided data.**\n\nAnalyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nURL: ${url}\n\nContent: ${cleanText}\n\nDetermine the content type based only on what is visible in the content above. Categorize appropriately.`
+              : `**Extract factual information only from the provided data.**\n\nAnalyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nURL: ${url}\n\nArticle Content: ${cleanText}\n\nDetermine the content type based only on what is visible in the article content above. Categorize appropriately.`
           }
         ],
       }),
