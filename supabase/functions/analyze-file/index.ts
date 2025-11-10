@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.6.82/legacy/build/pdf.mjs";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
+import { cleanMetadataFields, validateAndParseAiJson, cleanTitle } from "../_shared/metadata-utils.ts";
 
 
 const pdfjs = pdfjsLib as unknown as {
@@ -63,40 +64,14 @@ const analyzeFileToolSchema = {
   }
 };
 
-// Utility: Clean filename into title
-function cleanTitle(fileName: string): string {
-  return fileName
-    .replace(/\.[^/.]+$/, '') // Remove extension
-    .replace(/[_-]/g, ' ') // Replace underscores and hyphens with spaces
-    .replace(/\s+/g, ' ') // Collapse whitespace
-    .split(' ')
-    .map(word => {
-      // Preserve acronyms (all caps, 2-5 letters)
-      if (word.length >= 2 && word.length <= 5 && word === word.toUpperCase()) {
-        return word;
-      }
-      // Title case
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join(' ')
-    .trim();
-}
-
-// Utility: Normalize tags
+// Legacy normalizeTags wrapper for backward compatibility
 function normalizeTags(tags: string[]): string[] {
-  const normalized = tags
-    .map(tag => tag.toLowerCase().trim().replace(/\s+/g, '-'))
-    .filter(tag => tag.length > 0);
-  
-  // Deduplicate
-  const unique = [...new Set(normalized)];
-  
-  // Cap at 6 tags
-  return unique.slice(0, 6);
+  const cleaned = cleanMetadataFields({ tags });
+  return cleaned.tags || [];
 }
 
 // Extract text from PDF
-async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCount: number; metadata: any }> {
+async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCount: number; metadata: Record<string, unknown> }> {
   try {
     console.log('📄 Fetching PDF bytes...');
     const response = await fetch(fileUrl);
@@ -140,7 +115,7 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
-          .map((item: any) => item.str)
+          .map((item: { str: string }) => item.str)
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
@@ -179,7 +154,7 @@ async function generatePdfThumbnail(
 }
 
 // Extract text from DOCX
-async function extractDocxText(fileUrl: string): Promise<{ text: string; metadata: any }> {
+async function extractDocxText(fileUrl: string): Promise<{ text: string; metadata: Record<string, unknown> }> {
   try {
     console.log('📝 Fetching DOCX bytes...');
     const response = await fetch(fileUrl);
@@ -202,7 +177,7 @@ async function extractDocxText(fileUrl: string): Promise<{ text: string; metadat
     }
     
     // Extract metadata from docProps/core.xml
-    let metadata: any = {};
+    let metadata: Record<string, unknown> = {};
     const coreXml = await zip.file('docProps/core.xml')?.async('string');
     if (coreXml) {
       const titleMatch = coreXml.match(/<dc:title>([^<]+)<\/dc:title>/);
@@ -311,25 +286,27 @@ serve(async (req) => {
                 content: [
                   {
                     type: "text",
-                    text: `Analyze this image comprehensively:
+                    text: `**CRITICAL: Base your response ONLY on the provided image content. Do not infer, assume, or add information not directly visible in the image.**
 
-1. **OCR Extraction**: Extract ALL visible text from the image with high accuracy. Include:
+Analyze this image and extract factual information:
+
+1. **OCR Extraction**: Extract ALL visible text exactly as it appears in the image. Include:
    - Main text content, headers, titles
    - Labels, captions, table text
    - Small print or footnotes
    - Any logos with text
 
-2. **Title Suggestion**: If text/logos are present, suggest a descriptive title based on that content. Otherwise, describe the main subject.
+2. **Title**: Create a descriptive title based ONLY on visible text or the primary subject matter shown in the image.
 
-3. **Visual Analysis**: Describe the image:
+3. **Visual Description**: Describe only what is actually visible:
    - Type: document, screenshot, photo, diagram, chart, receipt, form, etc.
-   - Main subject or purpose
-   - Notable visual elements (logos, signatures, graphs, etc.)
-   - Structure and layout
+   - Main subject or purpose as shown
+   - Notable visual elements present (logos, signatures, graphs, etc.)
+   - Layout and structure
 
-4. **Categorization**: Determine category and suggest 4-6 specific tags optimized for filtering and search.
+4. **Categorization**: Determine category and provide 4-6 specific tags based solely on visible content.
 
-5. **Key Information**: Extract and summarize the most important information or key points.
+5. **Key Information**: Extract and list only factual information visible in the image.
 
 Use the analyze_file function to provide structured output.`
                   },
@@ -360,25 +337,23 @@ Use the analyze_file function to provide structured output.`
         const data = await response.json();
         const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
         
-        if (toolCall?.function?.arguments) {
-          try {
-            const parsed = JSON.parse(toolCall.function.arguments);
-            title = parsed.title || title;
-            description = parsed.description || 'Image file';
-            extractedText = parsed.extractedText || '';
-            tags = normalizeTags(parsed.tags || ['image']);
-            category = parsed.category || 'other';
-            summary = parsed.summary || '';
-            keyPoints = parsed.keyPoints || [];
-            console.log('✅ Image analysis:', { title, tags, category, extractedTextLength: extractedText.length });
-          } catch (e) {
-            console.error('⚠️ Tool call parse error:', e);
-            tags = ['image'];
-          }
-        } else {
-          console.log('⚠️ No tool call in response, using fallback');
-          tags = ['image'];
-        }
+        // Use validateAndParseAiJson with fallback
+        const fallback = {
+          title,
+          description: 'Image file',
+          tags: ['image'],
+          category: 'other'
+        };
+        
+        const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+        title = parsed.title || title;
+        description = parsed.description || 'Image file';
+        extractedText = parsed.extractedText || '';
+        tags = parsed.tags || ['image'];
+        category = parsed.category || 'other';
+        summary = parsed.summary || '';
+        keyPoints = parsed.keyPoints || [];
+        console.log('✅ Image analysis:', { title, tags, category, extractedTextLength: extractedText.length });
       } catch (error) {
         console.error('❌ Image analysis error:', error);
         description = 'Image file';
@@ -405,7 +380,9 @@ Use the analyze_file function to provide structured output.`
         // Sample text for AI analysis
         const textSample = sampleText(extractedText, 2500);
         
-        const prompt = `Analyze this PDF document with ${pageCount} pages.
+        const prompt = `**CRITICAL: Base your response ONLY on the provided content. Do not infer, assume, or add information not present in the text.**
+
+Analyze this PDF document with ${pageCount} pages and extract factual information.
 
 **Filename**: ${fileName}
 
@@ -414,24 +391,24 @@ ${textSample}
 
 **Metadata**: ${JSON.stringify(metadata)}
 
-Provide a comprehensive analysis:
+Provide analysis based strictly on the content above:
 
-1. **Title**: Create a clean, professional title. If the embedded metadata title is good, use it. Otherwise, infer from content.
+1. **Title**: Use the embedded metadata title if present and meaningful. Otherwise, create a title from the document's actual content.
 
-2. **Description**: Detailed description of the document's content and purpose. Look for:
-   - Academic identifiers (DOI, PMID, journal names, citations)
-   - Medical/scientific terminology
-   - Business patterns (invoices, reports, proposals, contracts)
-   - Technical documentation (API docs, manuals, specifications)
-   - Date patterns, version numbers
+2. **Description**: Describe the document based only on visible content. Identify:
+   - Academic identifiers if present (DOI, PMID, journal names, citations)
+   - Medical/scientific terminology that appears in text
+   - Business patterns visible (invoices, reports, proposals, contracts)
+   - Technical documentation elements (API docs, manuals, specifications)
+   - Date patterns, version numbers found in text
 
-3. **Category**: Classify as: academic, business, personal, technical, medical, financial, legal, creative, or other
+3. **Category**: Classify based on actual content as: academic, business, personal, technical, medical, financial, legal, creative, or other
 
-4. **Tags**: 4-6 highly specific tags based on content and type
+4. **Tags**: Provide 4-6 highly specific tags based strictly on the content and type present in the document
 
-5. **Summary**: 2-3 sentence summary of the actual content
+5. **Summary**: Write a 2-3 sentence summary of what is actually in the content
 
-6. **Key Points**: 3-5 main topics or findings from the document
+6. **Key Points**: List 3-5 main topics or findings that are explicitly mentioned in the document
 
 Use the analyze_file function to provide structured output.`;
 
@@ -460,22 +437,23 @@ Use the analyze_file function to provide structured output.`;
           const data = await aiResponse.json();
           const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
           
-          if (toolCall?.function?.arguments) {
-            try {
-              const parsed = JSON.parse(toolCall.function.arguments);
-              title = parsed.title || title;
-              description = parsed.description || `PDF document with ${pageCount} pages`;
-              tags = normalizeTags(parsed.tags || ['pdf', 'document']);
-              category = parsed.category || 'other';
-              summary = parsed.summary || '';
-              keyPoints = parsed.keyPoints || [];
-              
-              console.log('✅ PDF analysis:', { title, tags, category, pageCount, textLength: extractedText.length });
-            } catch (e) {
-              console.error('⚠️ Tool call parse error:', e);
-              tags = ['pdf', 'document'];
-            }
-          }
+          // Use validateAndParseAiJson with fallback
+          const fallback = {
+            title,
+            description: `PDF document with ${pageCount} pages`,
+            tags: ['pdf', 'document'],
+            category: 'other'
+          };
+          
+          const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+          title = parsed.title || title;
+          description = parsed.description || `PDF document with ${pageCount} pages`;
+          tags = parsed.tags || ['pdf', 'document'];
+          category = parsed.category || 'other';
+          summary = parsed.summary || '';
+          keyPoints = parsed.keyPoints || [];
+          
+          console.log('✅ PDF analysis:', { title, tags, category, pageCount, textLength: extractedText.length });
         } else {
           console.error('❌ AI analysis failed:', await aiResponse.text());
           tags = ['pdf', 'document'];
@@ -539,7 +517,9 @@ Use the analyze_file function to provide structured output.`;
         
         const textSample = sampleText(extractedText, 2500);
         
-        const prompt = `Analyze this Word document.
+        const prompt = `**CRITICAL: Base your response ONLY on the provided content. Do not infer, assume, or add information not present in the text.**
+
+Analyze this Word document and extract factual information.
 
 **Filename**: ${fileName}
 
@@ -548,14 +528,14 @@ ${textSample}
 
 **Metadata**: ${JSON.stringify(metadata)}
 
-Provide comprehensive analysis:
+Provide analysis based strictly on the content above:
 
-1. **Title**: Clean, professional title (prefer embedded metadata if good)
-2. **Description**: Detailed description based on actual content
-3. **Category**: academic, business, personal, technical, medical, financial, legal, creative, or other
-4. **Tags**: 4-6 specific tags based on content
-5. **Summary**: 2-3 sentence summary of actual content
-6. **Key Points**: 3-5 main topics from the document
+1. **Title**: Use embedded metadata title if present and meaningful. Otherwise, create a title from the document's actual content.
+2. **Description**: Detailed description based only on visible content in the document.
+3. **Category**: Classify based on actual content as: academic, business, personal, technical, medical, financial, legal, creative, or other
+4. **Tags**: 4-6 specific tags based strictly on the content present
+5. **Summary**: 2-3 sentence summary of what is actually in the content
+6. **Key Points**: 3-5 main topics explicitly mentioned in the document
 
 Use the analyze_file function to provide structured output.`;
 
@@ -581,17 +561,23 @@ Use the analyze_file function to provide structured output.`;
           const data = await aiResponse.json();
           const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
           
-          if (toolCall?.function?.arguments) {
-            const parsed = JSON.parse(toolCall.function.arguments);
-            title = parsed.title || title;
-            description = parsed.description || 'Word document';
-            tags = normalizeTags(parsed.tags || ['word', 'document']);
-            category = parsed.category || 'other';
-            summary = parsed.summary || '';
-            keyPoints = parsed.keyPoints || [];
-            
-            console.log('✅ DOCX analysis:', { title, tags, category, textLength: extractedText.length });
-          }
+          // Use validateAndParseAiJson with fallback
+          const fallback = {
+            title,
+            description: 'Word document',
+            tags: ['word', 'document'],
+            category: 'other'
+          };
+          
+          const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+          title = parsed.title || title;
+          description = parsed.description || 'Word document';
+          tags = parsed.tags || ['word', 'document'];
+          category = parsed.category || 'other';
+          summary = parsed.summary || '';
+          keyPoints = parsed.keyPoints || [];
+          
+          console.log('✅ DOCX analysis:', { title, tags, category, textLength: extractedText.length });
         } else {
           console.error('❌ AI analysis failed');
           tags = ['word', 'document'];
@@ -629,14 +615,16 @@ Use the analyze_file function to provide structured output.`;
           extractedText = textContent.substring(0, 50000);
           
           const textSample = sampleText(extractedText, 2000);
-          const prompt = `Analyze this ${fileType} file.
+          const prompt = `**CRITICAL: Base your response ONLY on the provided content. Do not infer, assume, or add information not present in the text.**
+
+Analyze this ${fileType} file and extract factual information.
 
 **Filename**: ${fileName}
 
 **Content Sample**:
 ${textSample}
 
-Provide structured metadata with title, description, 4-6 tags, category, 2-3 sentence summary, and 3-5 key points.
+Provide structured metadata based strictly on the content above: title, description, 4-6 tags, category, 2-3 sentence summary, and 3-5 key points.
 
 Use the analyze_file function.`;
 
@@ -657,16 +645,23 @@ Use the analyze_file function.`;
           if (aiResponse.ok) {
             const data = await aiResponse.json();
             const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-            if (toolCall?.function?.arguments) {
-              const parsed = JSON.parse(toolCall.function.arguments);
-              title = parsed.title || title;
-              description = parsed.description || 'Text file';
-              tags = normalizeTags(parsed.tags || ['text']);
-              category = parsed.category || 'other';
-              summary = parsed.summary || '';
-              keyPoints = parsed.keyPoints || [];
-              console.log('✅ Text file analysis:', { title, tags, category });
-            }
+            
+            // Use validateAndParseAiJson with fallback
+            const fallback = {
+              title,
+              description: 'Text file',
+              tags: ['text'],
+              category: 'other'
+            };
+            
+            const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+            title = parsed.title || title;
+            description = parsed.description || 'Text file';
+            tags = parsed.tags || ['text'];
+            category = parsed.category || 'other';
+            summary = parsed.summary || '';
+            keyPoints = parsed.keyPoints || [];
+            console.log('✅ Text file analysis:', { title, tags, category });
           }
         }
       } catch (error) {
@@ -695,25 +690,36 @@ Use the analyze_file function.`;
       tags = [typeTag, 'document'];
     }
 
-    console.log('✅ Analysis complete:', { 
-      title, 
+    // Final cleanup pass on all metadata before returning
+    const finalMetadata = cleanMetadataFields({
+      title,
+      description,
+      tags,
+      extractedText: extractedText.substring(0, 5000), // Return first 5k for storage
       category,
-      tags, 
-      extractedTextLength: extractedText.length,
-      hasSummary: !!summary,
-      keyPointsCount: keyPoints.length,
+      summary,
+      keyPoints
+    });
+
+    console.log('✅ Analysis complete:', { 
+      title: finalMetadata.title, 
+      category: finalMetadata.category,
+      tags: finalMetadata.tags, 
+      extractedTextLength: finalMetadata.extractedText?.length || 0,
+      hasSummary: !!finalMetadata.summary,
+      keyPointsCount: finalMetadata.keyPoints?.length || 0,
       hasPreviewImage: !!previewImageUrl
     });
 
     return new Response(
       JSON.stringify({
-        title,
-        description,
-        tags,
-        extractedText: extractedText.substring(0, 5000), // Return first 5k for storage
-        category,
-        summary,
-        keyPoints,
+        title: finalMetadata.title,
+        description: finalMetadata.description,
+        tags: finalMetadata.tags,
+        extractedText: finalMetadata.extractedText,
+        category: finalMetadata.category,
+        summary: finalMetadata.summary,
+        keyPoints: finalMetadata.keyPoints,
         previewImageUrl,
       }),
       {

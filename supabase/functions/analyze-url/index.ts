@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { cleanMetadataFields, validateAndParseAiJson } from "../_shared/metadata-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -205,13 +206,13 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that analyzes web content and categorizes it. Respond in JSON format: {"title": "improved title", "summary": "2-3 sentence summary", "tag": "read later", "contentType": "video|article|product|document"}. Use ONLY one of these tags: "watch later" (videos/entertainment), "read later" (articles/documents/text), or "wishlist" (products/items to buy). Choose only ONE tag that best fits the content.'
+            content: '**CRITICAL: Base your response ONLY on the provided content. Do not infer, assume, or add information not present in the text.** You are a helpful assistant that analyzes web content and categorizes it. Respond in JSON format: {"title": "improved title", "summary": "2-3 sentence summary", "tag": "read later", "contentType": "video|article|product|document"}. Use ONLY one of these tags: "watch later" (videos/entertainment), "read later" (articles/documents/text), or "wishlist" (products/items to buy). Choose only ONE tag that best fits the content based on what is actually provided.'
           },
           {
             role: 'user',
             content: platform 
-              ? `Analyze this ${platform} video:\n\nTitle: ${pageTitle}\nChannel: ${authorName}\n\nCategorize appropriately and provide a summary.`
-              : `Analyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nURL: ${url}\n\nContent: ${cleanText}\n\nDetermine if this is a product page, article, document, or work-related content and categorize appropriately.`
+              ? `**Extract factual information only from the provided data.**\n\nAnalyze this ${platform} video:\n\nTitle: ${pageTitle}\nChannel: ${authorName}\n\nCategorize based strictly on this information and provide a summary.`
+              : `**Extract factual information only from the provided data.**\n\nAnalyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nURL: ${url}\n\nContent: ${cleanText}\n\nDetermine the content type based only on what is visible in the content above. Categorize appropriately.`
           }
         ],
       }),
@@ -220,25 +221,37 @@ serve(async (req) => {
     const aiData = await aiResponse.json();
     console.log('AI response:', aiData);
     
-    let result;
+    let rawResult;
     try {
       const content = aiData.choices[0].message.content;
       // Extract JSON from potential markdown code blocks
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
-      result = JSON.parse(jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : content);
+      rawResult = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : content;
     } catch (e) {
-      console.error('Error parsing AI response:', e);
-      result = {
-        title: pageTitle,
-        summary: metaDescription || 'No summary available',
-        tags: ['article']
-      };
+      console.error('Error extracting AI response content:', e);
+      rawResult = undefined;
     }
+
+    // Use validateAndParseAiJson with fallback
+    const fallback = {
+      title: pageTitle,
+      summary: metaDescription || 'No summary available',
+      tags: ['article']
+    };
+    
+    const result = validateAndParseAiJson(rawResult, fallback);
+
+    // Final cleanup pass on all metadata before returning
+    const finalMetadata = cleanMetadataFields({
+      title: result.title || pageTitle,
+      summary: result.summary,
+      tags: result.tags
+    });
 
     return new Response(
       JSON.stringify({
-        title: result.title || pageTitle,
-        summary: result.summary,
+        title: finalMetadata.title || pageTitle,
+        summary: finalMetadata.summary,
         tag: result.tag || (platform ? 'watch later' : 'read later'),
         previewImageUrl: previewImageUrl,
         author: authorName || undefined,
