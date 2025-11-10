@@ -25,6 +25,10 @@ export const ALLOWED_FILE_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "application/vnd.ms-powerpoint",
   "text/plain",
+  "video/mp4",
+  "video/quicktime",
+  "video/x-msvideo",
+  "video/webm",
 ] as const;
 
 export const FILE_INPUT_ACCEPT = [
@@ -38,6 +42,10 @@ export const FILE_INPUT_ACCEPT = [
   ".pptx",
   ".ppt",
   ".txt",
+  ".mp4",
+  ".mov",
+  ".avi",
+  ".webm",
 ].join(",");
 
 export const FILE_SIZE_LIMIT_MB = 20;
@@ -53,6 +61,7 @@ export const SUPABASE_STORAGE_BUCKET_ITEM_IMAGES = "item-images" as const;
 export const SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX = `/${SUPABASE_STORAGE_BUCKET_ITEM_IMAGES}/` as const;
 export const SUPABASE_FUNCTION_ANALYZE_URL = "analyze-url" as const;
 export const SUPABASE_FUNCTION_ANALYZE_FILE = "analyze-file" as const;
+export const SUPABASE_FUNCTION_GENERATE_EMBEDDING = "generate-embedding" as const;
 
 export const FILE_ANALYSIS_SIGNED_URL_EXPIRATION = 60 * 10;
 export const PREVIEW_SIGNED_URL_EXPIRATION = 60 * 60;

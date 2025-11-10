@@ -1,6 +1,6 @@
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
-export type ItemType = 'url' | 'note' | 'image' | 'document' | 'file';
+export type ItemType = 'url' | 'note' | 'image' | 'document' | 'file' | 'video';
 
 export interface Tag {
   id?: string;
@@ -19,6 +19,7 @@ export interface Item {
   user_notes: string | null;
   tags: string[];
   preview_image_url: string | null;
+  embedding?: number[] | null;
   created_at: string;
   updated_at?: string;
 }
