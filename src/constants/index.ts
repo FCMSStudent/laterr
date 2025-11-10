@@ -19,6 +19,12 @@ export const ALLOWED_FILE_MIME_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "text/csv",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-powerpoint",
+  "text/plain",
 ] as const;
 
 export const FILE_INPUT_ACCEPT = [
@@ -26,6 +32,12 @@ export const FILE_INPUT_ACCEPT = [
   ".pdf",
   ".docx",
   ".doc",
+  ".xlsx",
+  ".xls",
+  ".csv",
+  ".pptx",
+  ".ppt",
+  ".txt",
 ].join(",");
 
 export const FILE_SIZE_LIMIT_MB = 20;
