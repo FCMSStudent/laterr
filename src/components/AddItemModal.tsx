@@ -78,6 +78,28 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         setSuggestedCategory(data.tag);
       }
 
+      // Generate embedding for semantic search
+      let embedding = null;
+      try {
+        setStatusStep('generating embeddings');
+        const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
+          body: {
+            title: data.title,
+            summary: data.summary,
+            tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
+            extractedText: data.description || ''
+          }
+        });
+
+        if (!embeddingError && embeddingData?.embedding) {
+          embedding = embeddingData.embedding;
+        }
+      } catch (embError) {
+        console.warn('Failed to generate embedding, continuing without it:', embError);
+      }
+
+      setStatusStep('saving');
+
       const { error: insertError } = await supabase
         .from(SUPABASE_ITEMS_TABLE)
         .insert({
@@ -87,6 +109,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           summary: data.summary,
           tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
           preview_image_url: data.previewImageUrl,
+          embedding: embedding,
           user_id: user.id,
         });
 
@@ -131,6 +154,29 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       if (!user) throw new Error('Not authenticated');
 
       const firstLine = noteResult.data.split('\n')[0].substring(0, NOTE_TITLE_MAX_LENGTH);
+      const noteSummary = noteResult.data.substring(0, NOTE_SUMMARY_MAX_LENGTH);
+
+      // Generate embedding for semantic search
+      let embedding = null;
+      try {
+        setStatusStep('generating embeddings');
+        const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
+          body: {
+            title: firstLine || 'Untitled Note',
+            summary: noteSummary,
+            tags: [...DEFAULT_ITEM_TAGS],
+            extractedText: noteResult.data.substring(0, 1000)
+          }
+        });
+
+        if (!embeddingError && embeddingData?.embedding) {
+          embedding = embeddingData.embedding;
+        }
+      } catch (embError) {
+        console.warn('Failed to generate embedding, continuing without it:', embError);
+      }
+
+      setStatusStep('saving');
 
       const { error } = await supabase
         .from(SUPABASE_ITEMS_TABLE)
@@ -138,8 +184,9 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           type: 'note',
           title: firstLine || 'Untitled Note',
           content: noteResult.data,
-          summary: noteResult.data.substring(0, NOTE_SUMMARY_MAX_LENGTH),
+          summary: noteSummary,
           tags: [...DEFAULT_ITEM_TAGS],
+          embedding: embedding,
           user_id: user.id,
         });
 
@@ -224,6 +271,29 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       } else if (file.type === 'application/pdf' || file.type.includes('word')) {
         itemType = 'document';
         defaultTag = DEFAULT_ITEM_TAG;  // Always read later for documents
+      } else if (file.type.startsWith('video/')) {
+        itemType = 'video';
+        defaultTag = 'watch later';  // Videos go to watch later
+      }
+
+      // Generate embedding for semantic search
+      let embedding = null;
+      try {
+        setStatusStep('generating embeddings');
+        const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
+          body: {
+            title: data.title,
+            summary: data.summary || data.description,
+            tags: [defaultTag],
+            extractedText: data.extractedText || ''
+          }
+        });
+
+        if (!embeddingError && embeddingData?.embedding) {
+          embedding = embeddingData.embedding;
+        }
+      } catch (embError) {
+        console.warn('Failed to generate embedding, continuing without it:', embError);
       }
 
       // Insert into database
@@ -238,13 +308,15 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           summary: data.summary || data.description,
           tags: [defaultTag],
           preview_image_url: file.type.startsWith('image/') ? publicUrl : (data.previewImageUrl || null),
+          embedding: embedding,
           user_id: user.id,
         });
 
       if (insertError) throw insertError;
 
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' :
-                           file.type === 'application/pdf' ? 'PDF' : 'Document';
+                           file.type === 'application/pdf' ? 'PDF' : 
+                           file.type.startsWith('video/') ? 'Video' : 'Document';
       toast.success(`${fileTypeLabel} added to your space! 📁`);
       setFile(null);
       onOpenChange(false);

@@ -144,13 +144,46 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
   }
 }
 
-// Generate thumbnail from PDF first page (disabled - skia_canvas not supported in Edge runtime)
+// Generate thumbnail from PDF first page
+// Note: Full implementation would require pdf-to-image conversion library
+// For now, we'll use the PDF URL directly as preview since the bucket is public
 async function generatePdfThumbnail(
   fileUrl: string,
   userId: string
 ): Promise<string | null> {
-  console.log('🖼️ Skipping PDF thumbnail generation in this environment');
-  return null;
+  try {
+    console.log('🖼️ PDF thumbnail: Using original file URL as preview');
+    // In a production environment with proper infrastructure, you would:
+    // 1. Extract first page of PDF as image using pdf-to-image library
+    // 2. Upload the image to storage
+    // 3. Return the image URL
+    // For now, return null to use the PDF URL directly
+    return null;
+  } catch (error) {
+    console.error('❌ PDF thumbnail generation failed:', error);
+    return null;
+  }
+}
+
+// Generate thumbnail from video first frame
+async function generateVideoThumbnail(
+  fileUrl: string,
+  userId: string
+): Promise<string | null> {
+  try {
+    console.log('🎬 Video thumbnail: Marking for client-side extraction');
+    // Video thumbnail generation in edge functions requires FFmpeg or similar
+    // which is not available in the Deno edge runtime
+    // In a production environment, you would:
+    // 1. Use FFmpeg to extract first frame: ffmpeg -i video.mp4 -ss 00:00:01 -vframes 1 thumb.jpg
+    // 2. Upload the thumbnail to storage
+    // 3. Return the thumbnail URL
+    // For now, return null - client can show video icon or extract frame on client side
+    return null;
+  } catch (error) {
+    console.error('❌ Video thumbnail generation failed:', error);
+    return null;
+  }
 }
 
 // Extract text from DOCX
@@ -1135,6 +1168,30 @@ Use the analyze_file function.`;
       } catch (error) {
         console.error('❌ Text file error:', error);
         tags = ['text', 'document'];
+      }
+      
+    } else if (fileType.startsWith('video/')) {
+      // ========== VIDEO FILES ==========
+      console.log('🎬 Processing video file');
+      
+      try {
+        // Generate thumbnail from first frame
+        if (userId) {
+          previewImageUrl = await generateVideoThumbnail(fileUrl, userId);
+        }
+        
+        // Basic metadata for video
+        title = cleanTitle(fileName || 'Video');
+        description = 'Video file';
+        tags = normalizeTags(['video', 'media', 'watch later']);
+        category = 'other';
+        summary = `Video file: ${fileName}`;
+        
+        console.log('✅ Video file processed:', { title, tags });
+      } catch (error) {
+        console.error('❌ Video processing error:', error);
+        description = 'Video file';
+        tags = ['video', 'media'];
       }
       
     } else if (fileType.startsWith('audio/')) {

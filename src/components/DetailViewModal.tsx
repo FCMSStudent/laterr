@@ -15,6 +15,7 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { SimilarItemsPanel } from "@/components/SimilarItemsPanel";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -306,6 +307,23 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 </div>
               </div>
             </div>
+
+            {/* Similar Items Section */}
+            {item?.embedding && (
+              <div className="pt-4">
+                <SimilarItemsPanel 
+                  itemId={item.id} 
+                  onItemClick={(similarItem) => {
+                    onOpenChange(false);
+                    // This will trigger opening the detail view for the similar item
+                    setTimeout(() => {
+                      const event = new CustomEvent('open-item-detail', { detail: similarItem });
+                      window.dispatchEvent(event);
+                    }, 100);
+                  }}
+                />
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-4 border-t border-border">
