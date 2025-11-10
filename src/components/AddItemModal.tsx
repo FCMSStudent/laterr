@@ -470,7 +470,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
             </div>
             
             <p id="file-helper-text" className="text-xs text-muted-foreground text-center">
-              Supports: Images, PDFs, Word documents (max {FILE_SIZE_LIMIT_MB}MB)
+              Supports: Images, PDFs, Word, Excel, PowerPoint, CSV, TXT (max {FILE_SIZE_LIMIT_MB}MB)
             </p>
             <div className="space-y-2">
               <LoadingButton

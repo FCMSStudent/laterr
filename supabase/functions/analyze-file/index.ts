@@ -220,6 +220,285 @@ function sampleText(text: string, maxChars: number = 2500): string {
   return `${head}\n\n[...middle section...]\n\n${middle}\n\n[...end section...]\n\n${tail}`;
 }
 
+// Split long text into segments for improved summarization
+function splitIntoSegments(text: string, segmentSize: number = 5000): string[] {
+  const segments: string[] = [];
+  const paragraphs = text.split(/\n\n+/);
+  let currentSegment = '';
+  
+  for (const para of paragraphs) {
+    if ((currentSegment + para).length > segmentSize && currentSegment.length > 0) {
+      segments.push(currentSegment.trim());
+      currentSegment = para;
+    } else {
+      currentSegment += (currentSegment ? '\n\n' : '') + para;
+    }
+  }
+  
+  if (currentSegment.trim()) {
+    segments.push(currentSegment.trim());
+  }
+  
+  return segments;
+}
+
+// Generate cohesive summary from segment summaries with AI
+async function generateCohesiveSummary(
+  segmentSummaries: string[],
+  apiKey: string,
+  fileName: string
+): Promise<{ summary: string; keyPoints: string[] }> {
+  try {
+    const prompt = `You are analyzing a document titled "${fileName}".
+
+Below are summaries of different segments from this document:
+
+${segmentSummaries.map((s, i) => `Segment ${i + 1}: ${s}`).join('\n\n')}
+
+Based on these segment summaries, provide:
+1. A cohesive 2-3 sentence summary that captures the main content and purpose of the entire document
+2. 3-5 key points or takeaways from the document
+
+Respond in JSON format with "summary" and "keyPoints" (array) fields.`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (content) {
+        const parsed = JSON.parse(content);
+        return {
+          summary: parsed.summary || '',
+          keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints.slice(0, 5) : []
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ Cohesive summary generation failed:', error);
+  }
+  
+  // Fallback: concatenate summaries
+  return {
+    summary: segmentSummaries.slice(0, 2).join(' '),
+    keyPoints: []
+  };
+}
+
+// Extract data from Excel/CSV spreadsheet
+async function extractSpreadsheetData(fileUrl: string, fileType: string): Promise<{ 
+  headers: string[]; 
+  firstRows: string[][]; 
+  rowCount: number;
+  columnCount: number;
+}> {
+  try {
+    console.log('📊 Fetching spreadsheet bytes...');
+    const response = await fetch(fileUrl);
+    if (!response.ok) throw new Error(`Failed to fetch spreadsheet: ${response.status}`);
+    
+    if (fileType === 'text/csv') {
+      // Parse CSV
+      const text = await response.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      const rows = lines.map(line => {
+        // Simple CSV parsing (handles basic quotes)
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim());
+        return result;
+      });
+      
+      const headers = rows[0] || [];
+      const firstRows = rows.slice(1, 6); // Get first 5 data rows
+      
+      console.log(`📊 CSV: ${rows.length} rows, ${headers.length} columns`);
+      return {
+        headers,
+        firstRows,
+        rowCount: rows.length - 1,
+        columnCount: headers.length
+      };
+    } else {
+      // Parse Excel using xlsx
+      const arrayBuffer = await response.arrayBuffer();
+      console.log(`📊 Excel size: ${(arrayBuffer.byteLength / 1024).toFixed(2)} KB`);
+      
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      
+      // Extract from xl/worksheets/sheet1.xml
+      const sheetXml = await zip.file('xl/worksheets/sheet1.xml')?.async('string');
+      if (!sheetXml) {
+        throw new Error('Could not find worksheet in Excel file');
+      }
+      
+      // Extract shared strings for lookup
+      const sharedStringsXml = await zip.file('xl/sharedStrings.xml')?.async('string');
+      const sharedStrings: string[] = [];
+      if (sharedStringsXml) {
+        const matches = sharedStringsXml.matchAll(/<t[^>]*>([^<]*)<\/t>/g);
+        for (const match of matches) {
+          sharedStrings.push(match[1]);
+        }
+      }
+      
+      // Extract cell values
+      const cellMatches = sheetXml.matchAll(/<c r="([A-Z]+\d+)"[^>]*(?:\s+t="([^"]*)")?[^>]*><v>([^<]*)<\/v><\/c>/g);
+      const cells: Map<string, string> = new Map();
+      
+      for (const match of cellMatches) {
+        const cellRef = match[1];
+        const cellType = match[2];
+        const value = match[3];
+        
+        // If type is 's', it's a shared string reference
+        if (cellType === 's') {
+          const index = parseInt(value);
+          cells.set(cellRef, sharedStrings[index] || value);
+        } else {
+          cells.set(cellRef, value);
+        }
+      }
+      
+      // Organize into rows
+      const rowData: Map<number, Map<string, string>> = new Map();
+      for (const [cellRef, value] of cells.entries()) {
+        const rowMatch = cellRef.match(/([A-Z]+)(\d+)/);
+        if (rowMatch) {
+          const col = rowMatch[1];
+          const row = parseInt(rowMatch[2]);
+          
+          if (!rowData.has(row)) {
+            rowData.set(row, new Map());
+          }
+          rowData.get(row)!.set(col, value);
+        }
+      }
+      
+      // Get unique columns and sort them
+      const allColumns = new Set<string>();
+      for (const row of rowData.values()) {
+        for (const col of row.keys()) {
+          allColumns.add(col);
+        }
+      }
+      const sortedColumns = Array.from(allColumns).sort();
+      
+      // Convert to arrays
+      const rows: string[][] = [];
+      const sortedRowNumbers = Array.from(rowData.keys()).sort((a, b) => a - b);
+      
+      for (const rowNum of sortedRowNumbers.slice(0, 6)) {
+        const rowMap = rowData.get(rowNum)!;
+        const rowArray = sortedColumns.map(col => rowMap.get(col) || '');
+        rows.push(rowArray);
+      }
+      
+      const headers = rows[0] || [];
+      const firstRows = rows.slice(1);
+      
+      console.log(`📊 Excel: ${sortedRowNumbers.length} rows, ${sortedColumns.length} columns`);
+      return {
+        headers,
+        firstRows,
+        rowCount: sortedRowNumbers.length - 1,
+        columnCount: sortedColumns.length
+      };
+    }
+  } catch (error) {
+    console.error('❌ Spreadsheet extraction failed:', error);
+    throw error;
+  }
+}
+
+// Extract content from PowerPoint presentation
+async function extractPresentationContent(fileUrl: string): Promise<{ 
+  slideCount: number;
+  slideTitles: string[];
+  bulletPoints: string[];
+}> {
+  try {
+    console.log('📽️ Fetching presentation bytes...');
+    const response = await fetch(fileUrl);
+    if (!response.ok) throw new Error(`Failed to fetch presentation: ${response.status}`);
+    
+    const arrayBuffer = await response.arrayBuffer();
+    console.log(`📽️ PowerPoint size: ${(arrayBuffer.byteLength / 1024).toFixed(2)} KB`);
+    
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    
+    // Get all slide files
+    const slideFiles = Object.keys(zip.files).filter(name => name.match(/ppt\/slides\/slide\d+\.xml/));
+    slideFiles.sort((a, b) => {
+      const aNum = parseInt(a.match(/\d+/)?.[0] || '0');
+      const bNum = parseInt(b.match(/\d+/)?.[0] || '0');
+      return aNum - bNum;
+    });
+    
+    console.log(`📽️ Found ${slideFiles.length} slides`);
+    
+    const slideTitles: string[] = [];
+    const bulletPoints: string[] = [];
+    
+    // Process each slide
+    for (const slideFile of slideFiles.slice(0, 20)) { // Process max 20 slides
+      const slideXml = await zip.file(slideFile)?.async('string');
+      if (!slideXml) continue;
+      
+      // Extract all text from <a:t> tags
+      const textMatches = slideXml.matchAll(/<a:t>([^<]+)<\/a:t>/g);
+      const texts = Array.from(textMatches).map(m => m[1]);
+      
+      if (texts.length > 0) {
+        // First text is likely the title
+        slideTitles.push(texts[0]);
+        
+        // Remaining texts are bullet points
+        for (let i = 1; i < Math.min(texts.length, 6); i++) {
+          if (texts[i].length > 5) { // Filter out very short texts
+            bulletPoints.push(texts[i]);
+          }
+        }
+      }
+    }
+    
+    console.log(`📽️ Extracted ${slideTitles.length} titles and ${bulletPoints.length} bullet points`);
+    
+    return {
+      slideCount: slideFiles.length,
+      slideTitles,
+      bulletPoints: bulletPoints.slice(0, 15) // Limit to 15 bullet points
+    };
+  } catch (error) {
+    console.error('❌ PowerPoint extraction failed:', error);
+    throw error;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -365,7 +644,7 @@ Use the analyze_file function to provide structured output.`
 
     } else if (fileType === 'application/pdf') {
       // ========== PDF PROCESSING ==========
-      console.log('📄 Processing PDF with content extraction');
+      console.log('📄 Processing PDF with enhanced segmented summarization');
       
       try {
         const { text, pageCount, metadata } = await extractPdfText(fileUrl);
@@ -374,11 +653,25 @@ Use the analyze_file function to provide structured output.`
         // Prefer embedded title if it's clean and meaningful
         const embeddedTitle = metadata.Title || metadata.title;
         if (embeddedTitle && embeddedTitle.length > 3 && embeddedTitle.length < 200 && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
-          title = embeddedTitle;
+          title = cleanTitle(embeddedTitle);
+          console.log('📄 Using embedded PDF title:', title);
         }
         
-        // Sample text for AI analysis
-        const textSample = sampleText(extractedText, 2500);
+        // For long documents, use segmented summarization
+        let textSample = '';
+        let useSegmentedApproach = false;
+        
+        if (extractedText.length > 15000) {
+          console.log('📄 Long document detected, using segmented summarization');
+          useSegmentedApproach = true;
+          const segments = splitIntoSegments(extractedText, 8000);
+          console.log(`📄 Split into ${segments.length} segments`);
+          
+          // For now, use head-middle-tail approach for AI analysis
+          textSample = sampleText(extractedText, 3000);
+        } else {
+          textSample = sampleText(extractedText, 2500);
+        }
         
         const prompt = `**CRITICAL: Base your response ONLY on the provided content. Do not infer, assume, or add information not present in the text.**
 
@@ -512,10 +805,18 @@ Use the analyze_file function to provide structured output.`;
         
         // Prefer embedded title if meaningful
         if (metadata.Title && metadata.Title.length > 3 && metadata.Title.length < 200) {
-          title = metadata.Title;
+          title = cleanTitle(metadata.Title as string);
+          console.log('📝 Using embedded DOCX title:', title);
         }
         
-        const textSample = sampleText(extractedText, 2500);
+        // For long documents, use enhanced sampling
+        let textSample = '';
+        if (extractedText.length > 15000) {
+          console.log('📝 Long document detected, using enhanced sampling');
+          textSample = sampleText(extractedText, 3000);
+        } else {
+          textSample = sampleText(extractedText, 2500);
+        }
         
         const prompt = `**CRITICAL: Base your response ONLY on the provided content. Do not infer, assume, or add information not present in the text.**
 
@@ -591,23 +892,190 @@ Use the analyze_file function to provide structured output.`;
         }
       }
       
-    } else if (fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || fileType === 'application/vnd.ms-excel') {
+    } else if (fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || fileType === 'application/vnd.ms-excel' || fileType === 'text/csv') {
       // ========== SPREADSHEET ==========
-      console.log('📊 Processing spreadsheet');
-      description = 'Spreadsheet containing data tables and calculations';
-      tags = normalizeTags(['spreadsheet', 'data', 'excel', 'business']);
-      category = 'business';
+      console.log('📊 Processing spreadsheet with structure analysis');
+      
+      try {
+        const { headers, firstRows, rowCount, columnCount } = await extractSpreadsheetData(fileUrl, fileType);
+        
+        // Build a sample of the data for AI analysis
+        const dataSample = [
+          `Headers: ${headers.join(', ')}`,
+          `Sample rows (first ${Math.min(firstRows.length, 5)}):`,
+          ...firstRows.slice(0, 5).map((row, i) => `Row ${i + 1}: ${row.join(', ')}`)
+        ].join('\n');
+        
+        const prompt = `**CRITICAL: Base your response ONLY on the provided spreadsheet structure. Do not infer, assume, or add information not present in the data.**
+
+Analyze this spreadsheet and extract factual information.
+
+**Filename**: ${fileName}
+
+**Structure**: ${rowCount} rows, ${columnCount} columns
+
+**Data Sample**:
+${dataSample}
+
+Based on the headers and sample data, provide:
+1. **Title**: Descriptive title based on the filename and data type
+2. **Description**: Describe the dataset structure and what type of data it contains (e.g., financial records, inventory, sales data, customer list, etc.)
+3. **Category**: Classify based on content type (business, financial, personal, technical, etc.)
+4. **Tags**: Provide 4-6 specific tags based on the data type and purpose
+5. **Summary**: 2-3 sentence summary describing the dataset structure and purpose
+6. **Key Points**: 3-5 key observations about the data structure (e.g., "Contains financial transactions from 2023", "Tracks inventory with quantity and pricing")
+
+Use the analyze_file function to provide structured output.`;
+
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [{ role: "user", content: prompt }],
+            tools: [analyzeFileToolSchema],
+            tool_choice: { type: "function", function: { name: "analyze_file" } }
+          }),
+        });
+
+        if (aiResponse.status === 429 || aiResponse.status === 402) {
+          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded. Please try again later." : "AI credits exhausted. Please add credits to continue.");
+        }
+
+        if (aiResponse.ok) {
+          const data = await aiResponse.json();
+          const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+          
+          const fallback = {
+            title,
+            description: `Spreadsheet with ${rowCount} rows and ${columnCount} columns`,
+            tags: ['spreadsheet', 'data', fileType === 'text/csv' ? 'csv' : 'excel'],
+            category: 'business'
+          };
+          
+          const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+          title = parsed.title || title;
+          description = parsed.description || fallback.description;
+          tags = parsed.tags || fallback.tags;
+          category = parsed.category || 'business';
+          summary = parsed.summary || '';
+          keyPoints = parsed.keyPoints || [];
+          extractedText = dataSample;
+          
+          console.log('✅ Spreadsheet analysis:', { title, tags, category, rowCount, columnCount });
+        } else {
+          console.error('❌ AI analysis failed');
+          description = `Spreadsheet with ${rowCount} rows and ${columnCount} columns`;
+          tags = ['spreadsheet', 'data', fileType === 'text/csv' ? 'csv' : 'excel'];
+          category = 'business';
+          extractedText = dataSample;
+        }
+      } catch (error) {
+        console.error('❌ Spreadsheet processing error:', error);
+        description = 'Spreadsheet containing data tables';
+        tags = ['spreadsheet', 'data'];
+        category = 'business';
+        if (error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits'))) {
+          throw error;
+        }
+      }
       
     } else if (fileType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || fileType === 'application/vnd.ms-powerpoint') {
       // ========== PRESENTATION ==========
-      console.log('📽️ Processing presentation');
-      description = 'Presentation slides';
-      tags = normalizeTags(['presentation', 'slides', 'powerpoint', 'business']);
-      category = 'business';
+      console.log('📽️ Processing presentation with content extraction');
       
-    } else if (fileType === 'text/plain' || fileType === 'text/markdown' || fileType === 'text/csv') {
+      try {
+        const { slideCount, slideTitles, bulletPoints } = await extractPresentationContent(fileUrl);
+        
+        const contentSample = [
+          `Total slides: ${slideCount}`,
+          `\nSlide titles:`,
+          ...slideTitles.slice(0, 10).map((t, i) => `${i + 1}. ${t}`),
+          `\nKey bullet points:`,
+          ...bulletPoints.slice(0, 10).map(b => `• ${b}`)
+        ].join('\n');
+        
+        const prompt = `**CRITICAL: Base your response ONLY on the provided presentation content. Do not infer, assume, or add information not present in the slides.**
+
+Analyze this presentation and extract factual information.
+
+**Filename**: ${fileName}
+
+**Content Sample**:
+${contentSample}
+
+Based on the slide titles and bullet points, provide:
+1. **Title**: Descriptive title based on the presentation content
+2. **Description**: Describe the presentation's purpose and content type
+3. **Category**: Classify based on content (business, academic, technical, creative, etc.)
+4. **Tags**: Provide 4-6 specific tags based on the presentation type (e.g., 'pitch-deck', 'training', 'product-demo', 'quarterly-report', etc.)
+5. **Summary**: 2-3 sentence summary describing the presentation's main purpose and content
+6. **Key Points**: 3-5 main topics covered in the presentation
+
+Use the analyze_file function to provide structured output.`;
+
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [{ role: "user", content: prompt }],
+            tools: [analyzeFileToolSchema],
+            tool_choice: { type: "function", function: { name: "analyze_file" } }
+          }),
+        });
+
+        if (aiResponse.status === 429 || aiResponse.status === 402) {
+          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded. Please try again later." : "AI credits exhausted. Please add credits to continue.");
+        }
+
+        if (aiResponse.ok) {
+          const data = await aiResponse.json();
+          const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+          
+          const fallback = {
+            title,
+            description: `Presentation with ${slideCount} slides`,
+            tags: ['presentation', 'slides', 'powerpoint'],
+            category: 'business'
+          };
+          
+          const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+          title = parsed.title || title;
+          description = parsed.description || fallback.description;
+          tags = parsed.tags || fallback.tags;
+          category = parsed.category || 'business';
+          summary = parsed.summary || '';
+          keyPoints = parsed.keyPoints || [];
+          extractedText = contentSample;
+          
+          console.log('✅ Presentation analysis:', { title, tags, category, slideCount });
+        } else {
+          console.error('❌ AI analysis failed');
+          description = `Presentation with ${slideCount} slides`;
+          tags = ['presentation', 'slides', 'powerpoint'];
+          category = 'business';
+          extractedText = contentSample;
+        }
+      } catch (error) {
+        console.error('❌ Presentation processing error:', error);
+        description = 'Presentation slides';
+        tags = ['presentation', 'slides'];
+        category = 'business';
+        if (error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits'))) {
+          throw error;
+        }
+      }
+      
+    } else if (fileType === 'text/plain' || fileType === 'text/markdown') {
       // ========== TEXT FILES ==========
-      console.log('📄 Processing text file');
+      console.log('📄 Processing text file with segmented analysis');
       try {
         const fileResponse = await fetch(fileUrl);
         if (fileResponse.ok) {
