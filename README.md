@@ -1,98 +1,112 @@
-# Welcome to your Lovable project
+# Laterr Garden
 
-## Project info
+A beautiful, modern digital garden application for organizing and discovering your content with AI-powered semantic search.
 
-**URL**: https://lovable.dev/projects/28683ca3-713b-4aac-a657-44ab3b98e337
+## ✨ Features
 
-## How can I edit this code?
+- 📝 **Content Management**: Save URLs, notes, images, videos, and documents
+- 🔍 **Semantic Search**: AI-powered search to find related content by meaning
+- 🎨 **Beautiful UI**: Apple-inspired glassmorphism design with dark mode
+- 🤖 **Smart Recommendations**: Personalized content suggestions
+- 📱 **Responsive**: Works great on desktop, tablet, and mobile
 
-There are several ways of editing your application.
+## 🚀 Quick Start
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/28683ca3-713b-4aac-a657-44ab3b98e337) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
 ```
 
-**Edit a file directly in GitHub**
+### Prerequisites
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Node.js 18+ and npm
+- Supabase account (for backend)
+- OpenAI API key (for embeddings)
 
-**Use GitHub Codespaces**
+## 🛠 Technologies
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- **Frontend**: React 18, TypeScript, Vite
+- **UI Components**: shadcn/ui, Radix UI, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **AI**: OpenAI Embeddings, pgvector
+- **State Management**: TanStack Query
 
-## What technologies are used for this project?
+## 📚 Documentation
 
-This project is built with:
+All documentation has been organized in the [`/docs`](docs/) folder:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **[Documentation Index](docs/README.md)** - Start here for navigation
+- **[Design System](docs/DESIGN_SYSTEM.md)** - Colors, typography, spacing, buttons
+- **[Embeddings Guide](docs/EMBEDDINGS_GUIDE.md)** - Semantic search implementation
+- **[UI/UX Feedback](docs/UI_UX_FEEDBACK.md)** - Comprehensive UI analysis
+- **[Testing Checklist](docs/TESTING_CHECKLIST.md)** - Testing guidelines
+- **[Optimization Plan](docs/OPTIMIZATION_PLAN.md)** - Performance improvements
 
-## How can I deploy this project?
+## 🎨 Design System
 
-Simply open [Lovable](https://lovable.dev/projects/28683ca3-713b-4aac-a657-44ab3b98e337) and click on Share -> Publish.
+The application uses a comprehensive design system with:
+- WCAG AA compliant color palette
+- Responsive typography with Inter font
+- Consistent 4px spacing scale
+- Accessible focus indicators
 
-## Can I connect a custom domain to my Lovable project?
+See [Design System Documentation](docs/DESIGN_SYSTEM.md) for details.
 
-Yes, you can!
+## 🔧 Project Structure
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```
+├── docs/               # All documentation
+├── public/             # Static assets
+├── src/
+│   ├── components/     # React components
+│   ├── hooks/          # Custom React hooks
+│   ├── integrations/   # External service integrations
+│   ├── lib/            # Utility functions
+│   ├── pages/          # Page components
+│   ├── styles/         # Global styles
+│   └── types/          # TypeScript types
+├── supabase/
+│   ├── functions/      # Edge functions
+│   └── migrations/     # Database migrations
+└── ...
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🌐 Deployment
 
-## Gradient Background
+This project is designed to work with [Lovable](https://lovable.dev):
 
-This app includes a fixed, masked radial gradient with a noise overlay for a soft, elegant visual effect.
+1. Visit [Lovable Project](https://lovable.dev/projects/28683ca3-713b-4aac-a657-44ab3b98e337)
+2. Click Share → Publish
+3. Configure custom domain in Project > Settings > Domains
 
-### Theming
-- Edit CSS variables in `src/styles/gradient.css`:
-  - `--gradient-accent`, `--gradient-accent-2`: glow colors (HSL).
-  - `--gradient-bg`: base page background.
-- Dark mode is controlled by the `.dark` class on the root element; tune values in the `.dark` block.
+## 🤝 Contributing
 
-### Toggling
-- Add `.has-subtle-bg` to the `<body>` or a root wrapper to reduce intensity.
-- To disable entirely on a view, conditionally render `GradientBackground`.
+1. Create a new branch for your feature
+2. Make your changes following the design system guidelines
+3. Test your changes thoroughly
+4. Submit a pull request
 
-### Performance notes
-- Keep `blur()` under ~40px for smoother performance on low-end devices.
-- Layers are `position: fixed` with `pointer-events: none` and `z-index: -1`.
+## 📄 License
 
-### Safari masking fallback
-- Safari versions prior to 15.4 may have limited `mask-image` support. If targeting older Safari versions, you can reduce reliance on masking by:
-  - Lowering the gradient opacity values (e.g., reduce from 0.85 to 0.6)
-  - Extending the base `linear-gradient` coverage to ensure a solid background
-  - Testing on the target Safari version to verify appearance
+Private project - All rights reserved
+
+## 🔗 Links
+
+- **Project**: https://lovable.dev/projects/28683ca3-713b-4aac-a657-44ab3b98e337
+- **Documentation**: [/docs](docs/)
+- **Design System**: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
 
