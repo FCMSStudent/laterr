@@ -9,5 +9,8 @@ verify_jwt = true
 [functions.analyze-file]
 verify_jwt = true
 
+[functions.generate-embedding]
+verify_jwt = true
+
 [functions.generate-tag-icon]
 verify_jwt = true
