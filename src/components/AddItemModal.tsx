@@ -244,14 +244,17 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       if (!user) throw new Error('Not authenticated');
 
       // Upload to storage with user-specific path
-      const { fileName, publicUrl } = await uploadFileToStorage(file, user.id);
+      const { fileName, storagePath } = await uploadFileToStorage(file, user.id);
 
       setStatusStep('extracting');
 
-      // Analyze with AI - using the new analyze-file function with public URL
+      // Create a temporary signed URL for the analyze-file function
+      const signedUrl = await createSignedUrlForFile(fileName, FILE_ANALYSIS_SIGNED_URL_EXPIRATION);
+
+      // Analyze with AI - using the analyze-file function with signed URL
       const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
         body: {
-          fileUrl: publicUrl,
+          fileUrl: signedUrl,
           fileType: file.type,
           fileName: file.name
         }
@@ -304,10 +307,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         .insert({
           type: itemType,
           title: data.title,
-          content: publicUrl,
+          content: storagePath,
           summary: data.summary || data.description,
           tags: [defaultTag],
-          preview_image_url: file.type.startsWith('image/') ? publicUrl : (data.previewImageUrl || null),
+          preview_image_url: file.type.startsWith('image/') ? storagePath : (data.previewImageUrl || null),
           embedding: embedding,
           user_id: user.id,
         });
