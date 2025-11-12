@@ -79,13 +79,13 @@ export async function generateSignedUrlsForItems(items: Item[]): Promise<Item[]>
  * Uploads a file to Supabase storage
  * @param file - The file to upload
  * @param userId - The user ID for path organization
- * @returns Object containing the file name and public URL
+ * @returns Object containing the file name and storage path
  * @throws Error if upload fails
  */
 export async function uploadFileToStorage(
   file: File,
   userId: string
-): Promise<{ fileName: string; publicUrl: string }> {
+): Promise<{ fileName: string; storagePath: string }> {
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
   
@@ -97,11 +97,10 @@ export async function uploadFileToStorage(
     throw uploadError;
   }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
-    .getPublicUrl(fileName);
+  // Return storage path instead of public URL for private buckets
+  const storagePath = `${SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX}${fileName}`;
 
-  return { fileName, publicUrl };
+  return { fileName, storagePath };
 }
 
 /**
