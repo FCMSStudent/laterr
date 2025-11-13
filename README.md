@@ -44,12 +44,16 @@ npm run lint
 - **Backend**: Supabase (PostgreSQL + Edge Functions)
 - **AI**: OpenAI Embeddings, pgvector
 - **State Management**: TanStack Query
+- **Hosting**: Lovable AI platform
+
+See [Architecture Documentation](docs/ARCHITECTURE.md) for detailed component breakdown.
 
 ## 📚 Documentation
 
 All documentation has been organized in the [`/docs`](docs/) folder:
 
 - **[Documentation Index](docs/README.md)** - Start here for navigation
+- **[Architecture Overview](docs/ARCHITECTURE.md)** - System design and component responsibilities
 - **[Design System](docs/DESIGN_SYSTEM.md)** - Colors, typography, spacing, buttons
 - **[Embeddings Guide](docs/EMBEDDINGS_GUIDE.md)** - Semantic search implementation
 - **[UI/UX Feedback](docs/UI_UX_FEEDBACK.md)** - Comprehensive UI analysis
