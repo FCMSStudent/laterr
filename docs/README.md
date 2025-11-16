@@ -6,18 +6,13 @@ Welcome to the Laterr Garden documentation! This directory contains all technica
 
 ### Architecture & System Design
 - **[Architecture Overview](ARCHITECTURE.md)** - System architecture, component responsibilities, Supabase vs Lovable AI breakdown
-- **[Migration Quick Start](MIGRATION_QUICK_START.md)** ⭐ - 5-minute decision guide and action plan for migration
-- **[Migration Guide](MIGRATION_GUIDE.md)** - Complete step-by-step guide for migrating from Lovable + Supabase to AWS or Google Cloud
-- **[Architecture Comparison](ARCHITECTURE_COMPARISON.md)** - Side-by-side comparison of hosting options with cost analysis and recommendations
 
 ### Design & UI/UX
 - **[Design System](DESIGN_SYSTEM.md)** - Comprehensive design guidelines including colors, typography, spacing, and buttons
 - **[UI/UX Feedback](UI_UX_FEEDBACK.md)** - Detailed UI/UX analysis and improvement recommendations (Grade: B+ 85/100)
-- **[Improvements Summary](IMPROVEMENTS_SUMMARY.md)** - Summary of implemented UI/UX improvements and quick wins
 
 ### Features & Implementation
 - **[Embeddings Guide](EMBEDDINGS_GUIDE.md)** - Complete guide to multimodal embeddings and semantic search functionality
-- **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)** - Quick reference for thumbnail generation and embeddings implementation
 - **[Testing Checklist](TESTING_CHECKLIST.md)** - Comprehensive testing guide for embeddings and features
 
 ### Performance & Optimization
@@ -31,7 +26,6 @@ Welcome to the Laterr Garden documentation! This directory contains all technica
 Start with:
 1. [Architecture Overview](ARCHITECTURE.md) - Understand the system design
 2. [Main README](../README.md) - Project overview and quick start
-3. [Architecture Comparison](ARCHITECTURE_COMPARISON.md) - Understand different hosting options
 
 ### For Designers
 Start with:
@@ -42,22 +36,13 @@ Start with:
 Start with:
 1. [Architecture Overview](ARCHITECTURE.md) - Understand Supabase vs Lovable AI
 2. [Embeddings Guide](EMBEDDINGS_GUIDE.md) - Understand the semantic search system
-3. [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Quick API reference
-4. [Testing Checklist](TESTING_CHECKLIST.md) - Test your changes
+3. [Testing Checklist](TESTING_CHECKLIST.md) - Test your changes
 
 ### For Product Managers
 Start with:
 1. [Architecture Overview](ARCHITECTURE.md) - System components and data flow
-2. [Improvements Summary](IMPROVEMENTS_SUMMARY.md) - See what's been built
-3. [UI/UX Feedback](UI_UX_FEEDBACK.md) - Understand the roadmap
-4. [Optimization Plan](OPTIMIZATION_PLAN.md) - Performance strategy
-
-### For Decision Makers / Non-Programmers
-Start with:
-1. **[Migration Quick Start](MIGRATION_QUICK_START.md)** ⭐ - **Start here!** Quick 5-minute decision guide
-2. [Architecture Comparison](ARCHITECTURE_COMPARISON.md) - Understand hosting options and costs
-3. [Migration Guide](MIGRATION_GUIDE.md) - Detailed migration instructions
-4. [Architecture Overview](ARCHITECTURE.md) - See how everything works
+2. [UI/UX Feedback](UI_UX_FEEDBACK.md) - Understand the roadmap
+3. [Optimization Plan](OPTIMIZATION_PLAN.md) - Performance strategy
 
 ---
 
@@ -101,16 +86,6 @@ Professional UI/UX audit with:
 
 **When to use**: Planning improvements or understanding user experience issues
 
-### Implementation Summary (500+ lines)
-Quick reference guide covering:
-- What was built (features)
-- How it works (flows)
-- Quick start guides
-- Database queries
-- API reference
-
-**When to use**: Need quick answers about features or APIs
-
 ### Testing Checklist (400+ lines)
 Complete testing guide including:
 - Pre-testing setup
@@ -121,15 +96,6 @@ Complete testing guide including:
 
 **When to use**: Before deploying changes or verifying features
 
-### Improvements Summary
-Executive summary of:
-- Implemented improvements
-- Impact analysis
-- Remaining work
-- Next steps
-
-**When to use**: Understanding what's been done and what's next
-
 ### Optimization Plan
 Technical optimization strategies:
 - Code organization
@@ -138,39 +104,6 @@ Technical optimization strategies:
 - Best practices
 
 **When to use**: Planning technical improvements
-
-### Migration Quick Start ⭐
-Action-oriented quick guide for migration decisions:
-- 5-minute decision tree
-- Quick cost comparison
-- Pre-migration checklist
-- Timeline examples
-- Command references
-- Common questions
-
-**When to use**: First time considering migration, need quick answers
-
-### Migration Guide (900+ lines)
-Complete migration documentation for moving to cloud providers:
-- Understanding current setup
-- AWS migration (step-by-step)
-- Google Cloud migration (step-by-step)
-- Cost comparisons
-- Non-programmer friendly explanations
-- Troubleshooting guide
-
-**When to use**: Ready to migrate, need detailed instructions
-
-### Architecture Comparison
-Side-by-side comparison of hosting options:
-- Feature comparisons
-- Cost breakdowns
-- Pros and cons
-- Decision matrix
-- Risk assessment
-- Optimization tips
-
-**When to use**: Deciding between hosting platforms or evaluating costs
 
 ---
 
@@ -202,18 +135,6 @@ Side-by-side comparison of hosting options:
 
 ### "How does deployment work?"
 → See [Architecture Overview - Deployment Pipeline](ARCHITECTURE.md#deployment-pipeline)
-
-### "Should I migrate to AWS or Google Cloud?"
-→ **Start with [Migration Quick Start](MIGRATION_QUICK_START.md)** for quick decision
-→ Then see [Architecture Comparison](ARCHITECTURE_COMPARISON.md) for details
-
-### "How do I migrate to AWS/Google Cloud?"
-→ **Start with [Migration Quick Start](MIGRATION_QUICK_START.md)** for overview
-→ Then see [Migration Guide](MIGRATION_GUIDE.md) for step-by-step instructions
-
-### "What are the costs of different platforms?"
-→ [Migration Quick Start - Quick Cost Table](MIGRATION_QUICK_START.md#cost-comparison-quick-reference)
-→ [Architecture Comparison - Detailed Costs](ARCHITECTURE_COMPARISON.md#cost-comparison)
 
 ---
 
@@ -276,17 +197,6 @@ When adding new documentation:
 
 ---
 
-**Last Updated**: 2025-11-15
-**Total Documentation**: 11 files
-**Combined Size**: ~130KB of developer knowledge
-
----
-
-## ⭐ Recommended Reading Order for Migration
-
-If you're considering migrating to AWS or Google Cloud:
-
-1. **Start**: [Migration Quick Start](MIGRATION_QUICK_START.md) (5 minutes)
-2. **Compare**: [Architecture Comparison](ARCHITECTURE_COMPARISON.md) (20 minutes)
-3. **Detailed**: [Migration Guide](MIGRATION_GUIDE.md) (1 hour)
-4. **Context**: [Architecture Overview](ARCHITECTURE.md) (30 minutes)
+**Last Updated**: 2025-11-16
+**Total Documentation**: 6 files
+**Combined Size**: ~60KB of essential developer knowledge

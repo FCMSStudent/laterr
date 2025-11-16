@@ -54,8 +54,6 @@ All documentation has been organized in the [`/docs`](docs/) folder:
 
 - **[Documentation Index](docs/README.md)** - Start here for navigation
 - **[Architecture Overview](docs/ARCHITECTURE.md)** - System design and component responsibilities
-- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Step-by-step guide to migrate to AWS or Google Cloud
-- **[Architecture Comparison](docs/ARCHITECTURE_COMPARISON.md)** - Compare Lovable/Supabase vs AWS vs Google Cloud
 - **[Design System](docs/DESIGN_SYSTEM.md)** - Colors, typography, spacing, buttons
 - **[Embeddings Guide](docs/EMBEDDINGS_GUIDE.md)** - Semantic search implementation
 - **[UI/UX Feedback](docs/UI_UX_FEEDBACK.md)** - Comprehensive UI analysis
@@ -101,17 +99,7 @@ This project is designed to work with [Lovable](https://lovable.dev):
 2. Click Share → Publish
 3. Configure custom domain in Project > Settings > Domains
 
-### Considering Migration?
 
-Want to move to AWS or Google Cloud? We have comprehensive guides:
-
-- **[Architecture Comparison](docs/ARCHITECTURE_COMPARISON.md)** - Compare costs, features, and complexity
-- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Complete step-by-step migration instructions
-
-**Quick Summary**: 
-- Stay with Lovable/Supabase if you want simplicity (~$45/month)
-- Migrate to Google Cloud for lower costs (~$48/month with more control)
-- Migrate to AWS for enterprise features (~$85/month with maximum flexibility)
 
 ## 🤝 Contributing
 
