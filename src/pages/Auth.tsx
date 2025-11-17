@@ -29,7 +29,7 @@ export default function Auth() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate('/');
+        navigate('/app');
       }
     });
   }, [navigate]);
@@ -120,9 +120,9 @@ export default function Auth() {
           title: 'Welcome back!',
           description: 'Successfully signed in.',
         });
-        navigate('/');
+        navigate('/app');
       } else {
-        const redirectUrl = `${window.location.origin}/`;
+        const redirectUrl = `${window.location.origin}/app`;
         const { error } = await supabase.auth.signUp({
           email,
           password,
