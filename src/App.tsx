@@ -8,6 +8,7 @@ import GradientBackground from "./components/GradientBackground";
 import "./styles/gradient.css";
 
 // Lazy load route components for code splitting
+const Landing = lazy(() => import("./pages/Landing"));
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -34,7 +35,8 @@ const App = () => (
         <Suspense fallback={<LoadingFallback />}>
           <div className="animate-in fade-in duration-500">
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/app" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
