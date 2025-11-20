@@ -1,5 +1,3 @@
-import type { User as SupabaseUser } from '@supabase/supabase-js';
-
 export type ItemType = 'url' | 'note' | 'image' | 'document' | 'file' | 'video';
 
 export interface Tag {
@@ -24,7 +22,12 @@ export interface Item {
   updated_at?: string;
 }
 
-export type User = SupabaseUser;
+export interface User {
+  id: string;
+  email: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export interface PaginatedResponse<T> {
   data: T[];
