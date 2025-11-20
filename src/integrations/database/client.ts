@@ -20,13 +20,20 @@ function ensureDatabase() {
 const database = {
   from: (tableName: string) => {
     const builder = baseDatabase.from(tableName);
-    // Wrap the then method to wait for initialization
-    const originalThen = builder.then.bind(builder);
-    builder.then = async function(onfulfilled) {
-      await ensureDatabase();
-      return originalThen(onfulfilled);
-    };
-    return builder;
+    
+    // Create a proxy that wraps the then method
+    return new Proxy(builder, {
+      get(target, prop) {
+        if (prop === 'then') {
+          return async function(onfulfilled: any, onrejected: any) {
+            await ensureDatabase();
+            const originalThen = target.then.bind(target);
+            return originalThen(onfulfilled, onrejected);
+          };
+        }
+        return (target as any)[prop];
+      }
+    });
   },
   auth: baseDatabase.auth,
   storage: baseDatabase.storage,

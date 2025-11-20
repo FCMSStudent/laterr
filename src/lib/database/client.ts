@@ -431,7 +431,8 @@ export const database = {
     },
     
     getUser: async () => {
-      return auth.getUser();
+      const { user, error } = await auth.getUser();
+      return { data: { user }, error };
     },
     
     onAuthStateChange: (callback: (event: string, session: Session | null) => void) => {
