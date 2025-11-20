@@ -4,11 +4,11 @@
  */
 
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify } from 'jose';
 import { getDatabase, saveDatabaseToIndexedDB } from './init';
 
 // JWT secret (in production, this should be from env or generated per user)
-const JWT_SECRET = 'laterr-local-secret-key-change-in-production';
+const JWT_SECRET = new TextEncoder().encode('laterr-local-secret-key-change-in-production');
 const TOKEN_EXPIRY = '7d'; // 7 days
 
 export interface User {
@@ -100,7 +100,11 @@ export async function signInWithPassword(email: string, password: string): Promi
     };
 
     // Create JWT token
-    const token = jwt.sign({ userId, email: userEmail }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+    const token = await new SignJWT({ userId, email: userEmail })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('7d')
+      .sign(JWT_SECRET);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
 
     // Store session
@@ -177,7 +181,7 @@ export async function getUser(): Promise<{ user: User | null; error: Error | nul
 
     // Verify token
     try {
-      jwt.verify(session.token, JWT_SECRET);
+      await jwtVerify(session.token, JWT_SECRET);
     } catch {
       localStorage.removeItem('laterr_session');
       return { user: null, error: new Error('Invalid token') };

@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-toast',
             '@radix-ui/react-tooltip',
           ],
-          'database-vendor': ['sql.js', 'bcryptjs', 'jsonwebtoken', '@tanstack/react-query'],
+          'database-vendor': ['sql.js', 'bcryptjs', 'jose', '@tanstack/react-query'],
           'utils-vendor': ['clsx', 'tailwind-merge', 'class-variance-authority', 'zod'],
         },
       },

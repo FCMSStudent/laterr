@@ -3,7 +3,7 @@
  * This provides a compatible interface with the old Supabase client
  */
 
-import { database } from '@/lib/database/client';
+import { database as baseDatabase } from '@/lib/database/client';
 import { initDatabase } from '@/lib/database/init';
 
 // Initialize database on module load
@@ -16,7 +16,25 @@ function ensureDatabase() {
   return dbInitPromise;
 }
 
-// Ensure database is initialized before any operations
+// Wrap the database client to ensure initialization before operations
+const database = {
+  from: (tableName: string) => {
+    const builder = baseDatabase.from(tableName);
+    // Wrap the then method to wait for initialization
+    const originalThen = builder.then.bind(builder);
+    builder.then = async function(onfulfilled) {
+      await ensureDatabase();
+      return originalThen(onfulfilled);
+    };
+    return builder;
+  },
+  auth: baseDatabase.auth,
+  storage: baseDatabase.storage,
+  functions: baseDatabase.functions,
+  rpc: baseDatabase.rpc,
+};
+
+// Start initialization immediately
 ensureDatabase();
 
 // Export the database client as 'supabase' for compatibility

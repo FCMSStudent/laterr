@@ -198,16 +198,28 @@ class QueryBuilder<T> implements PostgrestBuilder<T> {
   }
 
   private async executeSelect(db: any): Promise<T | T[]> {
-    const whereClause = this.buildWhereClause();
-    const orderClause = this.orderByClause 
-      ? `ORDER BY ${this.orderByClause.column} ${this.orderByClause.ascending ? 'ASC' : 'DESC'}`
-      : '';
-    const limitClause = this.limitCount ? `LIMIT ${this.limitCount}` : '';
+    let result;
+    try {
+      const whereClause = this.buildWhereClause();
+      const orderClause = this.orderByClause 
+        ? `ORDER BY ${this.orderByClause.column} ${this.orderByClause.ascending ? 'ASC' : 'DESC'}`
+        : '';
+      const limitClause = this.limitCount ? `LIMIT ${this.limitCount}` : '';
 
-    const sql = `SELECT ${this.selectColumns} FROM ${this.tableName} ${whereClause} ${orderClause} ${limitClause}`.trim();
-    const params = this.whereConditions.map(c => c.value).filter(v => v !== null);
+      const sql = `SELECT ${this.selectColumns} FROM ${this.tableName} ${whereClause} ${orderClause} ${limitClause}`.trim();
+      const params = this.whereConditions.map(c => c.value).filter(v => v !== null);
 
-    const result = db.exec(sql, params);
+      result = db.exec(sql, params);
+    } catch (error) {
+      // If it's a "no such table" error, return empty array (table will be created on first insert)
+      if ((error as Error).message && (error as Error).message.includes('no such table')) {
+        if (this.singleRow) {
+          throw new Error('No rows found');
+        }
+        return [] as T[];
+      }
+      throw error;
+    }
     
     if (result.length === 0 || result[0].values.length === 0) {
       if (this.singleRow) {
@@ -255,6 +267,11 @@ class QueryBuilder<T> implements PostgrestBuilder<T> {
     const results: T[] = [];
 
     for (const data of dataArray) {
+      // Generate ID if not provided
+      if (!(data as any).id) {
+        (data as any).id = this.generateUUID();
+      }
+      
       const keys = Object.keys(data);
       const values = keys.map(k => (data as any)[k]);
       
@@ -273,7 +290,7 @@ class QueryBuilder<T> implements PostgrestBuilder<T> {
       db.run(sql, processedValues);
       
       // Get the inserted row
-      const lastId = data.id || this.getLastInsertId(db);
+      const lastId = (data as any).id;
       const selectResult = db.exec(`SELECT * FROM ${this.tableName} WHERE id = ?`, [lastId]);
       
       if (selectResult.length > 0 && selectResult[0].values.length > 0) {
@@ -378,9 +395,12 @@ class QueryBuilder<T> implements PostgrestBuilder<T> {
     return `WHERE ${conditions.join(' AND ')}`;
   }
 
-  private getLastInsertId(db: any): string {
-    const result = db.exec('SELECT last_insert_rowid() as id');
-    return result[0]?.values[0]?.[0] || '';
+  private generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   }
 }
 

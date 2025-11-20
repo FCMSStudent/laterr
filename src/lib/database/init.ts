@@ -21,7 +21,7 @@ export async function initDatabase(): Promise<Database> {
 
   // Initialize sql.js
   const SQL = await initSqlJs({
-    locateFile: file => `https://sql.js.org/dist/${file}`
+    locateFile: file => `/sql-wasm/${file}`
   });
 
   // Try to load existing database from IndexedDB
