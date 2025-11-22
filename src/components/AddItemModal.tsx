@@ -27,7 +27,7 @@ import {
   FILE_ANALYSIS_SIGNED_URL_EXPIRATION,
 } from "@/constants";
 import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-utils";
-import { formatError, handleSupabaseError } from "@/lib/error-utils";
+import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
 
@@ -124,37 +124,14 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       const typedError = toTypedError(error);
       console.error('Error adding URL:', typedError);
       
-      // Check for specific configuration or authentication issues
-      if (error instanceof Error) {
-        const errorMsg = error.message.toLowerCase();
-        
-        // Check for authentication issues
-        if (errorMsg.includes('not authenticated') || errorMsg.includes('auth')) {
-          toast.error('Authentication Required', { 
-            description: 'Please sign in to add items to your collection.' 
-          });
-          return;
+      // Check for common configuration or authentication issues
+      const commonError = checkCommonConfigErrors(error);
+      if (commonError) {
+        if (commonError.logDetails) {
+          console.error(`⚠️ ${commonError.logDetails}`);
         }
-        
-        // Check for missing API configuration
-        if (errorMsg.includes('missing authorization') || errorMsg.includes('api key')) {
-          console.error('⚠️ API configuration issue detected. Please verify:');
-          console.error('  1. VITE_SUPABASE_URL is set in .env');
-          console.error('  2. VITE_SUPABASE_PUBLISHABLE_KEY is set in .env');
-          console.error('  3. LOVABLE_API_KEY is configured in Supabase Edge Functions');
-          toast.error('Configuration Error', { 
-            description: 'API configuration is missing or invalid. Please check the console for details.' 
-          });
-          return;
-        }
-        
-        // Check for function invocation errors
-        if (errorMsg.includes('function') && errorMsg.includes('not found')) {
-          toast.error('Service Error', { 
-            description: 'The required service is unavailable. Please contact support.' 
-          });
-          return;
-        }
+        toast.error(commonError.title, { description: commonError.description });
+        return;
       }
       
       // Use generic error message for other cases
@@ -236,25 +213,14 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       const typedError = toTypedError(error);
       console.error('Error adding note:', typedError);
       
-      // Check for specific configuration or authentication issues
-      if (error instanceof Error) {
-        const errorMsg = error.message.toLowerCase();
-        
-        // Check for authentication issues
-        if (errorMsg.includes('not authenticated') || errorMsg.includes('auth')) {
-          toast.error('Authentication Required', { 
-            description: 'Please sign in to add items to your collection.' 
-          });
-          return;
+      // Check for common configuration or authentication issues
+      const commonError = checkCommonConfigErrors(error);
+      if (commonError) {
+        if (commonError.logDetails) {
+          console.error(`⚠️ ${commonError.logDetails}`);
         }
-        
-        // Check for database permission issues
-        if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
-          toast.error('Permission Error', { 
-            description: 'You do not have permission to add items. Please check your authentication status.' 
-          });
-          return;
-        }
+        toast.error(commonError.title, { description: commonError.description });
+        return;
       }
       
       // Use generic error message for other cases
