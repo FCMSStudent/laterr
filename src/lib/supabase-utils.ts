@@ -1,6 +1,6 @@
 /**
- * Supabase utility functions for common operations like signed URL generation,
- * file uploads, and other Supabase-related tasks
+ * Storage utility functions for common operations like file URL generation,
+ * file uploads, and other storage-related tasks
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -13,8 +13,9 @@ import type { Item } from "@/types";
 
 /**
  * Generates a signed URL from a storage path
+ * For local storage, this returns the data URL directly from localStorage
  * @param storagePath - The full storage path (e.g., "/item-images/path/to/file.jpg")
- * @param expiresIn - Number of seconds until the signed URL expires
+ * @param expiresIn - Number of seconds until the signed URL expires (unused in local mode)
  * @returns The signed URL or null if generation fails
  */
 export async function generateSignedUrl(
