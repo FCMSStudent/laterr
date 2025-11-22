@@ -121,14 +121,50 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
-      const errorMessage = getItemErrorMessage(error, 'url');
       const typedError = toTypedError(error);
+      console.error('Error adding URL:', typedError);
+      
+      // Check for specific configuration or authentication issues
+      if (error instanceof Error) {
+        const errorMsg = error.message.toLowerCase();
+        
+        // Check for authentication issues
+        if (errorMsg.includes('not authenticated') || errorMsg.includes('auth')) {
+          toast.error('Authentication Required', { 
+            description: 'Please sign in to add items to your collection.' 
+          });
+          return;
+        }
+        
+        // Check for missing API configuration
+        if (errorMsg.includes('missing authorization') || errorMsg.includes('api key')) {
+          console.error('⚠️ API configuration issue detected. Please verify:');
+          console.error('  1. VITE_SUPABASE_URL is set in .env');
+          console.error('  2. VITE_SUPABASE_PUBLISHABLE_KEY is set in .env');
+          console.error('  3. LOVABLE_API_KEY is configured in Supabase Edge Functions');
+          toast.error('Configuration Error', { 
+            description: 'API configuration is missing or invalid. Please check the console for details.' 
+          });
+          return;
+        }
+        
+        // Check for function invocation errors
+        if (errorMsg.includes('function') && errorMsg.includes('not found')) {
+          toast.error('Service Error', { 
+            description: 'The required service is unavailable. Please contact support.' 
+          });
+          return;
+        }
+      }
+      
+      // Use generic error message for other cases
+      const errorMessage = getItemErrorMessage(error, 'url');
       const networkError = new NetworkError(
         errorMessage.message,
         typedError
       );
       
-      console.error('Error adding URL:', networkError);
+      console.error('Error details:', networkError);
       toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setLoading(false);
@@ -197,14 +233,38 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
-      const errorMessage = getItemErrorMessage(error, 'note');
       const typedError = toTypedError(error);
+      console.error('Error adding note:', typedError);
+      
+      // Check for specific configuration or authentication issues
+      if (error instanceof Error) {
+        const errorMsg = error.message.toLowerCase();
+        
+        // Check for authentication issues
+        if (errorMsg.includes('not authenticated') || errorMsg.includes('auth')) {
+          toast.error('Authentication Required', { 
+            description: 'Please sign in to add items to your collection.' 
+          });
+          return;
+        }
+        
+        // Check for database permission issues
+        if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
+          toast.error('Permission Error', { 
+            description: 'You do not have permission to add items. Please check your authentication status.' 
+          });
+          return;
+        }
+      }
+      
+      // Use generic error message for other cases
+      const errorMessage = getItemErrorMessage(error, 'note');
       const networkError = new NetworkError(
         errorMessage.message,
         typedError
       );
       
-      console.error('Error adding note:', networkError);
+      console.error('Error details:', networkError);
       toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setLoading(false);
