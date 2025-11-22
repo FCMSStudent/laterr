@@ -73,6 +73,7 @@ All documentation has been organized in the [`/docs`](docs/) folder:
 - **[UI/UX Feedback](docs/UI_UX_FEEDBACK.md)** - Comprehensive UI analysis
 - **[Testing Checklist](docs/TESTING_CHECKLIST.md)** - Testing guidelines
 - **[Optimization Plan](docs/OPTIMIZATION_PLAN.md)** - Performance improvements
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## 🎨 Design System
 

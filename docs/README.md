@@ -18,6 +18,9 @@ Welcome to the Laterr Garden documentation! This directory contains all technica
 ### Performance & Optimization
 - **[Optimization Plan](OPTIMIZATION_PLAN.md)** - Technical optimization strategies and performance improvements
 
+### Troubleshooting & Support
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions, especially for "Failed to Add Item" errors
+
 ---
 
 ## 🚀 Quick Start Guides
@@ -136,6 +139,9 @@ Technical optimization strategies:
 ### "How does deployment work?"
 → See [Architecture Overview - Deployment Pipeline](ARCHITECTURE.md#deployment-pipeline)
 
+### "I'm getting 'Failed to Add Item' errors"
+→ See [Troubleshooting Guide](TROUBLESHOOTING.md)
+
 ---
 
 ## 📝 Documentation Standards
@@ -197,6 +203,6 @@ When adding new documentation:
 
 ---
 
-**Last Updated**: 2025-11-16
-**Total Documentation**: 6 files
-**Combined Size**: ~60KB of essential developer knowledge
+**Last Updated**: 2025-11-22
+**Total Documentation**: 7 files
+**Combined Size**: ~65KB of essential developer knowledge
