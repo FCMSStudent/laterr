@@ -1,3 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,117 +12,150 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Premium Apple-inspired neutral palette */
-    --background: 0 0% 99%;
-    --foreground: 0 0% 8%;
+    --background: 240 4% 95%;
+    --foreground: 240 5% 10%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
+    --card: 0 0% 98%;
+    --card-foreground: 240 5% 10%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
+    --popover: 240 5% 90%;
+    --popover-foreground: 240 5% 10%;
 
     /* Refined blue primary - more vibrant */
-    --primary: 212 100% 48%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 258 89% 66%;
+    --primary-foreground: 250 100% 97%;
 
     /* Elegant gray secondary */
-    --secondary: 0 0% 97%;
-    --secondary-foreground: 0 0% 15%;
+    --secondary: 240 5% 33%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 35%;
+    --muted: 240 4% 83%;
+    --muted-foreground: 240 5% 10%;
 
     /* Sophisticated accent */
-    --accent: 212 100% 96%;
-    --accent-foreground: 212 100% 35%;
+    --accent: 269 100% 98%;
+    --accent-foreground: 270 91% 65%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 85% 97%;
+
     /* Semantic colors for success, warning, and info states */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-    
+
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    
+
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
-    --border: 0 0% 92%;
-    --input: 0 0% 97%;
-    --ring: 212 100% 48%;
+    --border: 240 4% 83%;
+    --input: 240 4% 83%;
+    --ring: 258 89% 66%;
 
-    --radius: 0.875rem;
-    
+    --radius: 0.5rem;
+
     /* Premium glassmorphism with enhanced depth */
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(0, 0, 0, 0.08);
     --glass-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.06), 0 1px 4px 0 rgba(0, 0, 0, 0.04);
-    
+
     /* Elegant gradient */
     --gradient-soft: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(212 100% 58%) 100%);
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-foreground: 240 5% 10%;
+    --sidebar-primary: 258 89% 66%;
+    --sidebar-primary-foreground: 250 100% 97%;
+    --sidebar-accent: 240 5% 33%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 4% 83%;
+    --sidebar-ring: 258 89% 66%;
+    --chart-1: 255 91% 76%;
+    --chart-2: 270 95% 75%;
+    --chart-3: 234 89% 73%;
+    --chart-4: 258 89% 66%;
+    --chart-5: 240 3% 46%;
+    --sidebar: 0 0% 98%;
+    --font-sans: 'Montserrat', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'Cormorant Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 0 0% 6%;
-    --foreground: 0 0% 96%;
+    --background: 240 5% 10%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 96%;
+    --card: 240 3% 15%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 96%;
+    --popover: 240 5% 26%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 212 100% 52%;
-    --primary-foreground: 0 0% 8%;
+    --primary: 255 91% 76%;
+    --primary-foreground: 261 72% 22%;
 
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 92%;
+    --secondary: 240 3% 46%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 240 3% 46%;
+    --muted-foreground: 0 0% 98%;
 
-    --accent: 212 100% 18%;
-    --accent-foreground: 212 100% 68%;
+    --accent: 273 86% 20%;
+    --accent-foreground: 270 95% 75%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 96%;
-    
+    --destructive-foreground: 0 85% 97%;
+
     /* Semantic colors for success, warning, and info states (dark mode) */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 96%;
-    
+
     --warning: 38 92% 55%;
     --warning-foreground: 0 0% 10%;
-    
+
     --info: 199 89% 55%;
     --info-foreground: 0 0% 96%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 15%;
-    --ring: 212 100% 52%;
-    
+    --border: 240 5% 33%;
+    --input: 240 5% 33%;
+    --ring: 255 91% 76%;
+
     --glass-bg: rgba(18, 18, 20, 0.88);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.6), 0 1px 4px 0 rgba(0, 0, 0, 0.4);
     --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 255 91% 76%;
+    --sidebar-primary-foreground: 261 72% 22%;
+    --sidebar-accent: 270 95% 75%;
+    --sidebar-accent-foreground: 273 86% 20%;
+    --sidebar-border: 240 5% 33%;
+    --sidebar-ring: 255 91% 76%;
+    --chart-1: 252 94% 85%;
+    --chart-2: 269 97% 85%;
+    --chart-3: 229 93% 81%;
+    --chart-4: 255 91% 76%;
+    --chart-5: 240 3% 46%;
+    --sidebar: 240 3% 15%;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   }
 }
 
@@ -135,7 +171,7 @@ All colors MUST be HSL.
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
   }
-  
+
   /* Glassmorphism with browser fallbacks and performance optimization */
   .glass-card {
     /* Fallback for older browsers that don't support backdrop-filter */
@@ -144,7 +180,7 @@ All colors MUST be HSL.
     box-shadow: var(--glass-shadow);
     transition: all 0.3s ease;
   }
-  
+
   /* Modern browsers with backdrop-filter support */
   @supports (backdrop-filter: blur(24px)) or (-webkit-backdrop-filter: blur(24px)) {
     .glass-card {
@@ -152,7 +188,7 @@ All colors MUST be HSL.
       backdrop-filter: blur(24px) saturate(190%);
       -webkit-backdrop-filter: blur(24px) saturate(190%);
     }
-    
+
     /* Reduced blur for low-end devices and reduced motion preference */
     @media (prefers-reduced-motion: reduce) {
       .glass-card {
@@ -160,7 +196,7 @@ All colors MUST be HSL.
         -webkit-backdrop-filter: blur(8px) saturate(150%);
       }
     }
-    
+
     /* Performance optimization for mobile and low-end devices */
     @media (max-width: 768px), (hover: none) {
       .glass-card {
@@ -169,39 +205,39 @@ All colors MUST be HSL.
       }
     }
   }
-  
+
   /* Dark mode glass fallback */
   .dark .glass-card {
     background-color: rgba(18, 18, 20, 0.95);
   }
-  
+
   /* User preference: Reduced glass intensity */
   html.glass-reduced .glass-card {
     background: rgba(255, 255, 255, 0.95);
   }
-  
+
   @supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
     html.glass-reduced .glass-card {
       backdrop-filter: blur(12px) saturate(130%);
       -webkit-backdrop-filter: blur(12px) saturate(130%);
     }
   }
-  
+
   html.dark.glass-reduced .glass-card {
     background: rgba(18, 18, 20, 0.97);
   }
-  
+
   /* User preference: Minimal glass intensity */
   html.glass-minimal .glass-card {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-  
+
   html.dark.glass-minimal .glass-card {
     background: rgba(18, 18, 20, 0.98);
   }
-  
+
   /* Hover state with subtle glow effect */
   .glass-card:hover {
     border-color: rgba(0, 122, 255, 0.2);
@@ -210,7 +246,7 @@ All colors MUST be HSL.
       0 2px 8px 0 rgba(0, 122, 255, 0.1),
       inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
-  
+
   .dark .glass-card:hover {
     border-color: rgba(100, 181, 246, 0.3);
     box-shadow: 
@@ -218,13 +254,13 @@ All colors MUST be HSL.
       0 2px 8px 0 rgba(100, 181, 246, 0.2),
       inset 0 0 0 1px rgba(255, 255, 255, 0.15);
   }
-  
+
   .glass-input {
     /* Fallback for browsers without backdrop-filter */
     background-color: rgba(255, 255, 255, 0.85);
     border: 1px solid var(--glass-border);
   }
-  
+
   /* Modern browsers with backdrop-filter support */
   @supports (backdrop-filter: blur(16px)) or (-webkit-backdrop-filter: blur(16px)) {
     .glass-input {
@@ -232,7 +268,7 @@ All colors MUST be HSL.
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
-    
+
     /* Reduced blur for low-end devices */
     @media (max-width: 768px), (hover: none) {
       .glass-input {
@@ -241,42 +277,42 @@ All colors MUST be HSL.
       }
     }
   }
-  
+
   .dark .glass-input {
     background-color: rgba(30, 30, 32, 0.85);
   }
-  
+
   /* User preference: Reduced glass intensity for inputs */
   html.glass-reduced .glass-input {
     background: rgba(255, 255, 255, 0.9);
   }
-  
+
   @supports (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px)) {
     html.glass-reduced .glass-input {
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
   }
-  
+
   html.dark.glass-reduced .glass-input {
     background: rgba(30, 30, 32, 0.92);
   }
-  
+
   /* User preference: Minimal glass intensity for inputs */
   html.glass-minimal .glass-input {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-  
+
   html.dark.glass-minimal .glass-input {
     background: rgba(30, 30, 32, 0.95);
   }
-  
+
   .animate-float {
     animation: float 5s ease-in-out infinite;
   }
-  
+
   @keyframes float {
     0%, 100% { 
       transform: translateY(0px) scale(1); 
@@ -285,22 +321,22 @@ All colors MUST be HSL.
       transform: translateY(-10px) scale(1.015); 
     }
   }
-  
+
   .smooth-transition {
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   .premium-transition {
     transition: all 0.4s cubic-bezier(0.34, 1.25, 0.64, 1);
   }
-  
+
   /* Improved focus indicators for accessibility - WCAG compliant */
   *:focus-visible {
     outline: 3px solid hsl(var(--ring));
     outline-offset: 2px;
     border-radius: 6px;
   }
-  
+
   button:focus-visible,
   a:focus-visible,
   input:focus-visible,
@@ -309,7 +345,7 @@ All colors MUST be HSL.
     outline: 3px solid hsl(var(--ring));
     outline-offset: 2px;
   }
-  
+
   /* High contrast focus for keyboard navigation */
   @media (prefers-contrast: high) {
     *:focus-visible,
@@ -322,76 +358,76 @@ All colors MUST be HSL.
       outline-offset: 3px;
     }
   }
-  
+
   /* Premium text styles with responsive typography */
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.02em;
     font-weight: 600;
     line-height: 1.15;
   }
-  
+
   /* Responsive typography - scale down headings on mobile */
   @media (max-width: 640px) {
     h1 { font-size: 2rem; }        /* 32px on mobile (from 48px+) */
     h2 { font-size: 1.75rem; }     /* 28px on mobile (from 36px+) */
     h3 { font-size: 1.5rem; }      /* 24px on mobile (from 30px+) */
   }
-  
+
   /* Body text optimal line height */
   p, li, td, th {
     line-height: 1.6;
   }
-  
+
   /* Maximum line length for readability (65-75 characters) */
   .prose {
     max-width: 65ch;
   }
-  
+
   .prose-narrow {
     max-width: 55ch;
   }
-  
+
   .prose-wide {
     max-width: 75ch;
   }
-  
+
   /* Smooth scroll */
   html {
     scroll-behavior: smooth;
   }
-  
+
   /* Custom scrollbar styling */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
-  
+
   ::-webkit-scrollbar-track {
     background: hsl(var(--muted));
     border-radius: 10px;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 10px;
     transition: background 0.3s ease;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.5);
   }
-  
+
   /* Selection styling */
   ::selection {
     background: hsl(var(--primary) / 0.2);
     color: hsl(var(--foreground));
   }
-  
+
   /* Improved link styling */
   a {
     transition: all 0.3s ease;
   }
-  
+
   /* Material-style ripple effect animation */
   @keyframes ripple-effect {
     to {
