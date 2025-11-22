@@ -82,8 +82,16 @@ export const RecommendationsPanel = ({ onItemClick, refreshTrigger = 0 }: Recomm
         {recommendations.map((item) => (
           <ItemCard
             key={item.id}
-            item={item}
+            id={item.id}
+            type={item.type}
+            title={item.title}
+            summary={item.summary}
+            previewImageUrl={item.preview_image_url}
+            tags={item.tags || []}
+            createdAt={item.created_at}
+            updatedAt={item.updated_at}
             onClick={() => onItemClick?.(item)}
+            onTagClick={() => {}}
           />
         ))}
       </CardContent>

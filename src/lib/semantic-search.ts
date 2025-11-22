@@ -45,8 +45,8 @@ export async function findSimilarItems(
 
     // Filter out the reference item itself and return
     return (data || [])
-      .filter((item: any) => item.id !== itemId)
-      .slice(0, limit);
+      .filter((item) => item.id !== itemId)
+      .slice(0, limit) as (Item & { similarity: number })[];
   } catch (error) {
     console.error('Error in findSimilarItems:', error);
     return [];
@@ -100,7 +100,7 @@ export async function findSimilarItemsByText(
       return [];
     }
 
-    return data || [];
+    return (data || []) as (Item & { similarity: number })[];
   } catch (error) {
     console.error('Error in findSimilarItemsByText:', error);
     return [];

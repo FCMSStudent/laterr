@@ -266,7 +266,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Determine item type and default tag based on file type
       let itemType = 'file';
-      let defaultTag = DEFAULT_ITEM_TAG;
+      let defaultTag: string = DEFAULT_ITEM_TAG;
 
       if (file.type.startsWith('image/')) {
         itemType = 'image';

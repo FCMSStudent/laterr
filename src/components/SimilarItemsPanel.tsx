@@ -80,8 +80,16 @@ export const SimilarItemsPanel = ({ itemId, onItemClick }: SimilarItemsPanelProp
         {similarItems.map((item) => (
           <div key={item.id} className="relative">
             <ItemCard
-              item={item}
+              id={item.id}
+              type={item.type}
+              title={item.title}
+              summary={item.summary}
+              previewImageUrl={item.preview_image_url}
+              tags={item.tags || []}
+              createdAt={item.created_at}
+              updatedAt={item.updated_at}
               onClick={() => onItemClick?.(item)}
+              onTagClick={() => {}}
             />
             <div className="absolute top-2 right-2 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
               {Math.round(item.similarity * 100)}% match
