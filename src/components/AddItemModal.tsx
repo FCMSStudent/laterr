@@ -109,9 +109,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         throw new Error('URL analysis returned no data');
       }
 
+      // Use fallback title if missing
+      const finalTitle = data.title || urlResult.data;
       if (!data.title) {
         console.warn('URL analysis missing title, using URL as fallback');
-        data.title = urlResult.data;
       }
 
       // Set suggested category from AI
@@ -148,7 +149,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       const insertData = {
         type: 'url',
-        title: data.title || urlResult.data,
+        title: finalTitle,
         content: urlResult.data,
         summary: data.summary || null,
         tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
@@ -415,9 +416,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         throw new Error('File analysis returned no data');
       }
 
+      // Use fallback title if missing
+      const finalFileTitle = data.title || file.name;
       if (!data.title) {
         console.warn('File analysis missing title, using filename as fallback');
-        data.title = file.name;
       }
 
       setStatusStep('summarizing');
@@ -443,7 +445,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         setStatusStep('generating embeddings');
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
           body: {
-            title: data.title,
+            title: finalFileTitle,
             summary: data.summary || data.description || '',
             tags: [defaultTag],
             extractedText: data.extractedText || ''
@@ -467,7 +469,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       const insertData = {
         type: itemType,
-        title: data.title || file.name,
+        title: finalFileTitle,
         content: storagePath,
         summary: data.summary || data.description || null,
         tags: [defaultTag],

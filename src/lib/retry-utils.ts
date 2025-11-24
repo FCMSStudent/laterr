@@ -11,48 +11,58 @@ export interface RetryOptions {
   shouldRetry?: (error: unknown) => boolean;
 }
 
+/**
+ * Check if an error is retryable based on its message
+ */
+function isRetryableError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  
+  const message = error.message.toLowerCase();
+  
+  // Don't retry on authentication errors
+  if (message.includes('not authenticated') || message.includes('unauthorized') || message.includes('forbidden')) {
+    return false;
+  }
+  
+  // Don't retry on validation errors
+  if (message.includes('invalid') || message.includes('validation')) {
+    return false;
+  }
+  
+  // Don't retry on rate limit errors (user should wait)
+  if (message.includes('rate limit') || message.includes('too many requests') || message.includes('429')) {
+    return false;
+  }
+  
+  // Don't retry on credits exhausted
+  if (message.includes('credits') || message.includes('402')) {
+    return false;
+  }
+  
+  // Retry on network errors
+  if (message.includes('network') || message.includes('timeout') || message.includes('fetch failed')) {
+    return true;
+  }
+  
+  // Retry on temporary service errors
+  if (message.includes('503') || message.includes('service unavailable')) {
+    return true;
+  }
+  
+  // Retry on connection errors
+  if (message.includes('connection') || message.includes('econnrefused')) {
+    return true;
+  }
+  
+  return false;
+}
+
 const DEFAULT_OPTIONS: Required<RetryOptions> = {
   maxAttempts: 3,
   initialDelay: 1000, // 1 second
   maxDelay: 10000, // 10 seconds
   backoffMultiplier: 2,
-  shouldRetry: (error: unknown) => {
-    if (!(error instanceof Error)) return false;
-    
-    const message = error.message.toLowerCase();
-    
-    // Retry on network errors
-    if (message.includes('network') || message.includes('timeout') || message.includes('fetch failed')) {
-      return true;
-    }
-    
-    // Retry on temporary service errors
-    if (message.includes('503') || message.includes('service unavailable')) {
-      return true;
-    }
-    
-    // Retry on connection errors
-    if (message.includes('connection') || message.includes('econnrefused')) {
-      return true;
-    }
-    
-    // Don't retry on authentication errors
-    if (message.includes('not authenticated') || message.includes('unauthorized') || message.includes('forbidden')) {
-      return false;
-    }
-    
-    // Don't retry on validation errors
-    if (message.includes('invalid') || message.includes('validation')) {
-      return false;
-    }
-    
-    // Don't retry on rate limit errors (user should wait)
-    if (message.includes('rate limit') || message.includes('too many requests')) {
-      return false;
-    }
-    
-    return false;
-  }
+  shouldRetry: isRetryableError
 };
 
 /**
@@ -116,24 +126,7 @@ export const SUPABASE_RETRY_OPTIONS: RetryOptions = {
   initialDelay: 1000,
   maxDelay: 5000,
   backoffMultiplier: 2,
-  shouldRetry: (error: unknown) => {
-    if (!(error instanceof Error)) return false;
-    
-    const message = error.message.toLowerCase();
-    
-    // Retry on Supabase connection errors
-    if (message.includes('connection') || message.includes('fetch failed')) {
-      return true;
-    }
-    
-    // Retry on timeout errors
-    if (message.includes('timeout')) {
-      return true;
-    }
-    
-    // Don't retry on auth or validation errors
-    return DEFAULT_OPTIONS.shouldRetry(error);
-  }
+  shouldRetry: isRetryableError
 };
 
 /**
@@ -144,27 +137,5 @@ export const AI_RETRY_OPTIONS: RetryOptions = {
   initialDelay: 2000,
   maxDelay: 5000,
   backoffMultiplier: 2,
-  shouldRetry: (error: unknown) => {
-    if (!(error instanceof Error)) return false;
-    
-    const message = error.message.toLowerCase();
-    
-    // Don't retry on rate limits (user should wait)
-    if (message.includes('rate limit') || message.includes('429')) {
-      return false;
-    }
-    
-    // Don't retry on credits exhausted
-    if (message.includes('credits') || message.includes('402')) {
-      return false;
-    }
-    
-    // Retry on temporary service errors
-    if (message.includes('503') || message.includes('service unavailable')) {
-      return true;
-    }
-    
-    // Retry on network errors
-    return DEFAULT_OPTIONS.shouldRetry(error);
-  }
+  shouldRetry: isRetryableError
 };

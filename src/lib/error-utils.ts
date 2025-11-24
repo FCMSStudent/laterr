@@ -66,7 +66,7 @@ export function checkCommonConfigErrors(error: unknown): {
   }
   
   // Check for missing API configuration
-  if (errorMsg.includes('missing authorization') || errorMsg.includes('api key') || errorMsg.includes('lovable_api_key is not configured')) {
+  if (errorMsg.includes('missing authorization') || errorMsg.includes('api key') || errorMsg.includes('is not configured')) {
     return {
       title: 'Configuration Error',
       description: 'API configuration is missing or invalid. Please check the console for details.',
