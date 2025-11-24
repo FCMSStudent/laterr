@@ -30,6 +30,7 @@ import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-util
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
+import { retryWithBackoff, SUPABASE_RETRY_OPTIONS, AI_RETRY_OPTIONS } from "@/lib/retry-utils";
 
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
@@ -64,14 +65,55 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     setLoading(true);
     setStatusStep('uploading');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error('Authentication error:', authError);
+        throw new Error('Authentication failed: ' + authError.message);
+      }
+      if (!user) {
+        console.error('No user found in session');
+        throw new Error('Not authenticated');
+      }
 
-      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_URL, {
-        body: { url: urlResult.data }
-      });
+      console.log('Analyzing URL:', urlResult.data);
+      
+      // Retry URL analysis with exponential backoff for transient failures
+      const { data, error } = await retryWithBackoff(
+        async () => {
+          const result = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_URL, {
+            body: { url: urlResult.data }
+          });
+          
+          // Throw on error to trigger retry
+          if (result.error) {
+            throw result.error;
+          }
+          
+          return result;
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
 
-      if (error) throw error;
+      // Log the response for debugging
+      console.log('URL analysis response:', { data, error });
+
+      if (error) {
+        console.error('URL analysis error:', error);
+        throw error;
+      }
+
+      // Validate response data
+      if (!data) {
+        console.error('No data returned from URL analysis');
+        throw new Error('URL analysis returned no data');
+      }
+
+      // Use fallback title if missing
+      const finalTitle = data.title || urlResult.data;
+      if (!data.title) {
+        console.warn('URL analysis missing title, using URL as fallback');
+      }
 
       // Set suggested category from AI
       if (data.tag) {
@@ -85,14 +127,19 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
           body: {
             title: data.title,
-            summary: data.summary,
+            summary: data.summary || '',
             tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
             extractedText: data.description || ''
           }
         });
 
+        if (embeddingError) {
+          console.warn('Embedding generation error:', embeddingError);
+        }
+
         if (!embeddingError && embeddingData?.embedding) {
           embedding = embeddingData.embedding;
+          console.log('Embedding generated successfully');
         }
       } catch (embError) {
         console.warn('Failed to generate embedding, continuing without it:', embError);
@@ -100,21 +147,35 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       setStatusStep('saving');
 
-      const { error: insertError } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert({
-          type: 'url',
-          title: data.title,
-          content: urlResult.data,
-          summary: data.summary,
-          tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
-          preview_image_url: data.previewImageUrl,
-          embedding: embedding,
-          user_id: user.id,
-        });
+      const insertData = {
+        type: 'url',
+        title: finalTitle,
+        content: urlResult.data,
+        summary: data.summary || null,
+        tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
+        preview_image_url: data.previewImageUrl || null,
+        embedding: embedding,
+        user_id: user.id,
+      };
 
-      if (insertError) throw insertError;
+      console.log('Inserting item:', { ...insertData, embedding: embedding ? '[embedding data]' : null });
 
+      // Retry database insert with backoff for transient failures
+      await retryWithBackoff(
+        async () => {
+          const { error: insertError } = await supabase
+            .from(SUPABASE_ITEMS_TABLE)
+            .insert(insertData);
+
+          if (insertError) {
+            console.error('Database insert error:', insertError);
+            throw insertError;
+          }
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
+
+      console.log('URL added successfully');
       toast.success("URL added to your space! 🌱");
       setUrl("");
       setSuggestedCategory("");
@@ -163,11 +224,21 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     setLoading(true);
     setStatusStep('uploading');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error('Authentication error:', authError);
+        throw new Error('Authentication failed: ' + authError.message);
+      }
+      if (!user) {
+        console.error('No user found in session');
+        throw new Error('Not authenticated');
+      }
 
       const firstLine = noteResult.data.split('\n')[0].substring(0, NOTE_TITLE_MAX_LENGTH);
       const noteSummary = noteResult.data.substring(0, NOTE_SUMMARY_MAX_LENGTH);
+
+      console.log('Creating note:', { title: firstLine || 'Untitled Note', contentLength: noteResult.data.length });
 
       // Generate embedding for semantic search
       let embedding = null;
@@ -182,8 +253,13 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           }
         });
 
+        if (embeddingError) {
+          console.warn('Embedding generation error:', embeddingError);
+        }
+
         if (!embeddingError && embeddingData?.embedding) {
           embedding = embeddingData.embedding;
+          console.log('Embedding generated successfully');
         }
       } catch (embError) {
         console.warn('Failed to generate embedding, continuing without it:', embError);
@@ -191,20 +267,34 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       setStatusStep('saving');
 
-      const { error } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert({
-          type: 'note',
-          title: firstLine || 'Untitled Note',
-          content: noteResult.data,
-          summary: noteSummary,
-          tags: [...DEFAULT_ITEM_TAGS],
-          embedding: embedding,
-          user_id: user.id,
-        });
+      const insertData = {
+        type: 'note',
+        title: firstLine || 'Untitled Note',
+        content: noteResult.data,
+        summary: noteSummary,
+        tags: [...DEFAULT_ITEM_TAGS],
+        embedding: embedding,
+        user_id: user.id,
+      };
 
-      if (error) throw error;
+      console.log('Inserting note:', { ...insertData, embedding: embedding ? '[embedding data]' : null });
 
+      // Retry database insert with backoff for transient failures
+      await retryWithBackoff(
+        async () => {
+          const { error } = await supabase
+            .from(SUPABASE_ITEMS_TABLE)
+            .insert(insertData);
+
+          if (error) {
+            console.error('Database insert error:', error);
+            throw error;
+          }
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
+
+      console.log('Note added successfully');
       toast.success("Note planted in your space! 📝");
       setNote("");
       onOpenChange(false);
@@ -266,27 +356,71 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     setLoading(true);
     setStatusStep('uploading');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error('Authentication error:', authError);
+        throw new Error('Authentication failed: ' + authError.message);
+      }
+      if (!user) {
+        console.error('No user found in session');
+        throw new Error('Not authenticated');
+      }
+
+      console.log('Uploading file:', { name: file.name, type: file.type, size: file.size });
 
       // Upload to storage with user-specific path
       const { fileName, storagePath } = await uploadFileToStorage(file, user.id);
+
+      console.log('File uploaded:', { fileName, storagePath });
 
       setStatusStep('extracting');
 
       // Create a temporary signed URL for the analyze-file function
       const signedUrl = await createSignedUrlForFile(fileName, FILE_ANALYSIS_SIGNED_URL_EXPIRATION);
 
-      // Analyze with AI - using the analyze-file function with signed URL
-      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
-        body: {
-          fileUrl: signedUrl,
-          fileType: file.type,
-          fileName: file.name
-        }
-      });
+      console.log('Analyzing file with AI');
 
-      if (error) throw error;
+      // Retry file analysis with exponential backoff for transient failures
+      const { data, error } = await retryWithBackoff(
+        async () => {
+          const result = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
+            body: {
+              fileUrl: signedUrl,
+              fileType: file.type,
+              fileName: file.name
+            }
+          });
+          
+          // Throw on error to trigger retry
+          if (result.error) {
+            throw result.error;
+          }
+          
+          return result;
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
+
+      // Log the response for debugging
+      console.log('File analysis response:', { data, error });
+
+      if (error) {
+        console.error('File analysis error:', error);
+        throw error;
+      }
+
+      // Validate response data
+      if (!data) {
+        console.error('No data returned from file analysis');
+        throw new Error('File analysis returned no data');
+      }
+
+      // Use fallback title if missing
+      const finalFileTitle = data.title || file.name;
+      if (!data.title) {
+        console.warn('File analysis missing title, using filename as fallback');
+      }
 
       setStatusStep('summarizing');
 
@@ -311,15 +445,20 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         setStatusStep('generating embeddings');
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
           body: {
-            title: data.title,
-            summary: data.summary || data.description,
+            title: finalFileTitle,
+            summary: data.summary || data.description || '',
             tags: [defaultTag],
             extractedText: data.extractedText || ''
           }
         });
 
+        if (embeddingError) {
+          console.warn('Embedding generation error:', embeddingError);
+        }
+
         if (!embeddingError && embeddingData?.embedding) {
           embedding = embeddingData.embedding;
+          console.log('Embedding generated successfully');
         }
       } catch (embError) {
         console.warn('Failed to generate embedding, continuing without it:', embError);
@@ -328,24 +467,38 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       // Insert into database
       setStatusStep('saving');
 
-      const { error: insertError } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert({
-          type: itemType,
-          title: data.title,
-          content: storagePath,
-          summary: data.summary || data.description,
-          tags: [defaultTag],
-          preview_image_url: file.type.startsWith('image/') ? storagePath : (data.previewImageUrl || null),
-          embedding: embedding,
-          user_id: user.id,
-        });
+      const insertData = {
+        type: itemType,
+        title: finalFileTitle,
+        content: storagePath,
+        summary: data.summary || data.description || null,
+        tags: [defaultTag],
+        preview_image_url: file.type.startsWith('image/') ? storagePath : (data.previewImageUrl || null),
+        embedding: embedding,
+        user_id: user.id,
+      };
 
-      if (insertError) throw insertError;
+      console.log('Inserting file item:', { ...insertData, embedding: embedding ? '[embedding data]' : null });
+
+      // Retry database insert with backoff for transient failures
+      await retryWithBackoff(
+        async () => {
+          const { error: insertError } = await supabase
+            .from(SUPABASE_ITEMS_TABLE)
+            .insert(insertData);
+
+          if (insertError) {
+            console.error('Database insert error:', insertError);
+            throw insertError;
+          }
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
 
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' :
                            file.type === 'application/pdf' ? 'PDF' : 
                            file.type.startsWith('video/') ? 'Video' : 'Document';
+      console.log('File added successfully');
       toast.success(`${fileTypeLabel} added to your space! 📁`);
       setFile(null);
       onOpenChange(false);

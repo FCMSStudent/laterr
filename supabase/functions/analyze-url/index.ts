@@ -218,6 +218,11 @@ serve(async (req) => {
     
     // Use AI to generate summary and tags
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY is not configured');
+      throw new Error('LOVABLE_API_KEY is not configured');
+    }
+    
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -241,11 +246,22 @@ serve(async (req) => {
       }),
     });
 
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('AI API error:', aiResponse.status, errorText);
+      throw new Error(`AI analysis failed: ${aiResponse.statusText}`);
+    }
+    
     const aiData = await aiResponse.json();
     console.log('AI response:', aiData);
     
     let rawResult;
     try {
+      if (!aiData.choices || !aiData.choices[0] || !aiData.choices[0].message) {
+        console.error('Invalid AI response structure:', aiData);
+        throw new Error('Invalid AI response structure');
+      }
+      
       const content = aiData.choices[0].message.content;
       // Extract JSON from potential markdown code blocks
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
