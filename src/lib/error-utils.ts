@@ -57,38 +57,87 @@ export function checkCommonConfigErrors(error: unknown): {
   const errorMsg = error.message.toLowerCase();
   
   // Check for authentication issues
-  if (errorMsg.includes('not authenticated') || errorMsg.includes('auth')) {
+  if (errorMsg.includes('not authenticated') || errorMsg.includes('authentication failed')) {
     return {
       title: 'Authentication Required',
-      description: 'Please sign in to add items to your collection.'
+      description: 'Please sign in to add items to your collection.',
+      logDetails: 'Authentication check failed. User may not be logged in or session may have expired.'
     };
   }
   
   // Check for missing API configuration
-  if (errorMsg.includes('missing authorization') || errorMsg.includes('api key')) {
+  if (errorMsg.includes('missing authorization') || errorMsg.includes('api key') || errorMsg.includes('lovable_api_key is not configured')) {
     return {
       title: 'Configuration Error',
       description: 'API configuration is missing or invalid. Please check the console for details.',
       logDetails: 'API configuration issue detected. Please verify:\n' +
         '  1. VITE_SUPABASE_URL is set in .env\n' +
         '  2. VITE_SUPABASE_PUBLISHABLE_KEY is set in .env\n' +
-        '  3. LOVABLE_API_KEY is configured in Supabase Edge Functions'
+        '  3. LOVABLE_API_KEY is configured in Supabase Edge Functions\n' +
+        '  4. Restart development server after updating .env'
     };
   }
   
   // Check for database permission issues
-  if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
+  if (errorMsg.includes('permission') || errorMsg.includes('policy') || errorMsg.includes('rls')) {
     return {
       title: 'Permission Error',
-      description: 'You do not have permission to add items. Please check your authentication status.'
+      description: 'You do not have permission to add items. Please check your authentication status.',
+      logDetails: 'Database permission denied. This could be due to Row Level Security (RLS) policies.'
     };
   }
   
   // Check for function invocation errors
-  if (errorMsg.includes('function') && errorMsg.includes('not found')) {
+  if (errorMsg.includes('function') && (errorMsg.includes('not found') || errorMsg.includes('unavailable'))) {
     return {
       title: 'Service Error',
-      description: 'The required service is unavailable. Please contact support.'
+      description: 'The required service is unavailable. Please contact support.',
+      logDetails: 'Edge function not found or not deployed. Check Supabase project status.'
+    };
+  }
+  
+  // Check for network/timeout errors
+  if (errorMsg.includes('timeout') || errorMsg.includes('network') || errorMsg.includes('fetch failed')) {
+    return {
+      title: 'Network Error',
+      description: 'Connection problem. Please check your internet connection and try again.',
+      logDetails: 'Network request failed or timed out. Check internet connectivity and Supabase project status.'
+    };
+  }
+  
+  // Check for CORS errors
+  if (errorMsg.includes('cors') || errorMsg.includes('cross-origin')) {
+    return {
+      title: 'Configuration Error',
+      description: 'Cross-origin request blocked. Please contact support.',
+      logDetails: 'CORS error detected. Edge function CORS headers may not be configured correctly.'
+    };
+  }
+  
+  // Check for database insert errors
+  if (errorMsg.includes('null value') || errorMsg.includes('violates not-null constraint')) {
+    return {
+      title: 'Data Validation Error',
+      description: 'Some required data is missing. Please try again.',
+      logDetails: 'Database constraint violation. Required field may be null. Error: ' + error.message
+    };
+  }
+  
+  // Check for URL analysis failure
+  if (errorMsg.includes('url analysis returned no data') || errorMsg.includes('invalid url')) {
+    return {
+      title: 'URL Analysis Failed',
+      description: 'Unable to analyze this URL. It may be blocked or unavailable.',
+      logDetails: 'URL analysis returned no data. URL may be inaccessible or blocked by the site.'
+    };
+  }
+  
+  // Check for file analysis failure
+  if (errorMsg.includes('file analysis returned no data')) {
+    return {
+      title: 'File Analysis Failed',
+      description: 'Unable to analyze this file. It may be corrupted or in an unsupported format.',
+      logDetails: 'File analysis returned no data. File may be corrupted or unsupported format.'
     };
   }
   
