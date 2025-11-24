@@ -27,7 +27,7 @@ import {
   FILE_ANALYSIS_SIGNED_URL_EXPIRATION,
 } from "@/constants";
 import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-utils";
-import { formatError, handleSupabaseError } from "@/lib/error-utils";
+import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
 
@@ -121,14 +121,27 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
-      const errorMessage = getItemErrorMessage(error, 'url');
       const typedError = toTypedError(error);
+      console.error('Error adding URL:', typedError);
+      
+      // Check for common configuration or authentication issues
+      const commonError = checkCommonConfigErrors(error);
+      if (commonError) {
+        if (commonError.logDetails) {
+          console.error(`⚠️ ${commonError.logDetails}`);
+        }
+        toast.error(commonError.title, { description: commonError.description });
+        return;
+      }
+      
+      // Use generic error message for other cases
+      const errorMessage = getItemErrorMessage(error, 'url');
       const networkError = new NetworkError(
         errorMessage.message,
         typedError
       );
       
-      console.error('Error adding URL:', networkError);
+      console.error('Error details:', networkError);
       toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setLoading(false);
@@ -197,14 +210,27 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
-      const errorMessage = getItemErrorMessage(error, 'note');
       const typedError = toTypedError(error);
+      console.error('Error adding note:', typedError);
+      
+      // Check for common configuration or authentication issues
+      const commonError = checkCommonConfigErrors(error);
+      if (commonError) {
+        if (commonError.logDetails) {
+          console.error(`⚠️ ${commonError.logDetails}`);
+        }
+        toast.error(commonError.title, { description: commonError.description });
+        return;
+      }
+      
+      // Use generic error message for other cases
+      const errorMessage = getItemErrorMessage(error, 'note');
       const networkError = new NetworkError(
         errorMessage.message,
         typedError
       );
       
-      console.error('Error adding note:', networkError);
+      console.error('Error details:', networkError);
       toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setLoading(false);

@@ -37,6 +37,20 @@ npm run lint
 - Supabase account (for backend)
 - OpenAI API key (for embeddings)
 
+### Environment Setup
+
+1. Copy `.env.example` to `.env`:
+   ```sh
+   cp .env.example .env
+   ```
+
+2. Configure the following required environment variables in `.env`:
+   - `VITE_SUPABASE_URL` - Your Supabase project URL (from Supabase Dashboard > Settings > API)
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` - Your Supabase anon/public key (from Supabase Dashboard > Settings > API)
+   - `LOVABLE_API_KEY` - Your OpenAI API key (required for edge functions that generate embeddings and analyze content)
+
+**Important**: All three variables are required for the application to function properly. Without them, you will see errors when trying to add items to your collection.
+
 ## 🛠 Technologies
 
 - **Frontend**: React 18, TypeScript, Vite
@@ -59,6 +73,7 @@ All documentation has been organized in the [`/docs`](docs/) folder:
 - **[UI/UX Feedback](docs/UI_UX_FEEDBACK.md)** - Comprehensive UI analysis
 - **[Testing Checklist](docs/TESTING_CHECKLIST.md)** - Testing guidelines
 - **[Optimization Plan](docs/OPTIMIZATION_PLAN.md)** - Performance improvements
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## 🎨 Design System
 
