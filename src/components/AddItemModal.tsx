@@ -30,6 +30,7 @@ import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-util
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
+import { retryWithBackoff, SUPABASE_RETRY_OPTIONS, AI_RETRY_OPTIONS } from "@/lib/retry-utils";
 
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
@@ -76,9 +77,23 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       }
 
       console.log('Analyzing URL:', urlResult.data);
-      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_URL, {
-        body: { url: urlResult.data }
-      });
+      
+      // Retry URL analysis with exponential backoff for transient failures
+      const { data, error } = await retryWithBackoff(
+        async () => {
+          const result = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_URL, {
+            body: { url: urlResult.data }
+          });
+          
+          // Throw on error to trigger retry
+          if (result.error) {
+            throw result.error;
+          }
+          
+          return result;
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
 
       // Log the response for debugging
       console.log('URL analysis response:', { data, error });
@@ -144,14 +159,20 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       console.log('Inserting item:', { ...insertData, embedding: embedding ? '[embedding data]' : null });
 
-      const { error: insertError } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert(insertData);
+      // Retry database insert with backoff for transient failures
+      await retryWithBackoff(
+        async () => {
+          const { error: insertError } = await supabase
+            .from(SUPABASE_ITEMS_TABLE)
+            .insert(insertData);
 
-      if (insertError) {
-        console.error('Database insert error:', insertError);
-        throw insertError;
-      }
+          if (insertError) {
+            console.error('Database insert error:', insertError);
+            throw insertError;
+          }
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
 
       console.log('URL added successfully');
       toast.success("URL added to your space! 🌱");
@@ -257,14 +278,20 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       console.log('Inserting note:', { ...insertData, embedding: embedding ? '[embedding data]' : null });
 
-      const { error } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert(insertData);
+      // Retry database insert with backoff for transient failures
+      await retryWithBackoff(
+        async () => {
+          const { error } = await supabase
+            .from(SUPABASE_ITEMS_TABLE)
+            .insert(insertData);
 
-      if (error) {
-        console.error('Database insert error:', error);
-        throw error;
-      }
+          if (error) {
+            console.error('Database insert error:', error);
+            throw error;
+          }
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
 
       console.log('Note added successfully');
       toast.success("Note planted in your space! 📝");
@@ -353,14 +380,26 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       console.log('Analyzing file with AI');
 
-      // Analyze with AI - using the analyze-file function with signed URL
-      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
-        body: {
-          fileUrl: signedUrl,
-          fileType: file.type,
-          fileName: file.name
-        }
-      });
+      // Retry file analysis with exponential backoff for transient failures
+      const { data, error } = await retryWithBackoff(
+        async () => {
+          const result = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
+            body: {
+              fileUrl: signedUrl,
+              fileType: file.type,
+              fileName: file.name
+            }
+          });
+          
+          // Throw on error to trigger retry
+          if (result.error) {
+            throw result.error;
+          }
+          
+          return result;
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
 
       // Log the response for debugging
       console.log('File analysis response:', { data, error });
@@ -439,14 +478,20 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       console.log('Inserting file item:', { ...insertData, embedding: embedding ? '[embedding data]' : null });
 
-      const { error: insertError } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert(insertData);
+      // Retry database insert with backoff for transient failures
+      await retryWithBackoff(
+        async () => {
+          const { error: insertError } = await supabase
+            .from(SUPABASE_ITEMS_TABLE)
+            .insert(insertData);
 
-      if (insertError) {
-        console.error('Database insert error:', insertError);
-        throw insertError;
-      }
+          if (insertError) {
+            console.error('Database insert error:', insertError);
+            throw insertError;
+          }
+        },
+        SUPABASE_RETRY_OPTIONS
+      );
 
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' :
                            file.type === 'application/pdf' ? 'PDF' : 

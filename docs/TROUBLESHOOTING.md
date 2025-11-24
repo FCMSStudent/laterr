@@ -4,7 +4,27 @@ This guide helps you diagnose and fix common issues in the Laterr application.
 
 ## Failed to Add Item Error
 
-If you see "Failed to Add Item - Unable to add this item to your collection. Please try again." when trying to add bookmarks, URLs, notes, or files, follow these steps:
+If you see "Failed to Add Item - Unable to add this item to your collection. Please try again." when trying to add bookmarks, URLs, notes, or files, this guide will help you diagnose and fix the issue.
+
+### Recent Improvements (Nov 2024)
+
+The application now includes:
+- ✅ **Automatic retry logic** for transient network failures
+- ✅ **Enhanced error logging** in browser console for easier debugging
+- ✅ **Better error messages** with specific causes
+- ✅ **Data validation** before API calls
+- ✅ **Graceful degradation** when embeddings fail
+
+### Quick Diagnosis
+
+**First, check your browser console** (F12 → Console tab) for detailed error messages. The application now logs comprehensive information to help identify the root cause.
+
+Common log patterns and what they mean:
+- `"Authentication error:"` → See section 3 below
+- `"URL analysis error:"` or `"File analysis error:"` → Edge function issue, see section 1
+- `"Database insert error:"` → Permission or validation issue, see section 1 & 4
+- `"Network request failed"` → Connectivity issue, see section 4
+- `"Attempt X/3 failed, retrying"` → Transient error, retry in progress (normal)
 
 ### 1. Check Environment Variables
 
@@ -81,6 +101,29 @@ If you see "Too Many Requests" or "Rate limit exceeded":
   
 - **API Credits Exhausted**: You've run out of AI credits
   - Solution: Add credits to your OpenAI account or wait for quota reset
+
+### 6. Automatic Retry Logic
+
+The application now automatically retries failed operations for transient errors:
+
+- **What gets retried:**
+  - Network timeout errors
+  - Connection failures
+  - Temporary service unavailability (503 errors)
+  - Database connection issues
+
+- **What doesn't get retried:**
+  - Authentication errors (sign in required)
+  - Validation errors (fix input data)
+  - Rate limit errors (wait before retry)
+  - Permission errors (check account permissions)
+
+- **Retry behavior:**
+  - Maximum 3 attempts for most operations
+  - Exponential backoff (1s, 2s, 4s delays)
+  - You'll see `"Attempt X/3"` messages in console during retries
+
+If an operation fails after 3 retries, check the console logs for the specific error.
 
 ## Additional Issues
 
