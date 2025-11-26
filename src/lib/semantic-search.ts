@@ -4,6 +4,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Item } from "@/types";
+import { isValidEmbedding } from "@/constants";
 
 /**
  * Find similar items based on embedding similarity
@@ -84,6 +85,11 @@ export async function findSimilarItemsByText(
 
     if (embError || !embeddingData?.embedding) {
       console.error('Failed to generate embedding:', embError);
+      return [];
+    }
+
+    if (!isValidEmbedding(embeddingData.embedding)) {
+      console.error('Invalid embedding dimension:', embeddingData.embedding?.length);
       return [];
     }
 

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { EMBEDDING_DIMENSION, isValidEmbedding } from "@/constants";
 
 export interface BackfillProgress {
   total: number;
@@ -99,6 +100,10 @@ export async function backfillAllEmbeddings(
 
           if (!embeddingData?.embedding) {
             throw new Error('No embedding returned');
+          }
+
+          if (!isValidEmbedding(embeddingData.embedding)) {
+            throw new Error(`Invalid embedding dimension: ${embeddingData.embedding?.length} (expected ${EMBEDDING_DIMENSION})`);
           }
 
           // Update item with embedding
@@ -205,6 +210,10 @@ export async function regenerateEmbedding(itemId: string): Promise<boolean> {
 
     if (embError || !embeddingData?.embedding) {
       throw new Error('Failed to generate embedding');
+    }
+
+    if (!isValidEmbedding(embeddingData.embedding)) {
+      throw new Error(`Invalid embedding dimension: ${embeddingData.embedding?.length} (expected ${EMBEDDING_DIMENSION})`);
     }
 
     // Update item

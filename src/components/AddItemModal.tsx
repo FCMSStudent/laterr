@@ -25,6 +25,7 @@ import {
   SUPABASE_FUNCTION_ANALYZE_URL,
   SUPABASE_ITEMS_TABLE,
   FILE_ANALYSIS_SIGNED_URL_EXPIRATION,
+  isValidEmbedding,
 } from "@/constants";
 import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-utils";
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
@@ -79,7 +80,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       }
 
       // Generate embedding for semantic search
-      let embedding = null;
+      let embedding: number[] | null = null;
       try {
         setStatusStep('generating embeddings');
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -92,7 +93,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         });
 
         if (!embeddingError && embeddingData?.embedding) {
-          embedding = embeddingData.embedding;
+          // Validate embedding is an array with correct dimension
+          if (isValidEmbedding(embeddingData.embedding)) {
+            embedding = embeddingData.embedding;
+          } else {
+            console.warn('Invalid embedding dimension, skipping:', embeddingData.embedding?.length);
+          }
         }
       } catch (embError) {
         console.warn('Failed to generate embedding, continuing without it:', embError);
@@ -170,7 +176,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       const noteSummary = noteResult.data.substring(0, NOTE_SUMMARY_MAX_LENGTH);
 
       // Generate embedding for semantic search
-      let embedding = null;
+      let embedding: number[] | null = null;
       try {
         setStatusStep('generating embeddings');
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -183,7 +189,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         });
 
         if (!embeddingError && embeddingData?.embedding) {
-          embedding = embeddingData.embedding;
+          // Validate embedding is an array with correct dimension
+          if (isValidEmbedding(embeddingData.embedding)) {
+            embedding = embeddingData.embedding;
+          } else {
+            console.warn('Invalid embedding dimension, skipping:', embeddingData.embedding?.length);
+          }
         }
       } catch (embError) {
         console.warn('Failed to generate embedding, continuing without it:', embError);
@@ -306,7 +317,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       }
 
       // Generate embedding for semantic search
-      let embedding = null;
+      let embedding: number[] | null = null;
       try {
         setStatusStep('generating embeddings');
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -319,7 +330,12 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
         });
 
         if (!embeddingError && embeddingData?.embedding) {
-          embedding = embeddingData.embedding;
+          // Validate embedding is an array with correct dimension
+          if (isValidEmbedding(embeddingData.embedding)) {
+            embedding = embeddingData.embedding;
+          } else {
+            console.warn('Invalid embedding dimension, skipping:', embeddingData.embedding?.length);
+          }
         }
       } catch (embError) {
         console.warn('Failed to generate embedding, continuing without it:', embError);
