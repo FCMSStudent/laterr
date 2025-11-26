@@ -101,6 +101,7 @@ serve(async (req) => {
     }
 
     // Validate embedding dimension matches database schema (vector(1536))
+    // Note: This constant is duplicated because edge functions run in Deno and cannot import from the frontend codebase
     const EXPECTED_DIMENSION = 1536;
     if (embedding.length !== EXPECTED_DIMENSION) {
       console.error(`❌ Embedding dimension mismatch: got ${embedding.length}, expected ${EXPECTED_DIMENSION}`);
