@@ -11,6 +11,8 @@ interface EmbeddingState {
   error: string | null;
 }
 
+const EXPECTED_EMBEDDING_DIMENSION = 1536;
+
 export const useEmbeddings = () => {
   const [state, setState] = useState<EmbeddingState>({
     loading: false,
@@ -44,6 +46,12 @@ export const useEmbeddings = () => {
 
       if (!data?.embedding) {
         throw new Error('No embedding returned');
+      }
+
+      // Validate embedding is an array with correct dimension
+      if (!Array.isArray(data.embedding) || data.embedding.length !== EXPECTED_EMBEDDING_DIMENSION) {
+        console.warn('Invalid embedding dimension:', data.embedding?.length);
+        throw new Error(`Invalid embedding dimension: ${data.embedding?.length} (expected ${EXPECTED_EMBEDDING_DIMENSION})`);
       }
 
       setState({ loading: false, error: null });

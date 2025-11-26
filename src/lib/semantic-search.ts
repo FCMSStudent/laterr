@@ -5,6 +5,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Item } from "@/types";
 
+const EXPECTED_EMBEDDING_DIMENSION = 1536;
+
+/**
+ * Validates that an embedding has the correct dimension
+ */
+function isValidEmbedding(embedding: unknown): embedding is number[] {
+  return Array.isArray(embedding) && embedding.length === EXPECTED_EMBEDDING_DIMENSION;
+}
+
 /**
  * Find similar items based on embedding similarity
  * @param itemId - The ID of the reference item
@@ -84,6 +93,11 @@ export async function findSimilarItemsByText(
 
     if (embError || !embeddingData?.embedding) {
       console.error('Failed to generate embedding:', embError);
+      return [];
+    }
+
+    if (!isValidEmbedding(embeddingData.embedding)) {
+      console.error('Invalid embedding dimension:', embeddingData.embedding?.length);
       return [];
     }
 
