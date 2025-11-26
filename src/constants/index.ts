@@ -65,3 +65,13 @@ export const SUPABASE_FUNCTION_GENERATE_EMBEDDING = "generate-embedding" as cons
 
 export const FILE_ANALYSIS_SIGNED_URL_EXPIRATION = 60 * 10;
 export const PREVIEW_SIGNED_URL_EXPIRATION = 60 * 60;
+
+// Embedding configuration (must match database vector dimension)
+export const EMBEDDING_DIMENSION = 1536;
+
+/**
+ * Validates that an embedding has the correct dimension
+ */
+export function isValidEmbedding(embedding: unknown): embedding is number[] {
+  return Array.isArray(embedding) && embedding.length === EMBEDDING_DIMENSION;
+}

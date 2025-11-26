@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { EMBEDDING_DIMENSION, isValidEmbedding } from "@/constants";
 
 export interface BackfillProgress {
   total: number;
@@ -14,15 +15,6 @@ export interface BackfillProgress {
 }
 
 export type ProgressCallback = (progress: BackfillProgress) => void;
-
-const EXPECTED_EMBEDDING_DIMENSION = 1536;
-
-/**
- * Validates that an embedding has the correct dimension
- */
-function isValidEmbedding(embedding: unknown): embedding is number[] {
-  return Array.isArray(embedding) && embedding.length === EXPECTED_EMBEDDING_DIMENSION;
-}
 
 /**
  * Backfill embeddings for all items that don't have them
@@ -111,7 +103,7 @@ export async function backfillAllEmbeddings(
           }
 
           if (!isValidEmbedding(embeddingData.embedding)) {
-            throw new Error(`Invalid embedding dimension: ${embeddingData.embedding?.length} (expected ${EXPECTED_EMBEDDING_DIMENSION})`);
+            throw new Error(`Invalid embedding dimension: ${embeddingData.embedding?.length} (expected ${EMBEDDING_DIMENSION})`);
           }
 
           // Update item with embedding
@@ -221,7 +213,7 @@ export async function regenerateEmbedding(itemId: string): Promise<boolean> {
     }
 
     if (!isValidEmbedding(embeddingData.embedding)) {
-      throw new Error(`Invalid embedding dimension: ${embeddingData.embedding?.length} (expected ${EXPECTED_EMBEDDING_DIMENSION})`);
+      throw new Error(`Invalid embedding dimension: ${embeddingData.embedding?.length} (expected ${EMBEDDING_DIMENSION})`);
     }
 
     // Update item

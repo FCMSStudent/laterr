@@ -5,13 +5,12 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { EMBEDDING_DIMENSION, isValidEmbedding } from '@/constants';
 
 interface EmbeddingState {
   loading: boolean;
   error: string | null;
 }
-
-const EXPECTED_EMBEDDING_DIMENSION = 1536;
 
 export const useEmbeddings = () => {
   const [state, setState] = useState<EmbeddingState>({
@@ -49,9 +48,9 @@ export const useEmbeddings = () => {
       }
 
       // Validate embedding is an array with correct dimension
-      if (!Array.isArray(data.embedding) || data.embedding.length !== EXPECTED_EMBEDDING_DIMENSION) {
+      if (!isValidEmbedding(data.embedding)) {
         console.warn('Invalid embedding dimension:', data.embedding?.length);
-        throw new Error(`Invalid embedding dimension: ${data.embedding?.length} (expected ${EXPECTED_EMBEDDING_DIMENSION})`);
+        throw new Error(`Invalid embedding dimension: ${data.embedding?.length} (expected ${EMBEDDING_DIMENSION})`);
       }
 
       setState({ loading: false, error: null });

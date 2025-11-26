@@ -25,6 +25,7 @@ import {
   SUPABASE_FUNCTION_ANALYZE_URL,
   SUPABASE_ITEMS_TABLE,
   FILE_ANALYSIS_SIGNED_URL_EXPIRATION,
+  isValidEmbedding,
 } from "@/constants";
 import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-utils";
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
@@ -80,7 +81,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Generate embedding for semantic search
       let embedding: number[] | null = null;
-      const EXPECTED_EMBEDDING_DIMENSION = 1536;
       try {
         setStatusStep('generating embeddings');
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -94,8 +94,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
         if (!embeddingError && embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
-          if (Array.isArray(embeddingData.embedding) && 
-              embeddingData.embedding.length === EXPECTED_EMBEDDING_DIMENSION) {
+          if (isValidEmbedding(embeddingData.embedding)) {
             embedding = embeddingData.embedding;
           } else {
             console.warn('Invalid embedding dimension, skipping:', embeddingData.embedding?.length);
@@ -178,7 +177,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Generate embedding for semantic search
       let embedding: number[] | null = null;
-      const EXPECTED_EMBEDDING_DIMENSION = 1536;
       try {
         setStatusStep('generating embeddings');
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -192,8 +190,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
         if (!embeddingError && embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
-          if (Array.isArray(embeddingData.embedding) && 
-              embeddingData.embedding.length === EXPECTED_EMBEDDING_DIMENSION) {
+          if (isValidEmbedding(embeddingData.embedding)) {
             embedding = embeddingData.embedding;
           } else {
             console.warn('Invalid embedding dimension, skipping:', embeddingData.embedding?.length);
@@ -321,7 +318,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Generate embedding for semantic search
       let embedding: number[] | null = null;
-      const EXPECTED_EMBEDDING_DIMENSION = 1536;
       try {
         setStatusStep('generating embeddings');
         const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -335,8 +331,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
         if (!embeddingError && embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
-          if (Array.isArray(embeddingData.embedding) && 
-              embeddingData.embedding.length === EXPECTED_EMBEDDING_DIMENSION) {
+          if (isValidEmbedding(embeddingData.embedding)) {
             embedding = embeddingData.embedding;
           } else {
             console.warn('Invalid embedding dimension, skipping:', embeddingData.embedding?.length);

@@ -4,15 +4,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Item } from "@/types";
-
-const EXPECTED_EMBEDDING_DIMENSION = 1536;
-
-/**
- * Validates that an embedding has the correct dimension
- */
-function isValidEmbedding(embedding: unknown): embedding is number[] {
-  return Array.isArray(embedding) && embedding.length === EXPECTED_EMBEDDING_DIMENSION;
-}
+import { isValidEmbedding } from "@/constants";
 
 /**
  * Find similar items based on embedding similarity
