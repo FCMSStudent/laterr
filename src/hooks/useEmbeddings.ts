@@ -96,7 +96,7 @@ export const useEmbeddings = () => {
       // Update the item with new embedding
       const { error: updateError } = await supabase
         .from('items')
-        .update({ embedding })
+        .update({ embedding: JSON.stringify(embedding) })
         .eq('id', itemId);
 
       if (updateError) {

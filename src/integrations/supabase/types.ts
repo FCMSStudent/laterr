@@ -43,7 +43,7 @@ export type Database = {
           category_id: string | null
           content: string | null
           created_at: string
-          embedding: number[] | null
+          embedding: string | null
           id: string
           preview_image_url: string | null
           summary: string | null
@@ -58,7 +58,7 @@ export type Database = {
           category_id?: string | null
           content?: string | null
           created_at?: string
-          embedding?: number[] | null
+          embedding?: string | null
           id?: string
           preview_image_url?: string | null
           summary?: string | null
@@ -73,7 +73,7 @@ export type Database = {
           category_id?: string | null
           content?: string | null
           created_at?: string
-          embedding?: number[] | null
+          embedding?: string | null
           id?: string
           preview_image_url?: string | null
           summary?: string | null
@@ -125,19 +125,14 @@ export type Database = {
     Functions: {
       find_similar_items: {
         Args: {
-          query_embedding: number[]
-          match_threshold?: number
           match_count?: number
-          user_id_filter?: string
+          match_threshold?: number
+          query_embedding: string
         }
         Returns: {
           id: string
-          type: string
-          title: string
-          summary: string | null
-          tags: string[] | null
-          preview_image_url: string | null
           similarity: number
+          title: string
         }[]
       }
     }

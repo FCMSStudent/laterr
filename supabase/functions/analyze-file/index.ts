@@ -115,7 +115,7 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
-          .map((item: { str: string }) => item.str)
+          .map((item: any) => (item.str || ''))
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
@@ -685,7 +685,7 @@ Use the analyze_file function to provide structured output.`
         
         // Prefer embedded title if it's clean and meaningful
         const embeddedTitle = metadata.Title || metadata.title;
-        if (embeddedTitle && embeddedTitle.length > 3 && embeddedTitle.length < 200 && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
+        if (embeddedTitle && typeof embeddedTitle === 'string' && embeddedTitle.length > 3 && embeddedTitle.length < 200 && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
           title = cleanTitle(embeddedTitle);
           console.log('📄 Using embedded PDF title:', title);
         }
@@ -837,8 +837,8 @@ Use the analyze_file function to provide structured output.`;
         extractedText = text;
         
         // Prefer embedded title if meaningful
-        if (metadata.Title && metadata.Title.length > 3 && metadata.Title.length < 200) {
-          title = cleanTitle(metadata.Title as string);
+        if (metadata.Title && typeof metadata.Title === 'string' && metadata.Title.length > 3 && metadata.Title.length < 200) {
+          title = cleanTitle(metadata.Title);
           console.log('📝 Using embedded DOCX title:', title);
         }
         
