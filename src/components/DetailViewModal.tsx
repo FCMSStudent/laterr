@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SimilarItemsPanel } from "@/components/SimilarItemsPanel";
+import { PDFPreview } from "@/components/PDFPreview";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -217,14 +218,19 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                     <LoadingSpinner size="sm" text="Loading PDF preview..." />
                   </div>
                 ) : signedUrl ? (
-                  <iframe src={signedUrl} title="PDF preview" className="w-full h-64 md:h-80" />
+                  <>
+                    <PDFPreview url={signedUrl} className="h-64 md:h-80" />
+                    <a 
+                      href={signedUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50"
+                    >
+                      Open full PDF
+                    </a>
+                  </>
                 ) : (
                   <div className="p-4 text-sm text-muted-foreground">PDF preview unavailable</div>
-                )}
-                {signedUrl && !loadingSignedUrl && (
-                  <a href={signedUrl} target="_blank" rel="noopener noreferrer" className="block text-xs text-primary hover:underline px-3 py-2">
-                    Open full PDF
-                  </a>
                 )}
               </div>
             )}
