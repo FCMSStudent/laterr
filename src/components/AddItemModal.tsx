@@ -431,26 +431,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           </DialogTitle>
         </DialogHeader>
         <DialogDescription className="sr-only">Add a new item</DialogDescription>
-
-        {loading && suggestedCategory && (
-          <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
-            <p className="text-sm text-muted-foreground mb-2 font-medium">Confirm category:</p>
-            <div className="flex gap-2 flex-wrap">
-              {CATEGORY_OPTIONS.map(({ value, label }) => (
-                <Button
-                  key={value}
-                  type="button"
-                  variant={suggestedCategory === value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSuggestedCategory(value)}
-                  className="text-xs"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
         
         <Tabs defaultValue="url" className="w-full">
           <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
