@@ -19,11 +19,6 @@ serve(async (req) => {
 
     console.log('🔮 Generating embedding for:', { title, tags, summaryLength: summary?.length, textLength: extractedText?.length });
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
     // Construct multimodal text representation
     // Priority: tags (highest weight) > title > summary > extracted text (sample)
     const parts: string[] = [];
@@ -67,11 +62,16 @@ serve(async (req) => {
 
     console.log('📝 Combined text for embedding (first 200 chars):', combinedText.substring(0, 200));
 
-    // Generate embedding using OpenAI's embedding model via Lovable AI Gateway
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+    // Generate embedding using OpenAI's embedding model directly
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
+    }
+
+    const response = await fetch("https://api.openai.com/v1/embeddings", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
