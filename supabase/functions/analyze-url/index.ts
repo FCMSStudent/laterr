@@ -1,8 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { cleanMetadataFields, validateAndParseAiJson } from "../_shared/metadata-utils.ts";
-import { parseHTML } from "npm:linkedom@0.18.5";
-import { Readability } from "npm:@mozilla/readability@0.5.0";
+import { parseHTML } from "https://esm.sh/linkedom@0.18.5";
+import { Readability } from "https://esm.sh/@mozilla/readability@0.5.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -191,9 +191,9 @@ serve(async (req) => {
       
       // Use Readability to extract main article content
       try {
-        const { document } = parseHTML(html);
-        const reader = new Readability(document, { 
-          url: url,
+        const parsed: any = parseHTML(html);
+        const doc = parsed.document || parsed;
+        const reader = new Readability(doc, { 
           keepClasses: false 
         });
         const article = reader.parse();

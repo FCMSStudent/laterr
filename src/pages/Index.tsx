@@ -79,7 +79,7 @@ const Index = () => {
       if (error) throw error;
 
       // Generate signed URLs for preview images
-      const rawItems = ((data ?? []) as RawItem[]);
+      const rawItems = (data ?? []) as any[];
       const normalizedItems: Item[] = rawItems.map((item) => ({
         ...item,
         tags: item.tags ?? [],
@@ -87,6 +87,7 @@ const Index = () => {
         summary: item.summary ?? null,
         user_notes: item.user_notes ?? null,
         content: item.content ?? null,
+        embedding: item.embedding ? JSON.parse(item.embedding) : null,
       }));
 
       const itemsWithSignedUrls = await generateSignedUrlsForItems(normalizedItems);

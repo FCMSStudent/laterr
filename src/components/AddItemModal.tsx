@@ -115,7 +115,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           summary: data.summary,
           tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
           preview_image_url: data.previewImageUrl,
-          embedding: embedding,
+          embedding: embedding ? JSON.stringify(embedding) : null,
           user_id: user.id,
         });
 
@@ -210,7 +210,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           content: noteResult.data,
           summary: noteSummary,
           tags: [...DEFAULT_ITEM_TAGS],
-          embedding: embedding,
+          embedding: embedding ? JSON.stringify(embedding) : null,
           user_id: user.id,
         });
 
@@ -353,7 +353,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           summary: data.summary || data.description,
           tags: [defaultTag],
           preview_image_url: file.type.startsWith('image/') ? storagePath : (data.previewImageUrl || null),
-          embedding: embedding,
+          embedding: embedding ? JSON.stringify(embedding) : null,
           user_id: user.id,
         });
 
