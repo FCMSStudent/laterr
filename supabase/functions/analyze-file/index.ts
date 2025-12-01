@@ -145,19 +145,24 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
 }
 
 // Generate thumbnail from PDF first page
-// Note: Full implementation would require pdf-to-image conversion library
-// For now, we'll use the PDF URL directly as preview since the bucket is public
+// Note: Canvas API is not available in Deno edge runtime
+// PDF thumbnail generation requires either:
+// - Headless browser (Puppeteer/Playwright) - not available in Supabase Edge Functions
+// - Server-side canvas library - limited Deno support
+// - External PDF-to-image service
+// The PDFPreview component handles rendering in the browser instead
 async function generatePdfThumbnail(
   fileUrl: string,
   userId: string
 ): Promise<string | null> {
   try {
-    console.log('🖼️ PDF thumbnail: Using original file URL as preview');
+    console.log('🖼️ PDF thumbnail generation not supported in edge runtime');
     // In a production environment with proper infrastructure, you would:
-    // 1. Extract first page of PDF as image using pdf-to-image library
-    // 2. Upload the image to storage
-    // 3. Return the image URL
-    // For now, return null to use the PDF URL directly
+    // 1. Use a headless browser or PDF rendering service
+    // 2. Extract first page and convert to JPEG/PNG
+    // 3. Upload to storage bucket (e.g., 'thumbnails')
+    // 4. Return the thumbnail URL
+    // For now, PDFs are rendered client-side with react-pdf
     return null;
   } catch (error) {
     console.error('❌ PDF thumbnail generation failed:', error);
