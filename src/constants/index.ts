@@ -69,9 +69,10 @@ export const FILE_ANALYSIS_SIGNED_URL_EXPIRATION = 60 * 10;
 export const PREVIEW_SIGNED_URL_EXPIRATION = 60 * 60;
 
 // Thumbnail generation constants
-export const THUMBNAIL_WIDTH = 400;
-export const THUMBNAIL_HEIGHT = 225;
-export const THUMBNAIL_QUALITY = 0.85;
+// Higher resolution for better preview quality on high-DPI displays
+export const THUMBNAIL_WIDTH = 800;
+export const THUMBNAIL_HEIGHT = 450;
+export const THUMBNAIL_QUALITY = 0.9;
 
 // Embedding configuration (must match database vector dimension)
 export const EMBEDDING_DIMENSION = 1536;

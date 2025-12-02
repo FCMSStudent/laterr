@@ -9,6 +9,9 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // Configure PDF.js worker from CDN
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+// Get device pixel ratio for high-resolution rendering, capped at 2 for performance
+const getDevicePixelRatio = () => Math.min(window.devicePixelRatio || 1, 2);
+
 interface PDFPreviewProps {
   url: string;
   className?: string;
@@ -143,6 +146,7 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
             <Page
               pageNumber={pageNumber}
               scale={scale}
+              devicePixelRatio={getDevicePixelRatio()}
               loading=""
               error=""
               className="shadow-lg"
