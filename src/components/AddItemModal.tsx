@@ -27,10 +27,11 @@ import {
   FILE_ANALYSIS_SIGNED_URL_EXPIRATION,
   isValidEmbedding,
 } from "@/constants";
-import { uploadFileToStorage, createSignedUrlForFile } from "@/lib/supabase-utils";
+import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage } from "@/lib/supabase-utils";
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
+import { generateThumbnail } from "@/lib/thumbnail-generator";
 
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
@@ -283,6 +284,16 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       // Upload to storage with user-specific path
       const { fileName, storagePath } = await uploadFileToStorage(file, user.id);
 
+      // Generate thumbnail for preview
+      setStatusStep('generating thumbnail');
+      let thumbnailUrl: string | null = null;
+      try {
+        const thumbnailBlob = await generateThumbnail(file, file.name);
+        thumbnailUrl = await uploadThumbnailToStorage(thumbnailBlob, user.id);
+      } catch (thumbnailError) {
+        console.warn('Failed to generate thumbnail, continuing without it:', thumbnailError);
+      }
+
       setStatusStep('extracting');
 
       // Create a temporary signed URL for the analyze-file function
@@ -352,7 +363,7 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           content: storagePath,
           summary: data.summary || data.description,
           tags: [defaultTag],
-          preview_image_url: file.type.startsWith('image/') ? storagePath : (data.previewImageUrl || null),
+          preview_image_url: thumbnailUrl || (file.type.startsWith('image/') ? storagePath : (data.previewImageUrl || null)),
           embedding: embedding ? JSON.stringify(embedding) : null,
           user_id: user.id,
         });

@@ -58,13 +58,20 @@ export const NOTE_SUMMARY_MAX_LENGTH = 200;
 
 export const SUPABASE_ITEMS_TABLE = "items" as const;
 export const SUPABASE_STORAGE_BUCKET_ITEM_IMAGES = "item-images" as const;
+export const SUPABASE_STORAGE_BUCKET_THUMBNAILS = "thumbnails" as const;
 export const SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX = `/${SUPABASE_STORAGE_BUCKET_ITEM_IMAGES}/` as const;
+export const SUPABASE_STORAGE_THUMBNAILS_PATH_PREFIX = `/${SUPABASE_STORAGE_BUCKET_THUMBNAILS}/` as const;
 export const SUPABASE_FUNCTION_ANALYZE_URL = "analyze-url" as const;
 export const SUPABASE_FUNCTION_ANALYZE_FILE = "analyze-file" as const;
 export const SUPABASE_FUNCTION_GENERATE_EMBEDDING = "generate-embedding" as const;
 
 export const FILE_ANALYSIS_SIGNED_URL_EXPIRATION = 60 * 10;
 export const PREVIEW_SIGNED_URL_EXPIRATION = 60 * 60;
+
+// Thumbnail generation constants
+export const THUMBNAIL_WIDTH = 400;
+export const THUMBNAIL_HEIGHT = 225;
+export const THUMBNAIL_QUALITY = 0.85;
 
 // Embedding configuration (must match database vector dimension)
 export const EMBEDDING_DIMENSION = 1536;
