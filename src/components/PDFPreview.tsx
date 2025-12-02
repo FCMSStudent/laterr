@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -8,6 +8,9 @@ import 'react-pdf/dist/Page/TextLayer.css';
 
 // Configure PDF.js worker from CDN
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+// Get device pixel ratio for high-resolution rendering, capped at 2 for performance
+const getDevicePixelRatio = () => Math.min(window.devicePixelRatio || 1, 2);
 
 interface PDFPreviewProps {
   url: string;
@@ -20,13 +23,6 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
   const [scale, setScale] = useState<number>(1.0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Use device pixel ratio for high-resolution rendering on Retina/HiDPI displays
-  // Capped at 2 to balance quality vs performance
-  const devicePixelRatio = useMemo(
-    () => Math.min(window.devicePixelRatio || 1, 2),
-    []
-  );
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -150,7 +146,7 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
             <Page
               pageNumber={pageNumber}
               scale={scale}
-              devicePixelRatio={devicePixelRatio}
+              devicePixelRatio={getDevicePixelRatio()}
               loading=""
               error=""
               className="shadow-lg"
