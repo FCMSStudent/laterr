@@ -234,13 +234,6 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 )}
               </div>
             )}
-            {item.preview_image_url && (
-              <img
-                src={item.preview_image_url}
-                alt={item.title}
-                className="rounded-xl shadow-md object-cover w-full max-w-full h-auto"
-              />
-            )}
 
             {item.type === "url" && (
               <a
