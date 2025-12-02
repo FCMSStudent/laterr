@@ -208,9 +208,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
         {/* HORIZONTAL LAYOUT */}
-        <div className="flex flex-col md:flex-row gap-8 mt-4">
+        <div className="flex flex-col md:flex-row gap-8 mt-4 w-full overflow-hidden">
           {/* LEFT COLUMN */}
-          <div className="md:w-1/3 flex flex-col gap-4">
+          <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
             {(item.type === "document" || (item.content?.toLowerCase().includes(".pdf") ?? false)) && (
               <div className="rounded-xl overflow-hidden bg-muted">
                 {loadingSignedUrl ? (
@@ -238,7 +238,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               <img
                 src={item.preview_image_url}
                 alt={item.title}
-                className="rounded-xl shadow-md object-cover w-full h-auto"
+                className="rounded-xl shadow-md object-cover w-full max-w-full h-auto"
               />
             )}
 
@@ -277,7 +277,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="md:flex-1 flex flex-col gap-6">
+          <div className="md:flex-1 flex flex-col gap-6 min-w-0">
             <div>
               <h3 className="font-semibold text-sm text-muted-foreground mb-2">Summary</h3>
               <p className="text-base leading-body prose-wide">{item.summary}</p>
