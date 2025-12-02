@@ -17,7 +17,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Montserrat',
+  				'Lato',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -30,7 +30,7 @@ export default {
   				'sans-serif'
   			],
   			serif: [
-  				'Cormorant Garamond',
+  				'EB Garamond',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
@@ -39,7 +39,7 @@ export default {
   				'serif'
   			],
   			mono: [
-  				'IBM Plex Mono',
+  				'Fira Code',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
@@ -219,6 +219,15 @@ export default {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out'
+  		},
+  		boxShadow: {
+  			'2xs': 'var(--shadow-2xs)',
+  			xs: 'var(--shadow-xs)',
+  			sm: 'var(--shadow-sm)',
+  			md: 'var(--shadow-md)',
+  			lg: 'var(--shadow-lg)',
+  			xl: 'var(--shadow-xl)',
+  			'2xl': 'var(--shadow-2xl)'
   		}
   	}
   },
