@@ -6,7 +6,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
   SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
+  SUPABASE_STORAGE_BUCKET_THUMBNAILS,
   SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX,
+  SUPABASE_STORAGE_THUMBNAILS_PATH_PREFIX,
   PREVIEW_SIGNED_URL_EXPIRATION,
 } from "@/constants";
 import type { Item } from "@/types";
@@ -123,4 +125,36 @@ export async function createSignedUrlForFile(
   }
 
   return data.signedUrl;
+}
+
+/**
+ * Uploads a thumbnail to Supabase storage
+ * @param thumbnailBlob - The thumbnail blob to upload
+ * @param userId - The user ID for path organization
+ * @returns The public URL of the uploaded thumbnail
+ * @throws Error if upload fails
+ */
+export async function uploadThumbnailToStorage(
+  thumbnailBlob: Blob,
+  userId: string
+): Promise<string> {
+  const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.jpg`;
+  
+  const { error: uploadError } = await supabase.storage
+    .from(SUPABASE_STORAGE_BUCKET_THUMBNAILS)
+    .upload(fileName, thumbnailBlob, {
+      contentType: 'image/jpeg',
+      cacheControl: '3600',
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  // Return the public URL since thumbnails bucket is public
+  const { data } = supabase.storage
+    .from(SUPABASE_STORAGE_BUCKET_THUMBNAILS)
+    .getPublicUrl(fileName);
+
+  return data.publicUrl;
 }
