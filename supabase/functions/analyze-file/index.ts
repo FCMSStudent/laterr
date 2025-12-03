@@ -195,6 +195,8 @@ const MIN_TITLE_LENGTH = 3;
 const MAX_TITLE_LENGTH = 200;
 const SUMMARY_TEXT_SAMPLE_LENGTH = 1500;
 const MIN_TEXT_FOR_MULTIMODAL_BYPASS = 50;
+const MIN_SENTENCE_LENGTH = 20; // Minimum characters for a meaningful sentence
+const MIN_ACRONYM_LENGTH = 2; // Minimum length for all-caps acronyms to filter
 
 // Helper function to render PDF page to PNG base64 using pdfjs-dist
 // NOTE: Currently returns null due to Deno edge runtime limitations (no Canvas API)
@@ -1129,23 +1131,26 @@ Use the analyze_file function to provide structured output.`;
             console.error('❌ Fallback PDF summary error:', e instanceof Error ? e.message : String(e));
             // Last resort: generate a basic summary from extracted text
             if (extractedText && extractedText.trim().length > 0) {
-              // Split on sentence boundaries and filter for meaningful sentences
-              const sentences = extractedText
+              // Split on sentence boundaries using a more compatible approach
+              const rawSentences = extractedText
                 .trim()
                 .replace(/\s+/g, ' ')
-                .split(/(?<=[.!?])\s+/)  // Split after punctuation followed by whitespace
+                .split(/[.!?]\s+/);
+              
+              // Filter for meaningful sentences and reconstruct with punctuation
+              const sentences = rawSentences
                 .map(s => s.trim())
-                .filter(s => s.length > 20 && !s.match(/^[A-Z]{2,}\s*$/)); // Filter short or all-caps sentences
+                .filter(s => 
+                  s.length > MIN_SENTENCE_LENGTH && 
+                  !s.match(new RegExp(`^[A-Z]{${MIN_ACRONYM_LENGTH},}\\s*$`))
+                )
+                .map(s => s.endsWith('.') || s.endsWith('!') || s.endsWith('?') ? s : s + '.');
               
               // Take first 3 meaningful sentences
               const firstSentences = sentences.slice(0, 3);
               
               if (firstSentences.length > 0) {
                 summary = firstSentences.join(' ');
-                // Ensure it ends with punctuation
-                if (!summary.match(/[.!?]$/)) {
-                  summary += '.';
-                }
                 console.log('✅ Generated basic text-based summary as last resort');
               }
             }
