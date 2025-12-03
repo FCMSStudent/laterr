@@ -160,14 +160,11 @@ const MIN_TEXT_FOR_MULTIMODAL_BYPASS = 50;
 // NOTE: Currently returns null due to Deno edge runtime limitations (no Canvas API)
 // This function is a placeholder for future implementation when canvas support becomes available
 // or when using an external PDF-to-image service.
-async function renderPdfPageToPng(
-  fileUrl: string,
-  pageNum: number = 1,
-  scale: number = 1.5
-): Promise<string | null> {
+async function renderPdfPageToPng(): Promise<string | null> {
   console.log('⚠️ PDF page rendering not available in Deno edge runtime (no Canvas API)');
   console.log('🔄 Using alternative approach: text extraction + metadata analysis');
   // TODO: Implement using external service or when Deno canvas support is available
+  // Parameters (fileUrl, pageNum, scale) will be added when implementation is complete
   return null;
 }
 
@@ -183,11 +180,10 @@ async function analyzePdfWithMultimodal(
   console.log(`📊 Text available: ${extractedText ? extractedText.length : 0} chars`);
   console.log(`📊 Metadata available: ${metadata ? Object.keys(metadata).length : 0} fields`);
   
-  // Try to render PDF page to image
-  const pngBase64 = await renderPdfPageToPng(fileUrl, 1, 1.5);
+  // Try to render PDF page to image (currently returns null due to Deno limitations)
+  const pngBase64 = await renderPdfPageToPng();
   
   // Build a comprehensive prompt that uses all available information
-  let contentParts: any[] = [];
   let promptText = `Analyze this PDF document and extract structured metadata.\n\n**Filename**: ${fileName}\n\n`;
   
   // Include metadata if available
@@ -221,10 +217,12 @@ async function analyzePdfWithMultimodal(
 
 Use the analyze_file function to provide structured output.`;
 
-  contentParts.push({ type: "text", text: promptText });
+  // Build content parts for API request
+  // Future: If/when pngBase64 is not null, include image_url in content array
+  const contentParts: any[] = [{ type: "text", text: promptText }];
   
-  // If we successfully rendered a PNG, include it (but this won't work currently due to Deno limitations)
   if (pngBase64) {
+    // This code will execute when renderPdfPageToPng is implemented
     contentParts.push({
       type: "image_url",
       image_url: {
@@ -280,7 +278,7 @@ Use the analyze_file function to provide structured output.`;
       : fileName.replace(/\.[^/.]+$/, ''),
     description: 'PDF document',
     tags: ['pdf', 'document'],
-    category: 'other' as const,
+    category: 'other',
     summary: '',
     keyPoints: []
   };
