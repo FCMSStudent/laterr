@@ -1129,15 +1129,23 @@ Use the analyze_file function to provide structured output.`;
             console.error('❌ Fallback PDF summary error:', e instanceof Error ? e.message : String(e));
             // Last resort: generate a basic summary from extracted text
             if (extractedText && extractedText.trim().length > 0) {
-              const firstSentences = extractedText
+              // Split on sentence boundaries and filter for meaningful sentences
+              const sentences = extractedText
                 .trim()
                 .replace(/\s+/g, ' ')
-                .split(/[.!?]+/)
-                .filter(s => s.trim().length > 20)
-                .slice(0, 3)
-                .join('. ');
-              if (firstSentences.length > 10) {
-                summary = firstSentences + (firstSentences.endsWith('.') ? '' : '.');
+                .split(/(?<=[.!?])\s+/)  // Split after punctuation followed by whitespace
+                .map(s => s.trim())
+                .filter(s => s.length > 20 && !s.match(/^[A-Z]{2,}\s*$/)); // Filter short or all-caps sentences
+              
+              // Take first 3 meaningful sentences
+              const firstSentences = sentences.slice(0, 3);
+              
+              if (firstSentences.length > 0) {
+                summary = firstSentences.join(' ');
+                // Ensure it ends with punctuation
+                if (!summary.match(/[.!?]$/)) {
+                  summary += '.';
+                }
                 console.log('✅ Generated basic text-based summary as last resort');
               }
             }
