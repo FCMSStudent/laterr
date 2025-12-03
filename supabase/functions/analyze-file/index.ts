@@ -18,6 +18,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
+
+/**
+ * Helper function to make AI API calls with retry logic for rate limits (429 errors)
+ * @param url - API endpoint URL
+ * @param options - Fetch options
+ * @param retryCount - Current retry attempt (internal use)
+ * @returns Response from the API
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retryCount = 0
+): Promise<Response> {
+  try {
+    const response = await fetch(url, options);
+    
+    // If rate limited and we have retries left, wait and retry
+    if (response.status === 429 && retryCount < MAX_RETRIES) {
+      const delay = RETRY_DELAYS[retryCount];
+      console.log(`⏳ Rate limit hit (429). Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retryCount + 1);
+    }
+    
+    return response;
+  } catch (error) {
+    // For network errors, also retry if we have attempts left
+    if (retryCount < MAX_RETRIES) {
+      const delay = RETRY_DELAYS[retryCount];
+      console.log(`⚠️ Network error. Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retryCount + 1);
+    }
+    throw error;
+  }
+}
+
 // Define structured output schema
 const analyzeFileToolSchema = {
   type: "function",
@@ -161,8 +201,8 @@ const MIN_TEXT_FOR_MULTIMODAL_BYPASS = 50;
 // This function is a placeholder for future implementation when canvas support becomes available
 // or when using an external PDF-to-image service.
 async function renderPdfPageToPng(): Promise<string | null> {
-  console.log('⚠️ PDF page rendering not available in Deno edge runtime (no Canvas API)');
-  console.log('🔄 Using alternative approach: text extraction + metadata analysis');
+  console.log('⚠️ PDF visual rendering not available: Deno edge runtime lacks Canvas API support');
+  console.log('🔄 Falling back to text extraction + metadata analysis approach');
   // TODO: Implement using external service or when Deno canvas support is available
   // Parameters (fileUrl, pageNum, scale) will be added when implementation is complete
   return null;
@@ -233,7 +273,7 @@ Use the analyze_file function to provide structured output.`;
   }
 
   console.log('📤 Sending multimodal analysis request to AI...');
-  const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const aiResponse = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -251,7 +291,7 @@ Use the analyze_file function to provide structured output.`;
   });
 
   if (aiResponse.status === 429) {
-    console.error('❌ Rate limit exceeded');
+    console.error('❌ Rate limit exceeded after retries');
     throw new Error("Rate limit exceeded. Please try again later.");
   }
   if (aiResponse.status === 402) {
@@ -746,7 +786,7 @@ serve(async (req) => {
       console.log('🖼️ Processing image with enhanced OCR and analysis');
       
       try {
-        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const response = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${LOVABLE_API_KEY}`,
@@ -871,6 +911,7 @@ Use the analyze_file function to provide structured output.`
             summary = multimodalResult.summary;
             keyPoints = multimodalResult.keyPoints;
             
+            console.log('✅ PDF Analysis Path: AI multimodal analysis succeeded');
             console.log('✅ PDF multimodal analysis complete:', { 
               title, 
               tags, 
@@ -879,8 +920,8 @@ Use the analyze_file function to provide structured output.`
               keyPointsCount: keyPoints.length 
             });
           } catch (multimodalError) {
-            console.error('❌ Multimodal fallback failed:', multimodalError);
-            console.error('❌ Error details:', multimodalError instanceof Error ? multimodalError.message : String(multimodalError));
+            console.error('❌ PDF Analysis Path: Multimodal fallback failed, using metadata-based fallback');
+            console.error('❌ Multimodal error:', multimodalError instanceof Error ? multimodalError.message : String(multimodalError));
             
             if (multimodalError instanceof Error && (multimodalError.message.includes('Rate limit') || multimodalError.message.includes('credits'))) {
               throw multimodalError;
@@ -908,7 +949,8 @@ Use the analyze_file function to provide structured output.`
           }
         } else {
           // Text extraction succeeded with substantial content - continue with text-based analysis
-          console.log('✅ PDF text extraction successful, proceeding with text-based analysis');
+          console.log('✅ PDF Analysis Path: Text extraction successful, using text-based AI analysis');
+          console.log(`📊 Extracted ${extractedText.length} chars from ${pageCount} pages`);
         
         // Prefer embedded title if it's clean and meaningful
         const embeddedTitle = metadata.Title || metadata.title;
@@ -966,7 +1008,7 @@ Provide analysis based strictly on the content above:
 Use the analyze_file function to provide structured output.`;
 
         console.log('📤 Sending text-based AI analysis request...');
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiResponse = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${LOVABLE_API_KEY}`,
@@ -983,7 +1025,7 @@ Use the analyze_file function to provide structured output.`;
         console.log(`📥 AI response status: ${aiResponse.status} ${aiResponse.statusText}`);
 
         if (aiResponse.status === 429) {
-          console.error('❌ Rate limit exceeded during PDF analysis');
+          console.error('❌ Rate limit exceeded after retries during PDF analysis');
           throw new Error("Rate limit exceeded. Please try again later.");
         }
         if (aiResponse.status === 402) {
@@ -1023,6 +1065,7 @@ Use the analyze_file function to provide structured output.`;
           summary = parsed.summary || '';
           keyPoints = parsed.keyPoints || [];
           
+          console.log('✅ PDF Analysis Path: AI text-based analysis succeeded');
           console.log('✅ PDF text-based analysis complete:', { 
             title: title.substring(0, 50), 
             tags, 
@@ -1034,6 +1077,7 @@ Use the analyze_file function to provide structured output.`;
           });
         } else {
           const errorText = await aiResponse.text();
+          console.error('❌ PDF Analysis Path: AI analysis failed, using basic fallback');
           console.error('❌ AI analysis request failed:', {
             status: aiResponse.status,
             statusText: aiResponse.statusText,
@@ -1051,7 +1095,7 @@ Use the analyze_file function to provide structured output.`;
             console.log(`📝 Using ${textForSummary.length} chars for summary generation`);
             
             const fallbackPrompt = `Write a concise 2-3 sentence summary of this PDF content. Focus on the main topic and purpose.\n\n${textForSummary}`;
-            const sumResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            const sumResp = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${LOVABLE_API_KEY}`,
@@ -1083,6 +1127,20 @@ Use the analyze_file function to provide structured output.`;
             }
           } catch (e) {
             console.error('❌ Fallback PDF summary error:', e instanceof Error ? e.message : String(e));
+            // Last resort: generate a basic summary from extracted text
+            if (extractedText && extractedText.trim().length > 0) {
+              const firstSentences = extractedText
+                .trim()
+                .replace(/\s+/g, ' ')
+                .split(/[.!?]+/)
+                .filter(s => s.trim().length > 20)
+                .slice(0, 3)
+                .join('. ');
+              if (firstSentences.length > 10) {
+                summary = firstSentences + (firstSentences.endsWith('.') ? '' : '.');
+                console.log('✅ Generated basic text-based summary as last resort');
+              }
+            }
           }
         } else if (summary && summary.trim().length > 0) {
           console.log(`✅ Summary already present (${summary.length} chars)`);
@@ -1151,7 +1209,7 @@ Provide analysis based strictly on the content above:
 
 Use the analyze_file function to provide structured output.`;
 
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiResponse = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${LOVABLE_API_KEY}`,
@@ -1166,7 +1224,7 @@ Use the analyze_file function to provide structured output.`;
         });
 
         if (aiResponse.status === 429 || aiResponse.status === 402) {
-          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded. Please try again later." : "AI credits exhausted. Please add credits to continue.");
+          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded after retries. Please try again later." : "AI credits exhausted. Please add credits to continue.");
         }
 
         if (aiResponse.ok) {
@@ -1238,7 +1296,7 @@ Based on the headers and sample data, provide:
 
 Use the analyze_file function to provide structured output.`;
 
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiResponse = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${LOVABLE_API_KEY}`,
@@ -1253,7 +1311,7 @@ Use the analyze_file function to provide structured output.`;
         });
 
         if (aiResponse.status === 429 || aiResponse.status === 402) {
-          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded. Please try again later." : "AI credits exhausted. Please add credits to continue.");
+          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded after retries. Please try again later." : "AI credits exhausted. Please add credits to continue.");
         }
 
         if (aiResponse.ok) {
@@ -1328,7 +1386,7 @@ Based on the slide titles and bullet points, provide:
 
 Use the analyze_file function to provide structured output.`;
 
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiResponse = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${LOVABLE_API_KEY}`,
@@ -1343,7 +1401,7 @@ Use the analyze_file function to provide structured output.`;
         });
 
         if (aiResponse.status === 429 || aiResponse.status === 402) {
-          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded. Please try again later." : "AI credits exhausted. Please add credits to continue.");
+          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded after retries. Please try again later." : "AI credits exhausted. Please add credits to continue.");
         }
 
         if (aiResponse.ok) {
@@ -1407,7 +1465,7 @@ Provide structured metadata based strictly on the content above: title, descript
 
 Use the analyze_file function.`;
 
-          const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const aiResponse = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${LOVABLE_API_KEY}`,
