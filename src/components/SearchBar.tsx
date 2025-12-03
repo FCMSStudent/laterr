@@ -12,7 +12,7 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
       placeholder="Search your space..."
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="glass-input h-14 text-base font-medium rounded-2xl shadow-md focus:shadow-lg"
+      className="glass-input h-11 text-base font-medium rounded-2xl shadow-md focus:shadow-lg"
       prefixIcon="search"
       showClearButton={true}
       onClear={() => onChange("")}

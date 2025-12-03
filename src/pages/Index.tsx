@@ -260,11 +260,11 @@ const Index = () => {
         Skip to main content
       </a>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <header className="mb-12 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <header className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-6xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
-            <p className="text-muted-foreground text-lg font-medium">Your personal knowledge space</p>
+            <h1 className="text-4xl font-bold text-foreground mb-1 tracking-tight">Laterr</h1>
+            <p className="text-muted-foreground text-sm font-medium">Your personal knowledge space</p>
           </div>
           <nav aria-label="Main navigation" className="flex items-center gap-4">
             <Button
@@ -288,11 +288,11 @@ const Index = () => {
           </nav>
         </header>
 
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-2xl mx-auto mb-4">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        <div className="mb-10">
+        <div className="mb-6">
           <FilterBar
             selectedTag={selectedTag}
             selectedSort={sortOption}
