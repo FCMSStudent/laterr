@@ -124,8 +124,8 @@ export const ITEM_ERRORS = {
     message: 'Unable to analyze this file. It may be corrupted or in an unsupported format.',
   },
   PDF_LOAD_FAILED: {
-    title: 'PDF Load Failed',
-    message: 'Unable to load PDF preview. The file may be unavailable.',
+    title: 'File Load Failed',
+    message: 'Unable to load file preview. The file may be unavailable.',
   },
   AI_RATE_LIMIT: {
     title: 'Too Many Requests',

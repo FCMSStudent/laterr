@@ -210,26 +210,35 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         <div className="flex flex-col md:flex-row gap-8 mt-4 w-full overflow-hidden">
           {/* LEFT COLUMN */}
           <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
-            {item.content?.toLowerCase().endsWith(".pdf") && (
+            {item.content && (
               <div className="rounded-xl overflow-hidden bg-muted">
                 {loadingSignedUrl ? (
                   <div className="p-4 h-64 md:h-80 flex items-center justify-center">
-                    <LoadingSpinner size="sm" text="Loading PDF preview..." />
+                    <LoadingSpinner size="sm" text="Loading file preview..." />
                   </div>
                 ) : signedUrl ? (
                   <>
-                    <PDFPreview url={signedUrl} className="h-64 md:h-80" />
+                    {item.content?.toLowerCase().endsWith(".pdf") ? (
+                      <PDFPreview url={signedUrl} className="h-64 md:h-80" />
+                    ) : (
+                      <div className="p-4 h-64 md:h-80 flex items-center justify-center">
+                        <div className="text-center">
+                          <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">File preview</p>
+                        </div>
+                      </div>
+                    )}
                     <a 
                       href={signedUrl} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50"
                     >
-                      Open full PDF
+                      {item.content?.toLowerCase().endsWith(".pdf") ? "Open full PDF" : "Open file"}
                     </a>
                   </>
                 ) : (
-                  <div className="p-4 text-sm text-muted-foreground">PDF preview unavailable</div>
+                  <div className="p-4 text-sm text-muted-foreground">File preview unavailable</div>
                 )}
               </div>
             )}
