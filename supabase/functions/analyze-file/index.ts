@@ -140,8 +140,105 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
     };
   } catch (error) {
     console.error('❌ PDF extraction failed:', error);
-    throw error;
+    // Return empty result instead of throwing, so we can use multimodal fallback
+    return {
+      text: '',
+      pageCount: 0,
+      metadata: {}
+    };
   }
+}
+
+// Analyze PDF using AI multimodal capabilities when text extraction fails
+async function analyzePdfWithMultimodal(
+  fileUrl: string,
+  fileName: string,
+  apiKey: string
+): Promise<{ title: string; description: string; tags: string[]; category: string; summary: string; keyPoints: string[] }> {
+  console.log('🔄 Using multimodal AI to analyze PDF...');
+  
+  // Fetch the PDF as base64 for multimodal analysis
+  const response = await fetch(fileUrl);
+  if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status}`);
+  
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+  
+  const prompt = `Analyze this PDF document and extract structured metadata.
+
+**Filename**: ${fileName}
+
+Provide:
+1. **Title**: A clear, descriptive title based on the document content
+2. **Description**: Detailed description of the document's content and purpose
+3. **Category**: Classify as: academic, business, personal, technical, medical, financial, legal, creative, or other
+4. **Tags**: 4-6 specific categorization tags
+5. **Summary**: 2-3 sentence summary of the main content
+6. **Key Points**: 3-5 main topics or findings
+
+Use the analyze_file function to provide structured output.`;
+
+  const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [{
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:application/pdf;base64,${base64}`
+            }
+          }
+        ]
+      }],
+      tools: [analyzeFileToolSchema],
+      tool_choice: { type: "function", function: { name: "analyze_file" } }
+    }),
+  });
+
+  if (aiResponse.status === 429) {
+    throw new Error("Rate limit exceeded. Please try again later.");
+  }
+  if (aiResponse.status === 402) {
+    throw new Error("AI credits exhausted. Please add credits to continue.");
+  }
+
+  if (!aiResponse.ok) {
+    const errorText = await aiResponse.text();
+    console.error('❌ Multimodal AI error:', aiResponse.status, errorText);
+    throw new Error(`Multimodal AI analysis failed: ${aiResponse.statusText}`);
+  }
+
+  const data = await aiResponse.json();
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+  
+  const fallback = {
+    title: fileName.replace(/\.[^/.]+$/, ''),
+    description: 'PDF document',
+    tags: ['pdf', 'document'],
+    category: 'other',
+    summary: '',
+    keyPoints: []
+  };
+  
+  const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+  console.log('✅ Multimodal PDF analysis complete:', { title: parsed.title, tags: parsed.tags });
+  
+  return {
+    title: parsed.title || fallback.title,
+    description: parsed.description || fallback.description,
+    tags: parsed.tags || fallback.tags,
+    category: parsed.category || fallback.category,
+    summary: parsed.summary || fallback.summary,
+    keyPoints: parsed.keyPoints || fallback.keyPoints
+  };
 }
 
 // Generate thumbnail from PDF first page
@@ -688,6 +785,32 @@ Use the analyze_file function to provide structured output.`
         const { text, pageCount, metadata } = await extractPdfText(fileUrl);
         extractedText = text;
         
+        // If text extraction failed or returned empty, use multimodal AI fallback
+        if (!extractedText || extractedText.trim().length < 50) {
+          console.log('⚠️ PDF text extraction failed or empty, using multimodal AI fallback');
+          
+          try {
+            const multimodalResult = await analyzePdfWithMultimodal(fileUrl, fileName, LOVABLE_API_KEY);
+            title = multimodalResult.title;
+            description = multimodalResult.description;
+            tags = multimodalResult.tags;
+            category = multimodalResult.category;
+            summary = multimodalResult.summary;
+            keyPoints = multimodalResult.keyPoints;
+            
+            console.log('✅ PDF multimodal analysis complete:', { title, tags, category });
+          } catch (multimodalError) {
+            console.error('❌ Multimodal fallback also failed:', multimodalError);
+            if (multimodalError instanceof Error && (multimodalError.message.includes('Rate limit') || multimodalError.message.includes('credits'))) {
+              throw multimodalError;
+            }
+            // Use filename-based fallback
+            description = 'PDF document';
+            tags = ['pdf', 'document'];
+          }
+        } else {
+          // Text extraction succeeded - continue with text-based analysis
+        
         // Prefer embedded title if it's clean and meaningful
         const embeddedTitle = metadata.Title || metadata.title;
         if (embeddedTitle && typeof embeddedTitle === 'string' && embeddedTitle.length > 3 && embeddedTitle.length < 200 && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
@@ -817,6 +940,7 @@ Use the analyze_file function to provide structured output.`;
             console.warn('⚠️ Fallback PDF summary error:', e);
           }
         }
+        } // Close else block for successful text extraction
         
         // Generate thumbnail from first page if userId is available
         if (userId) {

@@ -210,7 +210,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         <div className="flex flex-col md:flex-row gap-8 mt-4 w-full overflow-hidden">
           {/* LEFT COLUMN */}
           <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
-            {(item.type === "document" || (item.content?.toLowerCase().includes(".pdf") ?? false)) && (
+            {item.content?.toLowerCase().endsWith(".pdf") && (
               <div className="rounded-xl overflow-hidden bg-muted">
                 {loadingSignedUrl ? (
                   <div className="p-4 h-64 md:h-80 flex items-center justify-center">
