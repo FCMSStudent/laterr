@@ -149,95 +149,26 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
   }
 }
 
+// Constants for PDF analysis
+const TEXT_SAMPLE_MAX_LENGTH = 2000;
+const MIN_TITLE_LENGTH = 3;
+const MAX_TITLE_LENGTH = 200;
+const SUMMARY_TEXT_SAMPLE_LENGTH = 1500;
+const MIN_TEXT_FOR_MULTIMODAL_BYPASS = 50;
+
 // Helper function to render PDF page to PNG base64 using pdfjs-dist
+// NOTE: Currently returns null due to Deno edge runtime limitations (no Canvas API)
+// This function is a placeholder for future implementation when canvas support becomes available
+// or when using an external PDF-to-image service.
 async function renderPdfPageToPng(
   fileUrl: string,
   pageNum: number = 1,
   scale: number = 1.5
 ): Promise<string | null> {
-  try {
-    console.log(`🖼️ Rendering PDF page ${pageNum} to PNG...`);
-    
-    const response = await fetch(fileUrl);
-    if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status}`);
-    
-    const arrayBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    
-    const loadingTask = pdfjsLib.getDocument({
-      data: uint8Array,
-      useWorkerFetch: false,
-      isEvalSupported: false,
-      useSystemFonts: true,
-    });
-    
-    const pdf = await loadingTask.promise;
-    
-    if (pageNum > pdf.numPages) {
-      pageNum = 1; // Fallback to first page
-    }
-    
-    const page = await pdf.getPage(pageNum);
-    const viewport = page.getViewport({ scale });
-    
-    // Create a minimal canvas-like object for pdfjs rendering
-    const canvasWidth = Math.floor(viewport.width);
-    const canvasHeight = Math.floor(viewport.height);
-    
-    // Use an offscreen rendering approach with ImageData
-    const imageData = new Uint8ClampedArray(canvasWidth * canvasHeight * 4);
-    
-    const canvasContext = {
-      canvas: {
-        width: canvasWidth,
-        height: canvasHeight,
-      },
-      save: () => {},
-      restore: () => {},
-      translate: () => {},
-      scale: () => {},
-      transform: () => {},
-      setTransform: () => {},
-      fillRect: (x: number, y: number, w: number, h: number) => {
-        // Fill with white background
-        for (let i = 0; i < imageData.length; i += 4) {
-          imageData[i] = 255;     // R
-          imageData[i + 1] = 255; // G
-          imageData[i + 2] = 255; // B
-          imageData[i + 3] = 255; // A
-        }
-      },
-      getImageData: () => ({ data: imageData }),
-      putImageData: (imgData: any) => {
-        imageData.set(imgData.data);
-      },
-      // Add minimal required methods for pdfjs rendering
-      beginPath: () => {},
-      closePath: () => {},
-      moveTo: () => {},
-      lineTo: () => {},
-      rect: () => {},
-      stroke: () => {},
-      fill: () => {},
-      clip: () => {},
-      fillStyle: '',
-      strokeStyle: '',
-      lineWidth: 1,
-      globalAlpha: 1,
-    };
-    
-    // Note: This is a simplified approach. In production, consider using a proper
-    // PDF-to-image service or library with full canvas support.
-    // For now, we'll use a workaround that extracts the PDF content differently.
-    
-    console.log('⚠️ Full PDF page rendering not available in Deno environment');
-    console.log('🔄 Will use alternative approach: combining text + metadata analysis');
-    
-    return null; // Return null to indicate rendering not available
-  } catch (error) {
-    console.error('❌ PDF page rendering error:', error);
-    return null;
-  }
+  console.log('⚠️ PDF page rendering not available in Deno edge runtime (no Canvas API)');
+  console.log('🔄 Using alternative approach: text extraction + metadata analysis');
+  // TODO: Implement using external service or when Deno canvas support is available
+  return null;
 }
 
 // Analyze PDF using AI multimodal capabilities with enhanced approach
@@ -274,8 +205,8 @@ async function analyzePdfWithMultimodal(
   
   // Include any extracted text (even partial)
   if (extractedText && extractedText.trim().length > 0) {
-    const textSample = extractedText.substring(0, 2000);
-    promptText += `**Extracted Text Sample** (first ${Math.min(extractedText.length, 2000)} chars):\n${textSample}\n\n`;
+    const textSample = extractedText.substring(0, TEXT_SAMPLE_MAX_LENGTH);
+    promptText += `**Extracted Text Sample** (first ${Math.min(extractedText.length, TEXT_SAMPLE_MAX_LENGTH)} chars):\n${textSample}\n\n`;
   } else {
     promptText += `**Note**: Text extraction failed or returned empty content. This may be a scanned PDF or image-based document.\n\n`;
   }
@@ -344,7 +275,7 @@ Use the analyze_file function to provide structured output.`;
   // Build intelligent fallback using metadata
   const metaTitle = metadata?.Title || metadata?.title;
   const fallback = {
-    title: (metaTitle && typeof metaTitle === 'string' && metaTitle.length > 3) 
+    title: (metaTitle && typeof metaTitle === 'string' && metaTitle.length > MIN_TITLE_LENGTH) 
       ? cleanTitle(metaTitle)
       : fileName.replace(/\.[^/.]+$/, ''),
     description: 'PDF document',
@@ -919,7 +850,7 @@ Use the analyze_file function to provide structured output.`
         console.log(`📊 PDF Processing Summary: ${pageCount} pages, ${extractedText.length} chars extracted`);
         
         // Enhanced fallback logic: Try multimodal even with some text if it's minimal
-        const hasMinimalText = extractedText && extractedText.trim().length > 0 && extractedText.trim().length < 50;
+        const hasMinimalText = extractedText && extractedText.trim().length > 0 && extractedText.trim().length < MIN_TEXT_FOR_MULTIMODAL_BYPASS;
         const hasNoText = !extractedText || extractedText.trim().length === 0;
         
         if (hasNoText || hasMinimalText) {
@@ -960,7 +891,7 @@ Use the analyze_file function to provide structured output.`
             // Enhanced filename and metadata-based fallback
             console.log('🔄 Using metadata + filename-based fallback...');
             const metaTitle = metadata.Title || metadata.title;
-            if (metaTitle && typeof metaTitle === 'string' && metaTitle.length > 3 && metaTitle.length < 200) {
+            if (metaTitle && typeof metaTitle === 'string' && metaTitle.length > MIN_TITLE_LENGTH && metaTitle.length < MAX_TITLE_LENGTH) {
               title = cleanTitle(metaTitle);
               console.log('📄 Using PDF metadata title:', title);
             } else {
@@ -983,7 +914,7 @@ Use the analyze_file function to provide structured output.`
         
         // Prefer embedded title if it's clean and meaningful
         const embeddedTitle = metadata.Title || metadata.title;
-        if (embeddedTitle && typeof embeddedTitle === 'string' && embeddedTitle.length > 3 && embeddedTitle.length < 200 && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
+        if (embeddedTitle && typeof embeddedTitle === 'string' && embeddedTitle.length > MIN_TITLE_LENGTH && embeddedTitle.length < MAX_TITLE_LENGTH && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
           title = cleanTitle(embeddedTitle);
           console.log('📄 Using embedded PDF title:', title);
         }
@@ -1118,7 +1049,7 @@ Use the analyze_file function to provide structured output.`;
         if ((!summary || summary.trim().length < 5) && extractedText && extractedText.trim().length > 0) {
           console.log('🔄 Summary missing or too short, attempting fallback summary generation...');
           try {
-            const textForSummary = sampleText(extractedText, 1500);
+            const textForSummary = sampleText(extractedText, SUMMARY_TEXT_SAMPLE_LENGTH);
             console.log(`📝 Using ${textForSummary.length} chars for summary generation`);
             
             const fallbackPrompt = `Write a concise 2-3 sentence summary of this PDF content. Focus on the main topic and purpose.\n\n${textForSummary}`;
