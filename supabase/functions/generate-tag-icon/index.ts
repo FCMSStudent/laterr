@@ -21,6 +21,9 @@ serve(async (req) => {
     console.log(`Generating icon for tag: ${tagName}`);
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
     
     // Use the image generation model
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
