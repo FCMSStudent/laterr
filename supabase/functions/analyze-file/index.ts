@@ -149,27 +149,66 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
   }
 }
 
-// Analyze PDF using AI multimodal capabilities when text extraction fails
+// Constants for PDF analysis
+const TEXT_SAMPLE_MAX_LENGTH = 2000;
+const MIN_TITLE_LENGTH = 3;
+const MAX_TITLE_LENGTH = 200;
+const SUMMARY_TEXT_SAMPLE_LENGTH = 1500;
+const MIN_TEXT_FOR_MULTIMODAL_BYPASS = 50;
+
+// Helper function to render PDF page to PNG base64 using pdfjs-dist
+// NOTE: Currently returns null due to Deno edge runtime limitations (no Canvas API)
+// This function is a placeholder for future implementation when canvas support becomes available
+// or when using an external PDF-to-image service.
+async function renderPdfPageToPng(): Promise<string | null> {
+  console.log('⚠️ PDF page rendering not available in Deno edge runtime (no Canvas API)');
+  console.log('🔄 Using alternative approach: text extraction + metadata analysis');
+  // TODO: Implement using external service or when Deno canvas support is available
+  // Parameters (fileUrl, pageNum, scale) will be added when implementation is complete
+  return null;
+}
+
+// Analyze PDF using AI multimodal capabilities with enhanced approach
 async function analyzePdfWithMultimodal(
   fileUrl: string,
   fileName: string,
-  apiKey: string
+  apiKey: string,
+  extractedText?: string,
+  metadata?: Record<string, unknown>
 ): Promise<{ title: string; description: string; tags: string[]; category: string; summary: string; keyPoints: string[] }> {
-  console.log('🔄 Using multimodal AI to analyze PDF...');
+  console.log('🔄 Using enhanced multimodal AI to analyze PDF...');
+  console.log(`📊 Text available: ${extractedText ? extractedText.length : 0} chars`);
+  console.log(`📊 Metadata available: ${metadata ? Object.keys(metadata).length : 0} fields`);
   
-  // Fetch the PDF as base64 for multimodal analysis
-  const response = await fetch(fileUrl);
-  if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status}`);
+  // Try to render PDF page to image (currently returns null due to Deno limitations)
+  const pngBase64 = await renderPdfPageToPng();
   
-  const arrayBuffer = await response.arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+  // Build a comprehensive prompt that uses all available information
+  let promptText = `Analyze this PDF document and extract structured metadata.\n\n**Filename**: ${fileName}\n\n`;
   
-  const prompt = `Analyze this PDF document and extract structured metadata.
-
-**Filename**: ${fileName}
-
-Provide:
-1. **Title**: A clear, descriptive title based on the document content
+  // Include metadata if available
+  if (metadata && Object.keys(metadata).length > 0) {
+    promptText += `**PDF Metadata**:\n`;
+    const metaTitle = metadata.Title || metadata.title;
+    const metaAuthor = metadata.Author || metadata.author;
+    const metaSubject = metadata.Subject || metadata.subject;
+    
+    if (metaTitle) promptText += `- Title: ${metaTitle}\n`;
+    if (metaAuthor) promptText += `- Author: ${metaAuthor}\n`;
+    if (metaSubject) promptText += `- Subject: ${metaSubject}\n`;
+    promptText += '\n';
+  }
+  
+  // Include any extracted text (even partial)
+  if (extractedText && extractedText.trim().length > 0) {
+    const textSample = extractedText.substring(0, TEXT_SAMPLE_MAX_LENGTH);
+    promptText += `**Extracted Text Sample** (first ${Math.min(extractedText.length, TEXT_SAMPLE_MAX_LENGTH)} chars):\n${textSample}\n\n`;
+  } else {
+    promptText += `**Note**: Text extraction failed or returned empty content. This may be a scanned PDF or image-based document.\n\n`;
+  }
+  
+  promptText += `Based on the available information above, provide:
+1. **Title**: A clear, descriptive title. Use metadata title if meaningful, otherwise derive from content/filename
 2. **Description**: Detailed description of the document's content and purpose
 3. **Category**: Classify as: academic, business, personal, technical, medical, financial, legal, creative, or other
 4. **Tags**: 4-6 specific categorization tags
@@ -178,6 +217,22 @@ Provide:
 
 Use the analyze_file function to provide structured output.`;
 
+  // Build content parts for API request
+  // Future: If/when pngBase64 is not null, include image_url in content array
+  const contentParts: any[] = [{ type: "text", text: promptText }];
+  
+  if (pngBase64) {
+    // This code will execute when renderPdfPageToPng is implemented
+    contentParts.push({
+      type: "image_url",
+      image_url: {
+        url: `data:image/png;base64,${pngBase64}`
+      }
+    });
+    console.log('✅ Including rendered PDF page as PNG image');
+  }
+
+  console.log('📤 Sending multimodal analysis request to AI...');
   const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -188,15 +243,7 @@ Use the analyze_file function to provide structured output.`;
       model: "google/gemini-2.5-flash",
       messages: [{
         role: "user",
-        content: [
-          { type: "text", text: prompt },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:application/pdf;base64,${base64}`
-            }
-          }
-        ]
+        content: contentParts
       }],
       tools: [analyzeFileToolSchema],
       tool_choice: { type: "function", function: { name: "analyze_file" } }
@@ -204,23 +251,31 @@ Use the analyze_file function to provide structured output.`;
   });
 
   if (aiResponse.status === 429) {
+    console.error('❌ Rate limit exceeded');
     throw new Error("Rate limit exceeded. Please try again later.");
   }
   if (aiResponse.status === 402) {
+    console.error('❌ AI credits exhausted');
     throw new Error("AI credits exhausted. Please add credits to continue.");
   }
 
   if (!aiResponse.ok) {
     const errorText = await aiResponse.text();
     console.error('❌ Multimodal AI error:', aiResponse.status, errorText);
-    throw new Error(`Multimodal AI analysis failed: ${aiResponse.statusText}`);
+    throw new Error(`Multimodal AI analysis failed: ${aiResponse.statusText} - ${errorText}`);
   }
 
   const data = await aiResponse.json();
+  console.log('📥 AI response received:', data.choices?.[0]?.message ? 'Valid' : 'Invalid');
+  
   const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
   
+  // Build intelligent fallback using metadata
+  const metaTitle = metadata?.Title || metadata?.title;
   const fallback = {
-    title: fileName.replace(/\.[^/.]+$/, ''),
+    title: (metaTitle && typeof metaTitle === 'string' && metaTitle.length > MIN_TITLE_LENGTH) 
+      ? cleanTitle(metaTitle)
+      : fileName.replace(/\.[^/.]+$/, ''),
     description: 'PDF document',
     tags: ['pdf', 'document'],
     category: 'other',
@@ -229,7 +284,12 @@ Use the analyze_file function to provide structured output.`;
   };
   
   const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
-  console.log('✅ Multimodal PDF analysis complete:', { title: parsed.title, tags: parsed.tags });
+  console.log('✅ Multimodal PDF analysis complete:', { 
+    title: parsed.title, 
+    tags: parsed.tags, 
+    hasExtractedText: !!extractedText,
+    textLength: extractedText?.length || 0
+  });
   
   return {
     title: parsed.title || fallback.title,
@@ -785,12 +845,25 @@ Use the analyze_file function to provide structured output.`
         const { text, pageCount, metadata } = await extractPdfText(fileUrl);
         extractedText = text;
         
-        // If text extraction failed or returned empty, use multimodal AI fallback
-        if (!extractedText || extractedText.trim().length < 50) {
-          console.log('⚠️ PDF text extraction failed or empty, using multimodal AI fallback');
+        console.log(`📊 PDF Processing Summary: ${pageCount} pages, ${extractedText.length} chars extracted`);
+        
+        // Enhanced fallback logic: Try multimodal even with some text if it's minimal
+        const hasMinimalText = extractedText && extractedText.trim().length > 0 && extractedText.trim().length < MIN_TEXT_FOR_MULTIMODAL_BYPASS;
+        const hasNoText = !extractedText || extractedText.trim().length === 0;
+        
+        if (hasNoText || hasMinimalText) {
+          console.log(`⚠️ PDF text extraction ${hasNoText ? 'failed or empty' : 'returned minimal text'} (${extractedText.trim().length} chars)`);
+          console.log('🔄 Attempting multimodal AI fallback with enhanced approach...');
           
           try {
-            const multimodalResult = await analyzePdfWithMultimodal(fileUrl, fileName, LOVABLE_API_KEY);
+            // Pass extracted text and metadata to multimodal for hybrid analysis
+            const multimodalResult = await analyzePdfWithMultimodal(
+              fileUrl, 
+              fileName, 
+              LOVABLE_API_KEY,
+              extractedText,
+              metadata
+            );
             title = multimodalResult.title;
             description = multimodalResult.description;
             tags = multimodalResult.tags;
@@ -798,22 +871,48 @@ Use the analyze_file function to provide structured output.`
             summary = multimodalResult.summary;
             keyPoints = multimodalResult.keyPoints;
             
-            console.log('✅ PDF multimodal analysis complete:', { title, tags, category });
+            console.log('✅ PDF multimodal analysis complete:', { 
+              title, 
+              tags, 
+              category,
+              hasSummary: !!summary,
+              keyPointsCount: keyPoints.length 
+            });
           } catch (multimodalError) {
-            console.error('❌ Multimodal fallback also failed:', multimodalError);
+            console.error('❌ Multimodal fallback failed:', multimodalError);
+            console.error('❌ Error details:', multimodalError instanceof Error ? multimodalError.message : String(multimodalError));
+            
             if (multimodalError instanceof Error && (multimodalError.message.includes('Rate limit') || multimodalError.message.includes('credits'))) {
               throw multimodalError;
             }
-            // Use filename-based fallback
-            description = 'PDF document';
+            
+            // Enhanced filename and metadata-based fallback
+            console.log('🔄 Using metadata + filename-based fallback...');
+            const metaTitle = metadata.Title || metadata.title;
+            if (metaTitle && typeof metaTitle === 'string' && metaTitle.length > MIN_TITLE_LENGTH && metaTitle.length < MAX_TITLE_LENGTH) {
+              title = cleanTitle(metaTitle);
+              console.log('📄 Using PDF metadata title:', title);
+            } else {
+              title = fileName.replace(/\.[^/.]+$/, '');
+              console.log('📄 Using filename as title:', title);
+            }
+            
+            description = `PDF document with ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}`;
             tags = ['pdf', 'document'];
+            category = 'other';
+            
+            // Try to generate at least a basic summary if we have any text
+            if (extractedText && extractedText.trim().length > 0) {
+              summary = `PDF document containing ${extractedText.trim().length} characters of text across ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}.`;
+            }
           }
         } else {
-          // Text extraction succeeded - continue with text-based analysis
+          // Text extraction succeeded with substantial content - continue with text-based analysis
+          console.log('✅ PDF text extraction successful, proceeding with text-based analysis');
         
         // Prefer embedded title if it's clean and meaningful
         const embeddedTitle = metadata.Title || metadata.title;
-        if (embeddedTitle && typeof embeddedTitle === 'string' && embeddedTitle.length > 3 && embeddedTitle.length < 200 && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
+        if (embeddedTitle && typeof embeddedTitle === 'string' && embeddedTitle.length > MIN_TITLE_LENGTH && embeddedTitle.length < MAX_TITLE_LENGTH && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
           title = cleanTitle(embeddedTitle);
           console.log('📄 Using embedded PDF title:', title);
         }
@@ -866,6 +965,7 @@ Provide analysis based strictly on the content above:
 
 Use the analyze_file function to provide structured output.`;
 
+        console.log('📤 Sending text-based AI analysis request...');
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -880,16 +980,32 @@ Use the analyze_file function to provide structured output.`;
           }),
         });
 
+        console.log(`📥 AI response status: ${aiResponse.status} ${aiResponse.statusText}`);
+
         if (aiResponse.status === 429) {
+          console.error('❌ Rate limit exceeded during PDF analysis');
           throw new Error("Rate limit exceeded. Please try again later.");
         }
         if (aiResponse.status === 402) {
+          console.error('❌ AI credits exhausted during PDF analysis');
           throw new Error("AI credits exhausted. Please add credits to continue.");
         }
 
         if (aiResponse.ok) {
           const data = await aiResponse.json();
+          console.log('📥 AI response received:', {
+            hasChoices: !!data.choices,
+            choicesLength: data.choices?.length,
+            hasToolCalls: !!data.choices?.[0]?.message?.tool_calls
+          });
+          
           const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+          
+          if (toolCall?.function?.arguments) {
+            console.log('✅ AI tool call received, parsing structured data...');
+          } else {
+            console.warn('⚠️ No tool call in AI response, using fallback values');
+          }
           
           // Use validateAndParseAiJson with fallback
           const fallback = {
@@ -907,17 +1023,34 @@ Use the analyze_file function to provide structured output.`;
           summary = parsed.summary || '';
           keyPoints = parsed.keyPoints || [];
           
-          console.log('✅ PDF analysis:', { title, tags, category, pageCount, textLength: extractedText.length });
+          console.log('✅ PDF text-based analysis complete:', { 
+            title: title.substring(0, 50), 
+            tags, 
+            category, 
+            pageCount, 
+            textLength: extractedText.length,
+            hasSummary: !!summary && summary.length > 0,
+            keyPointsCount: keyPoints.length
+          });
         } else {
-          console.error('❌ AI analysis failed:', await aiResponse.text());
+          const errorText = await aiResponse.text();
+          console.error('❌ AI analysis request failed:', {
+            status: aiResponse.status,
+            statusText: aiResponse.statusText,
+            error: errorText
+          });
           tags = ['pdf', 'document'];
           description = `PDF document with ${pageCount} pages`;
         }
 
         // Fallback: ensure we have a non-empty summary for PDFs
         if ((!summary || summary.trim().length < 5) && extractedText && extractedText.trim().length > 0) {
+          console.log('🔄 Summary missing or too short, attempting fallback summary generation...');
           try {
-            const fallbackPrompt = `Write a concise 2-3 sentence summary of this PDF content. Focus on the main topic and purpose.\n\n${sampleText(extractedText, 1500)}`;
+            const textForSummary = sampleText(extractedText, SUMMARY_TEXT_SAMPLE_LENGTH);
+            console.log(`📝 Using ${textForSummary.length} chars for summary generation`);
+            
+            const fallbackPrompt = `Write a concise 2-3 sentence summary of this PDF content. Focus on the main topic and purpose.\n\n${textForSummary}`;
             const sumResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
               method: "POST",
               headers: {
@@ -929,16 +1062,32 @@ Use the analyze_file function to provide structured output.`;
                 messages: [{ role: "user", content: fallbackPrompt }],
               }),
             });
+            
+            console.log(`📥 Fallback summary response: ${sumResp.status} ${sumResp.statusText}`);
+            
             if (sumResp.ok) {
               const sumData = await sumResp.json();
               const sumText = sumData.choices?.[0]?.message?.content?.trim();
-              if (sumText) summary = sumText;
+              if (sumText && sumText.length > 0) {
+                summary = sumText;
+                console.log('✅ Fallback summary generated successfully:', summary.substring(0, 100));
+              } else {
+                console.warn('⚠️ Fallback summary response was empty');
+              }
             } else {
-              console.warn('⚠️ Fallback summary failed with status', sumResp.status);
+              const errorText = await sumResp.text();
+              console.warn('⚠️ Fallback summary failed:', {
+                status: sumResp.status,
+                error: errorText
+              });
             }
           } catch (e) {
-            console.warn('⚠️ Fallback PDF summary error:', e);
+            console.error('❌ Fallback PDF summary error:', e instanceof Error ? e.message : String(e));
           }
+        } else if (summary && summary.trim().length > 0) {
+          console.log(`✅ Summary already present (${summary.length} chars)`);
+        } else {
+          console.log('⚠️ No summary available and no extracted text for fallback');
         }
         } // Close else block for successful text extraction
         
