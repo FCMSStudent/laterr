@@ -247,7 +247,17 @@ async function renderPdfPageToPng(): Promise<string | null> {
   return null;
 }
 
-// Analyze PDF using AI multimodal capabilities with enhanced approach
+// Helper function to convert ArrayBuffer to base64
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+// Analyze PDF using AI multimodal capabilities - sends raw PDF bytes to Gemini
 async function analyzePdfWithMultimodal(
   fileUrl: string,
   fileName: string,
@@ -255,15 +265,38 @@ async function analyzePdfWithMultimodal(
   extractedText?: string,
   metadata?: Record<string, unknown>
 ): Promise<{ title: string; description: string; tags: string[]; category: string; summary: string; keyPoints: string[] }> {
-  console.log('🔄 Using enhanced multimodal AI to analyze PDF...');
+  console.log('🔄 Using RAW PDF BYTES approach with Gemini multimodal...');
   console.log(`📊 Text available: ${extractedText ? extractedText.length : 0} chars`);
   console.log(`📊 Metadata available: ${metadata ? Object.keys(metadata).length : 0} fields`);
   
-  // Try to render PDF page to image (currently returns null due to Deno limitations)
-  const pngBase64 = await renderPdfPageToPng();
+  // Fetch the raw PDF bytes
+  console.log('📥 Fetching raw PDF bytes for multimodal analysis...');
+  const pdfResponse = await fetch(fileUrl);
+  if (!pdfResponse.ok) {
+    throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
+  }
   
-  // Build a comprehensive prompt that uses all available information
-  let promptText = `Analyze this PDF document and extract structured metadata.\n\n**Filename**: ${fileName}\n\n`;
+  const pdfArrayBuffer = await pdfResponse.arrayBuffer();
+  const pdfSizeKB = (pdfArrayBuffer.byteLength / 1024).toFixed(2);
+  console.log(`📄 PDF size for multimodal: ${pdfSizeKB} KB`);
+  
+  // Check file size - Gemini has limits (typically 20MB for inline data)
+  const maxSizeBytes = 20 * 1024 * 1024; // 20MB
+  if (pdfArrayBuffer.byteLength > maxSizeBytes) {
+    console.warn(`⚠️ PDF too large for inline processing (${pdfSizeKB} KB > 20MB), falling back to text-only`);
+    throw new Error('PDF too large for multimodal processing');
+  }
+  
+  // Convert to base64
+  const pdfBase64 = arrayBufferToBase64(pdfArrayBuffer);
+  console.log(`✅ Converted PDF to base64 (${(pdfBase64.length / 1024).toFixed(2)} KB encoded)`);
+  
+  // Build the prompt
+  let promptText = `Analyze this PDF document and extract structured metadata.
+
+**Filename**: ${fileName}
+
+`;
   
   // Include metadata if available
   if (metadata && Object.keys(metadata).length > 0) {
@@ -278,40 +311,35 @@ async function analyzePdfWithMultimodal(
     promptText += '\n';
   }
   
-  // Include any extracted text (even partial)
+  // Include any extracted text as supplementary info
   if (extractedText && extractedText.trim().length > 0) {
-    const textSample = extractedText.substring(0, TEXT_SAMPLE_MAX_LENGTH);
-    promptText += `**Extracted Text Sample** (first ${Math.min(extractedText.length, TEXT_SAMPLE_MAX_LENGTH)} chars):\n${textSample}\n\n`;
-  } else {
-    promptText += `**Note**: Text extraction failed or returned empty content. This may be a scanned PDF or image-based document.\n\n`;
+    const textSample = extractedText.substring(0, 1000);
+    promptText += `**Supplementary extracted text** (first ${Math.min(extractedText.length, 1000)} chars):\n${textSample}\n\n`;
   }
   
-  promptText += `Based on the available information above, provide:
-1. **Title**: A clear, descriptive title. Use metadata title if meaningful, otherwise derive from content/filename
+  promptText += `Based on the PDF document content, provide:
+1. **Title**: A clear, descriptive title based on the actual document content
 2. **Description**: Detailed description of the document's content and purpose
 3. **Category**: Classify as: academic, business, personal, technical, medical, financial, legal, creative, or other
-4. **Tags**: 4-6 specific categorization tags
+4. **Tags**: 4-6 specific categorization tags based on the content
 5. **Summary**: 2-3 sentence summary of the main content
-6. **Key Points**: 3-5 main topics or findings
+6. **Key Points**: 3-5 main topics or findings from the document
 
 Use the analyze_file function to provide structured output.`;
 
-  // Build content parts for API request
-  // Future: If/when pngBase64 is not null, include image_url in content array
-  const contentParts: any[] = [{ type: "text", text: promptText }];
-  
-  if (pngBase64) {
-    // This code will execute when renderPdfPageToPng is implemented
-    contentParts.push({
+  // Build content parts with inline PDF data
+  // Using the OpenAI-compatible format that Lovable AI Gateway supports
+  const contentParts: any[] = [
+    { type: "text", text: promptText },
+    {
       type: "image_url",
       image_url: {
-        url: `data:image/png;base64,${pngBase64}`
+        url: `data:application/pdf;base64,${pdfBase64}`
       }
-    });
-    console.log('✅ Including rendered PDF page as PNG image');
-  }
-
-  console.log('📤 Sending multimodal analysis request to AI...');
+    }
+  ];
+  
+  console.log('📤 Sending PDF with raw bytes to Gemini for multimodal analysis...');
   const aiResponse = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -364,11 +392,13 @@ Use the analyze_file function to provide structured output.`;
   console.log(`📊 AI response source: ${aiSource}`);
   
   const parsed = validateAndParseAiJson(aiRaw, fallback);
-  console.log('✅ Multimodal PDF analysis complete:', { 
+  console.log('✅ AI metadata parsed and cleaned successfully');
+  console.log('✅ PDF multimodal analysis complete:', { 
     title: parsed.title, 
     tags: parsed.tags, 
-    hasExtractedText: !!extractedText,
-    textLength: extractedText?.length || 0
+    category: parsed.category,
+    hasSummary: !!parsed.summary,
+    keyPointsCount: parsed.keyPoints?.length || 0
   });
   
   return {
