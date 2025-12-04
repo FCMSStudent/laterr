@@ -10,6 +10,12 @@ import { THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_QUALITY } from '@/constant
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+// DOCX thumbnail constants
+const DOCX_MAX_CONTENT_HEIGHT = 1000; // Maximum height of content to render (pixels)
+const DOCX_MAX_LINES = 30; // Maximum number of lines to display in thumbnail
+const DOCX_MAX_LINE_LENGTH = 100; // Maximum characters per line
+const DOCX_PADDING = 40; // Padding around content (pixels)
+
 /**
  * Generates a thumbnail from an image file
  * @param file - Image file to generate thumbnail from
@@ -240,7 +246,7 @@ export async function generateDocxThumbnail(file: File): Promise<Blob> {
     const contentHeight = container.offsetHeight;
     const scale = Math.min(
       THUMBNAIL_WIDTH / contentWidth,
-      THUMBNAIL_HEIGHT / Math.min(contentHeight, 1000) // Limit to first ~1000px of content
+      THUMBNAIL_HEIGHT / Math.min(contentHeight, DOCX_MAX_CONTENT_HEIGHT)
     );
     
     // Use html2canvas-like approach - render text manually
@@ -253,7 +259,7 @@ export async function generateDocxThumbnail(file: File): Promise<Blob> {
     }
     
     tempCanvas.width = contentWidth;
-    tempCanvas.height = Math.min(contentHeight, 1000);
+    tempCanvas.height = Math.min(contentHeight, DOCX_MAX_CONTENT_HEIGHT);
     
     // Fill white background on temp canvas
     tempCtx.fillStyle = '#ffffff';
@@ -261,15 +267,15 @@ export async function generateDocxThumbnail(file: File): Promise<Blob> {
     
     // Simple text extraction and rendering
     const textContent = container.innerText || container.textContent || '';
-    const lines = textContent.split('\n').slice(0, 30); // Get first 30 lines
+    const lines = textContent.split('\n').slice(0, DOCX_MAX_LINES);
     
     tempCtx.fillStyle = '#000000';
     tempCtx.font = '14px system-ui, -apple-system, sans-serif';
     
-    let y = 40;
+    let y = DOCX_PADDING;
     for (const line of lines) {
-      if (y > tempCanvas.height - 40) break;
-      tempCtx.fillText(line.substring(0, 100), 40, y);
+      if (y > tempCanvas.height - DOCX_PADDING) break;
+      tempCtx.fillText(line.substring(0, DOCX_MAX_LINE_LENGTH), DOCX_PADDING, y);
       y += 20;
     }
     

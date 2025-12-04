@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import mammoth from 'mammoth';
+import DOMPurify from 'dompurify';
 
 interface DOCXPreviewProps {
   url: string;
@@ -28,7 +29,13 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
         
         // Convert DOCX to HTML using mammoth
         const result = await mammoth.convertToHtml({ arrayBuffer });
-        setHtmlContent(result.value);
+        
+        // Sanitize the HTML to prevent XSS attacks
+        const sanitizedHtml = DOMPurify.sanitize(result.value, {
+          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'table', 'tr', 'td', 'th', 'tbody', 'thead'],
+          ALLOWED_ATTR: ['href', 'src', 'alt', 'title']
+        });
+        setHtmlContent(sanitizedHtml);
         
         // Log any messages from mammoth (warnings, etc.)
         if (result.messages.length > 0) {
