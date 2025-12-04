@@ -108,9 +108,57 @@ export function validateAndParseAiJson(
     console.log('✅ AI metadata parsed and cleaned successfully');
     return cleaned;
   } catch (error) {
-    console.error('⚠️ Failed to parse AI JSON output:', error);
-    console.log('Using fallback metadata');
-    return cleanMetadataFields(fallbackData);
+    // JSON parsing failed - try to extract fields from plain text response
+    console.log('🔄 JSON parsing failed, attempting text extraction...');
+    
+    const text = toolCallArguments;
+    const extracted: Partial<MetadataFields> = {};
+    
+    // Try to extract title from text patterns
+    const titleMatch = text.match(/(?:title|Title)[:\s]*["']?([^"'\n]+)["']?/i);
+    if (titleMatch && titleMatch[1]?.trim()) {
+      extracted.title = titleMatch[1].trim();
+      console.log('📄 Extracted title from text:', extracted.title);
+    }
+    
+    // Try to extract summary from text patterns
+    const summaryMatch = text.match(/(?:summary|Summary)[:\s]*["']?([^"'\n]+(?:\n[^"'\n]+)?)["']?/i);
+    if (summaryMatch && summaryMatch[1]?.trim()) {
+      extracted.summary = summaryMatch[1].trim();
+      console.log('📄 Extracted summary from text');
+    }
+    
+    // Try to extract description
+    const descMatch = text.match(/(?:description|Description)[:\s]*["']?([^"'\n]+)["']?/i);
+    if (descMatch && descMatch[1]?.trim()) {
+      extracted.description = descMatch[1].trim();
+    }
+    
+    // Try to extract category
+    const categoryMatch = text.match(/(?:category|Category)[:\s]*["']?(\w+)["']?/i);
+    if (categoryMatch && categoryMatch[1]?.trim()) {
+      extracted.category = categoryMatch[1].trim().toLowerCase();
+    }
+    
+    // Try to extract tags (comma-separated or array-like)
+    const tagsMatch = text.match(/(?:tags|Tags)[:\s]*\[?["']?([^\]\n]+)["']?\]?/i);
+    if (tagsMatch && tagsMatch[1]?.trim()) {
+      const tagStr = tagsMatch[1].replace(/["'\[\]]/g, '');
+      extracted.tags = tagStr.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
+      console.log('📄 Extracted tags from text:', extracted.tags);
+    }
+    
+    // Merge extracted with fallback
+    const merged = { ...fallbackData, ...extracted };
+    const cleaned = cleanMetadataFields(merged);
+    
+    if (Object.keys(extracted).length > 0) {
+      console.log('✅ Extracted metadata fields from text response');
+    } else {
+      console.log('⚠️ Could not extract fields from text, using fallback');
+    }
+    
+    return cleaned;
   }
 }
 
