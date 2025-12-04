@@ -4,6 +4,7 @@
  */
 
 import { pdfjs, Document, Page } from 'react-pdf';
+import mammoth from 'mammoth';
 import { THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_QUALITY } from '@/constants';
 
 // Configure PDF.js worker
@@ -192,6 +193,123 @@ export async function generateVideoThumbnail(file: File): Promise<Blob> {
 }
 
 /**
+ * Generates a thumbnail from the first page of a DOCX file
+ * @param file - DOCX file to generate thumbnail from
+ * @returns Blob containing the thumbnail image (JPEG format)
+ */
+export async function generateDocxThumbnail(file: File): Promise<Blob> {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    
+    // Convert DOCX to HTML using mammoth
+    const result = await mammoth.convertToHtml({ arrayBuffer });
+    const htmlContent = result.value;
+    
+    // Create a temporary container to render HTML
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.width = '816px'; // A4 width in pixels at 96 DPI
+    container.style.padding = '40px';
+    container.style.backgroundColor = 'white';
+    container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    container.style.fontSize = '14px';
+    container.style.lineHeight = '1.5';
+    container.style.color = '#000000';
+    container.innerHTML = htmlContent;
+    document.body.appendChild(container);
+    
+    // Create canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      document.body.removeChild(container);
+      throw new Error('Failed to get canvas context');
+    }
+    
+    canvas.width = THUMBNAIL_WIDTH;
+    canvas.height = THUMBNAIL_HEIGHT;
+    
+    // Fill white background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Calculate scale to fit content
+    const contentWidth = container.offsetWidth;
+    const contentHeight = container.offsetHeight;
+    const scale = Math.min(
+      THUMBNAIL_WIDTH / contentWidth,
+      THUMBNAIL_HEIGHT / Math.min(contentHeight, 1000) // Limit to first ~1000px of content
+    );
+    
+    // Use html2canvas-like approach - render text manually
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    if (!tempCtx) {
+      document.body.removeChild(container);
+      throw new Error('Failed to get temp canvas context');
+    }
+    
+    tempCanvas.width = contentWidth;
+    tempCanvas.height = Math.min(contentHeight, 1000);
+    
+    // Fill white background on temp canvas
+    tempCtx.fillStyle = '#ffffff';
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    
+    // Simple text extraction and rendering
+    const textContent = container.innerText || container.textContent || '';
+    const lines = textContent.split('\n').slice(0, 30); // Get first 30 lines
+    
+    tempCtx.fillStyle = '#000000';
+    tempCtx.font = '14px system-ui, -apple-system, sans-serif';
+    
+    let y = 40;
+    for (const line of lines) {
+      if (y > tempCanvas.height - 40) break;
+      tempCtx.fillText(line.substring(0, 100), 40, y);
+      y += 20;
+    }
+    
+    // Draw scaled temp canvas onto final canvas
+    ctx.drawImage(
+      tempCanvas,
+      0,
+      0,
+      tempCanvas.width,
+      tempCanvas.height,
+      0,
+      0,
+      tempCanvas.width * scale,
+      tempCanvas.height * scale
+    );
+    
+    // Cleanup
+    document.body.removeChild(container);
+    
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to generate DOCX thumbnail blob'));
+          }
+        },
+        'image/jpeg',
+        THUMBNAIL_QUALITY
+      );
+    });
+  } catch (error) {
+    console.warn('Failed to generate DOCX thumbnail, falling back to placeholder:', error);
+    // Fallback to placeholder thumbnail
+    return generateDocumentThumbnail(file, file.name);
+  }
+}
+
+/**
  * Generates a styled placeholder thumbnail for document files
  * @param file - Document file to generate thumbnail for
  * @param title - Title of the document
@@ -293,8 +411,14 @@ export async function generateThumbnail(
     return generatePdfThumbnail(file);
   } else if (file.type.startsWith('video/')) {
     return generateVideoThumbnail(file);
+  } else if (
+    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    file.name.toLowerCase().endsWith('.docx')
+  ) {
+    // For DOCX files, generate thumbnail from content
+    return generateDocxThumbnail(file);
   } else {
-    // For documents and other files, generate placeholder
+    // For other documents and files, generate placeholder
     return generateDocumentThumbnail(file, title || file.name);
   }
 }
