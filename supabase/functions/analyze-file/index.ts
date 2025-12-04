@@ -110,6 +110,43 @@ function normalizeTags(tags: string[]): string[] {
   return cleaned.tags || [];
 }
 
+/**
+ * Extract AI metadata from response, trying tool_calls first then content field
+ * This handles cases where Gemini returns JSON in content instead of tool_calls
+ */
+function extractAiMetadata(data: any, fallback: Record<string, unknown>): { raw: string | undefined, source: string } {
+  // Log full response for debugging
+  console.log('📥 Full AI response:', JSON.stringify(data, null, 2));
+  
+  // Try tool_calls first (preferred structured output)
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+  if (toolCall?.function?.arguments) {
+    console.log('✅ Found tool_calls response');
+    return { raw: toolCall.function.arguments, source: 'tool_calls' };
+  }
+  
+  // Fallback to content field (Gemini sometimes returns JSON here)
+  const content = data.choices?.[0]?.message?.content;
+  if (content && typeof content === 'string') {
+    console.log('🔄 No tool_calls found, checking content field...');
+    console.log('📄 Content field value:', content.substring(0, 500));
+    
+    // Try to extract JSON from content
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      console.log('✅ Found JSON in content field');
+      return { raw: jsonMatch[0], source: 'content_json' };
+    }
+    
+    // Return raw content for text parsing
+    console.log('📄 No JSON found, returning raw content for text parsing');
+    return { raw: content, source: 'content_text' };
+  }
+  
+  console.warn('⚠️ No usable AI response found in tool_calls or content');
+  return { raw: undefined, source: 'none' };
+}
+
 // Extract text from PDF
 async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCount: number; metadata: Record<string, unknown> }> {
   try {
@@ -308,9 +345,6 @@ Use the analyze_file function to provide structured output.`;
   }
 
   const data = await aiResponse.json();
-  console.log('📥 AI response received:', data.choices?.[0]?.message ? 'Valid' : 'Invalid');
-  
-  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
   
   // Build intelligent fallback using metadata
   const metaTitle = metadata?.Title || metadata?.title;
@@ -325,7 +359,11 @@ Use the analyze_file function to provide structured output.`;
     keyPoints: []
   };
   
-  const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+  // Use extractAiMetadata to handle both tool_calls and content field
+  const { raw: aiRaw, source: aiSource } = extractAiMetadata(data, fallback);
+  console.log(`📊 AI response source: ${aiSource}`);
+  
+  const parsed = validateAndParseAiJson(aiRaw, fallback);
   console.log('✅ Multimodal PDF analysis complete:', { 
     title: parsed.title, 
     tags: parsed.tags, 
@@ -1037,21 +1075,8 @@ Use the analyze_file function to provide structured output.`;
 
         if (aiResponse.ok) {
           const data = await aiResponse.json();
-          console.log('📥 AI response received:', {
-            hasChoices: !!data.choices,
-            choicesLength: data.choices?.length,
-            hasToolCalls: !!data.choices?.[0]?.message?.tool_calls
-          });
           
-          const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-          
-          if (toolCall?.function?.arguments) {
-            console.log('✅ AI tool call received, parsing structured data...');
-          } else {
-            console.warn('⚠️ No tool call in AI response, using fallback values');
-          }
-          
-          // Use validateAndParseAiJson with fallback
+          // Use extractAiMetadata with content field fallback
           const fallback = {
             title,
             description: `PDF document with ${pageCount} pages`,
@@ -1059,7 +1084,10 @@ Use the analyze_file function to provide structured output.`;
             category: 'other'
           };
           
-          const parsed = validateAndParseAiJson(toolCall?.function?.arguments, fallback);
+          const { raw: aiRaw, source: aiSource } = extractAiMetadata(data, fallback);
+          console.log(`📊 PDF text analysis - AI response source: ${aiSource}`);
+          
+          const parsed = validateAndParseAiJson(aiRaw, fallback);
           title = parsed.title || title;
           description = parsed.description || `PDF document with ${pageCount} pages`;
           tags = parsed.tags || ['pdf', 'document'];
