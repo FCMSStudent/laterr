@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PDFPreview } from "@/components/PDFPreview";
+import { DOCXPreview } from "@/components/DOCXPreview";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -220,6 +221,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   <>
                     {item.content?.toLowerCase().endsWith(".pdf") ? (
                       <PDFPreview url={signedUrl} className="h-64 md:h-80" />
+                    ) : item.content?.toLowerCase().endsWith(".docx") ? (
+                      <DOCXPreview url={signedUrl} className="h-64 md:h-80" />
                     ) : (
                       <div className="p-4 h-64 md:h-80 flex items-center justify-center">
                         <div className="text-center">
@@ -234,7 +237,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                       rel="noopener noreferrer" 
                       className="block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50"
                     >
-                      {item.content?.toLowerCase().endsWith(".pdf") ? "Open full PDF" : "Open file"}
+                      {item.content?.toLowerCase().endsWith(".pdf") ? "Open full PDF" : 
+                       item.content?.toLowerCase().endsWith(".docx") ? "Open full document" : "Open file"}
                     </a>
                   </>
                 ) : (
