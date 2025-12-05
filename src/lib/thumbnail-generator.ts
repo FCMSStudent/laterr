@@ -5,6 +5,8 @@
 
 import { pdfjs } from 'react-pdf';
 import mammoth from 'mammoth';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_QUALITY } from '@/constants';
 
 // Configure PDF.js worker
@@ -15,6 +17,11 @@ const DOCX_MAX_CONTENT_HEIGHT = 1000;
 const DOCX_MAX_LINES = 30;
 const DOCX_MAX_LINE_LENGTH = 100;
 const DOCX_PADDING = 40;
+
+// DOCX to PDF conversion constants
+// Using dimensions that work well with html2canvas rendering and jsPDF conversion
+const DOCX_CONTAINER_WIDTH_PX = 816; // Container width for HTML rendering
+const DOCX_CONTAINER_PADDING_PX = 72; // Container padding for margins
 
 export async function generateImageThumbnail(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -84,7 +91,56 @@ export async function generateVideoThumbnail(file: File): Promise<Blob> {
   });
 }
 
-export async function generateDocxThumbnail(file: File): Promise<Blob> {
+/**
+ * Convert DOCX to PDF blob for higher-quality thumbnail generation
+ */
+async function convertDocxToPdfBlob(file: File): Promise<Blob> {
+  // 1. Convert DOCX to HTML using mammoth
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.convertToHtml({ arrayBuffer });
+  
+  // 2. Create styled container for rendering (positioned off-screen)
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '-9999px';
+  container.style.width = `${DOCX_CONTAINER_WIDTH_PX}px`;
+  container.style.padding = `${DOCX_CONTAINER_PADDING_PX}px`;
+  container.style.backgroundColor = 'white';
+  container.style.fontFamily = 'Times New Roman, serif';
+  container.style.fontSize = '12pt';
+  container.style.lineHeight = '1.5';
+  container.innerHTML = result.value;
+  document.body.appendChild(container);
+  
+  try {
+    // 3. Render to canvas using html2canvas
+    const canvas = await html2canvas(container, {
+      scale: 2, // Higher quality
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+    
+    // 4. Convert canvas to PDF using jspdf
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    
+    // 5. Return PDF as Blob
+    return pdf.output('blob');
+  } finally {
+    // Always clean up the container to prevent DOM pollution
+    document.body.removeChild(container);
+  }
+}
+
+/**
+ * Fallback DOCX thumbnail generation (text-based)
+ */
+async function generateDocxThumbnailFallback(file: File): Promise<Blob> {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.convertToHtml({ arrayBuffer });
@@ -116,6 +172,26 @@ export async function generateDocxThumbnail(file: File): Promise<Blob> {
   } catch (error) {
     console.warn('DOCX thumbnail failed:', error);
     return generateDocumentThumbnail(file, file.name);
+  }
+}
+
+/**
+ * Generate high-quality DOCX thumbnail by converting to PDF first
+ */
+export async function generateDocxThumbnail(file: File): Promise<Blob> {
+  try {
+    // Convert DOCX to PDF first
+    const pdfBlob = await convertDocxToPdfBlob(file);
+    
+    // Create a File object from the PDF blob
+    const pdfFile = new File([pdfBlob], 'temp.pdf', { type: 'application/pdf' });
+    
+    // Use existing PDF thumbnail generation
+    return await generatePdfThumbnail(pdfFile);
+  } catch (error) {
+    console.warn('Failed to generate DOCX thumbnail via PDF, falling back to text:', error);
+    // Fallback to existing text-based approach
+    return generateDocxThumbnailFallback(file);
   }
 }
 
