@@ -10,9 +10,7 @@ import { Sparkles, LogOut, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { FilterBar, type SortOption } from "@/components/FilterBar";
-import {
-  SUPABASE_ITEMS_TABLE,
-} from "@/constants";
+import { SUPABASE_ITEMS_TABLE } from "@/constants";
 import type { Item, User, ItemType } from "@/types";
 import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
@@ -20,12 +18,24 @@ import { AuthError, NetworkError, toTypedError } from "@/types/errors";
 import { AUTH_ERRORS, getNetworkErrorMessage } from "@/lib/error-messages";
 
 // Lazy load modal components for better code splitting
-const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({ AddItemModal }) => ({ default: AddItemModal })));
-const DetailViewModal = lazy(() => import("@/components/DetailViewModal").then(({ DetailViewModal }) => ({ default: DetailViewModal })));
-const EditItemModal = lazy(() => import("@/components/EditItemModal").then(({ EditItemModal }) => ({ default: EditItemModal })));
-
-type RawItem = Omit<Item, 'tags'> & { tags: string[] | null };
-
+const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({
+  AddItemModal
+}) => ({
+  default: AddItemModal
+})));
+const DetailViewModal = lazy(() => import("@/components/DetailViewModal").then(({
+  DetailViewModal
+}) => ({
+  default: DetailViewModal
+})));
+const EditItemModal = lazy(() => import("@/components/EditItemModal").then(({
+  EditItemModal
+}) => ({
+  default: EditItemModal
+})));
+type RawItem = Omit<Item, 'tags'> & {
+  tags: string[] | null;
+};
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -41,7 +51,9 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Load bookmarks from localStorage
@@ -55,9 +67,8 @@ const Index = () => {
       }
     }
   }, []);
-
   const handleBookmarkToggle = useCallback((itemId: string) => {
-    setBookmarkedItems((prev) => {
+    setBookmarkedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(itemId)) {
         newSet.delete(itemId);
@@ -68,65 +79,54 @@ const Index = () => {
       return newSet;
     });
   }, []);
-
   const fetchItems = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from(SUPABASE_ITEMS_TABLE).select('*').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
 
       // Generate signed URLs for preview images
       const rawItems = (data ?? []) as any[];
-      const normalizedItems: Item[] = rawItems.map((item) => ({
+      const normalizedItems: Item[] = rawItems.map(item => ({
         ...item,
         tags: item.tags ?? [],
         preview_image_url: item.preview_image_url ?? null,
         summary: item.summary ?? null,
         user_notes: item.user_notes ?? null,
         content: item.content ?? null,
-        embedding: item.embedding ? JSON.parse(item.embedding) : null,
+        embedding: item.embedding ? JSON.parse(item.embedding) : null
       }));
-
       const itemsWithSignedUrls = await generateSignedUrlsForItems(normalizedItems);
-
       setItems(itemsWithSignedUrls);
       setFilteredItems(itemsWithSignedUrls);
     } catch (error: unknown) {
       const errorMessage = getNetworkErrorMessage('fetch');
       const typedError = toTypedError(error);
-      const networkError = new NetworkError(
-        errorMessage.message,
-        typedError
-      );
-      
+      const networkError = new NetworkError(errorMessage.message, typedError);
       console.error('Error fetching items:', networkError);
       toast({
         title: errorMessage.title,
         description: networkError.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   }, [toast]);
-
   const handleDeleteItem = useCallback(async (itemId: string) => {
     try {
-      const { error } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .delete()
-        .eq('id', itemId);
-
+      const {
+        error
+      } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq('id', itemId);
       if (error) throw error;
-
       toast({
         title: "Success",
-        description: "Item deleted successfully",
+        description: "Item deleted successfully"
       });
-      
       fetchItems();
     } catch (error: unknown) {
       const typedError = toTypedError(error);
@@ -134,11 +134,10 @@ const Index = () => {
       toast({
         title: "Error",
         description: "Failed to delete item",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   }, [toast, fetchItems]);
-
   const handleEditItem = useCallback((itemId: string) => {
     const item = items.find(i => i.id === itemId);
     if (item) {
@@ -146,10 +145,13 @@ const Index = () => {
       setShowEditModal(true);
     }
   }, [items]);
-
   useEffect(() => {
     // Check authentication
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       const currentUser = session?.user ?? null;
       if (!currentUser) {
         navigate('/auth');
@@ -160,35 +162,31 @@ const Index = () => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate('/auth');
       } else {
         setUser(session.user ?? null);
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate, fetchItems]);
-
   useEffect(() => {
     let filtered = items;
 
     // Filter by search (sanitize input)
     if (debouncedSearchQuery) {
       const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(sanitizedQuery) ||
-        item.summary?.toLowerCase().includes(sanitizedQuery) ||
-        item.user_notes?.toLowerCase().includes(sanitizedQuery)
-      );
+      filtered = filtered.filter(item => item.title.toLowerCase().includes(sanitizedQuery) || item.summary?.toLowerCase().includes(sanitizedQuery) || item.user_notes?.toLowerCase().includes(sanitizedQuery));
     }
 
     // Filter by tag
     if (selectedTag) {
-      filtered = filtered.filter(item =>
-        item.tags?.includes(selectedTag)
-      );
+      filtered = filtered.filter(item => item.tags?.includes(selectedTag));
     }
 
     // Filter by type
@@ -215,73 +213,52 @@ const Index = () => {
         sorted.sort((a, b) => a.type.localeCompare(b.type));
         break;
     }
-
     setFilteredItems(sorted);
   }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption]);
-
   const handleItemClick = (item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
   };
-
   const handleClearAllFilters = () => {
     setSelectedTag(null);
     setTypeFilter(null);
   };
-
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const {
+      error
+    } = await supabase.auth.signOut();
     if (error) {
-      const authError = new AuthError(
-        AUTH_ERRORS.SIGN_OUT_FAILED.message,
-        error instanceof Error ? error : undefined
-      );
+      const authError = new AuthError(AUTH_ERRORS.SIGN_OUT_FAILED.message, error instanceof Error ? error : undefined);
       toast({
         title: AUTH_ERRORS.SIGN_OUT_FAILED.title,
         description: authError.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } else {
       navigate('/');
     }
   };
-
   if (!user) {
     return null;
   }
-
-  return (
-    <div className="min-h-screen">
+  return <div className="min-h-screen">
       {/* Skip Navigation Link */}
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md"
-      >
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
         Skip to main content
       </a>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <header className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-1 tracking-tight">Laterr</h1>
+            <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
             <p className="text-muted-foreground text-sm font-medium">Your personal knowledge space</p>
           </div>
           <nav aria-label="Main navigation" className="flex items-center gap-4">
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
-              aria-label="Add new item to your collection"
-            >
+            <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
               <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
               Add Item
             </Button>
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground smooth-transition"
-              aria-label="Sign out of your account"
-            >
+            <Button onClick={handleSignOut} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground smooth-transition" aria-label="Sign out of your account">
               <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
               Sign Out
             </Button>
@@ -293,15 +270,7 @@ const Index = () => {
         </div>
 
         <div className="mb-4">
-          <FilterBar
-            selectedTag={selectedTag}
-            selectedSort={sortOption}
-            selectedTypeFilter={typeFilter}
-            onTagSelect={setSelectedTag}
-            onSortChange={setSortOption}
-            onTypeFilterChange={setTypeFilter}
-            onClearAll={handleClearAllFilters}
-          />
+          <FilterBar selectedTag={selectedTag} selectedSort={sortOption} selectedTypeFilter={typeFilter} onTagSelect={setSelectedTag} onSortChange={setSortOption} onTypeFilterChange={setTypeFilter} onClearAll={handleClearAllFilters} />
         </div>
 
         <main id="main-content">
@@ -310,75 +279,33 @@ const Index = () => {
             {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-              {Array.from({ length: 8 }).map((_, index) => (
-                <ItemCardSkeleton key={index} />
-              ))}
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="text-center py-32 space-y-5">
+          {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+              {Array.from({
+            length: 8
+          }).map((_, index) => <ItemCardSkeleton key={index} />)}
+            </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
               <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
               <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
               <p className="text-muted-foreground text-base max-w-md mx-auto">
                 Start building your knowledge by adding your first item
               </p>
-            </div>
-          ) : (
-            <section aria-label="Items collection">
+            </div> : <section aria-label="Items collection">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-                {filteredItems.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  id={item.id}
-                  type={item.type}
-                  title={item.title}
-                  summary={item.summary}
-                  previewImageUrl={item.preview_image_url}
-                  tags={item.tags}
-                  createdAt={item.created_at}
-                  updatedAt={item.updated_at}
-                  isBookmarked={bookmarkedItems.has(item.id)}
-                  onBookmarkToggle={handleBookmarkToggle}
-                  onDelete={handleDeleteItem}
-                  onEdit={handleEditItem}
-                  onClick={() => handleItemClick(item)}
-                  onTagClick={setSelectedTag}
-                />
-              ))}
+                {filteredItems.map(item => <ItemCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} isBookmarked={bookmarkedItems.has(item.id)} onBookmarkToggle={handleBookmarkToggle} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} />)}
             </div>
-          </section>
-        )}
+          </section>}
         </main>
       </div>
 
       <Suspense fallback={null}>
-        <AddItemModal
-          open={showAddModal}
-          onOpenChange={setShowAddModal}
-          onItemAdded={fetchItems}
-        />
+        <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={fetchItems} />
 
-        {selectedItem && (
-          <>
-            <DetailViewModal
-              open={showDetailModal}
-              onOpenChange={setShowDetailModal}
-              item={selectedItem}
-              onUpdate={fetchItems}
-            />
+        {selectedItem && <>
+            <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={fetchItems} />
 
-            <EditItemModal
-              open={showEditModal}
-              onOpenChange={setShowEditModal}
-              item={selectedItem}
-              onItemUpdated={fetchItems}
-            />
-          </>
-        )}
+            <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={fetchItems} />
+          </>}
       </Suspense>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
