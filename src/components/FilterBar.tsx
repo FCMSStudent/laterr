@@ -71,6 +71,11 @@ export const FilterBar = ({
     return category ? category.label : selectedTag;
   };
 
+  const getTypeLabel = (type: ItemType | null) => {
+    if (!type) return "Type";
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
   return (
     <div className="space-y-2">
       {/* Single-Line Filter Controls */}
@@ -112,11 +117,11 @@ export const FilterBar = ({
               size="sm"
               className="h-8"
             >
-              {selectedTypeFilter ? selectedTypeFilter.charAt(0).toUpperCase() + selectedTypeFilter.slice(1) : "Type"}
+              {getTypeLabel(selectedTypeFilter)}
               <ChevronDown className="h-3 w-3 ml-1" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-40">
+          <DropdownMenuContent align="start" className="w-40">
             <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onTypeFilterChange(null)}>
