@@ -292,7 +292,7 @@ const Index = () => {
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4">
           <FilterBar
             selectedTag={selectedTag}
             selectedSort={sortOption}
