@@ -19,8 +19,9 @@ const DOCX_MAX_LINE_LENGTH = 100;
 const DOCX_PADDING = 40;
 
 // DOCX to PDF conversion constants
-const A4_WIDTH_PX = 816; // A4 width at 96 DPI (8.5 inches * 96)
-const A4_MARGIN_PX = 72; // 1 inch margins (72 points)
+// Using dimensions that work well with html2canvas rendering and jsPDF conversion
+const DOCX_CONTAINER_WIDTH_PX = 816; // Container width for HTML rendering
+const DOCX_CONTAINER_PADDING_PX = 72; // Container padding for margins
 
 export async function generateImageThumbnail(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -103,8 +104,8 @@ async function convertDocxToPdfBlob(file: File): Promise<Blob> {
   container.style.position = 'absolute';
   container.style.left = '-9999px';
   container.style.top = '-9999px';
-  container.style.width = `${A4_WIDTH_PX}px`;
-  container.style.padding = `${A4_MARGIN_PX}px`;
+  container.style.width = `${DOCX_CONTAINER_WIDTH_PX}px`;
+  container.style.padding = `${DOCX_CONTAINER_PADDING_PX}px`;
   container.style.backgroundColor = 'white';
   container.style.fontFamily = 'Times New Roman, serif';
   container.style.fontSize = '12pt';
