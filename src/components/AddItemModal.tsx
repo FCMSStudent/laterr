@@ -9,40 +9,24 @@ import { Link2, FileText, File } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import {
-  CATEGORY_OPTIONS,
-  DEFAULT_ITEM_TAG,
-  DEFAULT_ITEM_TAGS,
-  ALLOWED_FILE_MIME_TYPES,
-  FILE_INPUT_ACCEPT,
-  FILE_SIZE_LIMIT_BYTES,
-  FILE_SIZE_LIMIT_MB,
-  NOTE_MAX_LENGTH,
-  NOTE_SUMMARY_MAX_LENGTH,
-  NOTE_TITLE_MAX_LENGTH,
-  URL_MAX_LENGTH,
-  SUPABASE_FUNCTION_ANALYZE_FILE,
-  SUPABASE_FUNCTION_ANALYZE_URL,
-  SUPABASE_ITEMS_TABLE,
-  FILE_ANALYSIS_SIGNED_URL_EXPIRATION,
-  isValidEmbedding,
-} from "@/constants";
+import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, DEFAULT_ITEM_TAGS, ALLOWED_FILE_MIME_TYPES, FILE_INPUT_ACCEPT, FILE_SIZE_LIMIT_BYTES, FILE_SIZE_LIMIT_MB, NOTE_MAX_LENGTH, NOTE_SUMMARY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH, URL_MAX_LENGTH, SUPABASE_FUNCTION_ANALYZE_FILE, SUPABASE_FUNCTION_ANALYZE_URL, SUPABASE_ITEMS_TABLE, FILE_ANALYSIS_SIGNED_URL_EXPIRATION, isValidEmbedding } from "@/constants";
 import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage } from "@/lib/supabase-utils";
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
 import { generateThumbnail } from "@/lib/thumbnail-generator";
-
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
-
 interface AddItemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onItemAdded: () => void;
 }
-
-export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalProps) => {
+export const AddItemModal = ({
+  open,
+  onOpenChange,
+  onItemAdded
+}: AddItemModalProps) => {
   // Modal for adding URLs, notes, and files to your space
   const [url, setUrl] = useState("");
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
@@ -51,28 +35,33 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
   const [loading, setLoading] = useState(false);
   const [statusStep, setStatusStep] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-
   const handleUrlSubmit = async () => {
     // Validate URL
     const urlResult = urlSchema.safeParse(url.trim());
     if (!urlResult.success) {
-      const errorMsg = urlResult.error.errors[0].message.toLowerCase().includes('invalid') 
-        ? ITEM_ERRORS.URL_INVALID 
-        : ITEM_ERRORS.URL_TOO_LONG;
-      toast.error(errorMsg.title, { description: errorMsg.message });
+      const errorMsg = urlResult.error.errors[0].message.toLowerCase().includes('invalid') ? ITEM_ERRORS.URL_INVALID : ITEM_ERRORS.URL_TOO_LONG;
+      toast.error(errorMsg.title, {
+        description: errorMsg.message
+      });
       return;
     }
-    
     setLoading(true);
     setStatusStep('uploading');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-
-      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_URL, {
-        body: { url: urlResult.data }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_URL, {
+        body: {
+          url: urlResult.data
+        }
       });
-
       if (error) throw error;
 
       // Set suggested category from AI
@@ -84,7 +73,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       let embedding: number[] | null = null;
       try {
         setStatusStep('generating embeddings');
-        const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
+        const {
+          data: embeddingData,
+          error: embeddingError
+        } = await supabase.functions.invoke('generate-embedding', {
           body: {
             title: data.title,
             summary: data.summary,
@@ -92,7 +84,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
             extractedText: data.description || ''
           }
         });
-
         if (!embeddingError && embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
           if (isValidEmbedding(embeddingData.embedding)) {
@@ -104,24 +95,20 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       } catch (embError) {
         console.warn('Failed to generate embedding, continuing without it:', embError);
       }
-
       setStatusStep('saving');
-
-      const { error: insertError } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert({
-          type: 'url',
-          title: data.title,
-          content: urlResult.data,
-          summary: data.summary,
-          tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
-          preview_image_url: data.previewImageUrl,
-          embedding: embedding ? JSON.stringify(embedding) : null,
-          user_id: user.id,
-        });
-
+      const {
+        error: insertError
+      } = await supabase.from(SUPABASE_ITEMS_TABLE).insert({
+        type: 'url',
+        title: data.title,
+        content: urlResult.data,
+        summary: data.summary,
+        tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
+        preview_image_url: data.previewImageUrl,
+        embedding: embedding ? JSON.stringify(embedding) : null,
+        user_id: user.id
+      });
       if (insertError) throw insertError;
-
       toast.success("URL added to your space! 🌱");
       setUrl("");
       setSuggestedCategory("");
@@ -130,49 +117,50 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     } catch (error: unknown) {
       const typedError = toTypedError(error);
       console.error('Error adding URL:', typedError);
-      
+
       // Check for common configuration or authentication issues
       const commonError = checkCommonConfigErrors(error);
       if (commonError) {
         if (commonError.logDetails) {
           console.error(`⚠️ ${commonError.logDetails}`);
         }
-        toast.error(commonError.title, { description: commonError.description });
+        toast.error(commonError.title, {
+          description: commonError.description
+        });
         return;
       }
-      
+
       // Use generic error message for other cases
       const errorMessage = getItemErrorMessage(error, 'url');
-      const networkError = new NetworkError(
-        errorMessage.message,
-        typedError
-      );
-      
+      const networkError = new NetworkError(errorMessage.message, typedError);
       console.error('Error details:', networkError);
-      toast.error(errorMessage.title, { description: errorMessage.message });
+      toast.error(errorMessage.title, {
+        description: errorMessage.message
+      });
     } finally {
       setLoading(false);
       setStatusStep(null);
     }
   };
-
   const handleNoteSubmit = async () => {
     // Validate note
     const noteResult = noteSchema.safeParse(note.trim());
     if (!noteResult.success) {
-      const errorMsg = noteResult.error.errors[0].message.toLowerCase().includes('empty') 
-        ? ITEM_ERRORS.NOTE_EMPTY 
-        : ITEM_ERRORS.NOTE_TOO_LONG;
-      toast.error(errorMsg.title, { description: errorMsg.message });
+      const errorMsg = noteResult.error.errors[0].message.toLowerCase().includes('empty') ? ITEM_ERRORS.NOTE_EMPTY : ITEM_ERRORS.NOTE_TOO_LONG;
+      toast.error(errorMsg.title, {
+        description: errorMsg.message
+      });
       return;
     }
-    
     setLoading(true);
     setStatusStep('uploading');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-
       const firstLine = noteResult.data.split('\n')[0].substring(0, NOTE_TITLE_MAX_LENGTH);
       const noteSummary = noteResult.data.substring(0, NOTE_SUMMARY_MAX_LENGTH);
 
@@ -180,7 +168,10 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       let embedding: number[] | null = null;
       try {
         setStatusStep('generating embeddings');
-        const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
+        const {
+          data: embeddingData,
+          error: embeddingError
+        } = await supabase.functions.invoke('generate-embedding', {
           body: {
             title: firstLine || 'Untitled Note',
             summary: noteSummary,
@@ -188,7 +179,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
             extractedText: noteResult.data.substring(0, 1000)
           }
         });
-
         if (!embeddingError && embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
           if (isValidEmbedding(embeddingData.embedding)) {
@@ -200,23 +190,19 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       } catch (embError) {
         console.warn('Failed to generate embedding, continuing without it:', embError);
       }
-
       setStatusStep('saving');
-
-      const { error } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert({
-          type: 'note',
-          title: firstLine || 'Untitled Note',
-          content: noteResult.data,
-          summary: noteSummary,
-          tags: [...DEFAULT_ITEM_TAGS],
-          embedding: embedding ? JSON.stringify(embedding) : null,
-          user_id: user.id,
-        });
-
+      const {
+        error
+      } = await supabase.from(SUPABASE_ITEMS_TABLE).insert({
+        type: 'note',
+        title: firstLine || 'Untitled Note',
+        content: noteResult.data,
+        summary: noteSummary,
+        tags: [...DEFAULT_ITEM_TAGS],
+        embedding: embedding ? JSON.stringify(embedding) : null,
+        user_id: user.id
+      });
       if (error) throw error;
-
       toast.success("Note planted in your space! 📝");
       setNote("");
       onOpenChange(false);
@@ -224,36 +210,35 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     } catch (error: unknown) {
       const typedError = toTypedError(error);
       console.error('Error adding note:', typedError);
-      
+
       // Check for common configuration or authentication issues
       const commonError = checkCommonConfigErrors(error);
       if (commonError) {
         if (commonError.logDetails) {
           console.error(`⚠️ ${commonError.logDetails}`);
         }
-        toast.error(commonError.title, { description: commonError.description });
+        toast.error(commonError.title, {
+          description: commonError.description
+        });
         return;
       }
-      
+
       // Use generic error message for other cases
       const errorMessage = getItemErrorMessage(error, 'note');
-      const networkError = new NetworkError(
-        errorMessage.message,
-        typedError
-      );
-      
+      const networkError = new NetworkError(errorMessage.message, typedError);
       console.error('Error details:', networkError);
-      toast.error(errorMessage.title, { description: errorMessage.message });
+      toast.error(errorMessage.title, {
+        description: errorMessage.message
+      });
     } finally {
       setLoading(false);
       setStatusStep(null);
     }
   };
-
   const handleFileSubmit = async () => {
     if (!file) {
-      toast.error(ITEM_ERRORS.FILE_NOT_SELECTED.title, { 
-        description: ITEM_ERRORS.FILE_NOT_SELECTED.message 
+      toast.error(ITEM_ERRORS.FILE_NOT_SELECTED.title, {
+        description: ITEM_ERRORS.FILE_NOT_SELECTED.message
       });
       return;
     }
@@ -261,28 +246,34 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     // Validate file type - now accepting images, PDFs, and Word documents
     const validTypes = ALLOWED_FILE_MIME_TYPES;
     if (!(validTypes as readonly string[]).includes(file.type)) {
-      toast.error(ITEM_ERRORS.FILE_INVALID_TYPE.title, { 
-        description: ITEM_ERRORS.FILE_INVALID_TYPE.message 
+      toast.error(ITEM_ERRORS.FILE_INVALID_TYPE.title, {
+        description: ITEM_ERRORS.FILE_INVALID_TYPE.message
       });
       return;
     }
 
     // Validate file size (20MB max for documents)
     if (file.size > FILE_SIZE_LIMIT_BYTES) {
-      toast.error(ITEM_ERRORS.FILE_TOO_LARGE.title, { 
-        description: ITEM_ERRORS.FILE_TOO_LARGE.message 
+      toast.error(ITEM_ERRORS.FILE_TOO_LARGE.title, {
+        description: ITEM_ERRORS.FILE_TOO_LARGE.message
       });
       return;
     }
-    
     setLoading(true);
     setStatusStep('uploading');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       // Upload to storage with user-specific path
-      const { fileName, storagePath } = await uploadFileToStorage(file, user.id);
+      const {
+        fileName,
+        storagePath
+      } = await uploadFileToStorage(file, user.id);
 
       // Generate thumbnail for preview
       setStatusStep('generating thumbnail');
@@ -293,45 +284,47 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
       } catch (thumbnailError) {
         console.warn('Failed to generate thumbnail, continuing without it:', thumbnailError);
       }
-
       setStatusStep('extracting');
 
       // Create a temporary signed URL for the analyze-file function
       const signedUrl = await createSignedUrlForFile(fileName, FILE_ANALYSIS_SIGNED_URL_EXPIRATION);
 
       // Analyze with AI - using the analyze-file function with signed URL
-      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke(SUPABASE_FUNCTION_ANALYZE_FILE, {
         body: {
           fileUrl: signedUrl,
           fileType: file.type,
           fileName: file.name
         }
       });
-
       if (error) throw error;
-
       setStatusStep('summarizing');
 
       // Determine item type and default tag based on file type
       let itemType = 'file';
       let defaultTag: string = DEFAULT_ITEM_TAG;
-
       if (file.type.startsWith('image/')) {
         itemType = 'image';
-        defaultTag = data.tag || DEFAULT_ITEM_TAG;  // AI chooses for images
+        defaultTag = data.tag || DEFAULT_ITEM_TAG; // AI chooses for images
       } else if (file.type === 'application/pdf' || file.type.includes('word')) {
         itemType = 'document';
-        defaultTag = DEFAULT_ITEM_TAG;  // Always read later for documents
+        defaultTag = DEFAULT_ITEM_TAG; // Always read later for documents
       } else if (file.type.startsWith('video/')) {
         itemType = 'video';
-        defaultTag = 'watch later';  // Videos go to watch later
+        defaultTag = 'watch later'; // Videos go to watch later
       }
 
       // Generate embedding for semantic search
       let embedding: number[] | null = null;
       try {
         setStatusStep('generating embeddings');
-        const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
+        const {
+          data: embeddingData,
+          error: embeddingError
+        } = await supabase.functions.invoke('generate-embedding', {
           body: {
             title: data.title,
             summary: data.summary || data.description,
@@ -339,7 +332,6 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
             extractedText: data.extractedText || ''
           }
         });
-
         if (!embeddingError && embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
           if (isValidEmbedding(embeddingData.embedding)) {
@@ -354,25 +346,20 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
 
       // Insert into database
       setStatusStep('saving');
-
-      const { error: insertError } = await supabase
-        .from(SUPABASE_ITEMS_TABLE)
-        .insert({
-          type: itemType,
-          title: data.title,
-          content: storagePath,
-          summary: data.summary || data.description,
-          tags: [defaultTag],
-          preview_image_url: thumbnailUrl || (file.type.startsWith('image/') ? storagePath : (data.previewImageUrl || null)),
-          embedding: embedding ? JSON.stringify(embedding) : null,
-          user_id: user.id,
-        });
-
+      const {
+        error: insertError
+      } = await supabase.from(SUPABASE_ITEMS_TABLE).insert({
+        type: itemType,
+        title: data.title,
+        content: storagePath,
+        summary: data.summary || data.description,
+        tags: [defaultTag],
+        preview_image_url: thumbnailUrl || (file.type.startsWith('image/') ? storagePath : data.previewImageUrl || null),
+        embedding: embedding ? JSON.stringify(embedding) : null,
+        user_id: user.id
+      });
       if (insertError) throw insertError;
-
-      const fileTypeLabel = file.type.startsWith('image/') ? 'Image' :
-                           file.type === 'application/pdf' ? 'PDF' : 
-                           file.type.startsWith('video/') ? 'Video' : 'Document';
+      const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : file.type === 'application/pdf' ? 'PDF' : file.type.startsWith('video/') ? 'Video' : 'Document';
       toast.success(`${fileTypeLabel} added to your space! 📁`);
       setFile(null);
       onOpenChange(false);
@@ -380,61 +367,56 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
     } catch (error: unknown) {
       const typedError = toTypedError(error);
       console.error('Error adding file:', typedError);
-      
-      const { message, isRateLimitError, isCreditsError } = handleSupabaseError(
-        typedError,
-        "Failed to add file. Please try again."
-      );
-      
+      const {
+        message,
+        isRateLimitError,
+        isCreditsError
+      } = handleSupabaseError(typedError, "Failed to add file. Please try again.");
+
       // Use specific error messages for rate limiting and credits issues for better UX
       if (isRateLimitError) {
-        toast.error(ITEM_ERRORS.AI_RATE_LIMIT.title, { 
-          description: ITEM_ERRORS.AI_RATE_LIMIT.message 
+        toast.error(ITEM_ERRORS.AI_RATE_LIMIT.title, {
+          description: ITEM_ERRORS.AI_RATE_LIMIT.message
         });
       } else if (isCreditsError) {
-        toast.error(ITEM_ERRORS.AI_CREDITS_EXHAUSTED.title, { 
-          description: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message 
+        toast.error(ITEM_ERRORS.AI_CREDITS_EXHAUSTED.title, {
+          description: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message
         });
       } else {
         const errorMessage = getItemErrorMessage(typedError, 'file');
-        toast.error(errorMessage.title, { description: errorMessage.message });
+        toast.error(errorMessage.title, {
+          description: errorMessage.message
+        });
       }
     } finally {
       setLoading(false);
       setStatusStep(null);
     }
   };
-
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
-
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
   };
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-
     const droppedFile = e.dataTransfer.files?.[0];
     if (droppedFile) {
       setFile(droppedFile);
     }
   };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+  return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground">
@@ -460,72 +442,25 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
           </TabsList>
 
           <TabsContent value="url" className="space-y-4 mt-6">
-            <EnhancedInput
-              id="url-input"
-              type="url"
-              placeholder="Paste a URL..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              maxLength={URL_MAX_LENGTH}
-              className="glass-input border-0 h-11 text-[15px]"
-              showClearButton={true}
-              onClear={() => setUrl('')}
-              autoComplete="url"
-              aria-label="URL to add"
-            />
-            <LoadingButton 
-              onClick={handleUrlSubmit} 
-              loading={loading}
-              disabled={!url}
-              loadingText="Adding..."
-              size="lg"
-              className="w-full"
-              aria-label="Add URL to collection"
-            >
+            <EnhancedInput id="url-input" type="url" placeholder="Paste a URL..." value={url} onChange={e => setUrl(e.target.value)} maxLength={URL_MAX_LENGTH} className="glass-input border-0 h-11 text-[15px]" showClearButton={true} onClear={() => setUrl('')} autoComplete="url" aria-label="URL to add" />
+            <LoadingButton onClick={handleUrlSubmit} loading={loading} disabled={!url} loadingText="Adding..." size="lg" className="w-full" aria-label="Add URL to collection">
               Add URL
             </LoadingButton>
           </TabsContent>
 
           <TabsContent value="note" className="space-y-4 mt-6">
-            <EnhancedTextarea
-              id="note-textarea"
-              placeholder="Write your thoughts..."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              maxLength={NOTE_MAX_LENGTH}
-              className="glass-input min-h-[150px] border-0 text-[15px] resize-none"
-              showCharacterCount={true}
-              helperText="Write your thoughts and ideas"
-              aria-label="Note content"
-            />
-            <LoadingButton 
-              onClick={handleNoteSubmit}
-              loading={loading}
-              disabled={!note}
-              loadingText="Saving..."
-              size="lg"
-              className="w-full"
-              aria-label="Save note to collection"
-            >
+            <EnhancedTextarea id="note-textarea" placeholder="Write your thoughts..." value={note} onChange={e => setNote(e.target.value)} maxLength={NOTE_MAX_LENGTH} className="glass-input min-h-[150px] border-0 text-[15px] resize-none" showCharacterCount={true} helperText="Write your thoughts and ideas" aria-label="Note content" />
+            <LoadingButton onClick={handleNoteSubmit} loading={loading} disabled={!note} loadingText="Saving..." size="lg" className="w-full" aria-label="Save note to collection">
               Save Note
             </LoadingButton>
           </TabsContent>
 
           <TabsContent value="image" className="space-y-4 mt-6">
-            <div
-              className={`
+            <div className={`
                 relative border-2 border-dashed rounded-xl p-8 transition-all duration-200
-                ${isDragging 
-                  ? 'border-primary bg-primary/5 scale-[1.02]' 
-                  : 'border-border/50 hover:border-border hover:bg-muted/30'
-                }
-              `}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              <div className="flex flex-col items-center justify-center space-y-3 text-center">
+                ${isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border/50 hover:border-border hover:bg-muted/30'}
+              `} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
+              <div className="items-center justify-center space-y-3 text-center flex flex-col">
                 <div className={`
                   rounded-full p-4 transition-all duration-200
                   ${isDragging ? 'bg-primary/10 scale-110' : 'bg-muted'}
@@ -533,24 +468,15 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                   <File className={`h-8 w-8 transition-colors duration-200 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
                 </div>
                 
-                {file ? (
-                  <div className="space-y-2">
+                {file ? <div className="space-y-2">
                     <p className="text-sm font-medium text-foreground">{file.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setFile(null)}
-                      className="text-xs"
-                    >
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setFile(null)} className="text-xs">
                       Remove file
                     </Button>
-                  </div>
-                ) : (
-                  <>
+                  </div> : <>
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-foreground">
                         {isDragging ? 'Drop your file here' : 'Drag & drop your file here'}
@@ -562,18 +488,9 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
                       <div className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
                         Browse files
                       </div>
-                      <input
-                        id="file-input"
-                        type="file"
-                        accept={FILE_INPUT_ACCEPT}
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
-                        className="sr-only"
-                        aria-required="true"
-                        aria-describedby="file-helper-text"
-                      />
+                      <input id="file-input" type="file" accept={FILE_INPUT_ACCEPT} onChange={e => setFile(e.target.files?.[0] || null)} className="sr-only" aria-required="true" aria-describedby="file-helper-text" />
                     </label>
-                  </>
-                )}
+                  </>}
               </div>
             </div>
             
@@ -581,30 +498,19 @@ export const AddItemModal = ({ open, onOpenChange, onItemAdded }: AddItemModalPr
               Supports: Images, PDFs, Word, Excel, PowerPoint, CSV, TXT (max {FILE_SIZE_LIMIT_MB}MB)
             </p>
             <div className="space-y-2">
-              <LoadingButton
-                onClick={handleFileSubmit}
-                loading={loading}
-                disabled={!file}
-                loadingText="Uploading..."
-                size="lg"
-                className="w-full"
-                aria-label="Upload file to collection"
-              >
+              <LoadingButton onClick={handleFileSubmit} loading={loading} disabled={!file} loadingText="Uploading..." size="lg" className="w-full" aria-label="Upload file to collection">
                 Upload File
               </LoadingButton>
-              {loading && (
-                <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">
+              {loading && <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">
                   {statusStep === 'uploading' && 'Uploading file…'}
                   {statusStep === 'extracting' && 'Extracting text…'}
                   {statusStep === 'summarizing' && 'Summarizing content…'}
                   {statusStep === 'saving' && 'Saving to your space…'}
                   {!statusStep && 'Processing…'}
-                </p>
-              )}
+                </p>}
             </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
