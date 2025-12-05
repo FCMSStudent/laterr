@@ -63,7 +63,7 @@ export const FilterBar = ({
   };
   return <div className="space-y-2">
       {/* Single-Line Filter Controls */}
-      <div className="flex-wrap flex-row flex items-center justify-start gap-[10px] border-0 shadow-none rounded-none opacity-100 text-primary bg-warning">
+      <div className="flex-wrap flex-row flex items-center justify-start gap-[10px] border-0 shadow-none rounded-none opacity-100 text-primary bg-white/[0.01]">
         {/* Tags Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
