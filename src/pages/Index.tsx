@@ -248,7 +248,7 @@ const Index = () => {
       </a>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-6 items-center justify-between flex flex-row">
           <div>
             <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
             <p className="text-muted-foreground text-sm font-medium">Your personal knowledge space</p>
