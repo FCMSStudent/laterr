@@ -1,19 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown } from "lucide-react";
 import type { ItemType } from "@/types";
 import { CATEGORY_OPTIONS } from "@/constants";
-
 export type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc" | "type";
-
 interface FilterBarProps {
   selectedTag: string | null;
   selectedSort: SortOption;
@@ -23,7 +14,6 @@ interface FilterBarProps {
   onTypeFilterChange: (type: ItemType | null) => void;
   onClearAll: () => void;
 }
-
 export const FilterBar = ({
   selectedTag,
   selectedSort,
@@ -31,10 +21,9 @@ export const FilterBar = ({
   onTagSelect,
   onSortChange,
   onTypeFilterChange,
-  onClearAll,
+  onClearAll
 }: FilterBarProps) => {
   const hasActiveFilters = selectedTag || selectedTypeFilter;
-
   const getSortLabel = (sort: SortOption) => {
     switch (sort) {
       case "date-desc":
@@ -51,7 +40,6 @@ export const FilterBar = ({
         return "Sort";
     }
   };
-
   const getTypeIcon = (type: ItemType) => {
     switch (type) {
       case "url":
@@ -64,30 +52,22 @@ export const FilterBar = ({
         return <ImageIcon className="h-3 w-3" />;
     }
   };
-
   const getSelectedTagLabel = () => {
     if (!selectedTag) return "All Tags";
     const category = CATEGORY_OPTIONS.find(cat => cat.value === selectedTag);
     return category ? category.label : selectedTag;
   };
-
   const getTypeLabel = (type: ItemType | null) => {
     if (!type) return "Type";
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
-
-  return (
-    <div className="space-y-2">
+  return <div className="space-y-2">
       {/* Single-Line Filter Controls */}
-      <div className="flex flex-wrap gap-2 items-center justify-center">
+      <div className="flex-wrap flex-row flex items-center justify-start gap-[10px] border-0 shadow-none rounded-none opacity-100 text-primary bg-warning">
         {/* Tags Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant={selectedTag ? "default" : "outline"}
-              size="sm"
-              className="h-8"
-            >
+            <Button variant={selectedTag ? "default" : "outline"} size="sm" className="h-8">
               {getSelectedTagLabel()}
               <ChevronDown className="h-3 w-3 ml-1" />
             </Button>
@@ -98,25 +78,16 @@ export const FilterBar = ({
             <DropdownMenuItem onClick={() => onTagSelect(null)}>
               All Tags
             </DropdownMenuItem>
-            {CATEGORY_OPTIONS.map((category) => (
-              <DropdownMenuItem 
-                key={category.value}
-                onClick={() => onTagSelect(category.value)}
-              >
+            {CATEGORY_OPTIONS.map(category => <DropdownMenuItem key={category.value} onClick={() => onTagSelect(category.value)}>
                 {category.label}
-              </DropdownMenuItem>
-            ))}
+              </DropdownMenuItem>)}
           </DropdownMenuContent>
         </DropdownMenu>
 
         {/* Type Filter Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant={selectedTypeFilter ? "default" : "outline"}
-              size="sm"
-              className="h-8"
-            >
+            <Button variant={selectedTypeFilter ? "default" : "outline"} size="sm" className="h-8">
               {getTypeLabel(selectedTypeFilter)}
               <ChevronDown className="h-3 w-3 ml-1" />
             </Button>
@@ -177,43 +148,23 @@ export const FilterBar = ({
       </div>
 
       {/* Active Filter Pills */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 items-center justify-center">
+      {hasActiveFilters && <div className="flex flex-wrap gap-2 items-center justify-center">
           <span className="text-xs text-muted-foreground font-medium">Active Filters:</span>
           
-          {selectedTag && (
-            <Badge
-              variant="secondary"
-              className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs"
-              onClick={() => onTagSelect(null)}
-            >
+          {selectedTag && <Badge variant="secondary" className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs" onClick={() => onTagSelect(null)}>
               #{selectedTag}
               <X className="h-3 w-3 ml-1" />
-            </Badge>
-          )}
+            </Badge>}
           
-          {selectedTypeFilter && (
-            <Badge
-              variant="secondary"
-              className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs flex items-center gap-1"
-              onClick={() => onTypeFilterChange(null)}
-            >
+          {selectedTypeFilter && <Badge variant="secondary" className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs flex items-center gap-1" onClick={() => onTypeFilterChange(null)}>
               {getTypeIcon(selectedTypeFilter)}
               {selectedTypeFilter.charAt(0).toUpperCase() + selectedTypeFilter.slice(1)}
               <X className="h-3 w-3 ml-1" />
-            </Badge>
-          )}
+            </Badge>}
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClearAll}
-            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-          >
+          <Button variant="ghost" size="sm" onClick={onClearAll} className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground">
             Clear All
           </Button>
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 };
