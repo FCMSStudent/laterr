@@ -18,6 +18,10 @@ const DOCX_MAX_LINES = 30;
 const DOCX_MAX_LINE_LENGTH = 100;
 const DOCX_PADDING = 40;
 
+// DOCX to PDF conversion constants
+const A4_WIDTH_PX = 816; // A4 width at 96 DPI (8.5 inches * 96)
+const A4_MARGIN_PX = 72; // 1 inch margins (72 points)
+
 export async function generateImageThumbnail(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -94,10 +98,13 @@ async function convertDocxToPdfBlob(file: File): Promise<Blob> {
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.convertToHtml({ arrayBuffer });
   
-  // 2. Create styled container for rendering
+  // 2. Create styled container for rendering (positioned off-screen)
   const container = document.createElement('div');
-  container.style.width = '816px'; // A4 width at 96 DPI
-  container.style.padding = '72px'; // 1 inch margins
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '-9999px';
+  container.style.width = `${A4_WIDTH_PX}px`;
+  container.style.padding = `${A4_MARGIN_PX}px`;
   container.style.backgroundColor = 'white';
   container.style.fontFamily = 'Times New Roman, serif';
   container.style.fontSize = '12pt';
@@ -105,25 +112,28 @@ async function convertDocxToPdfBlob(file: File): Promise<Blob> {
   container.innerHTML = result.value;
   document.body.appendChild(container);
   
-  // 3. Render to canvas using html2canvas
-  const canvas = await html2canvas(container, {
-    scale: 2, // Higher quality
-    useCORS: true,
-    backgroundColor: '#ffffff'
-  });
-  
-  document.body.removeChild(container);
-  
-  // 4. Convert canvas to PDF using jspdf
-  const pdf = new jsPDF('p', 'pt', 'a4');
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-  
-  pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-  
-  // 5. Return PDF as Blob
-  return pdf.output('blob');
+  try {
+    // 3. Render to canvas using html2canvas
+    const canvas = await html2canvas(container, {
+      scale: 2, // Higher quality
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+    
+    // 4. Convert canvas to PDF using jspdf
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    
+    // 5. Return PDF as Blob
+    return pdf.output('blob');
+  } finally {
+    // Always clean up the container to prevent DOM pollution
+    document.body.removeChild(container);
+  }
 }
 
 /**
