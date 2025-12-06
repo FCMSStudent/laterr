@@ -278,22 +278,22 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           <div className="md:w-[65%] bg-black/90 flex items-center justify-center min-w-0 rounded-l-lg overflow-hidden min-h-[400px] md:min-h-[500px]">
             {/* 1. YouTube URL → Embed player */}
             {youtubeVideoId ? (
-              <a 
-                href={item.content || undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative w-full h-full group cursor-pointer"
-                aria-label="Open YouTube video in new tab"
-              >
+              <div className="relative w-full h-full group">
                 <YouTubeEmbed 
                   videoId={youtubeVideoId} 
-                  className="h-full pointer-events-none"
+                  className="h-full"
                 />
-                {/* Hover overlay to indicate clickability */}
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                {/* Clickable overlay - shown on hover only, allows iframe controls when not hovering */}
+                <a 
+                  href={item.content || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  aria-label="Open YouTube video in new tab"
+                >
                   <Link2 className="h-8 w-8 text-white drop-shadow-lg" />
-                </div>
-              </a>
+                </a>
+              </div>
             ) : 
             
             /* 2. URL type with preview_image_url → Show thumbnail directly */
