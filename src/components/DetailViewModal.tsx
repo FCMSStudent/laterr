@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { PDFPreview } from "@/components/PDFPreview";
 import { DOCXPreview } from "@/components/DOCXPreview";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ZoomIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -109,6 +109,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [imageLoadError, setImageLoadError] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageZoomed, setImageZoomed] = useState(false);
 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
@@ -315,6 +316,17 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     setImageLoaded(true);
   };
 
+  // Extract domain from URL for display
+  const extractDomain = (url: string | null): string => {
+    if (!url) return '';
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace('www.', '');
+    } catch {
+      return '';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-6xl h-[90vh] p-0 overflow-hidden border-0 glass-card">
@@ -381,18 +393,27 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               )
             ) : 
             
-            /* 3. URL type without preview → Show icon placeholder */
+            /* 3. URL type without preview → Show icon placeholder with domain */
             item.type === "url" ? (
               <a
                 href={item.content || undefined}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-4 h-full flex items-center justify-center group cursor-pointer hover:bg-black/80 transition-colors"
+                className="p-4 h-full flex items-center justify-center group cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 aria-label="Open link in new tab"
               >
-                <div className="text-center">
-                  <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground group-hover:text-white transition-colors" />
-                  <p className="text-sm text-muted-foreground group-hover:text-white/90 transition-colors">Click to open link</p>
+                <div className="text-center max-w-md">
+                  <Link2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <p className="text-lg font-semibold mb-2 text-foreground group-hover:text-primary transition-colors">{item.title}</p>
+                  {extractDomain(item.content) && (
+                    <p className="text-sm text-muted-foreground font-mono bg-muted/50 px-3 py-1 rounded-md inline-block mb-3">
+                      {extractDomain(item.content)}
+                    </p>
+                  )}
+                  {item.summary && (
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed mb-4">{item.summary}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">Click to open in new tab</p>
                 </div>
               </a>
             ) :
@@ -419,17 +440,23 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                           </div>
                         </div>
                       ) : (
-                        <div className="w-full h-full p-6 flex items-center justify-center">
+                        <div className="relative w-full h-full p-6 flex items-center justify-center group">
                           <img 
                             src={signedUrl} 
                             alt={item.title}
-                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                            className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform duration-300 cursor-zoom-in ${imageZoomed ? 'scale-150 cursor-zoom-out' : 'hover:brightness-105'}`}
                             onLoad={handleImageLoad}
+                            onClick={() => setImageZoomed(!imageZoomed)}
                             onError={() => {
                               setImageLoadError(true);
                               toast.error("Failed to load image");
                             }}
                           />
+                          {/* Zoom indicator */}
+                          <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white px-3 py-2 rounded-lg flex items-center gap-2 pointer-events-none">
+                            <ZoomIn className="h-4 w-4" />
+                            <span className="text-xs font-medium">Click to {imageZoomed ? 'zoom out' : 'zoom in'}</span>
+                          </div>
                         </div>
                       )
                     ) : (
