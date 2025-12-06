@@ -278,41 +278,75 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           <div className="md:w-[65%] bg-black/90 flex items-center justify-center min-w-0 rounded-l-lg overflow-hidden min-h-[400px] md:min-h-[500px]">
             {/* 1. YouTube URL → Embed player */}
             {youtubeVideoId ? (
-              <div className="w-full h-full">
+              <div className="relative w-full h-full group">
                 <YouTubeEmbed 
                   videoId={youtubeVideoId} 
                   className="h-full"
                 />
+                {/* Clickable overlay - shown on hover only, allows iframe controls when not hovering */}
+                <a 
+                  href={item.content || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  aria-label="Open YouTube video in new tab"
+                >
+                  <Link2 className="h-8 w-8 text-white drop-shadow-lg" />
+                </a>
               </div>
             ) : 
             
             /* 2. URL type with preview_image_url → Show thumbnail directly */
             item.type === "url" && item.preview_image_url?.trim() ? (
               imageLoadError ? (
-                <div className="p-4 h-full flex items-center justify-center">
+                <a
+                  href={item.content || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-4 h-full flex items-center justify-center group cursor-pointer hover:bg-black/80 transition-colors"
+                  aria-label="Open link in new tab"
+                >
                   <div className="text-center">
-                    <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Preview unavailable</p>
+                    <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground group-hover:text-white transition-colors" />
+                    <p className="text-sm text-muted-foreground group-hover:text-white/90 transition-colors">Preview unavailable - Click to open</p>
                   </div>
-                </div>
+                </a>
               ) : (
-                <img 
-                  src={item.preview_image_url} 
-                  alt={item.title}
-                  className="w-full h-full object-contain"
-                  onError={() => setImageLoadError(true)}
-                />
+                <a
+                  href={item.content || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative w-full h-full group cursor-pointer block"
+                  aria-label="Open link in new tab"
+                >
+                  <img 
+                    src={item.preview_image_url} 
+                    alt={item.title}
+                    className="w-full h-full object-contain"
+                    onError={() => setImageLoadError(true)}
+                  />
+                  {/* Hover overlay to indicate clickability */}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <Link2 className="h-8 w-8 text-white drop-shadow-lg" />
+                  </div>
+                </a>
               )
             ) : 
             
             /* 3. URL type without preview → Show icon placeholder */
             item.type === "url" ? (
-              <div className="p-4 h-full flex items-center justify-center">
+              <a
+                href={item.content || undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-4 h-full flex items-center justify-center group cursor-pointer hover:bg-black/80 transition-colors"
+                aria-label="Open link in new tab"
+              >
                 <div className="text-center">
-                  <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No preview available</p>
+                  <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground group-hover:text-white transition-colors" />
+                  <p className="text-sm text-muted-foreground group-hover:text-white/90 transition-colors">Click to open link</p>
                 </div>
-              </div>
+              </a>
             ) :
             
             /* 4. File/image/document types → Use signed URL logic (existing) */
