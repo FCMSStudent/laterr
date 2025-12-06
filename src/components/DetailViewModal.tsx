@@ -297,6 +297,11 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                         src={signedUrl} 
                         alt={item.title}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          toast.error("Failed to load image");
+                        }}
                       />
                     ) : (
                       <div className="p-4 h-full flex items-center justify-center">
@@ -317,7 +322,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           </div>
 
           {/* RIGHT COLUMN - INFO PANEL */}
-          <div className="md:w-[35%] flex flex-col gap-4 p-6 min-w-0 overflow-y-auto max-h-[90vh]">
+          <div className="md:w-[35%] flex flex-col gap-4 p-6 min-w-0 overflow-y-auto">
             {/* Header: Title and Metadata */}
             <div>
               <h2 className="text-lg font-semibold mb-2">{item.title}</h2>
@@ -396,7 +401,11 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 className="h-10 w-10"
                 aria-label="Save changes (Ctrl+S or Cmd+S)"
               >
-                <Save className="h-4 w-4" aria-hidden="true" />
+                {saving ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  <Save className="h-4 w-4" aria-hidden="true" />
+                )}
               </Button>
               <Button
                 onClick={() => setShowDeleteAlert(true)}
@@ -406,7 +415,11 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 className="h-10 w-10 border-destructive/20 text-destructive hover:bg-destructive/10"
                 aria-label="Delete item (Ctrl+D or Cmd+D)"
               >
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                {deleting ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                )}
               </Button>
             </div>
           </div>
