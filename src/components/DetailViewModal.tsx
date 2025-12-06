@@ -316,8 +316,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     setImageLoaded(true);
   };
 
-  // Extract domain from URL for display
-  const extractDomain = (url: string | null): string => {
+  // Extract domain from URL for display (memoized)
+  const extractDomain = useCallback((url: string | null): string => {
     if (!url) return '';
     try {
       const urlObj = new URL(url);
@@ -325,7 +325,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     } catch {
       return '';
     }
-  };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -440,17 +440,27 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                           </div>
                         </div>
                       ) : (
-                        <div className="relative w-full h-full p-6 flex items-center justify-center group">
+                        <div className={`relative w-full h-full p-6 flex items-center justify-center group ${imageZoomed ? 'overflow-auto' : 'overflow-hidden'}`}>
                           <img 
                             src={signedUrl} 
                             alt={item.title}
-                            className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform duration-300 cursor-zoom-in ${imageZoomed ? 'scale-150 cursor-zoom-out' : 'hover:brightness-105'}`}
+                            className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300 ${imageZoomed ? 'scale-125 cursor-zoom-out' : 'cursor-zoom-in hover:brightness-105'}`}
                             onLoad={handleImageLoad}
                             onClick={() => setImageZoomed(!imageZoomed)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setImageZoomed(!imageZoomed);
+                              }
+                            }}
                             onError={() => {
                               setImageLoadError(true);
                               toast.error("Failed to load image");
                             }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={imageZoomed ? 'Click to zoom out' : 'Click to zoom in'}
+                            aria-expanded={imageZoomed}
                           />
                           {/* Zoom indicator */}
                           <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white px-3 py-2 rounded-lg flex items-center gap-2 pointer-events-none">
