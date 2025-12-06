@@ -295,7 +295,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                       <PDFPreview url={signedUrl} className="h-full" />
                     ) : item.content?.toLowerCase().endsWith(".docx") ? (
                       <DOCXPreview url={signedUrl} className="h-full" />
-                    ) : item.type === "url" && item.preview_image_url ? (
+                    ) : item.type === "url" && item.preview_image_url?.trim() ? (
                       imageLoadError ? (
                         <div className="p-4 h-full flex items-center justify-center">
                           <div className="text-center">
