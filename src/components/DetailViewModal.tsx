@@ -269,7 +269,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl max-h-[90vh] p-0 overflow-hidden border-0 glass-card">
+      <DialogContent className="sm:max-w-6xl h-[90vh] p-0 overflow-hidden border-0 glass-card">
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
         {/* HORIZONTAL LAYOUT */}
@@ -401,81 +401,86 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
           {/* RIGHT COLUMN - INFO PANEL */}
           <div 
-            className="md:w-[35%] flex flex-col gap-4 p-6 min-w-0 overflow-y-auto"
-            tabIndex={0}
+            className="md:w-[35%] flex flex-col min-w-0 h-full"
             role="region"
             aria-label="Item details panel"
           >
-            {/* Header: Title and Metadata */}
-            <div>
-              <h2 className="text-lg font-semibold mb-2">{item.title}</h2>
-              <p className="text-xs text-muted-foreground">
-                Added {formatDate(item.created_at)} • {getSourceTypeLabel()}
-              </p>
-            </div>
-
-            {/* Summary/TLDW Section */}
-            {item.summary && (
-              <div className="border border-border rounded-lg p-3">
-                <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
-                  {item.type === "url" && isYouTubeUrl(item.content) ? "TLDW" : "SUMMARY"}
-                </h3>
-                <p className="text-sm leading-relaxed">{item.summary}</p>
+            {/* SCROLLABLE CONTENT AREA */}
+            <div 
+              className="flex-1 overflow-y-auto flex flex-col gap-4 p-6"
+              tabIndex={0}
+            >
+              {/* Header: Title and Metadata */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">{item.title}</h2>
+                <p className="text-xs text-muted-foreground">
+                  Added {formatDate(item.created_at)} • {getSourceTypeLabel()}
+                </p>
               </div>
-            )}
 
-            {/* Category Tag Section */}
-            <div>
-              <label htmlFor="category-select" className="text-xs font-semibold text-muted-foreground mb-2 block">CATEGORY</label>
-              <select
-                id="category-select"
-                value={selectedTag}
-                onChange={(e) => setSelectedTag(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="Select category for this item"
-              >
-                {CATEGORY_OPTIONS.map(({ value, label }) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-                {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
-                  <option value={selectedTag}>{selectedTag}</option>
-                )}
-              </select>
-            </div>
+              {/* Summary/TLDW Section */}
+              {item.summary && (
+                <div className="border border-border rounded-lg p-3">
+                  <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
+                    {item.type === "url" && isYouTubeUrl(item.content) ? "TLDW" : "SUMMARY"}
+                  </h3>
+                  <p className="text-sm leading-relaxed">{item.summary}</p>
+                </div>
+              )}
 
-            {/* Notes Section */}
-            <div className="flex-1">
-              <label htmlFor="user-notes-textarea" className="text-xs font-semibold text-muted-foreground mb-2 block">NOTES</label>
-              <div className="space-y-2">
-                <Textarea
-                  id="user-notes-textarea"
-                  value={userNotes}
-                  onChange={(e) => setUserNotes(e.target.value)}
-                  placeholder="Add your personal notes..."
-                  maxLength={USER_NOTES_MAX_LENGTH}
-                  className="glass-input border-0 min-h-[80px] text-sm leading-relaxed resize-none"
-                  aria-describedby="notes-char-count"
-                />
-                <div className="flex justify-end">
-                  <p 
-                    id="notes-char-count" 
-                    className={`text-xs font-medium transition-colors ${
-                      userNotes.length > USER_NOTES_MAX_LENGTH * CHAR_WARNING_THRESHOLD 
-                        ? 'text-destructive' 
-                        : 'text-muted-foreground'
-                    }`}
-                    aria-live="polite"
-                  >
-                    {userNotes.length.toLocaleString()} / {USER_NOTES_MAX_LENGTH.toLocaleString()}
-                  </p>
+              {/* Category Tag Section */}
+              <div>
+                <label htmlFor="category-select" className="text-xs font-semibold text-muted-foreground mb-2 block">CATEGORY</label>
+                <select
+                  id="category-select"
+                  value={selectedTag}
+                  onChange={(e) => setSelectedTag(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-label="Select category for this item"
+                >
+                  {CATEGORY_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                  {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
+                    <option value={selectedTag}>{selectedTag}</option>
+                  )}
+                </select>
+              </div>
+
+              {/* Notes Section */}
+              <div className="flex-1">
+                <label htmlFor="user-notes-textarea" className="text-xs font-semibold text-muted-foreground mb-2 block">NOTES</label>
+                <div className="space-y-2">
+                  <Textarea
+                    id="user-notes-textarea"
+                    value={userNotes}
+                    onChange={(e) => setUserNotes(e.target.value)}
+                    placeholder="Add your personal notes..."
+                    maxLength={USER_NOTES_MAX_LENGTH}
+                    className="glass-input border-0 min-h-[80px] text-sm leading-relaxed resize-none"
+                    aria-describedby="notes-char-count"
+                  />
+                  <div className="flex justify-end">
+                    <p 
+                      id="notes-char-count" 
+                      className={`text-xs font-medium transition-colors ${
+                        userNotes.length > USER_NOTES_MAX_LENGTH * CHAR_WARNING_THRESHOLD 
+                          ? 'text-destructive' 
+                          : 'text-muted-foreground'
+                      }`}
+                      aria-live="polite"
+                    >
+                      {userNotes.length.toLocaleString()} / {USER_NOTES_MAX_LENGTH.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons as Icons */}
-            <div className="flex justify-center gap-2 pt-4 border-t border-border mt-auto">
+            {/* FIXED FOOTER WITH ACTION BUTTONS */}
+            <div className="shrink-0 flex justify-center gap-2 p-6 pt-4 border-t border-border shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.1)]">
               <Button
                 onClick={handleSave}
                 disabled={saving}
