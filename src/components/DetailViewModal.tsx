@@ -69,13 +69,21 @@ interface YouTubeEmbedProps {
 }
 
 const YouTubeEmbed = ({ videoId, className }: YouTubeEmbedProps) => {
-  // Sanitize videoId to only allow alphanumeric, underscores, and hyphens
-  const sanitizedVideoId = videoId.replace(/[^a-zA-Z0-9_-]/g, '');
+  // Validate videoId: YouTube IDs are 11 chars, alphanumeric with _ and -
+  const isValidVideoId = /^[a-zA-Z0-9_-]{11}$/.test(videoId);
+  
+  if (!isValidVideoId) {
+    return (
+      <div className={`p-4 text-sm text-muted-foreground ${className}`}>
+        Invalid YouTube video ID
+      </div>
+    );
+  }
   
   return (
     <div className={`relative w-full ${className}`}>
       <iframe
-        src={`https://www.youtube.com/embed/${sanitizedVideoId}`}
+        src={`https://www.youtube.com/embed/${videoId}`}
         title="YouTube video player"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
@@ -234,8 +242,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   ];
 
   // Cache YouTube video ID to avoid duplicate extraction
-  const youtubeVideoId = item.type === "url" && isYouTubeUrl(item.content) && item.content
-    ? extractYouTubeVideoId(item.content) 
+  const youtubeVideoId = item.type === "url" && isYouTubeUrl(item.content)
+    ? extractYouTubeVideoId(item.content || "") 
     : null;
 
   return (
