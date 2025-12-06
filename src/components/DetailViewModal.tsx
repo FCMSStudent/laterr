@@ -295,6 +295,24 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                       <PDFPreview url={signedUrl} className="h-full" />
                     ) : item.content?.toLowerCase().endsWith(".docx") ? (
                       <DOCXPreview url={signedUrl} className="h-full" />
+                    ) : item.type === "url" && item.preview_image_url?.trim() ? (
+                      imageLoadError ? (
+                        <div className="p-4 h-full flex items-center justify-center">
+                          <div className="text-center">
+                            <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Preview unavailable</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <img 
+                          src={item.preview_image_url} 
+                          alt={item.title}
+                          className="w-full h-full object-contain"
+                          onError={() => {
+                            setImageLoadError(true);
+                          }}
+                        />
+                      )
                     ) : item.type === "image" ? (
                       imageLoadError ? (
                         <div className="p-4 h-full flex items-center justify-center">
