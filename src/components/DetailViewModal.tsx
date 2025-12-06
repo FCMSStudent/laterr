@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,15 +11,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PDFPreview } from "@/components/PDFPreview";
 import { DOCXPreview } from "@/components/DOCXPreview";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 import {
   CATEGORY_OPTIONS,
   DEFAULT_ITEM_TAG,
@@ -235,104 +234,111 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   if (!item) return null;
 
-  const breadcrumbItems = [
-    { label: "Home", onClick: () => onOpenChange(false) },
-    ...(selectedTag ? [{ label: selectedTag }] : []),
-    { label: item.title },
-  ];
-
   // Cache YouTube video ID to avoid duplicate extraction
   const youtubeVideoId = item.type === "url" && isYouTubeUrl(item.content)
     ? extractYouTubeVideoId(item.content!) 
     : null;
 
+  // Format the created date
+  const formatDate = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), {
+        addSuffix: true
+      });
+    } catch {
+      return '';
+    }
+  };
+
+  // Get source type label
+  const getSourceTypeLabel = () => {
+    if (item.type === "url" && isYouTubeUrl(item.content)) return "YouTube";
+    switch (item.type) {
+      case "url": return "URL";
+      case "note": return "Note";
+      case "document": return "Document";
+      case "file": return "File";
+      case "image": return "Image";
+      default: return "Item";
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto border-0 glass-card">
-        <DialogHeader>
-          <Breadcrumbs items={breadcrumbItems} />
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="text-primary opacity-60">{getIcon()}</div>
-              <DialogTitle className="text-xl font-semibold">{item.title}</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Go back to list"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-          </div>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-6xl max-h-[90vh] p-0 overflow-hidden border-0 glass-card">
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
         {/* HORIZONTAL LAYOUT */}
-        <div className="flex flex-col md:flex-row gap-8 mt-4 w-full overflow-hidden">
-          {/* LEFT COLUMN */}
-          <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
+        <div className="flex flex-col md:flex-row h-full overflow-hidden">
+          {/* LEFT COLUMN - MEDIA PREVIEW */}
+          <div className="md:w-[65%] bg-black/90 flex items-center justify-center min-w-0 rounded-l-lg overflow-hidden min-h-[400px] md:min-h-[500px]">
             {/* Check for YouTube URL first */}
             {youtubeVideoId ? (
-              <div className="rounded-xl overflow-hidden bg-muted">
+              <div className="w-full h-full">
                 <YouTubeEmbed 
                   videoId={youtubeVideoId} 
-                  className="h-64 md:h-80"
+                  className="h-full"
                 />
               </div>
             ) : item.content && (
-              <div className="rounded-xl overflow-hidden bg-muted">
+              <div className="w-full h-full">
                 {loadingSignedUrl ? (
-                  <div className="p-4 h-64 md:h-80 flex items-center justify-center">
+                  <div className="p-4 h-full flex items-center justify-center">
                     <LoadingSpinner size="sm" text="Loading file preview..." />
                   </div>
                 ) : signedUrl ? (
                   <>
                     {item.content?.toLowerCase().endsWith(".pdf") ? (
-                      <PDFPreview url={signedUrl} className="h-64 md:h-80" />
+                      <PDFPreview url={signedUrl} className="h-full" />
                     ) : item.content?.toLowerCase().endsWith(".docx") ? (
-                      <DOCXPreview url={signedUrl} className="h-64 md:h-80" />
+                      <DOCXPreview url={signedUrl} className="h-full" />
+                    ) : item.type === "image" ? (
+                      <img 
+                        src={signedUrl} 
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <div className="p-4 h-64 md:h-80 flex items-center justify-center">
+                      <div className="p-4 h-full flex items-center justify-center">
                         <div className="text-center">
                           <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
                           <p className="text-sm text-muted-foreground">File preview</p>
                         </div>
                       </div>
                     )}
-                    <a 
-                      href={signedUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50"
-                    >
-                      {item.content?.toLowerCase().endsWith(".pdf") ? "Open full PDF" : 
-                       item.content?.toLowerCase().endsWith(".docx") ? "Open full document" : "Open file"}
-                    </a>
                   </>
                 ) : (
-                  <div className="p-4 text-sm text-muted-foreground">File preview unavailable</div>
+                  <div className="p-4 text-sm text-muted-foreground h-full flex items-center justify-center">
+                    {getIcon()}
+                  </div>
                 )}
               </div>
             )}
+          </div>
 
-            {item.type === "url" && (
-              <a
-                href={item.content ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline flex items-center gap-2"
-              >
-                <Link2 className="h-4 w-4" />
-                Visit Link
-              </a>
+          {/* RIGHT COLUMN - INFO PANEL */}
+          <div className="md:w-[35%] flex flex-col gap-4 p-6 min-w-0 overflow-y-auto max-h-[90vh]">
+            {/* Header: Title and Metadata */}
+            <div>
+              <h2 className="text-lg font-semibold mb-2">{item.title}</h2>
+              <p className="text-xs text-muted-foreground">
+                Added {formatDate(item.created_at)} • {getSourceTypeLabel()}
+              </p>
+            </div>
+
+            {/* Summary/TLDW Section */}
+            {item.summary && (
+              <div className="border border-border rounded-lg p-3">
+                <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
+                  {item.type === "url" && isYouTubeUrl(item.content) ? "TLDW" : "SUMMARY"}
+                </h3>
+                <p className="text-sm leading-relaxed">{item.summary}</p>
+              </div>
             )}
 
             {/* Category Tag Section */}
             <div>
-              <label htmlFor="category-select" className="font-semibold text-sm text-muted-foreground mb-2 block">Category</label>
+              <label htmlFor="category-select" className="text-xs font-semibold text-muted-foreground mb-2 block">CATEGORY</label>
               <select
                 id="category-select"
                 value={selectedTag}
@@ -350,28 +356,18 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 )}
               </select>
             </div>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="md:flex-1 flex flex-col gap-6 min-w-0">
-            <div>
-              <h3 className="font-semibold text-sm text-muted-foreground mb-2">Summary</h3>
-              <p className="text-base leading-body prose-wide">{item.summary}</p>
-            </div>
 
             {/* Notes Section */}
-            <div>
-              <h3 className="font-semibold text-sm text-muted-foreground mb-3">Personal Notes</h3>
-
+            <div className="flex-1">
+              <label htmlFor="user-notes-textarea" className="text-xs font-semibold text-muted-foreground mb-2 block">NOTES</label>
               <div className="space-y-2">
-                <label htmlFor="user-notes-textarea" className="sr-only">Personal notes</label>
                 <Textarea
                   id="user-notes-textarea"
                   value={userNotes}
                   onChange={(e) => setUserNotes(e.target.value)}
                   placeholder="Add your personal notes..."
                   maxLength={USER_NOTES_MAX_LENGTH}
-                  className="glass-input border-0 min-h-[150px] text-base leading-body resize-none"
+                  className="glass-input border-0 min-h-[80px] text-sm leading-relaxed resize-none"
                   aria-describedby="notes-char-count"
                 />
                 <div className="flex justify-end">
@@ -390,28 +386,27 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-4 border-t border-border">
-              <LoadingButton
+            {/* Action Buttons as Icons */}
+            <div className="flex justify-center gap-2 pt-4 border-t border-border mt-auto">
+              <Button
                 onClick={handleSave}
-                loading={saving}
-                size="lg"
-                className="flex-1"
+                disabled={saving}
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
                 aria-label="Save changes (Ctrl+S or Cmd+S)"
               >
-                <Save className="h-4 w-4 mr-2" aria-hidden="true" />
-                Save Changes
-              </LoadingButton>
+                <Save className="h-4 w-4" aria-hidden="true" />
+              </Button>
               <Button
                 onClick={() => setShowDeleteAlert(true)}
                 disabled={deleting}
                 variant="outline"
-                size="lg"
-                className="border-destructive/20 text-destructive hover:bg-destructive/10"
+                size="icon"
+                className="h-10 w-10 border-destructive/20 text-destructive hover:bg-destructive/10"
                 aria-label="Delete item (Ctrl+D or Cmd+D)"
               >
-                <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
-                Delete
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
