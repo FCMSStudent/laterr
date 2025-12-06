@@ -107,6 +107,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
@@ -267,6 +269,52 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     }
   };
 
+  // Get dynamic background based on content type
+  const getContentBackground = () => {
+    // YouTube → black background
+    if (item.type === "url" && isYouTubeUrl(item.content)) {
+      return "bg-black/90";
+    }
+    
+    // PDFs/Docs → off-white paper tone
+    if (item.content?.toLowerCase().endsWith(".pdf")) {
+      return "bg-stone-50 dark:bg-stone-900";
+    }
+    if (item.content?.toLowerCase().endsWith(".docx") || item.type === "document") {
+      return "bg-stone-50 dark:bg-stone-900";
+    }
+    
+    // Images → neutral gray with subtle backdrop
+    if (item.type === "image") {
+      return "bg-neutral-100 dark:bg-neutral-900";
+    }
+    
+    // URLs/Articles → light reading-safe background
+    if (item.type === "url") {
+      return "bg-slate-50 dark:bg-slate-900";
+    }
+    
+    // Default fallback
+    return "bg-muted/30";
+  };
+
+  // Get layout width based on image orientation
+  const getLayoutWidth = () => {
+    if (item.type === "image" && imageLoaded) {
+      return isPortrait ? "md:w-[45%]" : "md:w-[65%]";
+    }
+    // Default for other content types
+    return "md:w-[65%]";
+  };
+
+  // Handle image load to detect orientation
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    setIsPortrait(aspectRatio < 1);
+    setImageLoaded(true);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-6xl h-[90vh] p-0 overflow-hidden border-0 glass-card">
@@ -275,7 +323,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         {/* HORIZONTAL LAYOUT */}
         <div className="flex flex-col md:flex-row h-full overflow-hidden">
           {/* LEFT COLUMN - MEDIA PREVIEW */}
-          <div className="md:w-[65%] bg-black/90 flex items-center justify-center min-w-0 rounded-l-lg overflow-hidden min-h-[400px] md:min-h-[500px]">
+          <div className={`${getLayoutWidth()} ${getContentBackground()} flex items-center justify-center min-w-0 rounded-l-lg overflow-hidden min-h-[400px] md:min-h-[500px] @container`}>
             {/* 1. YouTube URL → Embed player */}
             {youtubeVideoId ? (
               <div className="relative w-full h-full group">
@@ -316,13 +364,13 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   href={item.content || undefined}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative w-full h-full group cursor-pointer block"
+                  className="relative w-full h-full group cursor-pointer block p-6 flex items-center justify-center"
                   aria-label="Open link in new tab"
                 >
                   <img 
                     src={item.preview_image_url} 
                     alt={item.title}
-                    className="w-full h-full object-contain"
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
                     onError={() => setImageLoadError(true)}
                   />
                   {/* Hover overlay to indicate clickability */}
@@ -371,15 +419,18 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                           </div>
                         </div>
                       ) : (
-                        <img 
-                          src={signedUrl} 
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                          onError={() => {
-                            setImageLoadError(true);
-                            toast.error("Failed to load image");
-                          }}
-                        />
+                        <div className="w-full h-full p-6 flex items-center justify-center">
+                          <img 
+                            src={signedUrl} 
+                            alt={item.title}
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                            onLoad={handleImageLoad}
+                            onError={() => {
+                              setImageLoadError(true);
+                              toast.error("Failed to load image");
+                            }}
+                          />
+                        </div>
                       )
                     ) : (
                       <div className="p-4 h-full flex items-center justify-center">
@@ -401,7 +452,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
           {/* RIGHT COLUMN - INFO PANEL */}
           <div 
-            className="md:w-[35%] flex flex-col min-w-0 h-full"
+            className={`${item.type === "image" && imageLoaded && isPortrait ? "md:w-[55%]" : "md:w-[35%]"} flex flex-col min-w-0 h-full flex-1`}
             role="region"
             aria-label="Item details panel"
           >

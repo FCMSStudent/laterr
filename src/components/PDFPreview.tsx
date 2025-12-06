@@ -121,7 +121,7 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
       </div>
 
       {/* PDF Viewer */}
-      <div className="flex-1 overflow-auto bg-muted/30 rounded-b-xl flex items-center justify-center min-h-[300px]">
+      <div className="flex-1 overflow-auto bg-stone-100 dark:bg-stone-800 rounded-b-xl flex items-center justify-center min-h-[300px] p-6">
         {loading && (
           <div className="p-8">
             <LoadingSpinner size="sm" text="Loading PDF..." />
