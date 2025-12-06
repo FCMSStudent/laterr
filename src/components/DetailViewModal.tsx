@@ -112,7 +112,8 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   useEffect(() => {
     const generateSignedUrlForItem = async () => {
-      if (!item?.content) {
+      // Skip signed URL for URL types - they use preview_image_url directly
+      if (!item?.content || item.type === "url") {
         setSignedUrl(null);
         return;
       }
@@ -275,7 +276,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         <div className="flex flex-col md:flex-row h-full overflow-hidden">
           {/* LEFT COLUMN - MEDIA PREVIEW */}
           <div className="md:w-[65%] bg-black/90 flex items-center justify-center min-w-0 rounded-l-lg overflow-hidden min-h-[400px] md:min-h-[500px]">
-            {/* Check for YouTube URL first */}
+            {/* 1. YouTube URL → Embed player */}
             {youtubeVideoId ? (
               <div className="w-full h-full">
                 <YouTubeEmbed 
@@ -283,7 +284,39 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   className="h-full"
                 />
               </div>
-            ) : item.content && (
+            ) : 
+            
+            /* 2. URL type with preview_image_url → Show thumbnail directly */
+            item.type === "url" && item.preview_image_url?.trim() ? (
+              imageLoadError ? (
+                <div className="p-4 h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Preview unavailable</p>
+                  </div>
+                </div>
+              ) : (
+                <img 
+                  src={item.preview_image_url} 
+                  alt={item.title}
+                  className="w-full h-full object-contain"
+                  onError={() => setImageLoadError(true)}
+                />
+              )
+            ) : 
+            
+            /* 3. URL type without preview → Show icon placeholder */
+            item.type === "url" ? (
+              <div className="p-4 h-full flex items-center justify-center">
+                <div className="text-center">
+                  <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No preview available</p>
+                </div>
+              </div>
+            ) :
+            
+            /* 4. File/image/document types → Use signed URL logic (existing) */
+            item.content ? (
               <div className="w-full h-full">
                 {loadingSignedUrl ? (
                   <div className="p-4 h-full flex items-center justify-center">
@@ -295,24 +328,6 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                       <PDFPreview url={signedUrl} className="h-full" />
                     ) : item.content?.toLowerCase().endsWith(".docx") ? (
                       <DOCXPreview url={signedUrl} className="h-full" />
-                    ) : item.type === "url" && item.preview_image_url?.trim() ? (
-                      imageLoadError ? (
-                        <div className="p-4 h-full flex items-center justify-center">
-                          <div className="text-center">
-                            <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                            <p className="text-sm text-muted-foreground">Preview unavailable</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <img 
-                          src={item.preview_image_url} 
-                          alt={item.title}
-                          className="w-full h-full object-contain"
-                          onError={() => {
-                            setImageLoadError(true);
-                          }}
-                        />
-                      )
                     ) : item.type === "image" ? (
                       imageLoadError ? (
                         <div className="p-4 h-full flex items-center justify-center">
@@ -347,7 +362,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   </div>
                 )}
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* RIGHT COLUMN - INFO PANEL */}
