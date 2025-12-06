@@ -332,10 +332,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       <DialogContent className="sm:max-w-6xl h-[90vh] p-0 overflow-hidden border-0 glass-card">
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
-        {/* HORIZONTAL LAYOUT */}
+        {/* RESPONSIVE LAYOUT - Stacked on mobile, horizontal on desktop */}
         <div className="flex flex-col md:flex-row h-full overflow-hidden">
           {/* LEFT COLUMN - MEDIA PREVIEW */}
-          <div className={`${getLayoutWidth()} ${getContentBackground()} flex items-center justify-center min-w-0 rounded-l-lg overflow-hidden min-h-[400px] md:min-h-[500px] @container`}>
+          <div className={`${getLayoutWidth()} ${getContentBackground()} flex items-center justify-center min-w-0 md:rounded-l-lg overflow-hidden min-h-[300px] md:min-h-[500px] @container transition-all duration-300`}>
             {/* 1. YouTube URL → Embed player */}
             {youtubeVideoId ? (
               <div className="relative w-full h-full group">
@@ -498,11 +498,11 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
               {/* Summary/TLDW Section */}
               {item.summary && (
-                <div className="border border-border rounded-lg p-3">
-                  <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
+                <div className="border border-border rounded-lg p-4 bg-muted/20">
+                  <h3 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
                     {item.type === "url" && isYouTubeUrl(item.content) ? "TLDW" : "SUMMARY"}
                   </h3>
-                  <p className="text-sm leading-relaxed">{item.summary}</p>
+                  <p className="text-sm leading-relaxed text-foreground/90 font-serif">{item.summary}</p>
                 </div>
               )}
 
