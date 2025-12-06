@@ -243,7 +243,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   // Cache YouTube video ID to avoid duplicate extraction
   const youtubeVideoId = item.type === "url" && isYouTubeUrl(item.content)
-    ? extractYouTubeVideoId(item.content || "") 
+    ? extractYouTubeVideoId(item.content!) 
     : null;
 
   return (
