@@ -35,6 +35,64 @@ import type { Item } from "@/types";
 const USER_NOTES_MAX_LENGTH = 100000;
 const CHAR_WARNING_THRESHOLD = 0.9;
 
+// YouTube URL detection
+const isYouTubeUrl = (url: string | null): boolean => {
+  if (!url) return false;
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname === 'www.youtube.com' || 
+           urlObj.hostname === 'youtube.com' || 
+           urlObj.hostname === 'youtu.be';
+  } catch {
+    return false;
+  }
+};
+
+// Extract video ID from various YouTube URL formats
+const extractYouTubeVideoId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+    /youtube\.com\/embed\/([^&\n?#]+)/,
+    /youtube\.com\/v\/([^&\n?#]+)/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) return match[1];
+  }
+  return null;
+};
+
+interface YouTubeEmbedProps {
+  videoId: string;
+  className?: string;
+}
+
+const YouTubeEmbed = ({ videoId, className }: YouTubeEmbedProps) => {
+  // Validate videoId: YouTube IDs are 11 chars, alphanumeric with _ and -
+  const isValidVideoId = /^[a-zA-Z0-9_-]{11}$/.test(videoId);
+  
+  if (!isValidVideoId) {
+    return (
+      <div className={`p-4 text-sm text-muted-foreground ${className}`}>
+        Invalid YouTube video ID
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`relative w-full ${className}`}>
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}`}
+        title="YouTube video player"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="w-full h-full rounded-xl border-0"
+      />
+    </div>
+  );
+};
+
 interface DetailViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -183,6 +241,11 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     { label: item.title },
   ];
 
+  // Cache YouTube video ID to avoid duplicate extraction
+  const youtubeVideoId = item.type === "url" && isYouTubeUrl(item.content)
+    ? extractYouTubeVideoId(item.content!) 
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto border-0 glass-card">
@@ -211,7 +274,15 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         <div className="flex flex-col md:flex-row gap-8 mt-4 w-full overflow-hidden">
           {/* LEFT COLUMN */}
           <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
-            {item.content && (
+            {/* Check for YouTube URL first */}
+            {youtubeVideoId ? (
+              <div className="rounded-xl overflow-hidden bg-muted">
+                <YouTubeEmbed 
+                  videoId={youtubeVideoId} 
+                  className="h-64 md:h-80"
+                />
+              </div>
+            ) : item.content && (
               <div className="rounded-xl overflow-hidden bg-muted">
                 {loadingSignedUrl ? (
                   <div className="p-4 h-64 md:h-80 flex items-center justify-center">
