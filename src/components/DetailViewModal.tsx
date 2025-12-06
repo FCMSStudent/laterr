@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { PDFPreview } from "@/components/PDFPreview";
 import { DOCXPreview } from "@/components/DOCXPreview";
@@ -495,7 +496,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           >
             {/* SCROLLABLE CONTENT AREA */}
             <div 
-              className="flex-1 overflow-y-auto flex flex-col gap-4 p-6"
+              className="flex-1 overflow-y-auto flex flex-col gap-4 p-6 pb-4"
               tabIndex={0}
             >
               {/* Header: Title and Metadata */}
@@ -565,38 +566,65 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* FIXED FOOTER WITH ACTION BUTTONS */}
-            <div className="shrink-0 flex justify-center gap-2 p-6 pt-4 border-t border-border shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.1)]">
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                variant="outline"
-                size="icon"
-                className="h-10 w-10"
-                aria-label="Save changes (Ctrl+S or Cmd+S)"
+              {/* ACTION BUTTONS - Integrated with content */}
+              <div 
+                className="shrink-0 flex justify-end gap-3 pt-6 mt-auto relative before:absolute before:top-0 before:left-0 before:right-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-border/50 before:to-transparent"
+                role="group"
+                aria-label="Item actions"
               >
-                {saving ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <Save className="h-4 w-4" aria-hidden="true" />
-                )}
-              </Button>
-              <Button
-                onClick={() => setShowDeleteAlert(true)}
-                disabled={deleting}
-                variant="outline"
-                size="icon"
-                className="h-10 w-10 border-destructive/20 text-destructive hover:bg-destructive/10"
-                aria-label="Delete item (Ctrl+D or Cmd+D)"
-              >
-                {deleting ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                )}
-              </Button>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        variant="outline"
+                        size="default"
+                        className="min-h-[44px] min-w-[44px] px-4"
+                        aria-label="Save changes"
+                      >
+                        {saving ? (
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" aria-hidden="true" />
+                            <span>Save</span>
+                          </>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Save changes (Ctrl+S or ⌘S)</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => setShowDeleteAlert(true)}
+                        disabled={deleting}
+                        variant="outline"
+                        size="default"
+                        className="min-h-[44px] min-w-[44px] px-4 border-destructive/20 text-destructive hover:bg-destructive/10"
+                        aria-label="Delete item"
+                      >
+                        {deleting ? (
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          <>
+                            <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
+                            <span>Delete</span>
+                          </>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Delete item (Ctrl+D or ⌘D)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
           </div>
         </div>
