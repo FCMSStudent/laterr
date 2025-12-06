@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { PDFPreview } from "@/components/PDFPreview";
 import { DOCXPreview } from "@/components/DOCXPreview";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ZoomIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -107,6 +107,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageZoomed, setImageZoomed] = useState(false);
 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
@@ -235,6 +238,17 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     }
   }, [item]);
 
+  // Extract domain from URL for display (memoized)
+  const extractDomain = useCallback((url: string | null): string => {
+    if (!url) return '';
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace('www.', '');
+    } catch {
+      return '';
+    }
+  }, []);
+
   if (!item) return null;
 
   // Cache YouTube video ID to avoid duplicate extraction
@@ -267,15 +281,61 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     }
   };
 
+  // Get dynamic background based on content type
+  const getContentBackground = () => {
+    // YouTube → black background
+    if (item.type === "url" && isYouTubeUrl(item.content)) {
+      return "bg-black/90";
+    }
+    
+    // PDFs/Docs → off-white paper tone
+    if (item.content?.toLowerCase().endsWith(".pdf")) {
+      return "bg-stone-50 dark:bg-stone-900";
+    }
+    if (item.content?.toLowerCase().endsWith(".docx") || item.type === "document") {
+      return "bg-stone-50 dark:bg-stone-900";
+    }
+    
+    // Images → neutral gray with subtle backdrop
+    if (item.type === "image") {
+      return "bg-neutral-100 dark:bg-neutral-900";
+    }
+    
+    // URLs/Articles → light reading-safe background
+    if (item.type === "url") {
+      return "bg-slate-50 dark:bg-slate-900";
+    }
+    
+    // Default fallback
+    return "bg-muted/30";
+  };
+
+  // Get layout width based on image orientation
+  const getLayoutWidth = () => {
+    if (item.type === "image" && imageLoaded) {
+      return isPortrait ? "md:w-[45%]" : "md:w-[65%]";
+    }
+    // Default for other content types
+    return "md:w-[65%]";
+  };
+
+  // Handle image load to detect orientation
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    setIsPortrait(aspectRatio < 1);
+    setImageLoaded(true);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-6xl h-[90vh] p-0 overflow-hidden border-0 glass-card">
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
-        {/* HORIZONTAL LAYOUT */}
+        {/* RESPONSIVE LAYOUT - Stacked on mobile, horizontal on desktop */}
         <div className="flex flex-col md:flex-row h-full overflow-hidden">
           {/* LEFT COLUMN - MEDIA PREVIEW */}
-          <div className="md:w-[65%] bg-black/90 flex items-center justify-center min-w-0 rounded-l-lg overflow-hidden min-h-[400px] md:min-h-[500px]">
+          <div className={`${getLayoutWidth()} ${getContentBackground()} flex items-center justify-center min-w-0 md:rounded-l-lg overflow-hidden min-h-[300px] md:min-h-[500px] @container transition-all duration-300`}>
             {/* 1. YouTube URL → Embed player */}
             {youtubeVideoId ? (
               <div className="relative w-full h-full group">
@@ -316,13 +376,13 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   href={item.content || undefined}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative w-full h-full group cursor-pointer block"
+                  className="relative w-full h-full group cursor-pointer block p-6 flex items-center justify-center"
                   aria-label="Open link in new tab"
                 >
                   <img 
                     src={item.preview_image_url} 
                     alt={item.title}
-                    className="w-full h-full object-contain"
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
                     onError={() => setImageLoadError(true)}
                   />
                   {/* Hover overlay to indicate clickability */}
@@ -333,18 +393,27 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               )
             ) : 
             
-            /* 3. URL type without preview → Show icon placeholder */
+            /* 3. URL type without preview → Show icon placeholder with domain */
             item.type === "url" ? (
               <a
                 href={item.content || undefined}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-4 h-full flex items-center justify-center group cursor-pointer hover:bg-black/80 transition-colors"
+                className="p-4 h-full flex items-center justify-center group cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 aria-label="Open link in new tab"
               >
-                <div className="text-center">
-                  <Link2 className="h-12 w-12 mx-auto mb-2 text-muted-foreground group-hover:text-white transition-colors" />
-                  <p className="text-sm text-muted-foreground group-hover:text-white/90 transition-colors">Click to open link</p>
+                <div className="text-center max-w-md">
+                  <Link2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <p className="text-lg font-semibold mb-2 text-foreground group-hover:text-primary transition-colors">{item.title}</p>
+                  {extractDomain(item.content) && (
+                    <p className="text-sm text-muted-foreground font-mono bg-muted/50 px-3 py-1 rounded-md inline-block mb-3">
+                      {extractDomain(item.content)}
+                    </p>
+                  )}
+                  {item.summary && (
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed mb-4">{item.summary}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">Click to open in new tab</p>
                 </div>
               </a>
             ) :
@@ -371,15 +440,34 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                           </div>
                         </div>
                       ) : (
-                        <img 
-                          src={signedUrl} 
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                          onError={() => {
-                            setImageLoadError(true);
-                            toast.error("Failed to load image");
-                          }}
-                        />
+                        <div className={`relative w-full h-full p-6 flex items-center justify-center group ${imageZoomed ? 'overflow-auto' : 'overflow-hidden'}`}>
+                          <img 
+                            src={signedUrl} 
+                            alt={item.title}
+                            className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300 ${imageZoomed ? 'scale-125 cursor-zoom-out' : 'cursor-zoom-in hover:brightness-105'}`}
+                            onLoad={handleImageLoad}
+                            onClick={() => setImageZoomed(!imageZoomed)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setImageZoomed(!imageZoomed);
+                              }
+                            }}
+                            onError={() => {
+                              setImageLoadError(true);
+                              toast.error("Failed to load image");
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={imageZoomed ? 'Click to zoom out' : 'Click to zoom in'}
+                            aria-expanded={imageZoomed}
+                          />
+                          {/* Zoom indicator */}
+                          <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white px-3 py-2 rounded-lg flex items-center gap-2 pointer-events-none">
+                            <ZoomIn className="h-4 w-4" />
+                            <span className="text-xs font-medium">Click to {imageZoomed ? 'zoom out' : 'zoom in'}</span>
+                          </div>
+                        </div>
                       )
                     ) : (
                       <div className="p-4 h-full flex items-center justify-center">
@@ -401,7 +489,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
           {/* RIGHT COLUMN - INFO PANEL */}
           <div 
-            className="md:w-[35%] flex flex-col min-w-0 h-full"
+            className={`${item.type === "image" && imageLoaded && isPortrait ? "md:w-[55%]" : "md:w-[35%]"} flex flex-col min-w-0 h-full flex-1`}
             role="region"
             aria-label="Item details panel"
           >
@@ -420,11 +508,11 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
               {/* Summary/TLDW Section */}
               {item.summary && (
-                <div className="border border-border rounded-lg p-3">
-                  <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
+                <div className="border border-border rounded-lg p-4 bg-muted/20">
+                  <h3 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
                     {item.type === "url" && isYouTubeUrl(item.content) ? "TLDW" : "SUMMARY"}
                   </h3>
-                  <p className="text-sm leading-relaxed">{item.summary}</p>
+                  <p className="text-sm leading-relaxed text-foreground/90 font-serif">{item.summary}</p>
                 </div>
               )}
 

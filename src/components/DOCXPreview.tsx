@@ -55,7 +55,7 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
   return (
     <div className={`flex flex-col ${className}`}>
       {/* Document Viewer */}
-      <div className="flex-1 overflow-auto bg-white/95 dark:bg-gray-900/95 rounded-xl p-6 min-h-[300px]">
+      <div className="flex-1 overflow-auto bg-stone-50 dark:bg-stone-900 rounded-xl p-8 min-h-[300px]">
         {loading && (
           <div className="flex items-center justify-center h-full">
             <LoadingSpinner size="sm" text="Loading document..." />
