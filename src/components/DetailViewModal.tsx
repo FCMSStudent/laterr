@@ -106,6 +106,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [deleting, setDeleting] = useState(false);
   const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
@@ -117,6 +118,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       }
       
       setLoadingSignedUrl(true);
+      setImageLoadError(false); // Reset image error state when item changes
       try {
         const url = await generateSignedUrl(item.content);
         setSignedUrl(url);
@@ -245,8 +247,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       return formatDistanceToNow(new Date(dateString), {
         addSuffix: true
       });
-    } catch {
-      return '';
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'recently';
     }
   };
 
@@ -293,16 +296,24 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                     ) : item.content?.toLowerCase().endsWith(".docx") ? (
                       <DOCXPreview url={signedUrl} className="h-full" />
                     ) : item.type === "image" ? (
-                      <img 
-                        src={signedUrl} 
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          toast.error("Failed to load image");
-                        }}
-                      />
+                      imageLoadError ? (
+                        <div className="p-4 h-full flex items-center justify-center">
+                          <div className="text-center">
+                            <ImageIcon className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Failed to load image</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <img 
+                          src={signedUrl} 
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                          onError={() => {
+                            setImageLoadError(true);
+                            toast.error("Failed to load image");
+                          }}
+                        />
+                      )
                     ) : (
                       <div className="p-4 h-full flex items-center justify-center">
                         <div className="text-center">
@@ -322,7 +333,12 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           </div>
 
           {/* RIGHT COLUMN - INFO PANEL */}
-          <div className="md:w-[35%] flex flex-col gap-4 p-6 min-w-0 overflow-y-auto">
+          <div 
+            className="md:w-[35%] flex flex-col gap-4 p-6 min-w-0 overflow-y-auto"
+            tabIndex={0}
+            role="region"
+            aria-label="Item details panel"
+          >
             {/* Header: Title and Metadata */}
             <div>
               <h2 className="text-lg font-semibold mb-2">{item.title}</h2>
