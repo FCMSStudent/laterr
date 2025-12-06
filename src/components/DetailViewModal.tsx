@@ -38,7 +38,14 @@ const CHAR_WARNING_THRESHOLD = 0.9;
 // YouTube URL detection
 const isYouTubeUrl = (url: string | null): boolean => {
   if (!url) return false;
-  return url.includes('youtube.com') || url.includes('youtu.be');
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname === 'www.youtube.com' || 
+           urlObj.hostname === 'youtube.com' || 
+           urlObj.hostname === 'youtu.be';
+  } catch {
+    return false;
+  }
 };
 
 // Extract video ID from various YouTube URL formats
@@ -66,10 +73,9 @@ const YouTubeEmbed = ({ videoId, className }: YouTubeEmbedProps) => (
     <iframe
       src={`https://www.youtube.com/embed/${videoId}`}
       title="YouTube video player"
-      frameBorder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowFullScreen
-      className="w-full h-full rounded-xl"
+      className="w-full h-full rounded-xl border-0"
     />
   </div>
 );
@@ -222,6 +228,11 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     { label: item.title },
   ];
 
+  // Cache YouTube video ID to avoid duplicate extraction
+  const youtubeVideoId = item.type === "url" && item.content 
+    ? extractYouTubeVideoId(item.content) 
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto border-0 glass-card">
@@ -251,10 +262,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
           {/* LEFT COLUMN */}
           <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
             {/* Check for YouTube URL first */}
-            {item.type === "url" && isYouTubeUrl(item.content) && extractYouTubeVideoId(item.content || "") ? (
+            {youtubeVideoId ? (
               <div className="rounded-xl overflow-hidden bg-muted">
                 <YouTubeEmbed 
-                  videoId={extractYouTubeVideoId(item.content || "") || ""} 
+                  videoId={youtubeVideoId} 
                   className="h-64 md:h-80"
                 />
               </div>
