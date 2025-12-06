@@ -35,6 +35,45 @@ import type { Item } from "@/types";
 const USER_NOTES_MAX_LENGTH = 100000;
 const CHAR_WARNING_THRESHOLD = 0.9;
 
+// YouTube URL detection
+const isYouTubeUrl = (url: string | null): boolean => {
+  if (!url) return false;
+  return url.includes('youtube.com') || url.includes('youtu.be');
+};
+
+// Extract video ID from various YouTube URL formats
+const extractYouTubeVideoId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+    /youtube\.com\/embed\/([^&\n?#]+)/,
+    /youtube\.com\/v\/([^&\n?#]+)/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) return match[1];
+  }
+  return null;
+};
+
+interface YouTubeEmbedProps {
+  videoId: string;
+  className?: string;
+}
+
+const YouTubeEmbed = ({ videoId, className }: YouTubeEmbedProps) => (
+  <div className={`relative w-full ${className}`}>
+    <iframe
+      src={`https://www.youtube.com/embed/${videoId}`}
+      title="YouTube video player"
+      frameBorder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowFullScreen
+      className="w-full h-full rounded-xl"
+    />
+  </div>
+);
+
 interface DetailViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -211,7 +250,15 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         <div className="flex flex-col md:flex-row gap-8 mt-4 w-full overflow-hidden">
           {/* LEFT COLUMN */}
           <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
-            {item.content && (
+            {/* Check for YouTube URL first */}
+            {item.type === "url" && isYouTubeUrl(item.content) && extractYouTubeVideoId(item.content || "") ? (
+              <div className="rounded-xl overflow-hidden bg-muted">
+                <YouTubeEmbed 
+                  videoId={extractYouTubeVideoId(item.content || "") || ""} 
+                  className="h-64 md:h-80"
+                />
+              </div>
+            ) : item.content && (
               <div className="rounded-xl overflow-hidden bg-muted">
                 {loadingSignedUrl ? (
                   <div className="p-4 h-64 md:h-80 flex items-center justify-center">
