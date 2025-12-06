@@ -68,17 +68,22 @@ interface YouTubeEmbedProps {
   className?: string;
 }
 
-const YouTubeEmbed = ({ videoId, className }: YouTubeEmbedProps) => (
-  <div className={`relative w-full ${className}`}>
-    <iframe
-      src={`https://www.youtube.com/embed/${videoId}`}
-      title="YouTube video player"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-      className="w-full h-full rounded-xl border-0"
-    />
-  </div>
-);
+const YouTubeEmbed = ({ videoId, className }: YouTubeEmbedProps) => {
+  // Sanitize videoId to only allow alphanumeric, underscores, and hyphens
+  const sanitizedVideoId = videoId.replace(/[^a-zA-Z0-9_-]/g, '');
+  
+  return (
+    <div className={`relative w-full ${className}`}>
+      <iframe
+        src={`https://www.youtube.com/embed/${sanitizedVideoId}`}
+        title="YouTube video player"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="w-full h-full rounded-xl border-0"
+      />
+    </div>
+  );
+};
 
 interface DetailViewModalProps {
   open: boolean;
@@ -229,7 +234,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   ];
 
   // Cache YouTube video ID to avoid duplicate extraction
-  const youtubeVideoId = item.type === "url" && item.content 
+  const youtubeVideoId = item.type === "url" && isYouTubeUrl(item.content) && item.content
     ? extractYouTubeVideoId(item.content) 
     : null;
 
