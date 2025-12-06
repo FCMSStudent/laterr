@@ -238,6 +238,17 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     }
   }, [item]);
 
+  // Extract domain from URL for display (memoized)
+  const extractDomain = useCallback((url: string | null): string => {
+    if (!url) return '';
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace('www.', '');
+    } catch {
+      return '';
+    }
+  }, []);
+
   if (!item) return null;
 
   // Cache YouTube video ID to avoid duplicate extraction
@@ -315,17 +326,6 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     setIsPortrait(aspectRatio < 1);
     setImageLoaded(true);
   };
-
-  // Extract domain from URL for display (memoized)
-  const extractDomain = useCallback((url: string | null): string => {
-    if (!url) return '';
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname.replace('www.', '');
-    } catch {
-      return '';
-    }
-  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
