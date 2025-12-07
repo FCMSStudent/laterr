@@ -315,7 +315,17 @@ const Index = () => {
             </div>
 
             <div className="mb-4">
-              <FilterBar selectedTag={selectedTag} selectedSort={sortOption} selectedTypeFilter={typeFilter} onTagSelect={setSelectedTag} onSortChange={setSortOption} onTypeFilterChange={setTypeFilter} onClearAll={handleClearAllFilters} />
+              <FilterBar 
+                selectedTag={selectedTag}
+                selectedCollectionId={selectedCollectionId}
+                selectedSort={sortOption} 
+                selectedTypeFilter={typeFilter} 
+                onTagSelect={setSelectedTag}
+                onCollectionSelect={setSelectedCollectionId}
+                onSortChange={setSortOption} 
+                onTypeFilterChange={setTypeFilter} 
+                onClearAll={handleClearAllFilters} 
+              />
             </div>
 
             <main id="main-content">
