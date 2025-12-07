@@ -16,10 +16,8 @@ import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
 import { AuthError, NetworkError, toTypedError } from "@/types/errors";
 import { AUTH_ERRORS, getNetworkErrorMessage } from "@/lib/error-messages";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { BottomNav } from "@/components/BottomNav";
 import { MobileHeader } from "@/components/MobileHeader";
-import { MobileSidebar } from "@/components/MobileSidebar";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({
@@ -260,20 +258,9 @@ const Index = () => {
     setMobileView("bookmarks");
   };
   
-  const handleOpenFilters = () => {
-    // On mobile, filters are always visible on the page
-    // This handler is for future enhancement
-  };
-  
-  return <SidebarProvider>
-      <MobileSidebar 
-        onSignOut={handleSignOut} 
-        onOpenFilters={handleOpenFilters}
-        userEmail={user?.email}
-      />
-      
-      <SidebarInset>
-        <div className="min-h-screen pb-20 md:pb-0">
+  return (
+    <main className="w-full">
+      <div className="min-h-screen pb-20 md:pb-0">
           {/* Skip Navigation Link */}
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
             Skip to main content
@@ -344,8 +331,7 @@ const Index = () => {
             onShowBookmarks={handleShowBookmarks}
             activeView={mobileView}
           />
-        </div>
-      </SidebarInset>
+      </div>
 
       <Suspense fallback={null}>
         <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={fetchItems} />
@@ -356,6 +342,7 @@ const Index = () => {
             <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={fetchItems} />
           </>}
       </Suspense>
-    </SidebarProvider>;
+    </main>
+  );
 };
 export default Index;

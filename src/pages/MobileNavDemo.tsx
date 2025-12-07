@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { BottomNav } from "@/components/BottomNav";
 import { MobileHeader } from "@/components/MobileHeader";
-import { MobileSidebar } from "@/components/MobileSidebar";
 import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
 
 const MobileNavDemo = () => {
@@ -17,24 +15,9 @@ const MobileNavDemo = () => {
     setMobileView("bookmarks");
   };
 
-  const handleSignOut = () => {
-    console.log("Sign out clicked");
-  };
-
-  const handleOpenFilters = () => {
-    console.log("Open filters clicked");
-  };
-
   return (
-    <SidebarProvider>
-      <MobileSidebar 
-        onSignOut={handleSignOut} 
-        onOpenFilters={handleOpenFilters}
-        userEmail="demo@example.com"
-      />
-      
-      <SidebarInset>
-        <div className="min-h-screen pb-20 md:pb-0">
+    <main className="w-full">
+      <div className="min-h-screen pb-20 md:pb-0">
           {/* Mobile Header */}
           <MobileHeader title="Laterr" subtitle="Your personal knowledge space" />
           
@@ -79,9 +62,8 @@ const MobileNavDemo = () => {
               </div>
             </div>
           )}
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </main>
   );
 };
 
