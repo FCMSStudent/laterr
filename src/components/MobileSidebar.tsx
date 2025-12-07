@@ -9,14 +9,17 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { LogOut, Settings, Filter, Tag } from "lucide-react";
+import { CollectionsList } from "@/components/CollectionsList";
 
 interface MobileSidebarProps {
   onSignOut: () => void;
   onOpenFilters: () => void;
+  selectedCollectionId: string | null;
+  onSelectCollection: (collectionId: string | null) => void;
   userEmail?: string;
 }
 
-export const MobileSidebar = ({ onSignOut, onOpenFilters, userEmail }: MobileSidebarProps) => {
+export const MobileSidebar = ({ onSignOut, onOpenFilters, selectedCollectionId, onSelectCollection, userEmail }: MobileSidebarProps) => {
   return (
     <Sidebar>
       <SidebarHeader className="border-b">
@@ -27,6 +30,14 @@ export const MobileSidebar = ({ onSignOut, onOpenFilters, userEmail }: MobileSid
       </SidebarHeader>
       
       <SidebarContent>
+        <CollectionsList 
+          selectedCollectionId={selectedCollectionId}
+          onSelectCollection={onSelectCollection}
+          className="px-2 mb-4"
+        />
+        
+        <SidebarSeparator />
+        
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={onOpenFilters} className="min-h-[44px]">

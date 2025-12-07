@@ -15,6 +15,7 @@ import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib
 import { NetworkError, ValidationError, toTypedError } from "@/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage } from "@/lib/error-messages";
 import { generateThumbnail } from "@/lib/thumbnail-generator";
+import { CollectionSelector } from "@/components/CollectionSelector";
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
 interface AddItemModalProps {
@@ -35,6 +36,7 @@ export const AddItemModal = ({
   const [loading, setLoading] = useState(false);
   const [statusStep, setStatusStep] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const handleUrlSubmit = async () => {
     // Validate URL
     const urlResult = urlSchema.safeParse(url.trim());
@@ -106,12 +108,14 @@ export const AddItemModal = ({
         tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
         preview_image_url: data.previewImageUrl,
         embedding: embedding ? JSON.stringify(embedding) : null,
-        user_id: user.id
+        user_id: user.id,
+        category_id: selectedCollectionId
       });
       if (insertError) throw insertError;
       toast.success("URL added to your space! 🌱");
       setUrl("");
       setSuggestedCategory("");
+      setSelectedCollectionId(null);
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -200,11 +204,13 @@ export const AddItemModal = ({
         summary: noteSummary,
         tags: [...DEFAULT_ITEM_TAGS],
         embedding: embedding ? JSON.stringify(embedding) : null,
-        user_id: user.id
+        user_id: user.id,
+        category_id: selectedCollectionId
       });
       if (error) throw error;
       toast.success("Note planted in your space! 📝");
       setNote("");
+      setSelectedCollectionId(null);
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -356,12 +362,14 @@ export const AddItemModal = ({
         tags: [defaultTag],
         preview_image_url: thumbnailUrl || (file.type.startsWith('image/') ? storagePath : data.previewImageUrl || null),
         embedding: embedding ? JSON.stringify(embedding) : null,
-        user_id: user.id
+        user_id: user.id,
+        category_id: selectedCollectionId
       });
       if (insertError) throw insertError;
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : file.type === 'application/pdf' ? 'PDF' : file.type.startsWith('video/') ? 'Video' : 'Document';
       toast.success(`${fileTypeLabel} added to your space! 📁`);
       setFile(null);
+      setSelectedCollectionId(null);
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -424,6 +432,12 @@ export const AddItemModal = ({
           </DialogTitle>
         </DialogHeader>
         <DialogDescription className="sr-only">Add a new item</DialogDescription>
+        
+        <CollectionSelector 
+          value={selectedCollectionId} 
+          onChange={setSelectedCollectionId}
+          className="mb-4"
+        />
         
         <Tabs defaultValue="url" className="w-full">
           <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
