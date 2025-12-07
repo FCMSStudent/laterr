@@ -124,10 +124,15 @@ export const useAssignItemToCollection = () => {
         .eq('id', itemId);
 
       if (error) throw error;
+      return collectionId;
     },
-    onSuccess: () => {
+    onSuccess: (collectionId) => {
       queryClient.invalidateQueries({ queryKey: ['items'] });
-      toast.success('Item moved to collection');
+      if (collectionId) {
+        toast.success('Item moved to collection');
+      } else {
+        toast.success('Item removed from collection');
+      }
     },
     onError: (error) => {
       console.error('Error assigning item to collection:', error);
