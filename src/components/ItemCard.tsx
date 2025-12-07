@@ -104,7 +104,7 @@ export const ItemCard = ({
       <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 premium-transition">
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-background/80 hover:bg-background" aria-label="Card actions">
+            <Button variant="ghost" size="icon" className="rounded-full bg-background/80 hover:bg-background" aria-label="Card actions">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -147,7 +147,7 @@ export const ItemCard = ({
         
         {/* Tags section with overflow handling */}
         <div className="flex flex-wrap gap-2 pt-2">
-          {(showAllTags ? tags : tags.slice(0, 3)).map((tag, index) => <Badge key={index} variant="secondary" className="cursor-pointer hover:bg-accent premium-transition text-xs font-semibold shadow-sm" role="button" tabIndex={0} aria-label={`Filter by tag ${tag}`} onClick={e => {
+          {(showAllTags ? tags : tags.slice(0, 3)).map((tag, index) => <Badge key={index} variant="secondary" className="cursor-pointer hover:bg-accent premium-transition text-xs font-semibold shadow-sm min-h-[44px] inline-flex items-center py-2" role="button" tabIndex={0} aria-label={`Filter by tag ${tag}`} onClick={e => {
           e.stopPropagation();
           onTagClick(tag);
         }} onKeyDown={e => {

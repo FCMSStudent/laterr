@@ -192,7 +192,7 @@ const EnhancedInput = React.forwardRef<HTMLInputElement, EnhancedInputProps>(
               <button
                 type="button"
                 onClick={handleClear}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                 aria-label="Clear input"
                 tabIndex={-1}
               >
@@ -205,7 +205,7 @@ const EnhancedInput = React.forwardRef<HTMLInputElement, EnhancedInputProps>(
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                 aria-label={type === "password" ? "Show password" : "Hide password"}
                 tabIndex={-1}
               >

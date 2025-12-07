@@ -16,7 +16,7 @@ export const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 px-2 text-muted-foreground hover:text-foreground"
+        className="px-2 text-muted-foreground hover:text-foreground"
         onClick={items[0]?.onClick}
         aria-label="Go to home"
       >
@@ -34,7 +34,7 @@ export const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 px-2 text-muted-foreground hover:text-foreground"
+              className="px-2 text-muted-foreground hover:text-foreground"
               onClick={item.onClick}
             >
               {item.label}

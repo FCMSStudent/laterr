@@ -67,7 +67,7 @@ export const FilterBar = ({
         {/* Tags Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant={selectedTag ? "default" : "outline"} size="sm" className="h-8">
+            <Button variant={selectedTag ? "default" : "outline"} size="sm">
               {getSelectedTagLabel()}
               <ChevronDown className="h-3 w-3 ml-1" />
             </Button>
@@ -87,7 +87,7 @@ export const FilterBar = ({
         {/* Type Filter Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant={selectedTypeFilter ? "default" : "outline"} size="sm" className="h-8">
+            <Button variant={selectedTypeFilter ? "default" : "outline"} size="sm">
               {getTypeLabel(selectedTypeFilter)}
               <ChevronDown className="h-3 w-3 ml-1" />
             </Button>
@@ -120,7 +120,7 @@ export const FilterBar = ({
         {/* Sort Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8">
+            <Button variant="outline" size="sm">
               <ArrowUpDown className="h-3 w-3 mr-1" />
               {getSortLabel(selectedSort)}
             </Button>
@@ -151,18 +151,18 @@ export const FilterBar = ({
       {hasActiveFilters && <div className="flex flex-wrap gap-2 items-center justify-center">
           <span className="text-xs text-muted-foreground font-medium">Active Filters:</span>
           
-          {selectedTag && <Badge variant="secondary" className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs" onClick={() => onTagSelect(null)}>
+          {selectedTag && <Badge variant="secondary" className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs min-h-[44px] inline-flex items-center" onClick={() => onTagSelect(null)}>
               #{selectedTag}
               <X className="h-3 w-3 ml-1" />
             </Badge>}
           
-          {selectedTypeFilter && <Badge variant="secondary" className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs flex items-center gap-1" onClick={() => onTypeFilterChange(null)}>
+          {selectedTypeFilter && <Badge variant="secondary" className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs flex items-center gap-1 min-h-[44px]" onClick={() => onTypeFilterChange(null)}>
               {getTypeIcon(selectedTypeFilter)}
               {selectedTypeFilter.charAt(0).toUpperCase() + selectedTypeFilter.slice(1)}
               <X className="h-3 w-3 ml-1" />
             </Badge>}
           
-          <Button variant="ghost" size="sm" onClick={onClearAll} className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground">
+          <Button variant="ghost" size="sm" onClick={onClearAll} className="text-xs text-muted-foreground hover:text-foreground">
             Clear All
           </Button>
         </div>}
