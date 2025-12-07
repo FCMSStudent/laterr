@@ -178,6 +178,7 @@ All colors MUST be HSL.
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
+    overflow-x: hidden;
   }
 
   /* Glassmorphism with browser fallbacks and performance optimization */

@@ -173,7 +173,7 @@ export const EmbeddingBackfillDialog = ({ onComplete }: EmbeddingBackfillDialogP
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
                   <span>Successful: {progress.successful}</span>
