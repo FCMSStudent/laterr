@@ -16,6 +16,10 @@ import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
 import { formatError } from "@/lib/error-utils";
 import { AuthError, NetworkError, toTypedError } from "@/types/errors";
 import { AUTH_ERRORS, getNetworkErrorMessage } from "@/lib/error-messages";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { BottomNav } from "@/components/BottomNav";
+import { MobileHeader } from "@/components/MobileHeader";
+import { MobileSidebar } from "@/components/MobileSidebar";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({
@@ -48,6 +52,7 @@ const Index = () => {
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [typeFilter, setTypeFilter] = useState<ItemType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mobileView, setMobileView] = useState<"all" | "bookmarks">("all");
   const [user, setUser] = useState<User | null>(null);
   const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
@@ -178,6 +183,11 @@ const Index = () => {
   useEffect(() => {
     let filtered = items;
 
+    // Filter by mobile view (bookmarks)
+    if (mobileView === "bookmarks") {
+      filtered = filtered.filter(item => bookmarkedItems.has(item.id));
+    }
+
     // Filter by search (sanitize input)
     if (debouncedSearchQuery) {
       const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
@@ -214,7 +224,7 @@ const Index = () => {
         break;
     }
     setFilteredItems(sorted);
-  }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption]);
+  }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption, mobileView, bookmarkedItems]);
   const handleItemClick = (item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
@@ -241,61 +251,101 @@ const Index = () => {
   if (!user) {
     return null;
   }
-  return <div className="min-h-screen">
-      {/* Skip Navigation Link */}
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
-        Skip to main content
-      </a>
+  
+  const handleShowAllItems = () => {
+    setMobileView("all");
+  };
+  
+  const handleShowBookmarks = () => {
+    setMobileView("bookmarks");
+  };
+  
+  const handleOpenFilters = () => {
+    // On mobile, filters are always visible on the page
+    // This handler is for future enhancement
+  };
+  
+  return <SidebarProvider>
+      <MobileSidebar 
+        onSignOut={handleSignOut} 
+        onOpenFilters={handleOpenFilters}
+        userEmail={user?.email}
+      />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <header className="mb-6 items-center justify-between flex flex-row">
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm font-medium">Your personal knowledge space</p>
-          </div>
-          <nav aria-label="Main navigation" className="flex items-center gap-4">
-            <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
-              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-              Add Item
-            </Button>
-            <Button onClick={handleSignOut} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground smooth-transition" aria-label="Sign out of your account">
-              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-              Sign Out
-            </Button>
-          </nav>
-        </header>
+      <SidebarInset>
+        <div className="min-h-screen pb-20 md:pb-0">
+          {/* Skip Navigation Link */}
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
+            Skip to main content
+          </a>
+          
+          {/* Mobile Header */}
+          <MobileHeader title="Laterr" subtitle="Your personal knowledge space" />
+          
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {/* Desktop Header */}
+            <header className="mb-6 items-center justify-between flex-row hidden md:flex">
+              <div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
+                <p className="text-muted-foreground text-xs sm:text-sm font-medium">Your personal knowledge space</p>
+              </div>
+              <nav aria-label="Main navigation" className="flex items-center gap-4">
+                <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
+                  <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+                  Add Item
+                </Button>
+                <Button onClick={handleSignOut} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground smooth-transition" aria-label="Sign out of your account">
+                  <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
+                  Sign Out
+                </Button>
+              </nav>
+            </header>
 
-        <div className="max-w-2xl mx-auto mb-4">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
-
-        <div className="mb-4">
-          <FilterBar selectedTag={selectedTag} selectedSort={sortOption} selectedTypeFilter={typeFilter} onTagSelect={setSelectedTag} onSortChange={setSortOption} onTypeFilterChange={setTypeFilter} onClearAll={handleClearAllFilters} />
-        </div>
-
-        <main id="main-content">
-          {/* Screen reader announcement for filtered results */}
-          <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-            {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
-          </div>
-
-          {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-              {Array.from({
-            length: 8
-          }).map((_, index) => <ItemCardSkeleton key={index} />)}
-            </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
-              <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
-              <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto">
-                Start building your knowledge by adding your first item
-              </p>
-            </div> : <section aria-label="Items collection">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-                {filteredItems.map(item => <ItemCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} isBookmarked={bookmarkedItems.has(item.id)} onBookmarkToggle={handleBookmarkToggle} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} />)}
+            <div className="max-w-2xl mx-auto mb-4">
+              <SearchBar value={searchQuery} onChange={setSearchQuery} />
             </div>
-          </section>}
-        </main>
-      </div>
+
+            <div className="mb-4">
+              <FilterBar selectedTag={selectedTag} selectedSort={sortOption} selectedTypeFilter={typeFilter} onTagSelect={setSelectedTag} onSortChange={setSortOption} onTypeFilterChange={setTypeFilter} onClearAll={handleClearAllFilters} />
+            </div>
+
+            <main id="main-content">
+              {/* Screen reader announcement for filtered results */}
+              <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
+              </div>
+
+              {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+                  {Array.from({
+                length: 8
+              }).map((_, index) => <ItemCardSkeleton key={index} />)}
+                </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
+                  <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
+                  <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+                    {mobileView === "bookmarks" ? "No bookmarked items" : "Your space is empty"}
+                  </h2>
+                  <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto">
+                    {mobileView === "bookmarks" 
+                      ? "Items you bookmark will appear here" 
+                      : "Start building your knowledge by adding your first item"}
+                  </p>
+                </div> : <section aria-label="Items collection">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+                    {filteredItems.map(item => <ItemCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} isBookmarked={bookmarkedItems.has(item.id)} onBookmarkToggle={handleBookmarkToggle} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} />)}
+                </div>
+              </section>}
+            </main>
+          </div>
+          
+          {/* Mobile Bottom Navigation */}
+          <BottomNav 
+            onAddItem={() => setShowAddModal(true)}
+            onShowAllItems={handleShowAllItems}
+            onShowBookmarks={handleShowBookmarks}
+            activeView={mobileView}
+          />
+        </div>
+      </SidebarInset>
 
       <Suspense fallback={null}>
         <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={fetchItems} />
@@ -306,6 +356,6 @@ const Index = () => {
             <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={fetchItems} />
           </>}
       </Suspense>
-    </div>;
+    </SidebarProvider>;
 };
 export default Index;
