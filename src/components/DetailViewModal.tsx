@@ -336,7 +336,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         {/* SINGLE SCROLL CONTAINER - wraps all content */}
         <div className="h-full overflow-y-auto">
           {/* RESPONSIVE LAYOUT - Stacked on mobile, horizontal on desktop */}
-          <div className="flex flex-col sm:flex-row min-h-full">
+          <div className="flex flex-col sm:flex-row h-full">
             {/* LEFT COLUMN - MEDIA PREVIEW */}
             <div className={`flex-1 ${getContentBackground()} flex items-center justify-center min-w-0 sm:rounded-l-lg overflow-hidden min-h-[300px] sm:min-h-[500px] @container transition-all duration-300`}>
             {/* 1. YouTube URL → Embed player */}
@@ -490,7 +490,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
             ) : null}
             </div>
 
-            {/* RIGHT COLUMN - INFO PANEL */}
+            {/* RIGHT COLUMN - INFO PANEL (Fixed width: 360px on desktop) */}
             <div 
               className="w-full sm:w-[360px] flex flex-col min-w-0 shrink-0"
               role="region"
