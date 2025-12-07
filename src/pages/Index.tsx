@@ -250,8 +250,8 @@ const Index = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <header className="mb-6 items-center justify-between flex flex-row">
           <div>
-            <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
-            <p className="text-muted-foreground text-sm font-medium">Your personal knowledge space</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium">Your personal knowledge space</p>
           </div>
           <nav aria-label="Main navigation" className="flex items-center gap-4">
             <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
@@ -285,8 +285,8 @@ const Index = () => {
           }).map((_, index) => <ItemCardSkeleton key={index} />)}
             </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
               <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
-              <p className="text-muted-foreground text-base max-w-md mx-auto">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
+              <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto">
                 Start building your knowledge by adding your first item
               </p>
             </div> : <section aria-label="Items collection">

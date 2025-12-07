@@ -405,7 +405,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
               >
                 <div className="text-center max-w-md">
                   <Link2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  <p className="text-lg font-semibold mb-2 text-foreground group-hover:text-primary transition-colors">{item.title}</p>
+                  <p className="text-base sm:text-lg font-semibold mb-2 text-foreground group-hover:text-primary transition-colors">{item.title}</p>
                   {extractDomain(item.content) && (
                     <p className="text-sm text-muted-foreground font-mono bg-muted/50 px-3 py-1 rounded-md inline-block mb-3">
                       {extractDomain(item.content)}
@@ -501,7 +501,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
             >
               {/* Header: Title and Metadata */}
               <div>
-                <h2 className="text-lg font-semibold mb-2">{item.title}</h2>
+                <h2 className="text-base sm:text-lg font-semibold mb-2">{item.title}</h2>
                 <p className="text-xs text-muted-foreground">
                   Added {formatDate(item.created_at)} • {getSourceTypeLabel()}
                 </p>

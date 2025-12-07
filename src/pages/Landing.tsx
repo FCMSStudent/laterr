@@ -30,22 +30,22 @@ const Landing = () => {
       <div className="max-w-4xl mx-auto text-center space-y-8">
         {/* Logo/Title */}
         <div className="space-y-4">
-          <h1 className="text-7xl md:text-8xl font-bold text-foreground tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-foreground tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700">
             Laterr
           </h1>
-          <p className="text-2xl md:text-3xl text-muted-foreground font-medium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+          <p className="text-xl sm:text-2xl md:text-3xl text-muted-foreground font-medium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
             Save it for later
           </p>
         </div>
 
         {/* Tagline */}
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+        <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
           Your personal knowledge space. Organize thoughts, links, and images with AI-powered semantic search.
         </p>
 
         {/* CTA Button */}
         <div className="pt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
-          <Button onClick={handleGetStarted} size="lg" className="bg-primary hover:bg-primary/90 text-white shadow-xl hover:shadow-2xl premium-transition hover:scale-[1.05] font-semibold text-lg px-12 py-7 rounded-2xl">
+          <Button onClick={handleGetStarted} size="lg" className="bg-primary hover:bg-primary/90 text-white shadow-xl hover:shadow-2xl premium-transition hover:scale-[1.05] font-semibold text-base sm:text-lg px-8 sm:px-12 py-6 sm:py-7 rounded-2xl">
             <Sparkles className="w-5 h-5 mr-2" aria-hidden="true" />
             Get Started
           </Button>
@@ -57,7 +57,7 @@ const Landing = () => {
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
               <Search className="w-6 h-6 text-primary" aria-hidden="true" />
             </div>
-            <h3 className="font-semibold text-foreground text-lg">Smart Search</h3>
+            <h3 className="font-semibold text-foreground text-base sm:text-lg">Smart Search</h3>
             <p className="text-sm text-muted-foreground">
               Find content by meaning, not just keywords
             </p>
@@ -67,7 +67,7 @@ const Landing = () => {
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
               <BookmarkIcon className="w-6 h-6 text-primary" aria-hidden="true" />
             </div>
-            <h3 className="font-semibold text-foreground text-lg">Organize</h3>
+            <h3 className="font-semibold text-foreground text-base sm:text-lg">Organize</h3>
             <p className="text-sm text-muted-foreground">
               Save URLs, notes, images, and documents
             </p>
@@ -77,7 +77,7 @@ const Landing = () => {
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
               <Zap className="w-6 h-6 text-primary" aria-hidden="true" />
             </div>
-            <h3 className="font-semibold text-foreground text-lg">AI-Powered</h3>
+            <h3 className="font-semibold text-foreground text-base sm:text-lg">AI-Powered</h3>
             <p className="text-sm text-muted-foreground">
               Get personalized content recommendations
             </p>

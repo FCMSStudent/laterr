@@ -16,9 +16,9 @@ const NotFound = () => {
         <div className="mb-8 flex justify-center">
           <Sparkles className="h-24 w-24 text-primary animate-pulse" aria-hidden="true" />
         </div>
-        <h1 className="text-7xl font-bold text-foreground mb-4 tracking-tight">404</h1>
-        <h2 className="text-3xl font-bold text-foreground mb-4 tracking-tight">Page Not Found</h2>
-        <p className="text-muted-foreground mb-10 text-lg leading-relaxed max-w-lg mx-auto">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-foreground mb-4 tracking-tight">404</h1>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4 tracking-tight">Page Not Found</h2>
+        <p className="text-muted-foreground mb-10 text-base sm:text-lg leading-relaxed max-w-lg mx-auto">
           Oops! The page you're looking for seems to have wandered off into space.
         </p>
         
