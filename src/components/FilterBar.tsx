@@ -1,41 +1,29 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown, Folder } from "lucide-react";
+import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown } from "lucide-react";
 import type { ItemType } from "@/types";
 import { CATEGORY_OPTIONS } from "@/constants";
-import { useCollections } from "@/hooks/useCollections";
 export type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc" | "type";
 interface FilterBarProps {
   selectedTag: string | null;
-  selectedCollectionId: string | null;
   selectedSort: SortOption;
   selectedTypeFilter: ItemType | null;
   onTagSelect: (tag: string | null) => void;
-  onCollectionSelect: (collectionId: string | null) => void;
   onSortChange: (sort: SortOption) => void;
   onTypeFilterChange: (type: ItemType | null) => void;
   onClearAll: () => void;
 }
 export const FilterBar = ({
   selectedTag,
-  selectedCollectionId,
   selectedSort,
   selectedTypeFilter,
   onTagSelect,
-  onCollectionSelect,
   onSortChange,
   onTypeFilterChange,
   onClearAll
 }: FilterBarProps) => {
-  const { data: collections } = useCollections();
-  const hasActiveFilters = selectedTag || selectedTypeFilter || selectedCollectionId;
-  
-  const getSelectedCollectionName = () => {
-    if (!selectedCollectionId) return null;
-    const collection = collections?.find(c => c.id === selectedCollectionId);
-    return collection?.name || 'Unknown Collection';
-  };
+  const hasActiveFilters = selectedTag || selectedTypeFilter;
   const getSortLabel = (sort: SortOption) => {
     switch (sort) {
       case "date-desc":
@@ -76,30 +64,6 @@ export const FilterBar = ({
   return <div className="space-y-2">
       {/* Single-Line Filter Controls */}
       <div className="flex-wrap flex-row flex items-center justify-start gap-[10px] border-0 shadow-none rounded-none opacity-100 text-primary bg-white/[0.01]">
-        {/* Collections Dropdown - Desktop only */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant={selectedCollectionId ? "default" : "outline"} size="sm" className="hidden md:flex">
-              <Folder className="h-3 w-3 mr-1" />
-              {selectedCollectionId ? getSelectedCollectionName() : 'All Collections'}
-              <ChevronDown className="h-3 w-3 ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuLabel>Filter by Collection</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onCollectionSelect(null)}>
-              All Collections
-            </DropdownMenuItem>
-            {collections?.map(collection => (
-              <DropdownMenuItem key={collection.id} onClick={() => onCollectionSelect(collection.id)}>
-                <Folder className="h-3 w-3 mr-2" />
-                {collection.name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
         {/* Tags Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -186,12 +150,6 @@ export const FilterBar = ({
       {/* Active Filter Pills */}
       {hasActiveFilters && <div className="flex flex-wrap gap-2 items-center justify-center">
           <span className="text-xs text-muted-foreground font-medium">Active Filters:</span>
-          
-          {selectedCollectionId && <Badge variant="secondary" className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs min-h-[44px] inline-flex items-center gap-1" onClick={() => onCollectionSelect(null)}>
-              <Folder className="h-3 w-3" />
-              {getSelectedCollectionName()}
-              <X className="h-3 w-3 ml-1" />
-            </Badge>}
           
           {selectedTag && <Badge variant="secondary" className="cursor-pointer hover:bg-destructive/10 premium-transition text-xs min-h-[44px] inline-flex items-center" onClick={() => onTagSelect(null)}>
               #{selectedTag}

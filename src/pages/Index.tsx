@@ -20,7 +20,6 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { BottomNav } from "@/components/BottomNav";
 import { MobileHeader } from "@/components/MobileHeader";
 import { MobileSidebar } from "@/components/MobileSidebar";
-import { LibraryChat } from "@/components/LibraryChat";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({
@@ -50,7 +49,6 @@ const Index = () => {
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [typeFilter, setTypeFilter] = useState<ItemType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -190,11 +188,6 @@ const Index = () => {
       filtered = filtered.filter(item => bookmarkedItems.has(item.id));
     }
 
-    // Filter by collection
-    if (selectedCollectionId) {
-      filtered = filtered.filter(item => item.category_id === selectedCollectionId);
-    }
-
     // Filter by search (sanitize input)
     if (debouncedSearchQuery) {
       const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
@@ -231,22 +224,14 @@ const Index = () => {
         break;
     }
     setFilteredItems(sorted);
-  }, [debouncedSearchQuery, selectedTag, selectedCollectionId, items, typeFilter, sortOption, mobileView, bookmarkedItems]);
-  const handleItemClick = useCallback((item: Item) => {
+  }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption, mobileView, bookmarkedItems]);
+  const handleItemClick = (item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
-  }, []);
-
-  const handleChatItemClick = useCallback((itemId: string) => {
-    const item = items.find(i => i.id === itemId);
-    if (item) {
-      handleItemClick(item);
-    }
-  }, [items, handleItemClick]);
+  };
   const handleClearAllFilters = () => {
     setSelectedTag(null);
     setTypeFilter(null);
-    setSelectedCollectionId(null);
   };
   const handleSignOut = async () => {
     const {
@@ -284,8 +269,6 @@ const Index = () => {
       <MobileSidebar 
         onSignOut={handleSignOut} 
         onOpenFilters={handleOpenFilters}
-        selectedCollectionId={selectedCollectionId}
-        onSelectCollection={setSelectedCollectionId}
         userEmail={user?.email}
       />
       
@@ -323,17 +306,7 @@ const Index = () => {
             </div>
 
             <div className="mb-4">
-              <FilterBar 
-                selectedTag={selectedTag}
-                selectedCollectionId={selectedCollectionId}
-                selectedSort={sortOption} 
-                selectedTypeFilter={typeFilter} 
-                onTagSelect={setSelectedTag}
-                onCollectionSelect={setSelectedCollectionId}
-                onSortChange={setSortOption} 
-                onTypeFilterChange={setTypeFilter} 
-                onClearAll={handleClearAllFilters} 
-              />
+              <FilterBar selectedTag={selectedTag} selectedSort={sortOption} selectedTypeFilter={typeFilter} onTagSelect={setSelectedTag} onSortChange={setSortOption} onTypeFilterChange={setTypeFilter} onClearAll={handleClearAllFilters} />
             </div>
 
             <main id="main-content">
@@ -373,9 +346,6 @@ const Index = () => {
           />
         </div>
       </SidebarInset>
-
-      {/* AI Chat Interface */}
-      <LibraryChat onItemClick={handleChatItemClick} />
 
       <Suspense fallback={null}>
         <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={fetchItems} />
