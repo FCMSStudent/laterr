@@ -330,7 +330,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl h-[90vh] p-0 overflow-hidden border-0 glass-card">
+      <DialogContent className="sm:max-w-6xl h-[100vh] sm:h-[90vh] p-0 overflow-hidden border-0 glass-card">
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
         {/* RESPONSIVE LAYOUT - Stacked on mobile, horizontal on desktop */}

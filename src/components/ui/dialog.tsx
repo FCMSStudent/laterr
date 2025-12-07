@@ -40,8 +40,8 @@ const DialogContent = React.forwardRef<
         "fixed z-50 grid w-full gap-4 border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl duration-300",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        // Mobile: Full-screen bottom sheet with slide-up animation
-        "inset-x-0 bottom-0 max-h-[95vh] overflow-y-auto rounded-t-3xl p-6",
+        // Mobile: Full-screen bottom sheet with slide-up animation - uses almost entire screen
+        "inset-x-0 bottom-0 max-h-[100vh] overflow-y-auto rounded-t-2xl p-6",
         "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         // Desktop: Centered modal with zoom animation
         "sm:inset-auto sm:bottom-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%]",
