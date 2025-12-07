@@ -89,7 +89,7 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-foreground">
+          <DialogTitle className="text-xl sm:text-2xl font-semibold text-foreground">
             Edit Item
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">

@@ -419,7 +419,7 @@ export const AddItemModal = ({
   return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-foreground">
+          <DialogTitle className="text-xl sm:text-2xl font-semibold text-foreground">
             Add New Item
           </DialogTitle>
         </DialogHeader>

@@ -162,8 +162,8 @@ export default function Auth() {
       <div className="w-full max-w-md">
         <div className="glass-card rounded-3xl p-10 shadow-apple">
           <div className="text-center mb-10">
-            <h1 className="text-5xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
-            <p className="text-muted-foreground text-base">Your personal knowledge space</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Your personal knowledge space</p>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-5">
