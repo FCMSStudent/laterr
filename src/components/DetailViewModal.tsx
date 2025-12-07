@@ -330,13 +330,15 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl h-[100vh] sm:h-[90vh] p-0 overflow-hidden border-0 glass-card">
+      <DialogContent className="sm:max-w-6xl h-[100vh] sm:h-[80vh] p-0 overflow-hidden border-0 glass-card">
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
-        {/* RESPONSIVE LAYOUT - Stacked on mobile, horizontal on desktop */}
-        <div className="flex flex-col sm:flex-row h-full overflow-hidden">
-          {/* LEFT COLUMN - MEDIA PREVIEW */}
-          <div className={`${getLayoutWidth()} ${getContentBackground()} flex items-center justify-center min-w-0 sm:rounded-l-lg overflow-hidden min-h-[300px] sm:min-h-[500px] @container transition-all duration-300`}>
+        {/* SINGLE SCROLL CONTAINER - wraps all content */}
+        <div className="h-full overflow-y-auto">
+          {/* RESPONSIVE LAYOUT - Stacked on mobile, horizontal on desktop */}
+          <div className="flex flex-col sm:flex-row h-full">
+            {/* LEFT COLUMN - MEDIA PREVIEW */}
+            <div className={`flex-1 ${getContentBackground()} flex items-center justify-center min-w-0 sm:rounded-l-lg overflow-hidden min-h-[300px] sm:min-h-[500px] @container transition-all duration-300`}>
             {/* 1. YouTube URL → Embed player */}
             {youtubeVideoId ? (
               <div className="relative w-full h-full group">
@@ -486,19 +488,19 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 )}
               </div>
             ) : null}
-          </div>
+            </div>
 
-          {/* RIGHT COLUMN - INFO PANEL */}
-          <div 
-            className={`${item.type === "image" && imageLoaded && isPortrait ? "sm:w-[55%]" : "sm:w-[35%]"} flex flex-col min-w-0 h-full flex-1`}
-            role="region"
-            aria-label="Item details panel"
-          >
-            {/* SCROLLABLE CONTENT AREA */}
+            {/* RIGHT COLUMN - INFO PANEL (Fixed width: 360px on desktop) */}
             <div 
-              className="flex-1 overflow-y-auto flex flex-col gap-4 p-6 pb-4"
-              tabIndex={0}
+              className="w-full sm:w-[360px] flex flex-col min-w-0 shrink-0"
+              role="region"
+              aria-label="Item details panel"
             >
+              {/* CONTENT AREA - NO nested scrolling */}
+              <div 
+                className="flex flex-col gap-4 p-6 pb-4"
+                tabIndex={0}
+              >
               {/* Header: Title and Metadata */}
               <div>
                 <h2 className="text-base sm:text-lg font-semibold mb-2">{item.title}</h2>
@@ -567,7 +569,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 </div>
               </div>
 
-              {/* ACTION BUTTONS - Integrated with content */}
+              {/* ACTION BUTTONS - Pushed to bottom with mt-auto */}
               <div 
                 className="shrink-0 flex justify-end gap-3 pt-6 mt-auto relative before:absolute before:top-0 before:left-0 before:right-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-border/50 before:to-transparent"
                 role="group"
@@ -624,6 +626,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+              </div>
               </div>
             </div>
           </div>
