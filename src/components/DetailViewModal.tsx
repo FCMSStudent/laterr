@@ -314,10 +314,10 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   // Get layout width based on image orientation
   const getLayoutWidth = () => {
     if (item.type === "image" && imageLoaded) {
-      return isPortrait ? "md:w-[45%]" : "md:w-[65%]";
+      return isPortrait ? "sm:w-[45%]" : "sm:w-[65%]";
     }
     // Default for other content types
-    return "md:w-[65%]";
+    return "sm:w-[65%]";
   };
 
   // Handle image load to detect orientation
@@ -334,9 +334,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         <DialogDescription className="sr-only">Detailed item view</DialogDescription>
 
         {/* RESPONSIVE LAYOUT - Stacked on mobile, horizontal on desktop */}
-        <div className="flex flex-col md:flex-row h-full overflow-hidden">
+        <div className="flex flex-col sm:flex-row h-full overflow-hidden">
           {/* LEFT COLUMN - MEDIA PREVIEW */}
-          <div className={`${getLayoutWidth()} ${getContentBackground()} flex items-center justify-center min-w-0 md:rounded-l-lg overflow-hidden min-h-[300px] md:min-h-[500px] @container transition-all duration-300`}>
+          <div className={`${getLayoutWidth()} ${getContentBackground()} flex items-center justify-center min-w-0 sm:rounded-l-lg overflow-hidden min-h-[300px] sm:min-h-[500px] @container transition-all duration-300`}>
             {/* 1. YouTube URL → Embed player */}
             {youtubeVideoId ? (
               <div className="relative w-full h-full group">
@@ -490,7 +490,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
           {/* RIGHT COLUMN - INFO PANEL */}
           <div 
-            className={`${item.type === "image" && imageLoaded && isPortrait ? "md:w-[55%]" : "md:w-[35%]"} flex flex-col min-w-0 h-full flex-1`}
+            className={`${item.type === "image" && imageLoaded && isPortrait ? "sm:w-[55%]" : "sm:w-[35%]"} flex flex-col min-w-0 h-full flex-1`}
             role="region"
             aria-label="Item details panel"
           >
