@@ -9,6 +9,14 @@ export interface Tag {
   updated_at?: string;
 }
 
+export interface Collection {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string | null;
+  created_at: string;
+}
+
 export interface Item {
   id: string;
   user_id: string;
@@ -18,6 +26,7 @@ export interface Item {
   summary: string | null;
   user_notes: string | null;
   tags: string[];
+  category_id: string | null;
   preview_image_url: string | null;
   embedding?: number[] | null;
   created_at: string;

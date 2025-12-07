@@ -49,6 +49,7 @@ const Index = () => {
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [typeFilter, setTypeFilter] = useState<ItemType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -188,6 +189,11 @@ const Index = () => {
       filtered = filtered.filter(item => bookmarkedItems.has(item.id));
     }
 
+    // Filter by collection
+    if (selectedCollectionId) {
+      filtered = filtered.filter(item => item.category_id === selectedCollectionId);
+    }
+
     // Filter by search (sanitize input)
     if (debouncedSearchQuery) {
       const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
@@ -224,7 +230,7 @@ const Index = () => {
         break;
     }
     setFilteredItems(sorted);
-  }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption, mobileView, bookmarkedItems]);
+  }, [debouncedSearchQuery, selectedTag, selectedCollectionId, items, typeFilter, sortOption, mobileView, bookmarkedItems]);
   const handleItemClick = (item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
@@ -232,6 +238,7 @@ const Index = () => {
   const handleClearAllFilters = () => {
     setSelectedTag(null);
     setTypeFilter(null);
+    setSelectedCollectionId(null);
   };
   const handleSignOut = async () => {
     const {
@@ -269,6 +276,8 @@ const Index = () => {
       <MobileSidebar 
         onSignOut={handleSignOut} 
         onOpenFilters={handleOpenFilters}
+        selectedCollectionId={selectedCollectionId}
+        onSelectCollection={setSelectedCollectionId}
         userEmail={user?.email}
       />
       
@@ -306,7 +315,17 @@ const Index = () => {
             </div>
 
             <div className="mb-4">
-              <FilterBar selectedTag={selectedTag} selectedSort={sortOption} selectedTypeFilter={typeFilter} onTagSelect={setSelectedTag} onSortChange={setSortOption} onTypeFilterChange={setTypeFilter} onClearAll={handleClearAllFilters} />
+              <FilterBar 
+                selectedTag={selectedTag}
+                selectedCollectionId={selectedCollectionId}
+                selectedSort={sortOption} 
+                selectedTypeFilter={typeFilter} 
+                onTagSelect={setSelectedTag}
+                onCollectionSelect={setSelectedCollectionId}
+                onSortChange={setSortOption} 
+                onTypeFilterChange={setTypeFilter} 
+                onClearAll={handleClearAllFilters} 
+              />
             </div>
 
             <main id="main-content">

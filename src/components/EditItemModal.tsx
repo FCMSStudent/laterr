@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SUPABASE_ITEMS_TABLE } from "@/constants";
 import type { Item } from "@/types";
+import { CollectionSelector } from "@/components/CollectionSelector";
 
 interface EditItemModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
   const [summary, setSummary] = useState(item.summary || "");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(item.tags || []);
+  const [collectionId, setCollectionId] = useState<string | null>(item.category_id);
   const [loading, setLoading] = useState(false);
 
   // Reset form when item changes
@@ -31,6 +33,7 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
       setTitle(item.title);
       setSummary(item.summary || "");
       setTags(item.tags || []);
+      setCollectionId(item.category_id);
       setTagInput("");
     }
   }, [item, open]);
@@ -66,6 +69,7 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
           title: title.trim(),
           summary: summary.trim() || null,
           tags: tags,
+          category_id: collectionId,
           updated_at: new Date().toISOString(),
         })
         .eq('id', item.id);
@@ -98,6 +102,11 @@ export const EditItemModal = ({ open, onOpenChange, item, onItemUpdated }: EditI
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          <CollectionSelector 
+            value={collectionId} 
+            onChange={setCollectionId}
+          />
+          
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium">
               Title
