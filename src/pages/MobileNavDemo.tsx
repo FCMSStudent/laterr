@@ -30,6 +30,8 @@ const MobileNavDemo = () => {
       <MobileSidebar 
         onSignOut={handleSignOut} 
         onOpenFilters={handleOpenFilters}
+        selectedCollectionId={null}
+        onSelectCollection={() => {}}
         userEmail="demo@example.com"
       />
       
