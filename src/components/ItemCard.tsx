@@ -80,6 +80,8 @@ export const ItemCard = ({
       onClick();
     }
   };
+
+  const interactiveBadgeClasses = "cursor-pointer hover:bg-accent premium-transition text-xs font-semibold shadow-sm min-h-[44px] inline-flex items-center py-2";
   const formatDate = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), {
@@ -147,16 +149,25 @@ export const ItemCard = ({
         
         {/* Tags section with overflow handling */}
         <div className="flex flex-wrap gap-2 pt-2">
-          {(showAllTags ? tags : tags.slice(0, 3)).map((tag, index) => <Badge key={index} variant="secondary" className="cursor-pointer hover:bg-accent premium-transition text-xs font-semibold shadow-sm min-h-[44px] inline-flex items-center py-2" role="button" tabIndex={0} aria-label={`Filter by tag ${tag}`} onClick={e => {
-          e.stopPropagation();
-          onTagClick(tag);
-        }} onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            e.stopPropagation();
-            onTagClick(tag);
-          }
-        }}>
+          {(showAllTags ? tags : tags.slice(0, 3)).map((tag, index) => <Badge 
+            key={index} 
+            variant="secondary" 
+            className={interactiveBadgeClasses}
+            role="button" 
+            tabIndex={0} 
+            aria-label={`Filter by tag ${tag}`} 
+            onClick={e => {
+              e.stopPropagation();
+              onTagClick(tag);
+            }} 
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                onTagClick(tag);
+              }
+            }}
+          >
               #{tag}
             </Badge>)}
           {!showAllTags && tags.length > 3 && <Badge variant="outline" className="text-xs font-medium" aria-label={`${tags.length - 3} more tags`}>
