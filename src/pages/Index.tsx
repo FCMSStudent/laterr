@@ -20,6 +20,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { BottomNav } from "@/components/BottomNav";
 import { MobileHeader } from "@/components/MobileHeader";
 import { MobileSidebar } from "@/components/MobileSidebar";
+import { LibraryChat } from "@/components/LibraryChat";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({
@@ -231,10 +232,17 @@ const Index = () => {
     }
     setFilteredItems(sorted);
   }, [debouncedSearchQuery, selectedTag, selectedCollectionId, items, typeFilter, sortOption, mobileView, bookmarkedItems]);
-  const handleItemClick = (item: Item) => {
+  const handleItemClick = useCallback((item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
-  };
+  }, []);
+
+  const handleChatItemClick = useCallback((itemId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+      handleItemClick(item);
+    }
+  }, [items, handleItemClick]);
   const handleClearAllFilters = () => {
     setSelectedTag(null);
     setTypeFilter(null);
@@ -365,6 +373,9 @@ const Index = () => {
           />
         </div>
       </SidebarInset>
+
+      {/* AI Chat Interface */}
+      <LibraryChat onItemClick={handleChatItemClick} />
 
       <Suspense fallback={null}>
         <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={fetchItems} />
