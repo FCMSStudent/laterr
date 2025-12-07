@@ -63,10 +63,9 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={goToPrevPage}
             disabled={pageNumber <= 1 || loading}
-            className="h-8 w-8 p-0"
             aria-label="Previous page"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -76,10 +75,9 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
           </span>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={goToNextPage}
             disabled={pageNumber >= numPages || loading}
-            className="h-8 w-8 p-0"
             aria-label="Next page"
           >
             <ChevronRight className="h-4 w-4" />
@@ -89,30 +87,27 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={zoomOut}
             disabled={scale <= 0.5 || loading}
-            className="h-8 w-8 p-0"
             aria-label="Zoom out"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={fitToWidth}
             disabled={loading}
-            className="h-8 w-8 p-0"
             aria-label="Fit to width"
           >
             <Maximize2 className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={zoomIn}
             disabled={scale >= 2.0 || loading}
-            className="h-8 w-8 p-0"
             aria-label="Zoom in"
           >
             <ZoomIn className="h-4 w-4" />
