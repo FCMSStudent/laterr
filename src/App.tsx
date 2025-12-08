@@ -1,18 +1,18 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/shared/components/ui/toaster";
+import { Toaster as Sonner } from "@/shared/components/ui/sonner";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import GradientBackground from "./components/GradientBackground";
+import { GradientBackground } from "@/shared/components";
 import "./styles/gradient.css";
 
 // Lazy load route components for code splitting
-const Landing = lazy(() => import("./pages/Landing"));
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const MobileNavDemo = lazy(() => import("./pages/MobileNavDemo"));
+const Landing = lazy(() => import("./pages/landing"));
+const Index = lazy(() => import("./pages/home"));
+const Auth = lazy(() => import("./pages/auth"));
+const NotFound = lazy(() => import("./pages/not-found"));
+const MobileNavDemo = lazy(() => import("./pages/mobile-demo"));
 
 const queryClient = new QueryClient();
 
