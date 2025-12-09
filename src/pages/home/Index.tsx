@@ -62,17 +62,22 @@ const Index = () => {
   
   // Virtual scrolling ref
   const parentRef = useRef<HTMLDivElement>(null);
+  
+  // Virtual scrolling constants
+  const ESTIMATED_ITEM_HEIGHT = 380; // Estimated height of ItemCard + gap in pixels
+  const VIRTUAL_SCROLL_THRESHOLD = 100; // Enable virtual scrolling at this many items
+  const HEADER_HEIGHT = 300; // Height of headers/navigation elements in pixels
 
   // Configure virtualizer for grid layout - must be called before any conditional returns
   // Estimate 4 columns on large screens, adjust based on breakpoints
-  const getColumnsCount = () => {
+  const getColumnsCount = useCallback(() => {
     if (typeof window === 'undefined') return 4;
     const width = window.innerWidth;
     if (width >= 1280) return 4; // xl
     if (width >= 1024) return 3; // lg
     if (width >= 768) return 2; // md
     return 1; // mobile
-  };
+  }, []);
   
   const columnsCount = getColumnsCount();
   const rowCount = Math.ceil(filteredItems.length / columnsCount);
@@ -81,12 +86,12 @@ const Index = () => {
   const rowVirtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 380, // Estimated height of ItemCard + gap
+    estimateSize: () => ESTIMATED_ITEM_HEIGHT,
     overscan: 2, // Render 2 extra rows above and below viewport
   });
   
   // Enable virtual scrolling when there are 100+ items to improve performance
-  const useVirtualScrolling = filteredItems.length >= 100;
+  const useVirtualScrolling = filteredItems.length >= VIRTUAL_SCROLL_THRESHOLD;
 
   // Load bookmarks from localStorage
   useEffect(() => {
@@ -358,7 +363,7 @@ const Index = () => {
                       ? "Items you bookmark will appear here" 
                       : "Start building your knowledge by adding your first item"}
                   </p>
-                </div> : <section aria-label="Items collection" ref={parentRef} className={useVirtualScrolling ? "h-[calc(100vh-300px)] overflow-auto" : ""}>
+                </div> : <section aria-label="Items collection" ref={parentRef} className={useVirtualScrolling ? `h-[calc(100vh-${HEADER_HEIGHT}px)] overflow-auto` : ""}>
                   {useVirtualScrolling ? (
                     <div 
                       style={{
