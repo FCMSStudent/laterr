@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ItemCard } from "./components/ItemCard";
@@ -18,6 +18,7 @@ import { AuthError, NetworkError, toTypedError } from "@/shared/types/errors";
 import { AUTH_ERRORS, getNetworkErrorMessage } from "@/shared/lib/error-messages";
 import { BottomNav } from "@/shared/components/layout/BottomNav";
 import { MobileHeader } from "@/shared/components/layout/MobileHeader";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("./components/AddItemModal").then(({
@@ -58,6 +59,39 @@ const Index = () => {
     toast
   } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  
+  // Virtual scrolling ref
+  const parentRef = useRef<HTMLDivElement>(null);
+  
+  // Virtual scrolling constants
+  const ESTIMATED_ITEM_HEIGHT = 380; // Estimated height of ItemCard + gap in pixels
+  const VIRTUAL_SCROLL_THRESHOLD = 100; // Enable virtual scrolling at this many items
+  const HEADER_HEIGHT = 300; // Height of headers/navigation elements in pixels
+
+  // Configure virtualizer for grid layout - must be called before any conditional returns
+  // Estimate 4 columns on large screens, adjust based on breakpoints
+  const getColumnsCount = useCallback(() => {
+    if (typeof window === 'undefined') return 4;
+    const width = window.innerWidth;
+    if (width >= 1280) return 4; // xl
+    if (width >= 1024) return 3; // lg
+    if (width >= 768) return 2; // md
+    return 1; // mobile
+  }, []);
+  
+  const columnsCount = getColumnsCount();
+  const rowCount = Math.ceil(filteredItems.length / columnsCount);
+  
+  // Always call the hook (hooks cannot be conditional)
+  const rowVirtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ESTIMATED_ITEM_HEIGHT,
+    overscan: 2, // Render 2 extra rows above and below viewport
+  });
+  
+  // Enable virtual scrolling when there are 100+ items to improve performance
+  const useVirtualScrolling = filteredItems.length >= VIRTUAL_SCROLL_THRESHOLD;
 
   // Load bookmarks from localStorage
   useEffect(() => {
@@ -329,10 +363,60 @@ const Index = () => {
                       ? "Items you bookmark will appear here" 
                       : "Start building your knowledge by adding your first item"}
                   </p>
-                </div> : <section aria-label="Items collection">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-                    {filteredItems.map(item => <ItemCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} isBookmarked={bookmarkedItems.has(item.id)} onBookmarkToggle={handleBookmarkToggle} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} />)}
-                </div>
+                </div> : <section aria-label="Items collection" ref={parentRef} className={useVirtualScrolling ? `h-[calc(100vh-${HEADER_HEIGHT}px)] overflow-auto` : ""}>
+                  {useVirtualScrolling ? (
+                    <div 
+                      style={{
+                        height: `${rowVirtualizer.getTotalSize()}px`,
+                        width: '100%',
+                        position: 'relative',
+                      }}
+                    >
+                      {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                        const startIndex = virtualRow.index * columnsCount;
+                        const rowItems = filteredItems.slice(startIndex, startIndex + columnsCount);
+                        
+                        return (
+                          <div
+                            key={virtualRow.key}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              transform: `translateY(${virtualRow.start}px)`,
+                            }}
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-6">
+                              {rowItems.map(item => (
+                                <ItemCard 
+                                  key={item.id} 
+                                  id={item.id} 
+                                  type={item.type} 
+                                  title={item.title} 
+                                  summary={item.summary} 
+                                  previewImageUrl={item.preview_image_url} 
+                                  tags={item.tags} 
+                                  createdAt={item.created_at} 
+                                  updatedAt={item.updated_at} 
+                                  isBookmarked={bookmarkedItems.has(item.id)} 
+                                  onBookmarkToggle={handleBookmarkToggle} 
+                                  onDelete={handleDeleteItem} 
+                                  onEdit={handleEditItem} 
+                                  onClick={() => handleItemClick(item)} 
+                                  onTagClick={setSelectedTag} 
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+                      {filteredItems.map(item => <ItemCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} isBookmarked={bookmarkedItems.has(item.id)} onBookmarkToggle={handleBookmarkToggle} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} />)}
+                    </div>
+                  )}
               </section>}
             </main>
           </div>
