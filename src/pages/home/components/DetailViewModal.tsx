@@ -127,8 +127,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       try {
         const url = await generateSignedUrl(item.content);
         setSignedUrl(url);
-      } catch (error) {
-        console.error('Error generating signed URL:', error);
+      } catch (error: unknown) {
+        const typedError = toTypedError(error);
+        console.error('Error generating signed URL:', typedError);
         setSignedUrl(null);
         toast.error(ITEM_ERRORS.PDF_LOAD_FAILED.title, { 
           description: ITEM_ERRORS.PDF_LOAD_FAILED.message 
@@ -263,8 +264,9 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       return formatDistanceToNow(new Date(dateString), {
         addSuffix: true
       });
-    } catch (error) {
-      console.error('Error formatting date:', error);
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      console.error('Error formatting date:', typedError);
       return 'recently';
     }
   };

@@ -192,8 +192,8 @@ serve(async (req) => {
       // Use Readability to extract main article content
       try {
         const parsed = parseHTML(html) as { document?: Document } | Document;
-        const doc = ('document' in parsed ? parsed.document : parsed) || parsed;
-        const reader = new Readability(doc as Document, { 
+        const doc = ('document' in parsed ? parsed.document : parsed) as Document;
+        const reader = new Readability(doc, { 
           keepClasses: false 
         });
         const article = reader.parse();

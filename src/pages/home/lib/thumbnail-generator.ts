@@ -12,12 +12,6 @@ import { THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_QUALITY } from '@/constant
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-// Type for PDF.js render parameters
-interface PDFRenderParams {
-  canvasContext: CanvasRenderingContext2D;
-  viewport: unknown;
-}
-
 // DOCX thumbnail constants
 const DOCX_MAX_CONTENT_HEIGHT = 1000;
 const DOCX_MAX_LINES = 30;
@@ -65,8 +59,9 @@ export async function generatePdfThumbnail(file: File): Promise<Blob> {
   if (!ctx) throw new Error('Failed to get canvas context');
   canvas.width = scaledViewport.width;
   canvas.height = scaledViewport.height;
-  const renderParams: PDFRenderParams = { canvasContext: ctx, viewport: scaledViewport };
-  await page.render(renderParams as never).promise;
+  // PDF.js render method expects specific parameter types that may not match TypeScript definitions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await page.render({ canvasContext: ctx, viewport: scaledViewport } as any).promise;
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Failed')), 'image/jpeg', THUMBNAIL_QUALITY);
   });
