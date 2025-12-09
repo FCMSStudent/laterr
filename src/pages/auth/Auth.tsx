@@ -17,6 +17,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   // Validation states
   const [emailError, setEmailError] = useState<string>();
@@ -157,16 +158,58 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate email
+    const emailResult = emailSchema.safeParse(email.trim());
+    if (!emailResult.success) {
+      toast({
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Email Sent',
+        description: 'Check your email for a password reset link.',
+      });
+      setIsForgotPassword(false);
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send reset email. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="glass-card rounded-3xl p-10 shadow-apple">
           <div className="text-center mb-10">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">Laterr</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">Your personal knowledge space</p>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              {isForgotPassword ? 'Reset your password' : 'Your personal knowledge space'}
+            </p>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-5">
+          <form onSubmit={isForgotPassword ? handleForgotPassword : handleAuth} className="space-y-5">
             <EnhancedInput
               id="email"
               type="email"
@@ -186,28 +229,32 @@ export default function Auth() {
               aria-label="Email address"
             />
             
-            <EnhancedInput
-              id="password"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => setTouched({ ...touched, password: true })}
-              required
-              maxLength={72}
-              className="glass-input h-12 text-base"
-              prefixIcon="password"
-              error={passwordError}
-              success={!passwordError && password.length > 0 && touched.password}
-              showPasswordToggle={true}
-              autoComplete={isLogin ? "current-password" : "new-password"}
-              aria-label="Password"
-            />
-            
-            {!isLogin && !passwordError && (
-              <p className="text-xs text-muted-foreground">
-                Password must be at least 6 characters
-              </p>
+            {!isForgotPassword && (
+              <>
+                <EnhancedInput
+                  id="password"
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => setTouched({ ...touched, password: true })}
+                  required
+                  maxLength={72}
+                  className="glass-input h-12 text-base"
+                  prefixIcon="password"
+                  error={passwordError}
+                  success={!passwordError && password.length > 0 && touched.password}
+                  showPasswordToggle={true}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  aria-label="Password"
+                />
+                
+                {!isLogin && !passwordError && (
+                  <p className="text-xs text-muted-foreground">
+                    Password must be at least 6 characters
+                  </p>
+                )}
+              </>
             )}
 
             <Button
@@ -215,17 +262,36 @@ export default function Auth() {
               disabled={loading}
               className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]"
             >
-              {loading ? 'Loading...' : isLogin ? 'Sign In' : 'Sign Up'}
+              {loading ? 'Loading...' : isForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign In' : 'Sign Up'}
             </Button>
           </form>
 
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:text-primary/80 text-sm font-medium smooth-transition hover:underline"
-            >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-            </button>
+          <div className="mt-8 text-center space-y-3">
+            {!isForgotPassword ? (
+              <>
+                {isLogin && (
+                  <button
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-muted-foreground hover:text-primary text-sm smooth-transition hover:underline block"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-primary hover:text-primary/80 text-sm font-medium smooth-transition hover:underline block"
+                >
+                  {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsForgotPassword(false)}
+                className="text-primary hover:text-primary/80 text-sm font-medium smooth-transition hover:underline"
+              >
+                Back to sign in
+              </button>
+            )}
           </div>
         </div>
       </div>

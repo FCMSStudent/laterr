@@ -19,6 +19,7 @@ import { AUTH_ERRORS, getNetworkErrorMessage } from "@/shared/lib/error-messages
 import { BottomNav } from "@/shared/components/layout/BottomNav";
 import { MobileHeader } from "@/shared/components/layout/MobileHeader";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { OnboardingFlow, hasCompletedOnboarding } from "@/components/OnboardingFlow";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("./components/AddItemModal").then(({
@@ -43,6 +44,7 @@ const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
@@ -153,6 +155,11 @@ const Index = () => {
       const itemsWithSignedUrls = await generateSignedUrlsForItems(normalizedItems);
       setItems(itemsWithSignedUrls);
       setFilteredItems(itemsWithSignedUrls);
+      
+      // Show onboarding for first-time users with no items
+      if (itemsWithSignedUrls.length === 0 && !hasCompletedOnboarding()) {
+        setShowOnboarding(true);
+      }
     } catch (error: unknown) {
       const errorMessage = getNetworkErrorMessage('fetch');
       const typedError = toTypedError(error);
@@ -353,16 +360,52 @@ const Index = () => {
                   {Array.from({
                 length: 8
               }).map((_, index) => <ItemCardSkeleton key={index} />)}
-                </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
-                  <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
-                  <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-                    {mobileView === "bookmarks" ? "No bookmarked items" : "Your space is empty"}
-                  </h2>
-                  <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto">
-                    {mobileView === "bookmarks" 
-                      ? "Items you bookmark will appear here" 
-                      : "Start building your knowledge by adding your first item"}
-                  </p>
+                </div> : filteredItems.length === 0 ? <div className="text-center py-20 space-y-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full bg-primary/5 animate-pulse"></div>
+                    </div>
+                    <Sparkles className="h-16 w-16 mx-auto text-primary/80 relative z-10" aria-hidden="true" />
+                  </div>
+                  <div className="space-y-3">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+                      {mobileView === "bookmarks" ? "No bookmarked items" : "Your space awaits"}
+                    </h2>
+                    <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto">
+                      {mobileView === "bookmarks" 
+                        ? "Items you bookmark will appear here" 
+                        : "Start building your personal knowledge base"}
+                    </p>
+                  </div>
+                  {mobileView !== "bookmarks" && items.length === 0 && (
+                    <>
+                      <Button 
+                        onClick={() => setShowAddModal(true)} 
+                        className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold px-8 py-6 text-base"
+                        size="lg"
+                      >
+                        <Plus className="w-5 h-5 mr-2" />
+                        Add Your First Item
+                      </Button>
+                      <div className="pt-4 space-y-3 max-w-sm mx-auto">
+                        <p className="text-sm font-semibold text-muted-foreground">Quick Tips:</p>
+                        <ul className="text-sm text-muted-foreground space-y-2 text-left">
+                          <li className="flex items-start gap-2">
+                            <span className="text-primary font-bold">•</span>
+                            <span>Save interesting articles and videos for later</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-primary font-bold">•</span>
+                            <span>Create notes for quick thoughts and ideas</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-primary font-bold">•</span>
+                            <span>Upload PDFs and documents to organize your files</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </>
+                  )}
                 </div> : <section aria-label="Items collection" ref={parentRef} className={useVirtualScrolling ? `h-[calc(100vh-${HEADER_HEIGHT}px)] overflow-auto` : ""}>
                   {useVirtualScrolling ? (
                     <div 
@@ -439,6 +482,14 @@ const Index = () => {
             <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={fetchItems} />
           </>}
       </Suspense>
+
+      {/* Onboarding flow for first-time users */}
+      <OnboardingFlow 
+        open={showOnboarding} 
+        onOpenChange={setShowOnboarding}
+        onComplete={() => setShowOnboarding(false)}
+        onAddFirstItem={() => setShowAddModal(true)}
+      />
     </main>
   );
 };
