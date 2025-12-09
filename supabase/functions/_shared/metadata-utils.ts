@@ -141,9 +141,9 @@ export function validateAndParseAiJson(
     }
     
     // Try to extract tags (comma-separated or array-like)
-    const tagsMatch = text.match(/(?:tags|Tags)[:\s]*\[?["']?([^\]\n]+)["']?\]?/i);
+    const tagsMatch = text.match(/(?:tags|Tags)[:\s]*[[]?["']?([^\]\n]+)["']?[\]]?/i);
     if (tagsMatch && tagsMatch[1]?.trim()) {
-      const tagStr = tagsMatch[1].replace(/["'\[\]]/g, '');
+      const tagStr = tagsMatch[1].replace(/["'[\]]/g, '');
       extracted.tags = tagStr.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
       console.log('📄 Extracted tags from text:', extracted.tags);
     }

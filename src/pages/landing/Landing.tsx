@@ -87,7 +87,7 @@ const Landing = () => {
 
       {/* Footer */}
       <footer className="absolute bottom-8 text-center text-sm text-muted-foreground">
-        <p>​</p>
+        <p>&nbsp;</p>
       </footer>
     </div>;
 };

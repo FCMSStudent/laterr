@@ -93,7 +93,20 @@ const Index = () => {
       if (error) throw error;
 
       // Generate signed URLs for preview images
-      const rawItems = (data ?? []) as any[];
+      const rawItems = (data ?? []) as Array<{
+        id: string;
+        user_id: string;
+        type: string;
+        title: string;
+        content: string | null;
+        summary: string | null;
+        user_notes: string | null;
+        tags: string[] | null;
+        preview_image_url: string | null;
+        embedding: string | null;
+        created_at: string;
+        updated_at: string;
+      }>;
       const normalizedItems: Item[] = rawItems.map(item => ({
         ...item,
         tags: item.tags ?? [],
