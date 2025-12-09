@@ -81,7 +81,7 @@ export const ItemCard = ({
     }
   };
 
-  const interactiveBadgeClasses = "cursor-pointer hover:bg-accent premium-transition text-xs font-semibold shadow-sm min-h-[44px] inline-flex items-center py-2";
+  const interactiveBadgeClasses = "cursor-pointer hover:bg-accent premium-transition";
   const formatDate = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), {
