@@ -122,7 +122,11 @@ export const OnboardingFlow = ({ open, onOpenChange, onComplete, onAddFirstItem 
 
   const handleComplete = () => {
     // Mark onboarding as complete in localStorage
-    localStorage.setItem('onboardingCompleted', 'true');
+    try {
+      localStorage.setItem('onboardingCompleted', 'true');
+    } catch (error) {
+      console.warn('Failed to save onboarding status to localStorage:', error);
+    }
     onComplete();
     onOpenChange(false);
   };
@@ -209,5 +213,10 @@ export const OnboardingFlow = ({ open, onOpenChange, onComplete, onAddFirstItem 
 
 // Helper function to check if user has completed onboarding
 export const hasCompletedOnboarding = (): boolean => {
-  return localStorage.getItem('onboardingCompleted') === 'true';
+  try {
+    return localStorage.getItem('onboardingCompleted') === 'true';
+  } catch (error) {
+    console.warn('Failed to read onboarding status from localStorage:', error);
+    return false; // Default to showing onboarding if localStorage is unavailable
+  }
 };
