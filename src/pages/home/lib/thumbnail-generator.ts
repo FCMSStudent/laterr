@@ -59,6 +59,8 @@ export async function generatePdfThumbnail(file: File): Promise<Blob> {
   if (!ctx) throw new Error('Failed to get canvas context');
   canvas.width = scaledViewport.width;
   canvas.height = scaledViewport.height;
+  // PDF.js render method expects specific parameter types that may not match TypeScript definitions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await page.render({ canvasContext: ctx, viewport: scaledViewport } as any).promise;
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Failed')), 'image/jpeg', THUMBNAIL_QUALITY);

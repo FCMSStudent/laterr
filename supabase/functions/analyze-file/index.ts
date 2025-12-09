@@ -111,10 +111,26 @@ function normalizeTags(tags: string[]): string[] {
 }
 
 /**
+ * AI Response structure from OpenAI-compatible API
+ */
+interface AIResponse {
+  choices?: Array<{
+    message?: {
+      tool_calls?: Array<{
+        function?: {
+          arguments?: string;
+        };
+      }>;
+      content?: string;
+    };
+  }>;
+}
+
+/**
  * Extract AI metadata from response, trying tool_calls first then content field
  * This handles cases where Gemini returns JSON in content instead of tool_calls
  */
-function extractAiMetadata(data: any, fallback: Record<string, unknown>): { raw: string | undefined, source: string } {
+function extractAiMetadata(data: AIResponse, fallback: Record<string, unknown>): { raw: string | undefined, source: string } {
   // Log full response for debugging
   console.log('📥 Full AI response:', JSON.stringify(data, null, 2));
   
@@ -192,7 +208,7 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
-          .map((item: any) => (item.str || ''))
+          .map((item: { str?: string }) => (item.str || ''))
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
@@ -329,7 +345,14 @@ Use the analyze_file function to provide structured output.`;
 
   // Build content parts with inline PDF data
   // Using the OpenAI-compatible format that Lovable AI Gateway supports
-  const contentParts: any[] = [
+  interface ContentPart {
+    type: string;
+    text?: string;
+    image_url?: {
+      url: string;
+    };
+  }
+  const contentParts: ContentPart[] = [
     { type: "text", text: promptText },
     {
       type: "image_url",
