@@ -63,6 +63,31 @@ const Index = () => {
   // Virtual scrolling ref
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // Configure virtualizer for grid layout - must be called before any conditional returns
+  // Estimate 4 columns on large screens, adjust based on breakpoints
+  const getColumnsCount = () => {
+    if (typeof window === 'undefined') return 4;
+    const width = window.innerWidth;
+    if (width >= 1280) return 4; // xl
+    if (width >= 1024) return 3; // lg
+    if (width >= 768) return 2; // md
+    return 1; // mobile
+  };
+  
+  const columnsCount = getColumnsCount();
+  const rowCount = Math.ceil(filteredItems.length / columnsCount);
+  
+  // Always call the hook (hooks cannot be conditional)
+  const rowVirtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 380, // Estimated height of ItemCard + gap
+    overscan: 2, // Render 2 extra rows above and below viewport
+  });
+  
+  // Enable virtual scrolling when there are 100+ items to improve performance
+  const useVirtualScrolling = filteredItems.length >= 100;
+
   // Load bookmarks from localStorage
   useEffect(() => {
     const savedBookmarks = localStorage.getItem('bookmarkedItems');
@@ -274,31 +299,6 @@ const Index = () => {
   const handleShowBookmarks = () => {
     setMobileView("bookmarks");
   };
-
-  // Enable virtual scrolling when there are 100+ items to improve performance
-  const useVirtualScrolling = filteredItems.length >= 100;
-  
-  // Configure virtualizer for grid layout
-  // Estimate 4 columns on large screens, adjust based on breakpoints
-  const getColumnsCount = () => {
-    if (typeof window === 'undefined') return 4;
-    const width = window.innerWidth;
-    if (width >= 1280) return 4; // xl
-    if (width >= 1024) return 3; // lg
-    if (width >= 768) return 2; // md
-    return 1; // mobile
-  };
-  
-  const columnsCount = getColumnsCount();
-  const rowCount = Math.ceil(filteredItems.length / columnsCount);
-  
-  const rowVirtualizer = useVirtualizer({
-    count: rowCount,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 380, // Estimated height of ItemCard + gap
-    overscan: 2, // Render 2 extra rows above and below viewport
-    enabled: useVirtualScrolling,
-  });
   
   return (
     <main className="w-full">
