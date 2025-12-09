@@ -107,9 +107,9 @@ export async function generateVideoThumbnail(file: File): Promise<Blob> {
  */
 async function convertDocxToPdfBlob(file: File): Promise<Blob> {
   // 1. Convert DOCX to HTML using mammoth (dynamically imported)
-  const mammoth = await import('mammoth');
+  const { default: mammoth } = await import('mammoth');
   const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.default.convertToHtml({ arrayBuffer });
+  const result = await mammoth.convertToHtml({ arrayBuffer });
   
   // 2. Create styled container for rendering (positioned off-screen)
   const container = document.createElement('div');
@@ -156,9 +156,9 @@ async function convertDocxToPdfBlob(file: File): Promise<Blob> {
  */
 async function generateDocxThumbnailFallback(file: File): Promise<Blob> {
   try {
-    const mammoth = await import('mammoth');
+    const { default: mammoth } = await import('mammoth');
     const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.default.convertToHtml({ arrayBuffer });
+    const result = await mammoth.convertToHtml({ arrayBuffer });
     const container = document.createElement('div');
     container.style.cssText = 'position:absolute;left:-9999px;width:816px;padding:40px;background:white;font:14px system-ui;line-height:1.5;color:#000';
     container.innerHTML = result.value;

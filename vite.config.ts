@@ -24,12 +24,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     chunkSizeWarningLimit: 600, // Suppress warnings for chunks under 600KB
     rollupOptions: {
-      // Externalize mammoth to prevent bundling issues with its circular dependencies
-      // It will be loaded from node_modules at runtime
-      external: (id) => {
-        // Don't externalize mammoth - this would require it to be in node_modules at runtime
-        return false;
-      },
       output: {
         manualChunks: (id) => {
           // Split vendor libraries into separate chunks for better caching
