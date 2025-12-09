@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { Dialog, DialogContent, DialogDescription } from "@/shared/components/ui/dialog";
 import {
   AlertDialog,
@@ -14,8 +14,12 @@ import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { LoadingSpinner } from "@/shared/components/feedback/LoadingSpinner";
-import { PDFPreview } from "./PDFPreview";
-import { DOCXPreview } from "./DOCXPreview";
+// Fixed: Lazy load document preview components to prevent "Cannot access before initialization" error
+// The react-pdf library sets pdfjs.GlobalWorkerOptions at module level, which can cause
+// initialization order issues when bundled. Lazy loading ensures these libraries are only
+// loaded when actually needed and after the main bundle is initialized.
+const PDFPreview = lazy(() => import("./PDFPreview").then(m => ({ default: m.PDFPreview })));
+const DOCXPreview = lazy(() => import("./DOCXPreview").then(m => ({ default: m.DOCXPreview })));
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ZoomIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -434,9 +438,13 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                 ) : signedUrl ? (
                   <>
                     {item.content?.toLowerCase().endsWith(".pdf") ? (
-                      <PDFPreview url={signedUrl} className="h-full" />
+                      <Suspense fallback={<LoadingSpinner size="sm" text="Loading PDF preview..." />}>
+                        <PDFPreview url={signedUrl} className="h-full" />
+                      </Suspense>
                     ) : item.content?.toLowerCase().endsWith(".docx") ? (
-                      <DOCXPreview url={signedUrl} className="h-full" />
+                      <Suspense fallback={<LoadingSpinner size="sm" text="Loading document preview..." />}>
+                        <DOCXPreview url={signedUrl} className="h-full" />
+                      </Suspense>
                     ) : item.type === "image" ? (
                       imageLoadError ? (
                         <div className="p-4 h-full flex items-center justify-center">

@@ -1,16 +1,24 @@
 /**
  * Client-side thumbnail generation utilities
  * Generates preview thumbnails for images, PDFs, videos, and documents
+ * 
+ * Fixed: Use dynamic imports for document libraries to prevent "Cannot access before initialization" errors
+ * Libraries like mammoth, html2canvas, and jsPDF have circular dependencies that cause issues when imported at module level
  */
 
 import { pdfjs } from 'react-pdf';
-import mammoth from 'mammoth';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_QUALITY } from '@/constants';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Fixed: Initialize PDF.js worker lazily to prevent "Cannot access before initialization" error
+// Setting pdfjs.GlobalWorkerOptions at module level can cause circular dependency issues when bundled
+// This function is called before first use instead of at module import time
+let pdfWorkerInitialized = false;
+function ensurePdfWorkerInitialized() {
+  if (!pdfWorkerInitialized) {
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    pdfWorkerInitialized = true;
+  }
+}
 
 // DOCX thumbnail constants
 const DOCX_MAX_CONTENT_HEIGHT = 1000;
@@ -48,6 +56,7 @@ export async function generateImageThumbnail(file: File): Promise<Blob> {
 }
 
 export async function generatePdfThumbnail(file: File): Promise<Blob> {
+  ensurePdfWorkerInitialized();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
   const page = await pdf.getPage(1);
@@ -97,9 +106,10 @@ export async function generateVideoThumbnail(file: File): Promise<Blob> {
  * Convert DOCX to PDF blob for higher-quality thumbnail generation
  */
 async function convertDocxToPdfBlob(file: File): Promise<Blob> {
-  // 1. Convert DOCX to HTML using mammoth
+  // 1. Convert DOCX to HTML using mammoth (dynamically imported)
+  const mammoth = await import('mammoth');
   const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.convertToHtml({ arrayBuffer });
+  const result = await mammoth.default.convertToHtml({ arrayBuffer });
   
   // 2. Create styled container for rendering (positioned off-screen)
   const container = document.createElement('div');
@@ -116,14 +126,16 @@ async function convertDocxToPdfBlob(file: File): Promise<Blob> {
   document.body.appendChild(container);
   
   try {
-    // 3. Render to canvas using html2canvas
+    // 3. Render to canvas using html2canvas (dynamically imported)
+    const html2canvas = (await import('html2canvas')).default;
     const canvas = await html2canvas(container, {
       scale: 2, // Higher quality
       useCORS: true,
       backgroundColor: '#ffffff'
     });
     
-    // 4. Convert canvas to PDF using jspdf
+    // 4. Convert canvas to PDF using jspdf (dynamically imported)
+    const { jsPDF } = await import('jspdf');
     const pdf = new jsPDF('p', 'pt', 'a4');
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -144,8 +156,9 @@ async function convertDocxToPdfBlob(file: File): Promise<Blob> {
  */
 async function generateDocxThumbnailFallback(file: File): Promise<Blob> {
   try {
+    const mammoth = await import('mammoth');
     const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.convertToHtml({ arrayBuffer });
+    const result = await mammoth.default.convertToHtml({ arrayBuffer });
     const container = document.createElement('div');
     container.style.cssText = 'position:absolute;left:-9999px;width:816px;padding:40px;background:white;font:14px system-ui;line-height:1.5;color:#000';
     container.innerHTML = result.value;

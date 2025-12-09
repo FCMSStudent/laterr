@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
-import mammoth from 'mammoth';
+// Fixed: Use dynamic import for mammoth to prevent "Cannot access before initialization" error
+// The mammoth library has internal circular dependencies that cause issues when imported at module level
+// Dynamic import ensures the library is only loaded when actually needed
 import DOMPurify from 'dompurify';
 
 interface DOCXPreviewProps {
@@ -27,8 +29,9 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
         
         const arrayBuffer = await response.arrayBuffer();
         
-        // Convert DOCX to HTML using mammoth
-        const result = await mammoth.convertToHtml({ arrayBuffer });
+        // Convert DOCX to HTML using mammoth (dynamically imported)
+        const mammoth = await import('mammoth');
+        const result = await mammoth.default.convertToHtml({ arrayBuffer });
         
         // Sanitize the HTML to prevent XSS attacks
         const sanitizedHtml = DOMPurify.sanitize(result.value, {

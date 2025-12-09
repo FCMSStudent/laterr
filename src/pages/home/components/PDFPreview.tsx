@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/shared/components/ui/button';
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner';
@@ -6,8 +6,15 @@ import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2 } from 'lucide-re
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Configure PDF.js worker from CDN
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Fixed: Initialize PDF.js worker lazily to prevent "Cannot access before initialization" error
+// Moved from module level to useEffect to avoid circular dependency issues during bundle initialization
+function usePdfWorkerInitialization() {
+  useEffect(() => {
+    if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    }
+  }, []);
+}
 
 // Get device pixel ratio for high-resolution rendering, capped at 2 for performance
 const getDevicePixelRatio = () => Math.min(window.devicePixelRatio || 1, 2);
@@ -18,6 +25,7 @@ interface PDFPreviewProps {
 }
 
 export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
+  usePdfWorkerInitialization();
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
