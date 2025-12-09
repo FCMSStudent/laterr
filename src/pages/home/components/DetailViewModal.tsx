@@ -387,6 +387,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                   <img 
                     src={item.preview_image_url} 
                     alt={item.title}
+                    loading="lazy"
                     className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
                     onError={() => setImageLoadError(true)}
                   />
@@ -449,6 +450,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
                           <img 
                             src={signedUrl} 
                             alt={item.title}
+                            loading="lazy"
                             className={`max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300 ${imageZoomed ? 'scale-125 cursor-zoom-out' : 'cursor-zoom-in hover:brightness-105'}`}
                             onLoad={handleImageLoad}
                             onClick={() => setImageZoomed(!imageZoomed)}

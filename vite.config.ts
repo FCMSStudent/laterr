@@ -16,24 +16,60 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    chunkSizeWarningLimit: 600, // Suppress warnings for chunks under 600KB
     rollupOptions: {
       output: {
-        manualChunks: {
+        manualChunks: (id) => {
           // Split vendor libraries into separate chunks for better caching
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-label',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-tooltip',
-          ],
-          'supabase-vendor': ['@supabase/supabase-js', '@tanstack/react-query'],
-          'utils-vendor': ['clsx', 'tailwind-merge', 'class-variance-authority', 'zod'],
+          if (id.includes('node_modules')) {
+            // React core libraries
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'react-vendor';
+            }
+            
+            // Radix UI components
+            if (id.includes('@radix-ui')) {
+              return 'ui-vendor';
+            }
+            
+            // Supabase and TanStack Query
+            if (id.includes('@supabase') || id.includes('@tanstack/react-query')) {
+              return 'supabase-vendor';
+            }
+            
+            // PDF and document processing libraries (heavy) - loaded lazily
+            if (id.includes('react-pdf') || id.includes('jspdf') || id.includes('html2canvas') || id.includes('mammoth')) {
+              return 'document-vendor';
+            }
+            
+            // DOMPurify for security
+            if (id.includes('dompurify')) {
+              return 'security-vendor';
+            }
+            
+            // Date and markdown utilities
+            if (id.includes('date-fns') || id.includes('react-markdown')) {
+              return 'content-vendor';
+            }
+            
+            // Chart libraries (if used)
+            if (id.includes('recharts')) {
+              return 'charts-vendor';
+            }
+            
+            // Lucide icons
+            if (id.includes('lucide-react')) {
+              return 'icons-vendor';
+            }
+            
+            // Utility libraries
+            if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority') || id.includes('zod')) {
+              return 'utils-vendor';
+            }
+            
+            // Everything else from node_modules
+            return 'vendor';
+          }
         },
       },
     },

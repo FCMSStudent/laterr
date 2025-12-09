@@ -125,7 +125,7 @@ export const ItemCard = ({
 
       {previewImageUrl ? <AspectRatio ratio={16 / 9} className="mb-6">
           <div className="relative w-full h-full rounded-xl overflow-hidden bg-muted/50">
-            <img src={previewImageUrl} alt={title} className="w-full h-full object-cover group-hover:scale-110 premium-transition" />
+            <img src={previewImageUrl} alt={title} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 premium-transition" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 premium-transition"></div>
           </div>
         </AspectRatio> : <AspectRatio ratio={16 / 9} className="mb-6">
