@@ -15,6 +15,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    // Exclude mammoth from pre-bundling to prevent circular dependency issues
+    // The mammoth library has internal circular dependencies that cause
+    // "Cannot access before initialization" errors when pre-bundled by Vite
+    exclude: ['mammoth'],
+  },
   build: {
     chunkSizeWarningLimit: 600, // Suppress warnings for chunks under 600KB
     rollupOptions: {
@@ -38,8 +44,22 @@ export default defineConfig(({ mode }) => ({
             }
             
             // PDF and document processing libraries (heavy) - loaded lazily
-            if (id.includes('react-pdf') || id.includes('jspdf') || id.includes('html2canvas') || id.includes('mammoth')) {
-              return 'document-vendor';
+            // Split into separate chunks to prevent circular dependency issues between these libraries
+            // react-pdf has internal circular dependencies that can cause "Cannot access before initialization" errors
+            // when bundled with other document libraries
+            if (id.includes('react-pdf') || id.includes('pdfjs-dist')) {
+              return 'pdf-vendor';
+            }
+            
+            // Keep mammoth in a separate async chunk to avoid initialization order issues
+            // mammoth has internal circular dependencies, so we isolate it
+            // It will only be loaded when actually needed via dynamic import()
+            if (id.includes('mammoth')) {
+              return 'mammoth-async';
+            }
+            
+            if (id.includes('jspdf') || id.includes('html2canvas')) {
+              return 'canvas-vendor';
             }
             
             // DOMPurify for security

@@ -4,7 +4,10 @@ import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import { GradientBackground } from "@/shared/components";
+// Fixed: Direct import instead of barrel file to prevent "Cannot access before initialization" error
+// Barrel files (@/shared/components/index.ts) can cause bundler initialization issues in entry points
+// when mixed with code-splitting and lazy loading, leading to circular references in the bundle
+import { GradientBackground } from "@/shared/components/layout/GradientBackground";
 import "./styles/gradient.css";
 
 // Lazy load route components for code splitting
