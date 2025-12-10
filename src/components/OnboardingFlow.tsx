@@ -210,13 +210,3 @@ export const OnboardingFlow = ({ open, onOpenChange, onComplete, onAddFirstItem 
     </Dialog>
   );
 };
-
-// Helper function to check if user has completed onboarding
-export const hasCompletedOnboarding = (): boolean => {
-  try {
-    return localStorage.getItem('onboardingCompleted') === 'true';
-  } catch (error) {
-    console.warn('Failed to read onboarding status from localStorage:', error);
-    return false; // Default to showing onboarding if localStorage is unavailable
-  }
-};
