@@ -19,7 +19,8 @@ import { AUTH_ERRORS, getNetworkErrorMessage } from "@/shared/lib/error-messages
 import { BottomNav } from "@/shared/components/layout/BottomNav";
 import { MobileHeader } from "@/shared/components/layout/MobileHeader";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { OnboardingFlow, hasCompletedOnboarding } from "@/components/OnboardingFlow";
+import { OnboardingFlow } from "@/components/OnboardingFlow";
+import { hasCompletedOnboarding } from "@/shared/lib/onboarding-utils";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("./components/AddItemModal").then(({
