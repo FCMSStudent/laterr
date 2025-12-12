@@ -181,9 +181,15 @@ All colors MUST be HSL.
     overflow-x: hidden;
   }
 
-  /* Glassmorphism with browser fallbacks and performance optimization */
+  /* Glassmorphism with browser fallbacks and performance optimization
+   * Fallback strategy:
+   * 1. Base: Solid background (Safari < 15.4, older browsers)
+   * 2. Enhanced: backdrop-filter with blur (Modern browsers)
+   * 3. Mobile: Reduced blur intensity for performance
+   * 4. Reduced motion: Minimal blur for accessibility
+   */
   .glass-card {
-    /* Fallback for older browsers that don't support backdrop-filter */
+    /* Fallback for older browsers that don't support backdrop-filter (including Safari < 15.4) */
     background-color: rgba(255, 255, 255, 0.92);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
@@ -265,7 +271,7 @@ All colors MUST be HSL.
   }
 
   .glass-input {
-    /* Fallback for browsers without backdrop-filter */
+    /* Fallback for browsers without backdrop-filter (including Safari < 15.4) */
     background-color: rgba(255, 255, 255, 0.85);
     border: 1px solid var(--glass-border);
   }
