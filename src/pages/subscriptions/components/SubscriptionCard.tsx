@@ -63,6 +63,16 @@ export const SubscriptionCard = ({
     return found?.symbol ?? curr;
   };
 
+  // Helper to safely extract hostname from URL
+  const getHostname = (url: string | null): string => {
+    if (!url) return '';
+    try {
+      return new URL(url).hostname.replace('www.', '');
+    } catch {
+      return url;
+    }
+  };
+
   const getStatusColor = (s: string) => {
     switch (s) {
       case 'active':
@@ -234,7 +244,7 @@ export const SubscriptionCard = ({
           <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground/70">
             <Globe className="h-3 w-3" />
             <span className="truncate max-w-[150px]">
-              {new URL(subscription.website_url).hostname.replace('www.', '')}
+              {getHostname(subscription.website_url)}
             </span>
           </div>
         )}

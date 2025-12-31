@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, lazy, Suspense, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ItemCard } from "./components/ItemCard";
 import { ItemCardSkeleton } from "./components/ItemCardSkeleton";
 import { SearchBar } from "./components/SearchBar";
 import { LoadingSpinner } from "@/shared/components/feedback/LoadingSpinner";
 import { Button } from "@/shared/components/ui/button";
-import { Sparkles, LogOut, Plus } from "lucide-react";
+import { Sparkles, LogOut, Plus, CreditCard } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "./hooks/useDebounce";
 import { FilterBar, type SortOption } from "./components/FilterBar";
@@ -332,6 +332,12 @@ const Index = () => {
                 <p className="text-muted-foreground text-xs sm:text-sm font-medium">Your personal knowledge space</p>
               </div>
               <nav aria-label="Main navigation" className="flex items-center gap-4">
+                <Button asChild variant="outline" size="sm" className="text-muted-foreground hover:text-foreground smooth-transition">
+                  <Link to="/subscriptions" aria-label="Manage subscriptions">
+                    <CreditCard className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Subscriptions
+                  </Link>
+                </Button>
                 <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
                   <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                   Add Item

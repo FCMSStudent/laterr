@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription } from "@/shared/components/ui/dialog";
 import {
   AlertDialog,
@@ -89,6 +89,16 @@ export const DetailViewModal = ({
       default: return cycle;
     }
   };
+
+  // Helper to safely extract hostname from URL
+  const getHostname = useCallback((url: string | null): string => {
+    if (!url) return '';
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return url;
+    }
+  }, []);
 
   const getMonthlyEquivalent = () => {
     const { amount, billing_cycle } = subscription;
@@ -267,7 +277,7 @@ export const DetailViewModal = ({
                     className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
                   >
                     <Globe className="h-3.5 w-3.5" />
-                    <span className="truncate">{new URL(subscription.website_url).hostname}</span>
+                    <span className="truncate">{getHostname(subscription.website_url)}</span>
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
