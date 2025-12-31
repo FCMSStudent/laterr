@@ -94,6 +94,149 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          category: string
+          amount: number
+          currency: string
+          billing_cycle: string
+          next_billing_date: string
+          status: string
+          payment_method: string | null
+          website_url: string | null
+          logo_url: string | null
+          notes: string | null
+          tags: string[] | null
+          reminder_days_before: number
+          auto_renew: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          category?: string
+          amount: number
+          currency?: string
+          billing_cycle?: string
+          next_billing_date: string
+          status?: string
+          payment_method?: string | null
+          website_url?: string | null
+          logo_url?: string | null
+          notes?: string | null
+          tags?: string[] | null
+          reminder_days_before?: number
+          auto_renew?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          category?: string
+          amount?: number
+          currency?: string
+          billing_cycle?: string
+          next_billing_date?: string
+          status?: string
+          payment_method?: string | null
+          website_url?: string | null
+          logo_url?: string | null
+          notes?: string | null
+          tags?: string[] | null
+          reminder_days_before?: number
+          auto_renew?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscription_payments: {
+        Row: {
+          id: string
+          subscription_id: string
+          user_id: string
+          amount: number
+          currency: string
+          payment_date: string
+          status: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          subscription_id: string
+          user_id: string
+          amount: number
+          currency?: string
+          payment_date: string
+          status?: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          subscription_id?: string
+          user_id?: string
+          amount?: number
+          currency?: string
+          payment_date?: string
+          status?: string
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_analytics: {
+        Row: {
+          id: string
+          user_id: string
+          period_start: string
+          period_end: string
+          total_monthly_cost: number
+          total_yearly_cost: number
+          active_count: number
+          by_category: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          period_start: string
+          period_end: string
+          total_monthly_cost?: number
+          total_yearly_cost?: number
+          active_count?: number
+          by_category?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          period_start?: string
+          period_end?: string
+          total_monthly_cost?: number
+          total_yearly_cost?: number
+          active_count?: number
+          by_category?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
       tag_icons: {
         Row: {
           created_at: string
@@ -133,6 +276,46 @@ export type Database = {
           id: string
           similarity: number
           title: string
+        }[]
+      }
+      get_upcoming_renewals: {
+        Args: {
+          p_user_id: string
+          p_days_ahead?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          amount: number
+          currency: string
+          billing_cycle: string
+          next_billing_date: string
+          days_until_renewal: number
+          logo_url: string | null
+          status: string
+        }[]
+      }
+      calculate_subscription_analytics: {
+        Args: {
+          p_user_id: string
+          p_start_date?: string | null
+          p_end_date?: string | null
+        }
+        Returns: {
+          category: string
+          total_amount: number
+          monthly_equivalent: number
+          subscription_count: number
+        }[]
+      }
+      get_subscription_totals: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          total_monthly: number
+          total_yearly: number
+          active_count: number
         }[]
       }
     }
