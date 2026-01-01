@@ -29,17 +29,23 @@ const MEASUREMENT_ICONS: Record<string, any> = {
 export const MeasurementCard = ({ measurement, onEdit, onDelete, showTrend }: MeasurementCardProps) => {
   const Icon = MEASUREMENT_ICONS[measurement.measurement_type] || Activity;
   
-  // Format the display value
-  const getDisplayValue = () => {
-    if (typeof measurement.value === 'object') {
+  // Format the display value - always returns a string or number for rendering
+  const getDisplayValue = (): string | number => {
+    if (typeof measurement.value === 'object' && measurement.value !== null) {
       if ('systolic' in measurement.value && 'diastolic' in measurement.value) {
         return `${measurement.value.systolic}/${measurement.value.diastolic}`;
       }
-      if ('value' in measurement.value) {
+      if ('value' in measurement.value && measurement.value.value !== undefined) {
         return measurement.value.value;
       }
+      // For any other object structure, convert to string
+      return JSON.stringify(measurement.value);
     }
-    return measurement.value;
+    // For primitive values
+    if (typeof measurement.value === 'string' || typeof measurement.value === 'number') {
+      return measurement.value;
+    }
+    return String(measurement.value);
   };
 
   const displayValue = getDisplayValue();
