@@ -14,6 +14,7 @@ import "./styles/gradient.css";
 const Landing = lazy(() => import("./pages/landing"));
 const Index = lazy(() => import("./pages/home"));
 const Subscriptions = lazy(() => import("./pages/subscriptions"));
+const Health = lazy(() => import("./pages/health"));
 const Auth = lazy(() => import("./pages/auth"));
 const NotFound = lazy(() => import("./pages/not-found"));
 const MobileNavDemo = lazy(() => import("./pages/mobile-demo"));
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/app" element={<Index />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/health" element={<Health />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/mobile-demo" element={<MobileNavDemo />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
