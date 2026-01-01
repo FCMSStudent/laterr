@@ -105,8 +105,20 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
   // Update goal mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<GoalFormData> & { status?: GoalStatus; current_value?: GoalValue } }) => {
+      // Define proper interface for update data to improve type safety
+      interface GoalUpdateData {
+        goal_type?: string;
+        target_value?: GoalValue;
+        start_date?: string;
+        target_date?: string;
+        motivation?: string;
+        milestones?: Milestone[];
+        status?: GoalStatus;
+        current_value?: GoalValue;
+      }
+
       // Convert to plain object compatible with Supabase types
-      const updateData: Record<string, string | number | boolean | GoalValue | Milestone[] | undefined> = {};
+      const updateData: GoalUpdateData = {};
       if (data.goal_type !== undefined) updateData.goal_type = data.goal_type;
       if (data.target_value !== undefined) updateData.target_value = data.target_value;
       if (data.start_date !== undefined) updateData.start_date = data.start_date;

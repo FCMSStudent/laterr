@@ -86,7 +86,11 @@ export interface ExtractedHealthData {
   diagnoses?: string[];
   recommendations?: string[];
   summary?: string;
-  [key: string]: string | string[] | TestResult[] | Medication[] | undefined;
+  provider_name?: string;
+  visit_date?: string;
+  // Allow additional fields for flexibility in medical data extraction
+  // Values are constrained to safe JSON-serializable types
+  [key: string]: string | string[] | TestResult[] | Medication[] | number | boolean | null | undefined;
 }
 
 export interface HealthDocument {

@@ -178,12 +178,24 @@ serve(async (req) => {
       count: number;
     }
 
+    // Helper function to extract numeric value from measurement
+    const extractNumericValue = (value: number | { value: number } | Record<string, unknown>): number | undefined => {
+      if (typeof value === 'number') {
+        return value;
+      }
+      if (typeof value === 'object' && value && 'value' in value) {
+        const numValue = (value as { value: number }).value;
+        return typeof numValue === 'number' ? numValue : undefined;
+      }
+      return undefined;
+    };
+
     // Calculate basic trends for each measurement type
     const trends: Record<string, TrendData> = {};
     Object.entries(measurementsByType).forEach(([type, values]) => {
       if (values.length >= 2) {
         const numericValues = values
-          .map((v) => typeof v.value === 'object' && v.value && 'value' in v.value ? (v.value as { value: number }).value : v.value)
+          .map((v) => extractNumericValue(v.value))
           .filter((v): v is number => typeof v === 'number' && !isNaN(v));
 
         if (numericValues.length >= 2) {

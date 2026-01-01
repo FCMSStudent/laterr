@@ -193,10 +193,15 @@ serve(async (req) => {
         document?: Document;
       }
       
+      // Type guard to check if parsed result has a document property
+      const hasDocument = (obj: unknown): obj is DOMDocument => {
+        return typeof obj === 'object' && obj !== null && 'document' in obj;
+      };
+      
       // Use Readability to extract main article content
       try {
-        const parsed = parseHTML(html) as unknown as DOMDocument;
-        const doc = ('document' in parsed ? parsed.document : parsed) as Document;
+        const parsed = parseHTML(html);
+        const doc = (hasDocument(parsed) ? parsed.document : parsed) as Document;
         const reader = new Readability(doc, { 
           keepClasses: false 
         });
