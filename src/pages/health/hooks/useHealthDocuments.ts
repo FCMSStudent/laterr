@@ -252,7 +252,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
 
       // Fetch full document data for results
       if (data && data.length > 0) {
-        const ids = data.map((d: any) => d.id);
+        const ids = data.map((d: { id: string }) => d.id);
         const { data: fullDocs, error: fetchError } = await supabase
           .from('health_documents')
           .select('*')

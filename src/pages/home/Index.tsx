@@ -8,7 +8,7 @@ import { LoadingSpinner } from "@/shared/components/feedback/LoadingSpinner";
 import { Button } from "@/shared/components/ui/button";
 import { Sparkles, LogOut, Plus, CreditCard } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
-import { useDebounce } from "./hooks/useDebounce";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { FilterBar, type SortOption } from "./components/FilterBar";
 import { SUPABASE_ITEMS_TABLE } from "@/constants";
 import type { Item, User, ItemType } from "@/shared/types";

@@ -207,9 +207,12 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
       try {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
+        interface PDFTextItem {
+          str?: string;
+        }
         const pageText = textContent.items
-          .filter((item: any) => 'str' in item)
-          .map((item: any) => item.str || '')
+          .filter((item: PDFTextItem) => 'str' in item)
+          .map((item: PDFTextItem) => item.str || '')
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();

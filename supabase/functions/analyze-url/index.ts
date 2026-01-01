@@ -189,10 +189,19 @@ serve(async (req) => {
       const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
       metaDescription = descMatch ? descMatch[1] : '';
       
+      interface DOMDocument {
+        document?: Document;
+      }
+      
+      // Type guard to check if parsed result has a document property
+      const hasDocument = (obj: unknown): obj is DOMDocument => {
+        return typeof obj === 'object' && obj !== null && 'document' in obj;
+      };
+      
       // Use Readability to extract main article content
       try {
-        const parsed = parseHTML(html) as any;
-        const doc = ('document' in parsed ? parsed.document : parsed) as any;
+        const parsed = parseHTML(html);
+        const doc = (hasDocument(parsed) ? parsed.document : parsed) as Document;
         const reader = new Readability(doc, { 
           keepClasses: false 
         });
