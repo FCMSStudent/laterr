@@ -161,7 +161,7 @@ CREATE TABLE public.health_insights (
   insight_type TEXT NOT NULL,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
-  confidence_score DECIMAL(3, 2) CHECK (confidence_score >= 0 AND confidence_score <= 1),
+  confidence_score DECIMAL(4, 3) CHECK (confidence_score >= 0 AND confidence_score <= 1),
   related_measurements UUID[] DEFAULT '{}',
   related_documents UUID[] DEFAULT '{}',
   generated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),

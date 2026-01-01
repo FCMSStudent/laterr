@@ -27,6 +27,8 @@ export interface MeasurementValue {
   systolic?: number;
   diastolic?: number;
   unit?: string;
+  // Flexible index signature to support custom measurement types with arbitrary properties
+  // This is intentional to allow users to create custom health metrics
   [key: string]: any;
 }
 

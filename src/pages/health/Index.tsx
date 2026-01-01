@@ -211,12 +211,12 @@ const HealthIndex = () => {
                               {insight.insight_type}
                             </span>
                             {insight.confidence_score && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground" aria-label={`Confidence: ${Math.round(insight.confidence_score * 100)} percent`}>
                                 {Math.round(insight.confidence_score * 100)}% confidence
                               </span>
                             )}
                           </div>
-                          <CardTitle className="text-xl">{insight.title}</CardTitle>
+                          <h3 className="text-xl font-semibold">{insight.title}</h3>
                         </div>
                       </div>
                     </CardHeader>
