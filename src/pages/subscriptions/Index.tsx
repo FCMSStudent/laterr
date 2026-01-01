@@ -10,7 +10,7 @@ import { AnalyticsPanel } from "./components/AnalyticsPanel";
 import { Button } from "@/shared/components/ui/button";
 import { Plus, LogOut, CreditCard, ArrowLeft } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
-import { useDebounce } from "../home/hooks/useDebounce";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useSubscriptions } from "./hooks/useSubscriptions";
 import { BottomNav } from "@/shared/components/layout/BottomNav";
 import { MobileHeader } from "@/shared/components/layout/MobileHeader";
