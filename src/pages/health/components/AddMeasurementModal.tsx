@@ -10,7 +10,7 @@ import { Label } from '@/shared/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useMeasurements } from '../hooks';
-import type { MeasurementType } from '../types';
+import type { MeasurementType, MeasurementValue } from '../types';
 
 interface AddMeasurementModalProps {
   open: boolean;
@@ -44,7 +44,7 @@ export const AddMeasurementModal = ({ open, onOpenChange }: AddMeasurementModalP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let measurementValue: any;
+    let measurementValue: MeasurementValue;
     
     if (selectedType?.hasCompound) {
       // Blood pressure has systolic and diastolic

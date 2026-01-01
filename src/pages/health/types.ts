@@ -29,7 +29,7 @@ export interface MeasurementValue {
   unit?: string;
   // Flexible index signature to support custom measurement types with arbitrary properties
   // This is intentional to allow users to create custom health metrics
-  [key: string]: any;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface HealthMeasurement {
@@ -85,7 +85,8 @@ export interface ExtractedHealthData {
   medications?: Medication[];
   diagnoses?: string[];
   recommendations?: string[];
-  [key: string]: any;
+  summary?: string;
+  [key: string]: string | string[] | TestResult[] | Medication[] | undefined;
 }
 
 export interface HealthDocument {
@@ -130,7 +131,7 @@ export interface GoalValue {
   unit?: string;
   daily?: number;
   weekly?: number;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 export interface Milestone {

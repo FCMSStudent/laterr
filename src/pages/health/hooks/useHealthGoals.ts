@@ -7,7 +7,7 @@ import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { HealthGoal, GoalFormData, GoalStatus } from '../types';
+import type { HealthGoal, GoalFormData, GoalStatus, GoalValue, Milestone } from '../types';
 
 interface UseHealthGoalsOptions {
   status?: GoalStatus;
@@ -70,14 +70,14 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
 
       const insertData = {
         goal_type: formData.goal_type,
-        target_value: formData.target_value as any,
+        target_value: formData.target_value as GoalValue,
         start_date: formData.start_date,
         target_date: formData.target_date,
         motivation: formData.motivation,
         user_id: user.id,
-        current_value: {} as any,
-        status: 'active',
-        milestones: (formData.milestones || []) as any,
+        current_value: {} as GoalValue,
+        status: 'active' as const,
+        milestones: (formData.milestones || []) as Milestone[],
       };
 
       const { data, error } = await supabase
@@ -104,9 +104,9 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
 
   // Update goal mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<GoalFormData> & { status?: GoalStatus; current_value?: any } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<GoalFormData> & { status?: GoalStatus; current_value?: GoalValue } }) => {
       // Convert to plain object compatible with Supabase types
-      const updateData: Record<string, any> = {};
+      const updateData: Record<string, string | number | boolean | GoalValue | Milestone[] | undefined> = {};
       if (data.goal_type !== undefined) updateData.goal_type = data.goal_type;
       if (data.target_value !== undefined) updateData.target_value = data.target_value;
       if (data.start_date !== undefined) updateData.start_date = data.start_date;

@@ -111,9 +111,12 @@ async function extractPdfText(fileUrl: string): Promise<{ text: string; pageCoun
     for (let i = 1; i <= pagesToExtract; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
+      interface PDFTextItem {
+        str?: string;
+      }
       const pageText = textContent.items
-        .filter((item: any) => 'str' in item)
-        .map((item: any) => item.str || '')
+        .filter((item: PDFTextItem) => 'str' in item)
+        .map((item: PDFTextItem) => item.str || '')
         .join(' ')
         .replace(/\s+/g, ' ')
         .trim();
@@ -197,7 +200,12 @@ serve(async (req) => {
 **Document Name**: ${fileName}
 `;
 
-    let contentParts: any[] = [];
+    interface ContentPart {
+      type: string;
+      text?: string;
+      image_url?: { url: string };
+    }
+    let contentParts: ContentPart[] = [];
 
     if (fileType.startsWith('image/')) {
       // Use vision for images
@@ -273,8 +281,11 @@ Use the analyze_health_document function to provide structured output.`;
     const extractedData = JSON.parse(toolCall.function.arguments);
     console.log('✅ Medical data extracted:', extractedData);
 
+    interface TestResult {
+      test_name: string;
+    }
     // Generate embedding for semantic search
-    const embeddingText = `${extractedData.summary || ''} ${extractedData.diagnoses?.join(' ') || ''} ${extractedData.test_results?.map((t: any) => t.test_name).join(' ') || ''}`;
+    const embeddingText = `${extractedData.summary || ''} ${extractedData.diagnoses?.join(' ') || ''} ${(extractedData.test_results as TestResult[])?.map((t) => t.test_name).join(' ') || ''}`;
     
     console.log('🔮 Generating embedding for semantic search...');
     const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {

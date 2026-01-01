@@ -2,7 +2,7 @@
  * MeasurementCard - Display individual measurement with actions
  */
 
-import { Activity, Droplet, Heart, Scale, Moon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Activity, Droplet, Heart, Scale, Moon, TrendingUp, TrendingDown, Minus, LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { format } from 'date-fns';
@@ -16,7 +16,7 @@ interface MeasurementCardProps {
   showTrend?: 'up' | 'down' | 'stable';
 }
 
-const MEASUREMENT_ICONS: Record<string, any> = {
+const MEASUREMENT_ICONS: Record<string, LucideIcon> = {
   weight: Scale,
   blood_pressure: Activity,
   heart_rate: Heart,

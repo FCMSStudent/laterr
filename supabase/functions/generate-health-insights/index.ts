@@ -152,9 +152,16 @@ serve(async (req) => {
 
     console.log(`📄 Found ${documents?.length || 0} recent documents`);
 
+    interface MeasurementRecord {
+      measurement_type: string;
+      value: number | { value: number } | Record<string, unknown>;
+      measured_at: string;
+      unit?: string;
+    }
+
     // Aggregate measurement data by type
-    const measurementsByType: Record<string, any[]> = {};
-    measurements?.forEach((m: any) => {
+    const measurementsByType: Record<string, MeasurementRecord[]> = {};
+    measurements?.forEach((m: MeasurementRecord) => {
       if (!measurementsByType[m.measurement_type]) {
         measurementsByType[m.measurement_type] = [];
       }
@@ -165,14 +172,19 @@ serve(async (req) => {
       });
     });
 
+    interface TrendData {
+      trend: string;
+      recentAvg: number;
+      count: number;
+    }
+
     // Calculate basic trends for each measurement type
-    const trends: Record<string, any> = {};
+    const trends: Record<string, TrendData> = {};
     Object.entries(measurementsByType).forEach(([type, values]) => {
       if (values.length >= 2) {
         const numericValues = values
-          .map((v: any) => typeof v.value === 'object' ? v.value.value : v.value)
-          .filter((v: any) => !isNaN(parseFloat(v)))
-          .map((v: any) => parseFloat(v));
+          .map((v) => typeof v.value === 'object' && v.value && 'value' in v.value ? (v.value as { value: number }).value : v.value)
+          .filter((v): v is number => typeof v === 'number' && !isNaN(v));
 
         if (numericValues.length >= 2) {
           const recent = numericValues.slice(0, Math.ceil(numericValues.length / 2));
@@ -193,18 +205,31 @@ serve(async (req) => {
       }
     });
 
+    interface GoalRecord {
+      goal_type: string;
+      target_value: unknown;
+      current_value: unknown;
+      target_date?: string;
+    }
+
+    interface DocumentRecord {
+      document_type: string;
+      summary?: string;
+      visit_date?: string;
+    }
+
     // Prepare data summary for AI
     const dataSummary = {
       measurementTypes: Object.keys(measurementsByType),
       trends,
       totalMeasurements: measurements?.length || 0,
-      activeGoals: goals?.map((g: any) => ({
+      activeGoals: goals?.map((g: GoalRecord) => ({
         type: g.goal_type,
         target: g.target_value,
         current: g.current_value,
         targetDate: g.target_date
       })) || [],
-      recentDocuments: documents?.map((d: any) => ({
+      recentDocuments: documents?.map((d: DocumentRecord) => ({
         type: d.document_type,
         summary: d.summary?.substring(0, 200),
         date: d.visit_date
@@ -221,17 +246,17 @@ serve(async (req) => {
 - Active goals: ${dataSummary.activeGoals.length}
 
 **Trends Detected:**
-${Object.entries(trends).map(([type, data]: [string, any]) => 
+${Object.entries(trends).map(([type, data]) => 
   `- ${type}: ${data.trend} (avg: ${data.recentAvg.toFixed(1)}, count: ${data.count})`
 ).join('\n')}
 
 **Active Goals:**
-${dataSummary.activeGoals.map((g: any) => 
+${dataSummary.activeGoals.map((g) => 
   `- ${g.type}: Target ${JSON.stringify(g.target)}, Current ${JSON.stringify(g.current)}`
 ).join('\n') || 'No active goals'}
 
 **Recent Medical Documents:**
-${dataSummary.recentDocuments.map((d: any) => 
+${dataSummary.recentDocuments.map((d) => 
   `- ${d.type} from ${d.date || 'unknown date'}: ${d.summary || 'No summary'}`
 ).join('\n') || 'No recent documents'}
 
@@ -277,20 +302,34 @@ Use the generate_health_insights function to provide structured output.`;
     const { insights } = JSON.parse(toolCall.function.arguments);
     console.log(`✅ Generated ${insights.length} insights`);
 
+    interface InsightMeasurement {
+      measurement_type: string;
+      id: string;
+    }
+
     // Get measurement IDs for related types
     const getMeasurementIds = (measurementTypes: string[]) => {
       const ids: string[] = [];
       measurementTypes?.forEach((type: string) => {
-        const typeMeasurements = measurements?.filter((m: any) => m.measurement_type === type);
+        const typeMeasurements = measurements?.filter((m: InsightMeasurement) => m.measurement_type === type);
         if (typeMeasurements && typeMeasurements.length > 0) {
-          ids.push(...typeMeasurements.slice(0, 5).map((m: any) => m.id));
+          ids.push(...typeMeasurements.slice(0, 5).map((m) => m.id));
         }
       });
       return ids;
     };
 
+    interface GeneratedInsight {
+      type: string;
+      title: string;
+      description: string;
+      action_items?: string[];
+      related_measurements?: string[];
+      priority?: string;
+    }
+
     // Store insights in database
-    const insightsToInsert = insights.map((insight: any) => ({
+    const insightsToInsert = insights.map((insight: GeneratedInsight) => ({
       user_id: userId,
       insight_type: insight.type,
       title: insight.title,
