@@ -45,7 +45,7 @@ export const useMeasurementTrends = (options: UseMeasurementTrendsOptions) => {
           date: format(new Date(m.measured_at), 'MMM dd'),
           value: numericValue,
           label: m.unit || '',
-        };
+        } as ChartDataPoint;
       })
       .filter((d): d is ChartDataPoint => d !== null)
       .reverse(); // Reverse to show oldest to newest
