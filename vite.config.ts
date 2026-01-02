@@ -23,7 +23,26 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     chunkSizeWarningLimit: 600, // Suppress warnings for chunks under 600KB
+    modulePreload: {
+      // Exclude mammoth from module preloading as it has circular dependencies
+      // that cause "Cannot access '$' before initialization" errors when eagerly loaded
+      resolveDependencies: (filename, deps) => {
+        // Use precise matching for mammoth package to avoid false positives
+        return deps.filter(dep => !(dep.includes('/mammoth') || dep.startsWith('mammoth')));
+      },
+    },
     rollupOptions: {
+      // Mark mammoth as having no side effects to prevent static imports
+      treeshake: {
+        moduleSideEffects: (id) => {
+          // mammoth package should not be included as a side-effect import
+          // Use node_modules path matching for precision
+          if (id.includes('node_modules/mammoth') || id.includes('node_modules\\mammoth')) {
+            return false;
+          }
+          return true;
+        },
+      },
       output: {
         manualChunks: (id) => {
           // Split vendor libraries into separate chunks for better caching
@@ -53,7 +72,7 @@ export default defineConfig(({ mode }) => ({
             
             // Keep mammoth in a separate async chunk to avoid initialization order issues
             // mammoth has internal circular dependencies, so we isolate it
-            // It will only be loaded when actually needed via dynamic import()
+            // The modulePreload filter above excludes this chunk from being eagerly loaded
             if (id.includes('mammoth')) {
               return 'mammoth-async';
             }
