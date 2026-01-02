@@ -42,7 +42,7 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
       
       if (error) throw error;
       
-      return (data || []) as unknown as HealthGoal[];
+      return (data || []) as HealthGoal[];
     },
   });
 
@@ -59,7 +59,7 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
       return null;
     }
 
-    return data as unknown as HealthGoal;
+    return data as HealthGoal;
   }, []);
 
   // Create goal mutation
@@ -68,26 +68,20 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const insertData = {
-        goal_type: formData.goal_type,
-        target_value: formData.target_value as any,
-        start_date: formData.start_date,
-        target_date: formData.target_date,
-        motivation: formData.motivation,
-        user_id: user.id,
-        current_value: {} as any,
-        status: 'active',
-        milestones: (formData.milestones || []) as any,
-      };
-
       const { data, error } = await supabase
         .from('health_goals')
-        .insert(insertData)
+        .insert({
+          ...formData,
+          user_id: user.id,
+          current_value: {},
+          status: 'active',
+          milestones: formData.milestones || [],
+        })
         .select()
         .single();
 
       if (error) throw error;
-      return data as unknown as HealthGoal;
+      return data as HealthGoal;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['health-goals'] });
@@ -105,26 +99,15 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
   // Update goal mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<GoalFormData> & { status?: GoalStatus; current_value?: any } }) => {
-      // Convert to plain object compatible with Supabase types
-      const updateData: Record<string, any> = {};
-      if (data.goal_type !== undefined) updateData.goal_type = data.goal_type;
-      if (data.target_value !== undefined) updateData.target_value = data.target_value;
-      if (data.start_date !== undefined) updateData.start_date = data.start_date;
-      if (data.target_date !== undefined) updateData.target_date = data.target_date;
-      if (data.motivation !== undefined) updateData.motivation = data.motivation;
-      if (data.milestones !== undefined) updateData.milestones = data.milestones;
-      if (data.status !== undefined) updateData.status = data.status;
-      if (data.current_value !== undefined) updateData.current_value = data.current_value;
-
       const { data: result, error } = await supabase
         .from('health_goals')
-        .update(updateData)
+        .update(data)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return result as unknown as HealthGoal;
+      return result as HealthGoal;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['health-goals'] });

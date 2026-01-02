@@ -144,16 +144,15 @@ const Index = () => {
         created_at: string;
         updated_at: string;
       }>;
-      const normalizedItems = rawItems.map(item => ({
+      const normalizedItems: Item[] = rawItems.map(item => ({
         ...item,
-        type: item.type as ItemType,
         tags: item.tags ?? [],
         preview_image_url: item.preview_image_url ?? null,
         summary: item.summary ?? null,
         user_notes: item.user_notes ?? null,
         content: item.content ?? null,
         embedding: item.embedding ? JSON.parse(item.embedding) : null
-      })) as Item[];
+      }));
       const itemsWithSignedUrls = await generateSignedUrlsForItems(normalizedItems);
       setItems(itemsWithSignedUrls);
       setFilteredItems(itemsWithSignedUrls);

@@ -42,7 +42,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
       
       if (error) throw error;
       
-      return (data || []) as unknown as HealthDocument[];
+      return (data || []) as HealthDocument[];
     },
   });
 
@@ -59,7 +59,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
       return null;
     }
 
-    return data as unknown as HealthDocument;
+    return data as HealthDocument;
   }, []);
 
   // Upload and analyze health document
@@ -128,7 +128,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
         .single();
 
       if (dbError) throw dbError;
-      return document as unknown as HealthDocument;
+      return document as HealthDocument;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['health-documents'] });
@@ -154,7 +154,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
         .single();
 
       if (error) throw error;
-      return result as unknown as HealthDocument;
+      return result as HealthDocument;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['health-documents'] });
@@ -259,7 +259,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
           .in('id', ids);
 
         if (fetchError) throw fetchError;
-        return (fullDocs || []) as unknown as HealthDocument[];
+        return (fullDocs || []) as HealthDocument[];
       }
 
       return [];
