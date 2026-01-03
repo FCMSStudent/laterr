@@ -47,7 +47,7 @@ export const useMeasurementTrends = (options: UseMeasurementTrendsOptions) => {
           label: m.unit || '',
         };
       })
-      .filter((d): d is ChartDataPoint => d !== null)
+      .filter((d): d is { date: string; value: number; label: string } => d !== null)
       .reverse(); // Reverse to show oldest to newest
   }, [measurements]);
 

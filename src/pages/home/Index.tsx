@@ -146,6 +146,7 @@ const Index = () => {
       }>;
       const normalizedItems: Item[] = rawItems.map(item => ({
         ...item,
+        type: item.type as ItemType,
         tags: item.tags ?? [],
         preview_image_url: item.preview_image_url ?? null,
         summary: item.summary ?? null,

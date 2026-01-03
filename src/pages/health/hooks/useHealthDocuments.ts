@@ -29,7 +29,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
       if (!user) throw new Error('Not authenticated');
 
       let query = supabase
-        .from('health_documents')
+        .from('health_documents' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -42,14 +42,14 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
       
       if (error) throw error;
       
-      return (data || []) as HealthDocument[];
+      return (data || []) as unknown as HealthDocument[];
     },
   });
 
   // Fetch single document by ID
   const fetchDocument = useCallback(async (id: string): Promise<HealthDocument | null> => {
     const { data, error } = await supabase
-      .from('health_documents')
+      .from('health_documents' as any)
       .select('*')
       .eq('id', id)
       .single();
@@ -59,7 +59,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
       return null;
     }
 
-    return data as HealthDocument;
+    return data as unknown as HealthDocument;
   }, []);
 
   // Upload and analyze health document
@@ -110,7 +110,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
 
       // Create document record with analysis results
       const { data: document, error: dbError } = await supabase
-        .from('health_documents')
+        .from('health_documents' as any)
         .insert({
           user_id: user.id,
           title: formData.title,
@@ -128,7 +128,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
         .single();
 
       if (dbError) throw dbError;
-      return document as HealthDocument;
+      return document as unknown as HealthDocument;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['health-documents'] });
@@ -147,14 +147,14 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<DocumentFormData> }) => {
       const { data: result, error } = await supabase
-        .from('health_documents')
+        .from('health_documents' as any)
         .update(data)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return result as HealthDocument;
+      return result as unknown as HealthDocument;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['health-documents'] });
@@ -187,7 +187,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
 
       // Delete from database
       const { error: dbError } = await supabase
-        .from('health_documents')
+        .from('health_documents' as any)
         .delete()
         .eq('id', id);
 
@@ -241,7 +241,7 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
       const { embedding } = await embeddingResponse.json();
 
       // Search for similar documents
-      const { data, error } = await supabase.rpc('find_similar_health_documents', {
+      const { data, error } = await (supabase.rpc as any)('find_similar_health_documents', {
         query_embedding: embedding,
         match_threshold: 0.5,
         match_count: 10,
@@ -254,12 +254,12 @@ export const useHealthDocuments = (options?: UseHealthDocumentsOptions) => {
       if (data && data.length > 0) {
         const ids = data.map((d: any) => d.id);
         const { data: fullDocs, error: fetchError } = await supabase
-          .from('health_documents')
+          .from('health_documents' as any)
           .select('*')
           .in('id', ids);
 
         if (fetchError) throw fetchError;
-        return (fullDocs || []) as HealthDocument[];
+        return (fullDocs || []) as unknown as HealthDocument[];
       }
 
       return [];

@@ -29,7 +29,7 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
       if (!user) throw new Error('Not authenticated');
 
       let query = supabase
-        .from('health_goals')
+        .from('health_goals' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -42,14 +42,14 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
       
       if (error) throw error;
       
-      return (data || []) as HealthGoal[];
+      return (data || []) as unknown as HealthGoal[];
     },
   });
 
   // Fetch single goal by ID
   const fetchGoal = useCallback(async (id: string): Promise<HealthGoal | null> => {
     const { data, error } = await supabase
-      .from('health_goals')
+      .from('health_goals' as any)
       .select('*')
       .eq('id', id)
       .single();
@@ -59,7 +59,7 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
       return null;
     }
 
-    return data as HealthGoal;
+    return data as unknown as HealthGoal;
   }, []);
 
   // Create goal mutation
@@ -69,7 +69,7 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
-        .from('health_goals')
+        .from('health_goals' as any)
         .insert({
           ...formData,
           user_id: user.id,
@@ -81,7 +81,7 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
         .single();
 
       if (error) throw error;
-      return data as HealthGoal;
+      return data as unknown as HealthGoal;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['health-goals'] });
@@ -100,14 +100,14 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<GoalFormData> & { status?: GoalStatus; current_value?: any } }) => {
       const { data: result, error } = await supabase
-        .from('health_goals')
+        .from('health_goals' as any)
         .update(data)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return result as HealthGoal;
+      return result as unknown as HealthGoal;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['health-goals'] });
@@ -126,7 +126,7 @@ export const useHealthGoals = (options?: UseHealthGoalsOptions) => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('health_goals')
+        .from('health_goals' as any)
         .delete()
         .eq('id', id);
 

@@ -30,16 +30,17 @@ export const MeasurementCard = ({ measurement, onEdit, onDelete, showTrend }: Me
   const Icon = MEASUREMENT_ICONS[measurement.measurement_type] || Activity;
   
   // Format the display value
-  const getDisplayValue = () => {
-    if (typeof measurement.value === 'object') {
-      if ('systolic' in measurement.value && 'diastolic' in measurement.value) {
-        return `${measurement.value.systolic}/${measurement.value.diastolic}`;
+  const getDisplayValue = (): string | number => {
+    const val = measurement.value as Record<string, unknown>;
+    if (typeof val === 'object' && val !== null) {
+      if ('systolic' in val && 'diastolic' in val) {
+        return `${val.systolic}/${val.diastolic}`;
       }
-      if ('value' in measurement.value) {
-        return measurement.value.value;
+      if ('value' in val) {
+        return val.value as string | number;
       }
     }
-    return measurement.value;
+    return typeof val === 'string' || typeof val === 'number' ? val : String(val);
   };
 
   const displayValue = getDisplayValue();
