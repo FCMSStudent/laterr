@@ -107,7 +107,8 @@ export async function generateVideoThumbnail(file: File): Promise<Blob> {
  */
 async function convertDocxToPdfBlob(file: File): Promise<Blob> {
   // 1. Convert DOCX to HTML using mammoth (dynamically imported)
-  const { default: mammoth } = await import('mammoth');
+  // @vite-ignore ensures mammoth is not statically analyzed and included in the initial bundle
+  const { default: mammoth } = await import(/* @vite-ignore */ 'mammoth');
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.convertToHtml({ arrayBuffer });
   
@@ -156,7 +157,8 @@ async function convertDocxToPdfBlob(file: File): Promise<Blob> {
  */
 async function generateDocxThumbnailFallback(file: File): Promise<Blob> {
   try {
-    const { default: mammoth } = await import('mammoth');
+    // @vite-ignore ensures mammoth is not statically analyzed and included in the initial bundle
+    const { default: mammoth } = await import(/* @vite-ignore */ 'mammoth');
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.convertToHtml({ arrayBuffer });
     const container = document.createElement('div');

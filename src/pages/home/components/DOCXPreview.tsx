@@ -30,7 +30,8 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
         const arrayBuffer = await response.arrayBuffer();
         
         // Convert DOCX to HTML using mammoth (dynamically imported)
-        const { default: mammoth } = await import('mammoth');
+        // @vite-ignore ensures mammoth is not statically analyzed and included in the initial bundle
+        const { default: mammoth } = await import(/* @vite-ignore */ 'mammoth');
         const result = await mammoth.convertToHtml({ arrayBuffer });
         
         // Sanitize the HTML to prevent XSS attacks
