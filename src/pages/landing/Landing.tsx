@@ -6,7 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 const Landing = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
   useEffect(() => {
+    console.log("[Laterr] Landing page component mounted");
+    
     // Check if user is already authenticated
     supabase.auth.getSession().then(({
       data: {
