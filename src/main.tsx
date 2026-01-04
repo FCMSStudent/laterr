@@ -79,7 +79,9 @@ if (!rootElement) {
     
     // Remove marker after 3 seconds once we confirm the app rendered
     setTimeout(() => {
-      marker.remove();
+      if (marker.parentNode) {
+        marker.remove();
+      }
     }, 3000);
   } catch (err) {
     console.error("[Laterr] Failed to mount React:", err);
