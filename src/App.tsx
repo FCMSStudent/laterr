@@ -31,30 +31,38 @@ const LoadingFallback = () => (
   </div>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <GradientBackground />
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="animate-in fade-in duration-500">
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/app" element={<Index />} />
-              <Route path="/subscriptions" element={<Subscriptions />} />
-              <Route path="/health" element={<Health />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/mobile-demo" element={<MobileNavDemo />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Log when App component renders
+  console.log("[Laterr] App component rendering", {
+    pathname: window.location.pathname,
+    search: window.location.search,
+  });
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <GradientBackground />
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Suspense fallback={<LoadingFallback />}>
+            <div className="animate-in fade-in duration-500">
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/app" element={<Index />} />
+                <Route path="/subscriptions" element={<Subscriptions />} />
+                <Route path="/health" element={<Health />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/mobile-demo" element={<MobileNavDemo />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </Suspense>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
