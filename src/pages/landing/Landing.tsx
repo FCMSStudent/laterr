@@ -11,15 +11,18 @@ const Landing = () => {
     console.log("[Laterr] Landing page component mounted");
     
     // Check if user is already authenticated
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
-      if (session) {
-        setIsAuthenticated(true);
-      }
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        console.log("[Laterr] Session check completed", { hasSession: !!session });
+        if (session) {
+          setIsAuthenticated(true);
+        }
+      })
+      .catch((error) => {
+        // Catch and log any Supabase auth errors without breaking the UI
+        console.error("[Laterr] Failed to check auth session:", error);
+        // Don't throw - allow the landing page to still render even if auth check fails
+      });
   }, []);
   const handleGetStarted = () => {
     if (isAuthenticated) {
