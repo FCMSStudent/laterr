@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/shared/components/ui/sonner";
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense, Component, ReactNode } from "react";
+import { lazy, Suspense, Component, ReactNode, ErrorInfo } from "react";
 // Fixed: Direct import instead of barrel file to prevent "Cannot access before initialization" error
 // Barrel files (@/shared/components/index.ts) can cause bundler initialization issues in entry points
 // when mixed with code-splitting and lazy loading, leading to circular references in the bundle
@@ -33,7 +33,8 @@ const Auth = lazy(() => import("./pages/auth").catch(err => {
 }));
 const NotFound = lazy(() => import("./pages/not-found").catch(err => {
   console.error("[Laterr] Failed to load NotFound page:", err);
-  // Ultimate fallback - inline component
+  // Ultimate fallback - inline component if even 404 page fails to load
+  // This ensures users always get SOME feedback rather than a white screen
   return {
     default: () => (
       <div className="flex min-h-screen items-center justify-center p-4">
@@ -81,7 +82,7 @@ class SuspenseErrorBoundary extends Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[Laterr] Suspense/Lazy loading failed:", error, errorInfo);
   }
 
