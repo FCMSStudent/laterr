@@ -22,13 +22,13 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   console.error('  Please check your .env file and ensure all required variables are set.');
   console.error('  See .env.example for reference.');
   
-  // CRITICAL: Throw in BOTH development AND production to prevent silent failures
-  // A missing Supabase config will cause the app to fail anyway - better to fail fast with a clear error
-  // This prevents the blank white screen issue where the app appears to load but crashes silently
-  throw new Error(
-    `Supabase configuration incomplete. Missing: ${missingVars.join(', ')}. ` +
-    'Please check your environment variables.'
-  );
+  // In development, throw an error to make the issue more visible
+  if (import.meta.env.DEV) {
+    throw new Error(
+      `Supabase configuration incomplete. Missing: ${missingVars.join(', ')}. ` +
+      'Please check your .env file.'
+    );
+  }
 }
 
 // Import the supabase client like this:

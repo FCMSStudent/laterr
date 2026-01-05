@@ -5,7 +5,6 @@ Welcome to the Laterr Garden documentation! This directory contains all technica
 ## 📚 Table of Contents
 
 ### Architecture & System Design
-- **[Architecture Overview (Detailed)](ARCHITECTURE_OVERVIEW.md)** - Comprehensive analysis of app architecture, tech stack, file organization, and design patterns
 - **[Architecture Overview](ARCHITECTURE.md)** - System architecture, component responsibilities, Supabase vs Lovable AI breakdown
 
 ### Design & UI/UX
@@ -28,9 +27,8 @@ Welcome to the Laterr Garden documentation! This directory contains all technica
 
 ### For New Team Members
 Start with:
-1. [Architecture Overview (Detailed)](ARCHITECTURE_OVERVIEW.md) - Complete architectural analysis
-2. [Architecture Overview](ARCHITECTURE.md) - Understand the system design
-3. [Main README](../README.md) - Project overview and quick start
+1. [Architecture Overview](ARCHITECTURE.md) - Understand the system design
+2. [Main README](../README.md) - Project overview and quick start
 
 ### For Designers
 Start with:
@@ -39,10 +37,9 @@ Start with:
 
 ### For Developers
 Start with:
-1. [Architecture Overview (Detailed)](ARCHITECTURE_OVERVIEW.md) - Deep dive into tech stack and patterns
-2. [Architecture Overview](ARCHITECTURE.md) - Understand Supabase vs Lovable AI
-3. [Embeddings Guide](EMBEDDINGS_GUIDE.md) - Understand the semantic search system
-4. [Testing Checklist](TESTING_CHECKLIST.md) - Test your changes
+1. [Architecture Overview](ARCHITECTURE.md) - Understand Supabase vs Lovable AI
+2. [Embeddings Guide](EMBEDDINGS_GUIDE.md) - Understand the semantic search system
+3. [Testing Checklist](TESTING_CHECKLIST.md) - Test your changes
 
 ### For Product Managers
 Start with:
@@ -54,21 +51,8 @@ Start with:
 
 ## 📖 Documentation Overview
 
-### Architecture Overview (Detailed) (1000+ lines)
-Comprehensive architectural analysis:
-- Complete folder and file structure breakdown
-- Full technology stack details (frontend, backend, build tools)
-- File management practices and organization conventions
-- Application architecture patterns (JAMstack, feature-based)
-- Design patterns and structural conventions
-- Component integration and data flow
-- Build and deployment pipeline
-- Security considerations
-
-**When to use**: Understanding the complete architecture, learning the codebase structure, or planning major architectural changes
-
 ### Architecture Overview (400+ lines)
-System architecture documentation:
+Complete system architecture documentation:
 - Component responsibilities (Supabase vs Lovable AI)
 - System diagrams
 - Data flow examples
@@ -129,16 +113,10 @@ Technical optimization strategies:
 ## 🎯 Common Tasks
 
 ### "I'm new to the project"
-→ See [Architecture Overview (Detailed)](ARCHITECTURE_OVERVIEW.md)
-
-### "I want to understand the codebase structure"
-→ See [Architecture Overview (Detailed) - Folder Structure](ARCHITECTURE_OVERVIEW.md#1-folder-and-file-structure)
+→ See [Architecture Overview](ARCHITECTURE.md)
 
 ### "Which services handle what?"
 → See [Architecture Overview - Summary](ARCHITECTURE.md#summary)
-
-### "What design patterns are used?"
-→ See [Architecture Overview (Detailed) - Design Patterns](ARCHITECTURE_OVERVIEW.md#5-design-patterns-and-conventions)
 
 ### "I want to add a new button"
 → See [Design System - Button Guidelines](DESIGN_SYSTEM.md#button-guidelines)
@@ -225,6 +203,6 @@ When adding new documentation:
 
 ---
 
-**Last Updated**: 2025-12-21
-**Total Documentation**: 8 files
-**Combined Size**: ~100KB of essential developer knowledge
+**Last Updated**: 2025-11-22
+**Total Documentation**: 7 files
+**Combined Size**: ~65KB of essential developer knowledge

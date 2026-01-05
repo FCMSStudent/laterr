@@ -115,64 +115,6 @@ If you've tried all troubleshooting steps and still have issues:
    - Browser console logs
    - Environment (OS, browser, Node.js version)
 
-## Build Warnings and Security
-
-### npm Security Vulnerabilities
-
-The project may show security vulnerabilities when running `npm audit`. Here's how to handle them:
-
-**Fixed Vulnerabilities:**
-- High severity vulnerabilities (glob, etc.) have been addressed
-- Moderate vulnerabilities in js-yaml and mdast-util-to-hast have been fixed
-
-**Remaining Vulnerabilities:**
-- **esbuild vulnerability (moderate)**: This requires upgrading to Vite 7.x, which is a breaking change
-  - **Impact**: Only affects development server security
-  - **Recommendation**: Plan a separate upgrade to Vite 7.x with thorough testing
-  - **Mitigation**: The vulnerability only affects the development server, not production builds
-
-**To check for vulnerabilities:**
-```bash
-npm audit
-```
-
-**To fix non-breaking vulnerabilities:**
-```bash
-npm audit fix
-```
-
-### Build Warnings
-
-**Large Chunk Size Warning:**
-When building (`npm run build`), you may see warnings about chunks larger than 600 kB:
-
-```
-(!) Some chunks are larger than 600 kB after minification.
-```
-
-**Current state:**
-- This is expected for applications with large dependencies (PDF viewer, canvas libraries)
-- The app already uses code splitting with lazy loading for modal components
-- Gzip compression significantly reduces transfer size
-
-**To improve (if needed):**
-1. Use dynamic imports for rarely-used features
-2. Configure manual chunks in `vite.config.ts` via `build.rollupOptions.output.manualChunks`
-3. Adjust warning limit if current bundle size is acceptable for your use case
-
-See [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md) for detailed performance optimization strategies.
-
-### Outdated Browserslist Warning
-
-If you see "browsers data (caniuse-lite) is 6 months old":
-
-**To fix:**
-```bash
-npm update caniuse-lite browserslist
-```
-
-This has been addressed in recent updates.
-
 ## Prevention
 
 To avoid common issues:
@@ -182,4 +124,3 @@ To avoid common issues:
 3. Restart development server after changing environment variables
 4. Keep dependencies up to date with `npm install`
 5. Monitor Supabase project quotas and limits
-6. Run `npm audit` periodically to check for security vulnerabilities
