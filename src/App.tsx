@@ -10,6 +10,7 @@ import "./styles/gradient.css";
 // Lazy load route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
 const Index = lazy(() => import("./pages/Index"));
+const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -37,6 +38,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/app" element={<Index />} />
+              <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/auth" element={<Auth />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
