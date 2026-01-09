@@ -130,10 +130,10 @@ export const HealthDocumentDetailModal = ({
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden bg-muted/50 min-h-[300px]">
               {isPdf && (
-                <PDFPreview fileUrl={document.file_url} />
+                <PDFPreview url={document.file_url} />
               )}
               {isDocx && (
-                <DOCXPreview fileUrl={document.file_url} />
+                <DOCXPreview url={document.file_url} />
               )}
               {isImage && (
                 <img 
