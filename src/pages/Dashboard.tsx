@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Bookmark, CreditCard, Activity } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useUnifiedActivity } from "@/hooks/useUnifiedActivity";
 import { QuickStatsGrid } from "@/components/QuickStatsGrid";
@@ -16,7 +15,6 @@ type User = { id: string; email?: string };
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const stats = useDashboardStats();
   const { activities, loading: activitiesLoading } = useUnifiedActivity(10);

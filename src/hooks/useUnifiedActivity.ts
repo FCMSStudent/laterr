@@ -35,6 +35,7 @@ export const useUnifiedActivity = (limit: number = 10): UseUnifiedActivityResult
       const { data, error: fetchError } = await supabase
         .from('unified_activity_feed')
         .select('*')
+        .eq('user_id', session.user.id)
         .limit(limit);
 
       if (fetchError) throw fetchError;
