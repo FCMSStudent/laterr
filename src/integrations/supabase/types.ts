@@ -268,6 +268,51 @@ export type Database = {
           },
         ]
       }
+      medication_schedule: {
+        Row: {
+          created_at: string
+          dosage: string
+          end_date: string | null
+          frequency: string
+          id: string
+          medication_name: string
+          notes: string | null
+          reminder_enabled: boolean
+          start_date: string
+          time_of_day: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dosage: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          medication_name: string
+          notes?: string | null
+          reminder_enabled?: boolean
+          start_date?: string
+          time_of_day?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dosage?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          medication_name?: string
+          notes?: string | null
+          reminder_enabled?: boolean
+          start_date?: string
+          time_of_day?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_categories: {
         Row: {
           budget_limit: number | null
