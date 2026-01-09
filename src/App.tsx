@@ -12,6 +12,7 @@ const Landing = lazy(() => import("./pages/Landing"));
 const Index = lazy(() => import("./pages/Index"));
 const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const Auth = lazy(() => import("./pages/Auth"));
+const Health = lazy(() => import("./pages/Health"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/app" element={<Index />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/health" element={<Health />} />
               <Route path="/auth" element={<Auth />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
