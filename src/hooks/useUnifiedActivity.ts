@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface UnifiedActivity {
@@ -24,7 +24,7 @@ export const useUnifiedActivity = (limit: number = 10): UseUnifiedActivityResult
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
@@ -47,11 +47,11 @@ export const useUnifiedActivity = (limit: number = 10): UseUnifiedActivityResult
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
 
   useEffect(() => {
     fetchActivities();
-  }, [limit]);
+  }, [fetchActivities]);
 
   return {
     activities,

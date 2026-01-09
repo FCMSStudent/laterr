@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { LogOut, Bookmark, CreditCard, Activity } from "lucide-react";
+import { Bookmark, CreditCard, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useUnifiedActivity } from "@/hooks/useUnifiedActivity";
 import { QuickStatsGrid } from "@/components/QuickStatsGrid";
 import { ModuleNavigationCard } from "@/components/ModuleNavigationCard";
 import { ActivityFeedCard } from "@/components/ActivityFeedCard";
-import { AuthError } from "@/types/errors";
-import { AUTH_ERRORS } from "@/lib/error-messages";
+import { NavigationHeader } from "@/components/NavigationHeader";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 type User = { id: string; email?: string };
@@ -46,23 +44,6 @@ const Dashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      const authError = new AuthError(
-        AUTH_ERRORS.SIGN_OUT_FAILED.message,
-        error instanceof Error ? error : undefined
-      );
-      toast({
-        title: AUTH_ERRORS.SIGN_OUT_FAILED.title,
-        description: authError.message,
-        variant: "destructive",
-      });
-    } else {
-      navigate('/');
-    }
-  };
-
   if (!user) {
     return null;
   }
@@ -78,28 +59,10 @@ const Dashboard = () => {
       </a>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <header className="mb-8 items-center justify-between flex flex-row">
-          <div>
-            <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
-              Laterr Dashboard
-            </h1>
-            <p className="text-muted-foreground text-sm font-medium">
-              Your unified personal hub
-            </p>
-          </div>
-          <nav aria-label="Main navigation" className="flex items-center gap-4">
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground smooth-transition"
-              aria-label="Sign out of your account"
-            >
-              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-              Sign Out
-            </Button>
-          </nav>
-        </header>
+        <NavigationHeader 
+          title="Laterr Dashboard"
+          subtitle="Your unified personal hub"
+        />
 
         <main id="main-content" className="space-y-8">
           {/* Quick Stats */}
