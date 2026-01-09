@@ -9,6 +9,7 @@ import "./styles/gradient.css";
 
 // Lazy load route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Index = lazy(() => import("./pages/Index"));
 const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -37,11 +38,13 @@ const App = () => (
         <Suspense fallback={<LoadingFallback />}>
           <div className="animate-in fade-in duration-500">
             <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/app" element={<Index />} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/app" element={<Dashboard />} />
+              <Route path="/bookmarks" element={<Index />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/health" element={<Health />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/landing" element={<Landing />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
