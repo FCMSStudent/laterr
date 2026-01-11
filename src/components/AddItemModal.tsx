@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { EnhancedInput } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Link2, FileText, File } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, DEFAULT_ITEM_TAGS, ALLOWED_FILE_MIME_TYPES, FILE_INPUT_ACCEPT, FILE_SIZE_LIMIT_BYTES, FILE_SIZE_LIMIT_MB, NOTE_MAX_LENGTH, NOTE_SUMMARY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH, URL_MAX_LENGTH, SUPABASE_FUNCTION_ANALYZE_FILE, SUPABASE_FUNCTION_ANALYZE_URL, SUPABASE_ITEMS_TABLE, FILE_ANALYSIS_SIGNED_URL_EXPIRATION, isValidEmbedding } from "@/constants";
 import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage } from "@/lib/supabase-utils";
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/lib/error-utils";
@@ -35,6 +37,7 @@ export const AddItemModal = ({
   const [loading, setLoading] = useState(false);
   const [statusStep, setStatusStep] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const isMobile = useIsMobile();
   const handleUrlSubmit = async () => {
     // Validate URL
     const urlResult = urlSchema.safeParse(url.trim());
@@ -416,7 +419,161 @@ export const AddItemModal = ({
       setFile(droppedFile);
     }
   };
-  return <Dialog open={open} onOpenChange={onOpenChange}>
+
+  // Shared content for both Dialog and Drawer
+  const ModalContent = () => (
+    <Tabs defaultValue="url" className="w-full">
+      <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
+        <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition min-h-[44px] md:min-h-0">
+          <Link2 className="h-4 w-4" />
+          URL
+        </TabsTrigger>
+        <TabsTrigger value="note" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition min-h-[44px] md:min-h-0">
+          <FileText className="h-4 w-4" />
+          Note
+        </TabsTrigger>
+        <TabsTrigger value="image" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition min-h-[44px] md:min-h-0">
+          <File className="h-4 w-4" />
+          Files
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="url" className="space-y-4 mt-6">
+        <EnhancedInput 
+          id="url-input" 
+          type="url" 
+          placeholder="Paste a URL..." 
+          value={url} 
+          onChange={e => setUrl(e.target.value)} 
+          maxLength={URL_MAX_LENGTH} 
+          className="glass-input border-0 h-12 md:h-11 text-[15px] min-h-[44px]" 
+          showClearButton={true} 
+          onClear={() => setUrl('')} 
+          autoComplete="url" 
+          aria-label="URL to add"
+          inputMode="url" 
+        />
+        <LoadingButton 
+          onClick={handleUrlSubmit} 
+          loading={loading} 
+          disabled={!url} 
+          loadingText="Adding..." 
+          size="lg" 
+          className="w-full min-h-[48px]" 
+          aria-label="Add URL to collection"
+        >
+          Add URL
+        </LoadingButton>
+      </TabsContent>
+
+      <TabsContent value="note" className="space-y-4 mt-6">
+        <EnhancedTextarea 
+          id="note-textarea" 
+          placeholder="Write your thoughts..." 
+          value={note} 
+          onChange={e => setNote(e.target.value)} 
+          maxLength={NOTE_MAX_LENGTH} 
+          className="glass-input min-h-[150px] md:min-h-[150px] border-0 text-[15px] resize-none" 
+          showCharacterCount={true} 
+          helperText="Write your thoughts and ideas" 
+          aria-label="Note content" 
+        />
+        <LoadingButton 
+          onClick={handleNoteSubmit} 
+          loading={loading} 
+          disabled={!note} 
+          loadingText="Saving..." 
+          size="lg" 
+          className="w-full min-h-[48px]" 
+          aria-label="Save note to collection"
+        >
+          Save Note
+        </LoadingButton>
+      </TabsContent>
+
+      <TabsContent value="image" className="space-y-4 mt-6">
+        <div className={`
+            relative border-2 border-dashed rounded-xl p-8 transition-all duration-200
+            ${isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border/50 hover:border-border hover:bg-muted/30'}
+          `} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
+          <div className="items-center justify-center space-y-3 text-center flex flex-col">
+            <div className={`
+              rounded-full p-4 transition-all duration-200
+              ${isDragging ? 'bg-primary/10 scale-110' : 'bg-muted'}
+            `}>
+              <File className={`h-8 w-8 transition-colors duration-200 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+            </div>
+            
+            {file ? <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setFile(null)} className="text-xs min-h-[44px]">
+                  Remove file
+                </Button>
+              </div> : <>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {isDragging ? 'Drop your file here' : 'Drag & drop your file here'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">or</p>
+                </div>
+                
+                <label htmlFor="file-input" className="cursor-pointer">
+                  <div className="px-6 py-3 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium min-h-[48px] flex items-center justify-center">
+                    Browse files
+                  </div>
+                  <input id="file-input" type="file" accept={FILE_INPUT_ACCEPT} onChange={e => setFile(e.target.files?.[0] || null)} className="sr-only" aria-required="true" aria-describedby="file-helper-text" />
+                </label>
+              </>}
+          </div>
+        </div>
+        
+        <p id="file-helper-text" className="text-xs text-muted-foreground text-center">
+          Supports: Images, PDFs, Word, Excel, PowerPoint, CSV, TXT (max {FILE_SIZE_LIMIT_MB}MB)
+        </p>
+        <div className="space-y-2">
+          <LoadingButton 
+            onClick={handleFileSubmit} 
+            loading={loading} 
+            disabled={!file} 
+            loadingText="Uploading..." 
+            size="lg" 
+            className="w-full min-h-[48px]" 
+            aria-label="Upload file to collection"
+          >
+            Upload File
+          </LoadingButton>
+          {loading && <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">
+              {statusStep === 'uploading' && 'Uploading file…'}
+              {statusStep === 'extracting' && 'Extracting text…'}
+              {statusStep === 'summarizing' && 'Summarizing content…'}
+              {statusStep === 'generating embeddings' && 'Generating embeddings…'}
+              {statusStep === 'saving' && 'Saving to your space…'}
+              {!statusStep && 'Processing…'}
+            </p>}
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
+
+  return isMobile ? (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[90vh] pb-safe">
+        <DrawerHeader>
+          <DrawerTitle className="text-xl font-semibold text-foreground">
+            Add New Item
+          </DrawerTitle>
+          <DrawerDescription className="sr-only">Add a new item</DrawerDescription>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-4 pb-4">
+          <ModalContent />
+        </div>
+      </DrawerContent>
+    </Drawer>
+  ) : (
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground">
@@ -424,93 +581,8 @@ export const AddItemModal = ({
           </DialogTitle>
         </DialogHeader>
         <DialogDescription className="sr-only">Add a new item</DialogDescription>
-        
-        <Tabs defaultValue="url" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
-            <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition">
-              <Link2 className="h-4 w-4" />
-              URL
-            </TabsTrigger>
-            <TabsTrigger value="note" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition">
-              <FileText className="h-4 w-4" />
-              Note
-            </TabsTrigger>
-            <TabsTrigger value="image" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition">
-              <File className="h-4 w-4" />
-              Files
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="url" className="space-y-4 mt-6">
-            <EnhancedInput id="url-input" type="url" placeholder="Paste a URL..." value={url} onChange={e => setUrl(e.target.value)} maxLength={URL_MAX_LENGTH} className="glass-input border-0 h-11 text-[15px]" showClearButton={true} onClear={() => setUrl('')} autoComplete="url" aria-label="URL to add" />
-            <LoadingButton onClick={handleUrlSubmit} loading={loading} disabled={!url} loadingText="Adding..." size="lg" className="w-full" aria-label="Add URL to collection">
-              Add URL
-            </LoadingButton>
-          </TabsContent>
-
-          <TabsContent value="note" className="space-y-4 mt-6">
-            <EnhancedTextarea id="note-textarea" placeholder="Write your thoughts..." value={note} onChange={e => setNote(e.target.value)} maxLength={NOTE_MAX_LENGTH} className="glass-input min-h-[150px] border-0 text-[15px] resize-none" showCharacterCount={true} helperText="Write your thoughts and ideas" aria-label="Note content" />
-            <LoadingButton onClick={handleNoteSubmit} loading={loading} disabled={!note} loadingText="Saving..." size="lg" className="w-full" aria-label="Save note to collection">
-              Save Note
-            </LoadingButton>
-          </TabsContent>
-
-          <TabsContent value="image" className="space-y-4 mt-6">
-            <div className={`
-                relative border-2 border-dashed rounded-xl p-8 transition-all duration-200
-                ${isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border/50 hover:border-border hover:bg-muted/30'}
-              `} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
-              <div className="items-center justify-center space-y-3 text-center flex flex-col">
-                <div className={`
-                  rounded-full p-4 transition-all duration-200
-                  ${isDragging ? 'bg-primary/10 scale-110' : 'bg-muted'}
-                `}>
-                  <File className={`h-8 w-8 transition-colors duration-200 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
-                </div>
-                
-                {file ? <div className="space-y-2">
-                    <p className="text-sm font-medium text-foreground">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setFile(null)} className="text-xs">
-                      Remove file
-                    </Button>
-                  </div> : <>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-foreground">
-                        {isDragging ? 'Drop your file here' : 'Drag & drop your file here'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">or</p>
-                    </div>
-                    
-                    <label htmlFor="file-input" className="cursor-pointer">
-                      <div className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-                        Browse files
-                      </div>
-                      <input id="file-input" type="file" accept={FILE_INPUT_ACCEPT} onChange={e => setFile(e.target.files?.[0] || null)} className="sr-only" aria-required="true" aria-describedby="file-helper-text" />
-                    </label>
-                  </>}
-              </div>
-            </div>
-            
-            <p id="file-helper-text" className="text-xs text-muted-foreground text-center">
-              Supports: Images, PDFs, Word, Excel, PowerPoint, CSV, TXT (max {FILE_SIZE_LIMIT_MB}MB)
-            </p>
-            <div className="space-y-2">
-              <LoadingButton onClick={handleFileSubmit} loading={loading} disabled={!file} loadingText="Uploading..." size="lg" className="w-full" aria-label="Upload file to collection">
-                Upload File
-              </LoadingButton>
-              {loading && <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">
-                  {statusStep === 'uploading' && 'Uploading file…'}
-                  {statusStep === 'extracting' && 'Extracting text…'}
-                  {statusStep === 'summarizing' && 'Summarizing content…'}
-                  {statusStep === 'saving' && 'Saving to your space…'}
-                  {!statusStep && 'Processing…'}
-                </p>}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <ModalContent />
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
