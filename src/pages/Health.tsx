@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { HEALTH_TABLES, MEASUREMENT_TYPES } from "@/constants/health";
 import type { HealthMeasurement, HealthDocument, MeasurementType } from "@/types/health";
 import type { User } from "@/types";
@@ -45,6 +46,7 @@ const Health = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const isMobile = useIsMobile();
 
   // Stats
   const [stats, setStats] = useState({
@@ -193,16 +195,16 @@ const Health = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <header className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <header className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <Button
               onClick={() => navigate(-1)}
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
               aria-label="Go back"
               disabled={window.history.length <= 1}
             >
@@ -212,90 +214,99 @@ const Health = () => {
               onClick={() => navigate('/dashboard')}
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
               aria-label="Go to dashboard"
             >
               <Home className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
                 Health Hub
               </h1>
-              <p className="text-muted-foreground text-sm font-medium">
+              <p className="text-muted-foreground text-xs sm:text-sm font-medium">
                 Track your wellness journey
               </p>
             </div>
           </div>
-          <nav className="flex items-center gap-4">
-            <Button
-              onClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
-              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
+          <nav className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+            {/* Desktop Add Button */}
+            {!isMobile && (
+              <Button
+                onClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                {activeTab === "measurements" ? "Log Measurement" : "Add Document"}
+              </Button>
+            )}
+            <Button 
+              onClick={handleSignOut} 
+              variant="ghost" 
+              size={isMobile ? "icon" : "sm"}
+              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
+              aria-label="Sign out"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              {activeTab === "measurements" ? "Log Measurement" : "Add Document"}
-            </Button>
-            <Button onClick={handleSignOut} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              <LogOut className="w-4 h-4" aria-hidden="true" />
+              {!isMobile && <span className="ml-2">Sign Out</span>}
             </Button>
           </nav>
         </header>
 
         {/* Stats Bar */}
         <div className="glass-card rounded-2xl p-4 mb-6">
-          <div className="flex flex-wrap gap-4 justify-around">
+          <div className="grid grid-cols-2 md:flex md:flex-wrap gap-3 md:gap-4 md:justify-around">
             {stats.latestWeight && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <div className="p-2 rounded-full bg-primary/10">
-                  <Scale className="w-5 h-5 text-primary" />
+                  <Scale className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Weight</p>
-                  <p className="text-lg font-semibold">{stats.latestWeight} kg</p>
+                  <p className="text-sm md:text-lg font-semibold">{stats.latestWeight} kg</p>
                 </div>
-                {getMeasurementTrend('weight') === 'increasing' && <TrendingUp className="w-4 h-4 text-orange-500" />}
-                {getMeasurementTrend('weight') === 'decreasing' && <TrendingDown className="w-4 h-4 text-green-500" />}
-                {getMeasurementTrend('weight') === 'stable' && <Minus className="w-4 h-4 text-muted-foreground" />}
+                {getMeasurementTrend('weight') === 'increasing' && <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-orange-500" />}
+                {getMeasurementTrend('weight') === 'decreasing' && <TrendingDown className="w-3 h-3 md:w-4 md:h-4 text-green-500" />}
+                {getMeasurementTrend('weight') === 'stable' && <Minus className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground" />}
               </div>
             )}
             {stats.latestBP && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <div className="p-2 rounded-full bg-red-500/10">
-                  <Heart className="w-5 h-5 text-red-500" />
+                  <Heart className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Blood Pressure</p>
-                  <p className="text-lg font-semibold">{stats.latestBP.systolic}/{stats.latestBP.diastolic} mmHg</p>
+                  <p className="text-sm md:text-lg font-semibold">{stats.latestBP.systolic}/{stats.latestBP.diastolic} mmHg</p>
                 </div>
               </div>
             )}
             {stats.latestGlucose && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <div className="p-2 rounded-full bg-blue-500/10">
-                  <Droplet className="w-5 h-5 text-blue-500" />
+                  <Droplet className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Glucose</p>
-                  <p className="text-lg font-semibold">{stats.latestGlucose} mg/dL</p>
+                  <p className="text-sm md:text-lg font-semibold">{stats.latestGlucose} mg/dL</p>
                 </div>
               </div>
             )}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               <div className="p-2 rounded-full bg-green-500/10">
-                <Target className="w-5 h-5 text-green-500" />
+                <Target className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Active Goals</p>
-                <p className="text-lg font-semibold">{stats.activeGoals}</p>
+                <p className="text-sm md:text-lg font-semibold">{stats.activeGoals}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               <div className="p-2 rounded-full bg-purple-500/10">
-                <Pill className="w-5 h-5 text-purple-500" />
+                <Pill className="w-4 h-4 md:w-5 md:h-5 text-purple-500" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Medications</p>
-                <p className="text-lg font-semibold">{stats.upcomingMeds} today</p>
+                <p className="text-sm md:text-lg font-semibold">{stats.upcomingMeds} today</p>
               </div>
             </div>
           </div>
@@ -303,22 +314,22 @@ const Health = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-4 bg-muted rounded-xl">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-muted rounded-xl">
             <TabsTrigger value="measurements" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
               <Activity className="h-4 w-4" />
-              Measurements
+              <span className="hidden sm:inline">Measurements</span>
             </TabsTrigger>
             <TabsTrigger value="documents" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
               <FileText className="h-4 w-4" />
-              Documents
+              <span className="hidden sm:inline">Documents</span>
             </TabsTrigger>
             <TabsTrigger value="goals" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
               <Target className="h-4 w-4" />
-              Goals
+              <span className="hidden sm:inline">Goals</span>
             </TabsTrigger>
             <TabsTrigger value="medications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
               <Pill className="h-4 w-4" />
-              Medications
+              <span className="hidden sm:inline">Medications</span>
             </TabsTrigger>
           </TabsList>
 
@@ -421,6 +432,17 @@ const Health = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Floating Action Button (FAB) for mobile */}
+      {isMobile && (
+        <Button
+          onClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-xl premium-transition hover:scale-110 p-0"
+          aria-label={activeTab === "measurements" ? "Log measurement" : "Add document"}
+        >
+          <Plus className="w-6 h-6" aria-hidden="true" />
+        </Button>
+      )}
 
       {/* Modals */}
       <Suspense fallback={null}>

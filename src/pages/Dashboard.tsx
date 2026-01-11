@@ -47,7 +47,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 md:pb-0">
       {/* Skip Navigation Link */}
       <a 
         href="#main-content" 

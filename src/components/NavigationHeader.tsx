@@ -8,6 +8,7 @@ import { AuthError } from "@/types/errors";
 import { AUTH_ERRORS } from "@/lib/error-messages";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NavigationHeaderProps {
   title: string;
@@ -24,6 +25,7 @@ export const NavigationHeader = ({
   const location = useLocation();
   const { toast } = useToast();
   const [canGoBack, setCanGoBack] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Check if there's navigation history by examining React Router's history state
@@ -102,11 +104,11 @@ export const NavigationHeader = ({
           <div className="border-l border-border h-6 hidden sm:block" aria-hidden="true"></div>
 
           <div>
-            <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
+            <h1 className="text-2xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-muted-foreground text-sm font-medium">
+              <p className="text-muted-foreground text-xs md:text-sm font-medium">
                 {subtitle}
               </p>
             )}
@@ -115,16 +117,16 @@ export const NavigationHeader = ({
         <Button
           onClick={handleSignOut}
           variant="ghost"
-          size="sm"
-          className="text-muted-foreground hover:text-foreground smooth-transition"
+          size={isMobile ? "icon" : "sm"}
+          className="text-muted-foreground hover:text-foreground smooth-transition min-h-[44px] min-w-[44px]"
           aria-label="Sign out of your account"
         >
-          <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-          Sign Out
+          <LogOut className="w-4 h-4" aria-hidden="true" />
+          {!isMobile && <span className="ml-2">Sign Out</span>}
         </Button>
       </div>
       
-      {!hideNavigation && (
+      {!hideNavigation && !isMobile && (
         <nav aria-label="Module navigation" className="flex gap-2 border-b border-border pb-2">
           {navItems.map((item) => {
             const Icon = item.icon;
