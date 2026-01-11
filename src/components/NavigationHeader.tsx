@@ -26,8 +26,9 @@ export const NavigationHeader = ({
   const [canGoBack, setCanGoBack] = useState(false);
 
   useEffect(() => {
-    // Check if there's history to go back to
-    setCanGoBack(window.history.length > 1);
+    // Check if there's history to go back to by checking if we're on the initial entry
+    // This is a simple heuristic - in a real app, you might track navigation state more precisely
+    setCanGoBack(window.history.state?.idx !== undefined && window.history.state.idx > 0);
   }, [location]);
 
   const handleSignOut = async () => {
@@ -119,7 +120,7 @@ export const NavigationHeader = ({
           aria-label="Sign out of your account"
         >
           <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-          <span className="hidden sm:inline">Sign Out</span>
+          Sign Out
         </Button>
       </div>
       
