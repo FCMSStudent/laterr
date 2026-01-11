@@ -446,4 +446,86 @@ All colors MUST be HSL.
       opacity: 0;
     }
   }
+
+  /* Mobile-specific improvements */
+  
+  /* Increase base font size on mobile to prevent zoom on iOS */
+  @media (max-width: 768px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  /* Responsive typography using clamp() for fluid scaling */
+  h1 {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  body {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  /* Minimum touch target size for mobile (Apple/Android guidelines) */
+  @media (max-width: 768px) {
+    button, a[role="button"], [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Add touch-action to prevent double-tap zoom */
+  button, a, input, textarea, select {
+    touch-action: manipulation;
+  }
+
+  /* Active states with scale transform for mobile feedback */
+  @media (max-width: 768px) {
+    button:active, a:active, [role="button"]:active {
+      transform: scale(0.95);
+      transition: transform 0.1s ease;
+    }
+  }
+
+  /* Remove hover states on touch devices */
+  @media (hover: hover) {
+    /* Hover styles only apply on devices with hover capability */
+  }
+
+  @media (hover: none) {
+    /* Remove hover effects on touch devices */
+    .glass-card:hover {
+      border-color: var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+  }
+
+  /* Reduce animation durations on mobile and for users who prefer reduced motion */
+  @media (max-width: 768px), (prefers-reduced-motion: reduce) {
+    .premium-transition {
+      transition: all 0.2s ease;
+    }
+    .smooth-transition {
+      transition: all 0.15s ease;
+    }
+  }
+
+  /* Safe area insets for notched devices */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .pt-safe {
+      padding-top: env(safe-area-inset-top);
+    }
+    .pl-safe {
+      padding-left: env(safe-area-inset-left);
+    }
+    .pr-safe {
+      padding-right: env(safe-area-inset-right);
+    }
+  }
 }

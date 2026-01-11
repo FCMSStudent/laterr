@@ -1,0 +1,17 @@
+{
+  "name": "Laterr - Save it for later",
+  "short_name": "Laterr",
+  "description": "Organize your thoughts, links, and images in a visual way. AI-powered knowledge management.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#353138",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
