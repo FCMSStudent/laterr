@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, LogOut, Plus, ArrowLeft, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterBar, type SortOption } from "@/components/FilterBar";
 import { SUPABASE_ITEMS_TABLE } from "@/constants";
 import type { Item, User, ItemType } from "@/types";
@@ -55,6 +56,7 @@ const Index = () => {
     toast
   } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const isMobile = useIsMobile();
 
   // Load bookmarks from localStorage
   useEffect(() => {
@@ -241,20 +243,20 @@ const Index = () => {
   if (!user) {
     return null;
   }
-  return <div className="min-h-screen">
+  return <div className="min-h-screen pb-20 md:pb-0">
       {/* Skip Navigation Link */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
         Skip to main content
       </a>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <header className="mb-6 items-center justify-between flex flex-row">
-          <div className="flex items-center gap-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+        <header className="mb-4 md:mb-6 items-center justify-between flex flex-col sm:flex-row gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <Button
               onClick={() => navigate(-1)}
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
               aria-label="Go back"
               disabled={window.history.length <= 1}
             >
@@ -264,24 +266,34 @@ const Index = () => {
               onClick={() => navigate('/dashboard')}
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
               aria-label="Go to dashboard"
             >
               <Home className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
-              <p className="text-muted-foreground text-sm font-medium">Your personal knowledge space</p>
+            <div className="flex-1 sm:flex-none">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm font-medium">Your personal knowledge space</p>
             </div>
           </div>
-          <nav aria-label="Main navigation" className="flex items-center gap-4">
-            <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
-              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-              Add Item
-            </Button>
-            <Button onClick={handleSignOut} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground smooth-transition" aria-label="Sign out of your account">
-              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-              Sign Out
+          <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+            {/* Desktop Add Item Button */}
+            {!isMobile && (
+              <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
+                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+                Add Item
+              </Button>
+            )}
+            {/* Sign Out Button - Icon only on mobile */}
+            <Button 
+              onClick={handleSignOut} 
+              variant="ghost" 
+              size={isMobile ? "icon" : "sm"}
+              className="text-muted-foreground hover:text-foreground smooth-transition min-h-[44px] min-w-[44px]" 
+              aria-label="Sign out of your account"
+            >
+              <LogOut className="w-4 h-4" aria-hidden="true" />
+              {!isMobile && <span className="ml-2">Sign Out</span>}
             </Button>
           </nav>
         </header>
@@ -300,7 +312,7 @@ const Index = () => {
             {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
           </div>
 
-          {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+          {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
               {Array.from({
             length: 8
           }).map((_, index) => <ItemCardSkeleton key={index} />)}
@@ -311,12 +323,23 @@ const Index = () => {
                 Start building your knowledge by adding your first item
               </p>
             </div> : <section aria-label="Items collection">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
                 {filteredItems.map(item => <ItemCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} isBookmarked={bookmarkedItems.has(item.id)} onBookmarkToggle={handleBookmarkToggle} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} />)}
             </div>
           </section>}
         </main>
       </div>
+
+      {/* Floating Action Button (FAB) for Add Item on mobile */}
+      {isMobile && (
+        <Button
+          onClick={() => setShowAddModal(true)}
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-xl premium-transition hover:scale-110 p-0"
+          aria-label="Add new item to your collection"
+        >
+          <Plus className="w-6 h-6" aria-hidden="true" />
+        </Button>
+      )}
 
       <Suspense fallback={null}>
         <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={fetchItems} />
