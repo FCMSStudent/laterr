@@ -26,8 +26,8 @@ export const NavigationHeader = ({
   const [canGoBack, setCanGoBack] = useState(false);
 
   useEffect(() => {
-    // Check if there's history to go back to by checking if we're on the initial entry
-    // This is a simple heuristic - in a real app, you might track navigation state more precisely
+    // Check if there's navigation history by examining React Router's history state
+    // The idx property tracks the current position in the history stack
     setCanGoBack(window.history.state?.idx !== undefined && window.history.state.idx > 0);
   }, [location]);
 
