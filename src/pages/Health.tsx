@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { 
   Activity, LogOut, Plus, Heart, FileText, Target, Pill, 
-  Scale, Droplet, TrendingUp, TrendingDown, Minus, Calendar 
+  Scale, Droplet, TrendingUp, TrendingDown, Minus, Calendar,
+  ArrowLeft, Home
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -196,13 +197,34 @@ const Health = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
-              Health Hub
-            </h1>
-            <p className="text-muted-foreground text-sm font-medium">
-              Track your wellness journey
-            </p>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => navigate(-1)}
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Go back"
+              disabled={window.history.length <= 1}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <Button
+              onClick={() => navigate('/dashboard')}
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Go to dashboard"
+            >
+              <Home className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
+                Health Hub
+              </h1>
+              <p className="text-muted-foreground text-sm font-medium">
+                Track your wellness journey
+              </p>
+            </div>
           </div>
           <nav className="flex items-center gap-4">
             <Button
