@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, LogOut, Plus, TrendingUp, Calendar, DollarSign, ArrowLeft, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SUBSCRIPTION_TABLES } from "@/constants/subscriptions";
 import { formatCurrency, calculateMonthlyCost, calculateAnnualCost } from "@/lib/currency-utils";
 import type { Subscription, SubscriptionStatus, SubscriptionBillingCycle } from "@/types/subscription";
@@ -39,6 +40,7 @@ const Subscriptions = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const isMobile = useIsMobile();
 
   // Calculate stats
   const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
@@ -186,19 +188,19 @@ const Subscriptions = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 md:pb-0">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
         Skip to main content
       </a>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <header className="mb-6 items-center justify-between flex flex-row">
-          <div className="flex items-center gap-3">
+        <header className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <Button
               onClick={() => navigate(-1)}
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
               aria-label="Go back"
               disabled={window.history.length <= 1}
             >
@@ -208,34 +210,37 @@ const Subscriptions = () => {
               onClick={() => navigate('/dashboard')}
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
               aria-label="Go to dashboard"
             >
               <Home className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">Subscriptions</h1>
-              <p className="text-muted-foreground text-sm font-medium">Track your recurring expenses</p>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">Subscriptions</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm font-medium">Track your recurring expenses</p>
             </div>
           </div>
-          <nav aria-label="Main navigation" className="flex items-center gap-4">
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
-              aria-label="Add new subscription"
-            >
-              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-              Add Subscription
-            </Button>
+          <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+            {/* Desktop Add Button */}
+            {!isMobile && (
+              <Button
+                onClick={() => setShowAddModal(true)}
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
+                aria-label="Add new subscription"
+              >
+                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+                Add Subscription
+              </Button>
+            )}
             <Button
               onClick={handleSignOut}
               variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground smooth-transition"
+              size={isMobile ? "icon" : "sm"}
+              className="text-muted-foreground hover:text-foreground smooth-transition min-h-[44px] min-w-[44px]"
               aria-label="Sign out"
             >
-              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-              Sign Out
+              <LogOut className="w-4 h-4" aria-hidden="true" />
+              {!isMobile && <span className="ml-2">Sign Out</span>}
             </Button>
           </nav>
         </header>
@@ -353,6 +358,17 @@ const Subscriptions = () => {
           )}
         </main>
       </div>
+
+      {/* Floating Action Button (FAB) for mobile */}
+      {isMobile && (
+        <Button
+          onClick={() => setShowAddModal(true)}
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-xl premium-transition hover:scale-110 p-0"
+          aria-label="Add new subscription"
+        >
+          <Plus className="w-6 h-6" aria-hidden="true" />
+        </Button>
+      )}
 
       <Suspense fallback={null}>
         <AddSubscriptionModal
