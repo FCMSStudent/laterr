@@ -450,7 +450,7 @@ All colors MUST be HSL.
   /* Mobile-specific improvements */
   
   /* Increase base font size on mobile to prevent zoom on iOS */
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     html {
       font-size: 16px;
     }
@@ -470,7 +470,7 @@ All colors MUST be HSL.
   }
 
   /* Minimum touch target size for mobile (Apple/Android guidelines) */
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     button, a[role="button"], [role="button"] {
       min-height: 44px;
       min-width: 44px;
@@ -483,7 +483,7 @@ All colors MUST be HSL.
   }
 
   /* Active states with scale transform for mobile feedback */
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     button:active, a:active, [role="button"]:active {
       transform: scale(0.95);
       transition: transform 0.1s ease;
@@ -504,7 +504,7 @@ All colors MUST be HSL.
   }
 
   /* Reduce animation durations on mobile and for users who prefer reduced motion */
-  @media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  @media (max-width: 767px), (prefers-reduced-motion: reduce) {
     .premium-transition {
       transition: all 0.2s ease;
     }

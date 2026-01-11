@@ -191,11 +191,14 @@ export const FilterBar = ({
               <Button variant="outline" size="sm" className="min-h-[44px] flex-1">
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
-                {hasActiveFilters && (
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                    {(selectedTag ? 1 : 0) + (selectedTypeFilter ? 1 : 0)}
-                  </Badge>
-                )}
+                {hasActiveFilters && (() => {
+                  const activeFilterCount = (selectedTag ? 1 : 0) + (selectedTypeFilter ? 1 : 0);
+                  return (
+                    <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                      {activeFilterCount}
+                    </Badge>
+                  );
+                })()}
               </Button>
             </DrawerTrigger>
             <DrawerContent className="max-h-[85vh]">
