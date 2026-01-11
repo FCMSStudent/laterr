@@ -649,6 +649,61 @@ Buttons support Material-style ripple feedback on click:
 - Provides tactile feedback for user interactions
 - Enhances perceived responsiveness
 
+### Navigation Buttons
+
+The application includes global navigation buttons (Back and Home) in the NavigationHeader component:
+
+#### Back Button
+- Uses `ArrowLeft` icon from Lucide React
+- Navigates to previous page using `navigate(-1)`
+- Disabled when there's no history to go back to
+- Shows "Back" text on desktop (sm breakpoint and above), icon-only on mobile
+- Includes tooltip "Go back to previous page"
+- ARIA label: "Go back to previous page"
+
+#### Home Button
+- Uses `Home` icon from Lucide React
+- Navigates to root page "/" (Dashboard)
+- Always enabled
+- Shows "Home" text on desktop (sm breakpoint and above), icon-only on mobile
+- Includes tooltip "Go to home page"
+- ARIA label: "Go to home page"
+
+#### Implementation Example
+```tsx
+<Tooltip>
+  <TooltipTrigger asChild>
+    <Button
+      onClick={() => navigate(-1)}
+      variant="ghost"
+      size="sm"
+      disabled={!canGoBack}
+      className="text-muted-foreground hover:text-foreground smooth-transition"
+      aria-label="Go back to previous page"
+    >
+      <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+      <span className="ml-2 hidden sm:inline">Back</span>
+    </Button>
+  </TooltipTrigger>
+  <TooltipContent>
+    <p>Go back to previous page</p>
+  </TooltipContent>
+</Tooltip>
+```
+
+#### Responsive Behavior
+- Mobile (< 640px): Icon-only display for space efficiency
+- Desktop (≥ 640px): Icon + text label for clarity
+- Touch targets meet 44x44px minimum for accessibility
+- Visual separator (border-l) shown only on desktop
+
+#### Accessibility Features
+- Full keyboard navigation support (Tab, Enter, Space)
+- ARIA labels for screen readers
+- Tooltips provide context on hover
+- Focus indicators follow design system standards
+- Disabled state properly communicated via `aria-disabled`
+
 ---
 
 ## Related Files

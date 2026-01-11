@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Bookmark, CreditCard, Activity, LogOut } from "lucide-react";
+import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AuthError } from "@/types/errors";
 import { AUTH_ERRORS } from "@/lib/error-messages";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useState, useEffect } from "react";
 
 interface NavigationHeaderProps {
   title: string;
@@ -21,6 +23,13 @@ export const NavigationHeader = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const [canGoBack, setCanGoBack] = useState(false);
+
+  useEffect(() => {
+    // Check if there's navigation history by examining React Router's history state
+    // The idx property tracks the current position in the history stack
+    setCanGoBack(window.history.state?.idx !== undefined && window.history.state.idx > 0);
+  }, [location]);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -49,15 +58,59 @@ export const NavigationHeader = ({
   return (
     <header className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="text-muted-foreground text-sm font-medium">
-              {subtitle}
-            </p>
-          )}
+        <div className="flex items-center gap-3">
+          {/* Back and Home Buttons */}
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => navigate(-1)}
+                  variant="ghost"
+                  size="sm"
+                  disabled={!canGoBack}
+                  className="text-muted-foreground hover:text-foreground smooth-transition"
+                  aria-label="Go back to previous page"
+                >
+                  <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+                  <span className="ml-2 hidden sm:inline">Back</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Go back to previous page</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => navigate('/')}
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground smooth-transition"
+                  aria-label="Go to home page"
+                >
+                  <Home className="w-4 h-4" aria-hidden="true" />
+                  <span className="ml-2 hidden sm:inline">Home</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Go to home page</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          <div className="border-l border-border h-6 hidden sm:block" aria-hidden="true"></div>
+
+          <div>
+            <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-muted-foreground text-sm font-medium">
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
         <Button
           onClick={handleSignOut}
