@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   SUBSCRIPTION_TABLES,
   DEFAULT_CATEGORIES,
@@ -68,6 +70,7 @@ export const AddSubscriptionModal = ({
   const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const isMobile = useIsMobile();
 
   const resetForm = () => {
     setName("");
@@ -176,47 +179,37 @@ export const AddSubscriptionModal = ({
 
   const yearlyPreview = amount ? calculateAnnualCost(parseFloat(amount) || 0, billingCycle) : 0;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto !bg-background border-border shadow-xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-foreground">
-            Add Subscription
-          </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            Track a new recurring expense
-          </DialogDescription>
-        </DialogHeader>
+  const FormContent = () => (
+    <>
+      {/* Quick Add Templates */}
+      <div className="mb-4">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowQuickAdd(!showQuickAdd)}
+          className="gap-2"
+        >
+          <Sparkles className="h-4 w-4" />
+          Quick Add
+        </Button>
+        {showQuickAdd && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {POPULAR_SUBSCRIPTIONS.map((sub) => (
+              <Badge
+                key={sub.name}
+                variant="outline"
+                className="cursor-pointer hover:bg-accent premium-transition"
+                onClick={() => handleQuickAdd(sub)}
+              >
+                {sub.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
 
-        {/* Quick Add Templates */}
-        <div className="mb-4">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowQuickAdd(!showQuickAdd)}
-            className="gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            Quick Add
-          </Button>
-          {showQuickAdd && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {POPULAR_SUBSCRIPTIONS.map((sub) => (
-                <Badge
-                  key={sub.name}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-accent premium-transition"
-                  onClick={() => handleQuickAdd(sub)}
-                >
-                  {sub.name}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div className="space-y-2">
             <Label htmlFor="name">Name *</Label>
@@ -443,6 +436,37 @@ export const AddSubscriptionModal = ({
             Add Subscription
           </LoadingButton>
         </form>
+      </>
+    );
+
+  return isMobile ? (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[90vh] pb-safe">
+        <DrawerHeader>
+          <DrawerTitle className="text-xl font-semibold text-foreground">
+            Add Subscription
+          </DrawerTitle>
+          <DrawerDescription className="text-muted-foreground">
+            Track a new recurring expense
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-4 pb-4">
+          <FormContent />
+        </div>
+      </DrawerContent>
+    </Drawer>
+  ) : (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto !bg-background border-border shadow-xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-semibold text-foreground">
+            Add Subscription
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Track a new recurring expense
+          </DialogDescription>
+        </DialogHeader>
+        <FormContent />
       </DialogContent>
     </Dialog>
   );
