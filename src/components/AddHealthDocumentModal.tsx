@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { HEALTH_TABLES, DOCUMENT_TYPES } from "@/constants/health";
 import type { DocumentType } from "@/types/health";
 import { format } from "date-fns";
@@ -46,6 +48,7 @@ export const AddHealthDocumentModal = ({
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const isMobile = useIsMobile();
 
   const resetForm = () => {
     setDocumentType("");
@@ -225,35 +228,24 @@ export const AddHealthDocumentModal = ({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg !bg-background border-border shadow-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-foreground">
-            Add Health Document
-          </DialogTitle>
-          <DialogDescription>
-            Upload a health document for easy access and insights
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 mt-4">
-          {/* Document Type */}
-          <div className="space-y-2">
-            <Label htmlFor="docType">Document Type *</Label>
-            <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type..." />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(DOCUMENT_TYPES).map(([key, info]) => (
-                  <SelectItem key={key} value={key}>
-                    {info.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  const FormContent = () => (
+    <div className="space-y-4 mt-4">
+      {/* Document Type */}
+      <div className="space-y-2">
+        <Label htmlFor="docType">Document Type *</Label>
+        <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select type..." />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(DOCUMENT_TYPES).map(([key, info]) => (
+              <SelectItem key={key} value={key}>
+                {info.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
           {/* Title */}
           <div className="space-y-2">
@@ -415,6 +407,36 @@ export const AddHealthDocumentModal = ({
             Upload Document
           </LoadingButton>
         </div>
+      );
+
+  return isMobile ? (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[90vh] pb-safe">
+        <DrawerHeader>
+          <DrawerTitle className="text-xl font-semibold text-foreground">
+            Add Health Document
+          </DrawerTitle>
+          <DrawerDescription>
+            Upload a health document for easy access and insights
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-4 pb-4">
+          <FormContent />
+        </div>
+      </DrawerContent>
+    </Drawer>
+  ) : (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg !bg-background border-border shadow-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-semibold text-foreground">
+            Add Health Document
+          </DialogTitle>
+          <DialogDescription>
+            Upload a health document for easy access and insights
+          </DialogDescription>
+        </DialogHeader>
+        <FormContent />
       </DialogContent>
     </Dialog>
   );
