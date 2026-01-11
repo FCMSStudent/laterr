@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import GradientBackground from "./components/GradientBackground";
 import "./styles/gradient.css";
 
@@ -28,31 +30,39 @@ const LoadingFallback = () => (
   </div>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <GradientBackground />
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="animate-in fade-in duration-500">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/app" element={<Dashboard />} />
-              <Route path="/bookmarks" element={<Index />} />
-              <Route path="/subscriptions" element={<Subscriptions />} />
-              <Route path="/health" element={<Health />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/landing" element={<Landing />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const isMobile = useIsMobile();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <GradientBackground />
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Suspense fallback={<LoadingFallback />}>
+            <div className="animate-in fade-in duration-500">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/app" element={<Dashboard />} />
+                <Route path="/bookmarks" element={<Index />} />
+                <Route path="/subscriptions" element={<Subscriptions />} />
+                <Route path="/health" element={<Health />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/landing" element={<Landing />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              {/* Mobile Bottom Navigation - only show on mobile and not on auth pages */}
+              {isMobile && (
+                <MobileBottomNav />
+              )}
+            </div>
+          </Suspense>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
