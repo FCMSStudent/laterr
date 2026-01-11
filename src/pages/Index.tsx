@@ -6,7 +6,7 @@ import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
 import { SearchBar } from "@/components/SearchBar";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LogOut, Plus } from "lucide-react";
+import { Sparkles, LogOut, Plus, ArrowLeft, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { FilterBar, type SortOption } from "@/components/FilterBar";
@@ -249,9 +249,30 @@ const Index = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <header className="mb-6 items-center justify-between flex flex-row">
-          <div>
-            <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
-            <p className="text-muted-foreground text-sm font-medium">Your personal knowledge space</p>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => navigate(-1)}
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Go back"
+              disabled={window.history.length <= 1}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <Button
+              onClick={() => navigate('/dashboard')}
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Go to dashboard"
+            >
+              <Home className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
+              <p className="text-muted-foreground text-sm font-medium">Your personal knowledge space</p>
+            </div>
           </div>
           <nav aria-label="Main navigation" className="flex items-center gap-4">
             <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
