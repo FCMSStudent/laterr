@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Calendar, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { HEALTH_TABLES, MEASUREMENT_TYPES } from "@/constants/health";
 import type { MeasurementType } from "@/types/health";
 import { format, subDays } from "date-fns";
@@ -46,6 +48,7 @@ export const AddMeasurementModal = ({
   const [notes, setNotes] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const isMobile = useIsMobile();
 
   const selectedTypeInfo = measurementType ? MEASUREMENT_TYPES[measurementType] : null;
   const isBloodPressure = measurementType === 'blood_pressure';
@@ -135,35 +138,24 @@ export const AddMeasurementModal = ({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-foreground">
-            Log Measurement
-          </DialogTitle>
-          <DialogDescription>
-            Record a new health measurement
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 mt-4">
-          {/* Measurement Type */}
-          <div className="space-y-2">
-            <Label htmlFor="type">Measurement Type *</Label>
-            <Select value={measurementType} onValueChange={(v) => setMeasurementType(v as MeasurementType)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type..." />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(MEASUREMENT_TYPES).map(([key, info]) => (
-                  <SelectItem key={key} value={key}>
-                    {info.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  const FormContent = () => (
+    <div className="space-y-4 mt-4">
+      {/* Measurement Type */}
+      <div className="space-y-2">
+        <Label htmlFor="type">Measurement Type *</Label>
+        <Select value={measurementType} onValueChange={(v) => setMeasurementType(v as MeasurementType)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select type..." />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(MEASUREMENT_TYPES).map(([key, info]) => (
+              <SelectItem key={key} value={key}>
+                {info.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
           {/* Value Input - Different for Blood Pressure */}
           {isBloodPressure ? (
@@ -300,6 +292,36 @@ export const AddMeasurementModal = ({
             Log Measurement
           </LoadingButton>
         </div>
+      );
+
+  return isMobile ? (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[90vh] pb-safe">
+        <DrawerHeader>
+          <DrawerTitle className="text-xl font-semibold text-foreground">
+            Log Measurement
+          </DrawerTitle>
+          <DrawerDescription>
+            Record a new health measurement
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-4 pb-4">
+          <FormContent />
+        </div>
+      </DrawerContent>
+    </Drawer>
+  ) : (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-semibold text-foreground">
+            Log Measurement
+          </DialogTitle>
+          <DialogDescription>
+            Record a new health measurement
+          </DialogDescription>
+        </DialogHeader>
+        <FormContent />
       </DialogContent>
     </Dialog>
   );
