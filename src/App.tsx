@@ -44,7 +44,8 @@ const App = () => {
             <div className="animate-in fade-in duration-500">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/app" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/app" element={<Index />} />
                 <Route path="/bookmarks" element={<Index />} />
                 <Route path="/subscriptions" element={<Subscriptions />} />
                 <Route path="/health" element={<Health />} />
