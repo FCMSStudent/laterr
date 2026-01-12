@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Trash2, Download, RefreshCw, Calendar, Building, FileText, 
-  ExternalLink, Sparkles 
+  ExternalLink, Sparkles, Beaker, Loader2 
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ import type { HealthDocument, DocumentType } from "@/types/health";
 import { DOCUMENT_TYPES, HEALTH_TABLES } from "@/constants/health";
 import { PDFPreview } from "@/components/PDFPreview";
 import { DOCXPreview } from "@/components/DOCXPreview";
+import { ExtractedHealthDataDisplay } from "@/components/ExtractedHealthDataDisplay";
 
 interface HealthDocumentDetailModalProps {
   open: boolean;
@@ -31,6 +33,8 @@ export const HealthDocumentDetailModal = ({
   onDelete,
 }: HealthDocumentDetailModalProps) => {
   const [regenerating, setRegenerating] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [activeTab, setActiveTab] = useState("summary");
   const docType = document.document_type as DocumentType;
   const typeInfo = DOCUMENT_TYPES[docType];
 
@@ -102,6 +106,55 @@ export const HealthDocumentDetailModal = ({
     }
   };
 
+  const handleExtractData = async () => {
+    setExtracting(true);
+    try {
+      // First get the document content - for now we'll use the summary as content
+      // In a real implementation, you'd fetch and parse the actual file
+      const contentToAnalyze = document.summary || `Health document: ${document.title}. Type: ${document.document_type}.`;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-health-data`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            content: contentToAnalyze,
+            document_type: document.document_type,
+            file_type: document.file_type,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Request failed: ${response.status}`);
+      }
+
+      const { extracted_data } = await response.json();
+
+      // Update document with extracted data
+      const { error: updateError } = await supabase
+        .from(HEALTH_TABLES.DOCUMENTS)
+        .update({ extracted_data })
+        .eq('id', document.id);
+
+      if (updateError) throw updateError;
+
+      toast.success("Health data extracted successfully!");
+      onUpdate();
+      setActiveTab("extracted");
+    } catch (error) {
+      console.error('Error extracting health data:', error);
+      toast.error(`Failed to extract data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl !bg-background border-border shadow-xl max-h-[90vh] overflow-y-auto">
@@ -156,7 +209,7 @@ export const HealthDocumentDetailModal = ({
           </div>
 
           {/* Right: Details */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Metadata */}
             <div className="space-y-3">
               {document.provider_name && (
@@ -181,33 +234,65 @@ export const HealthDocumentDetailModal = ({
               </div>
             </div>
 
-            {/* AI Summary */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  AI Summary
-                </h4>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRegenerateSummary}
-                  disabled={regenerating}
-                >
-                  <RefreshCw className={`w-3 h-3 mr-1 ${regenerating ? 'animate-spin' : ''}`} />
-                  Regenerate
-                </Button>
-              </div>
-              {document.summary ? (
-                <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-                  {document.summary}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">
-                  No summary available. Click regenerate to create one.
-                </p>
-              )}
-            </div>
+            {/* Tabs for Summary / Extracted Data */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="summary" className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Summary
+                </TabsTrigger>
+                <TabsTrigger value="extracted" className="flex items-center gap-1.5">
+                  <Beaker className="w-3.5 h-3.5" />
+                  Health Data
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="summary" className="mt-3 space-y-3">
+                <div className="flex items-center justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRegenerateSummary}
+                    disabled={regenerating}
+                  >
+                    <RefreshCw className={`w-3 h-3 mr-1 ${regenerating ? 'animate-spin' : ''}`} />
+                    Regenerate
+                  </Button>
+                </div>
+                {document.summary ? (
+                  <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                    {document.summary}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic text-center py-4">
+                    No summary available. Click regenerate to create one.
+                  </p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="extracted" className="mt-3 space-y-3">
+                <div className="flex items-center justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExtractData}
+                    disabled={extracting}
+                  >
+                    {extracting ? (
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                    )}
+                    {document.extracted_data ? 'Re-extract' : 'Extract Data'}
+                  </Button>
+                </div>
+                <ScrollArea className="max-h-[300px]">
+                  <ExtractedHealthDataDisplay 
+                    data={(document.extracted_data as any) || {}} 
+                  />
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
 
             {/* Tags */}
             {document.tags && document.tags.length > 0 && (

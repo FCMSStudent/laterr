@@ -27,6 +27,7 @@ const AddMeasurementModal = lazy(() => import("@/components/AddMeasurementModal"
 const MeasurementDetailModal = lazy(() => import("@/components/MeasurementDetailModal").then(({ MeasurementDetailModal }) => ({ default: MeasurementDetailModal })));
 const AddHealthDocumentModal = lazy(() => import("@/components/AddHealthDocumentModal").then(({ AddHealthDocumentModal }) => ({ default: AddHealthDocumentModal })));
 const HealthDocumentDetailModal = lazy(() => import("@/components/HealthDocumentDetailModal").then(({ HealthDocumentDetailModal }) => ({ default: HealthDocumentDetailModal })));
+const HealthChatPanel = lazy(() => import("@/components/HealthChatPanel").then(({ HealthChatPanel }) => ({ default: HealthChatPanel })));
 
 const Health = () => {
   const [activeTab, setActiveTab] = useState("measurements");
@@ -478,6 +479,9 @@ const Health = () => {
             onDelete={handleDeleteDocument}
           />
         )}
+
+        {/* AI Chat Panel */}
+        <HealthChatPanel />
       </Suspense>
     </div>
   );
