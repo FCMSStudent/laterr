@@ -41,10 +41,9 @@ async function performLogin(page: Page) {
   // Wait for the page to load
   await page.waitForLoadState('networkidle');
   
-  // Fill in login credentials
-  // Adjust selectors based on your actual auth form
-  await page.fill('input[type="email"]', authConfig.email);
-  await page.fill('input[type="password"]', authConfig.password);
+  // Fill in login credentials using id selectors
+  await page.fill('#email', authConfig.email);
+  await page.fill('#password', authConfig.password);
   
   // Click login button
   await page.click('button[type="submit"]');
@@ -53,7 +52,7 @@ async function performLogin(page: Page) {
   await page.waitForLoadState('networkidle');
   
   // Wait a bit for any post-login redirects or state updates
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(3000);
   
   console.log('Login completed');
 }
