@@ -1,0 +1,65 @@
+name: Screenshot Capture
+
+on:
+  # Run on manual trigger
+  workflow_dispatch:
+  
+  # Or run on schedule (e.g., weekly on Monday at 2 AM UTC)
+  # schedule:
+  #   - cron: '0 2 * * 1'
+  
+  # Or run on push to main
+  # push:
+  #   branches:
+  #     - main
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+      
+      - name: Build application
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      
+      - name: Run screenshot tests
+        run: npm run screenshots
+        env:
+          # Use production URL or preview environment
+          VITE_SCREENSHOT_BASE_URL: ${{ secrets.VITE_SCREENSHOT_BASE_URL || 'http://localhost:8080' }}
+          VITE_SCREENSHOT_EMAIL: ${{ secrets.VITE_SCREENSHOT_EMAIL }}
+          VITE_SCREENSHOT_PASSWORD: ${{ secrets.VITE_SCREENSHOT_PASSWORD }}
+          CI: true
+      
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/
+          retention-days: 30
+      
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
