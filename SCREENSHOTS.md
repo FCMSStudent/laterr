@@ -19,20 +19,22 @@ This system provides:
    npm run playwright:install
    ```
 
-2. **Configure environment (optional):**
+2. **Configure environment (required for authenticated routes):**
    
-   Create or update `.env` file:
+   Add to your `.env` file (this file is gitignored):
    ```bash
-   # Optional: Override base URL (defaults to http://localhost:8080)
-   VITE_SCREENSHOT_BASE_URL=http://localhost:8080
-   
-   # Optional: Override authentication credentials
+   # Screenshot automation credentials
    VITE_SCREENSHOT_EMAIL=your_email@example.com
    VITE_SCREENSHOT_PASSWORD=your_password
    
+   # Optional: Override base URL (defaults to http://localhost:8080)
+   # VITE_SCREENSHOT_BASE_URL=http://localhost:8080
+   
    # Optional: Skip authentication entirely
-   VITE_SCREENSHOT_SKIP_AUTH=false
+   # VITE_SCREENSHOT_SKIP_AUTH=true
    ```
+   
+   **⚠️ Security Note:** Never commit credentials to version control. The `.env` file is automatically excluded via `.gitignore`.
 
 ## Usage
 

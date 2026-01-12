@@ -16,10 +16,11 @@ export const routes = [
 
 /**
  * Authentication credentials
- * Override with environment variables for CI
+ * Override with environment variables for CI or local testing
+ * DO NOT commit real credentials - use environment variables instead
  */
 export const authConfig = {
-  email: process.env.VITE_SCREENSHOT_EMAIL || 'itswaledx@gmail.com',
-  password: process.env.VITE_SCREENSHOT_PASSWORD || 'xocqa3-nibbuq-gAdpyq',
+  email: process.env.VITE_SCREENSHOT_EMAIL || '',
+  password: process.env.VITE_SCREENSHOT_PASSWORD || '',
   enabled: process.env.VITE_SCREENSHOT_SKIP_AUTH !== 'true',
 };
