@@ -101,106 +101,27 @@ export const NavigationHeader = ({
   ];
 
   return (
-    <header className="mb-4">
-      <div className="flex items-center gap-3">
-        {/* Compact navigation buttons */}
-        <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => navigate(-1)}
-                variant="ghost"
-                size="icon"
-                disabled={!canGoBack}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                aria-label="Go back"
-              >
-                <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Go back</TooltipContent>
-          </Tooltip>
+    <header className="flex items-center gap-2 flex-wrap">
+      {/* Back button */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => navigate(-1)}
+            variant="ghost"
+            size="icon"
+            disabled={!canGoBack}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Go back</TooltipContent>
+      </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => navigate('/')}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                aria-label="Home"
-              >
-                <Home className="w-4 h-4" aria-hidden="true" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Home</TooltipContent>
-          </Tooltip>
-        </div>
-
-        <div className="border-l border-border/50 h-5" aria-hidden="true" />
-
-        {/* Title */}
-        <div>
-          <h1 className="text-xl md:text-2xl text-foreground tracking-tight font-semibold">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="text-muted-foreground text-xs hidden sm:block">
-              {subtitle}
-            </p>
-          )}
-        </div>
-
-        <div className="flex-1" />
-
-        {/* Sign Out */}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="w-4 h-4" aria-hidden="true" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Sign out</TooltipContent>
-            </Tooltip>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Sign out?</AlertDialogTitle>
-              <AlertDialogDescription>
-                You'll need to sign in again to access your data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={signingOut}>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleSignOut}
-                disabled={signingOut}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {signingOut ? (
-                  <>
-                    <LoadingSpinner size="sm" className="mr-2" />
-                    Signing out...
-                  </>
-                ) : (
-                  "Sign Out"
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-      
-      {/* Compact module navigation */}
+      {/* Module navigation - inline */}
       {!hideNavigation && !isMobile && (
-        <nav aria-label="Module navigation" className="flex gap-1 mt-3">
+        <nav aria-label="Module navigation" className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || 
@@ -210,22 +131,75 @@ export const NavigationHeader = ({
               <Button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                variant={isActive ? "secondary" : "ghost"}
+                variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8 gap-1.5 text-sm",
+                  "h-7 px-2.5 gap-1.5 text-xs font-medium rounded-md",
                   isActive 
-                    ? "bg-secondary text-secondary-foreground" 
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                 )}
               >
                 <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                {item.label}
+                <span className="hidden sm:inline">{item.label}</span>
               </Button>
             );
           })}
         </nav>
       )}
+
+      {/* Title - mobile only or when nav hidden */}
+      {(isMobile || hideNavigation) && (
+        <h1 className="text-lg font-semibold text-foreground">
+          {title}
+        </h1>
+      )}
+
+      <div className="flex-1" />
+
+      {/* Sign Out */}
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                aria-label="Sign out"
+              >
+                <LogOut className="w-4 h-4" aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Sign out</TooltipContent>
+          </Tooltip>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You'll need to sign in again to access your data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={signingOut}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {signingOut ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Signing out...
+                </>
+              ) : (
+                "Sign Out"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 };
