@@ -10,6 +10,7 @@ Welcome to the Laterr Garden documentation! This directory contains all technica
 ### Design & UI/UX
 - **[Design System](DESIGN_SYSTEM.md)** - Comprehensive design guidelines including colors, typography, spacing, and buttons
 - **[UI/UX Feedback](UI_UX_FEEDBACK.md)** - Detailed UI/UX analysis and improvement recommendations (Grade: B+ 85/100)
+- **[UI/UX Detailed Feedback](UI_UX_DETAILED_FEEDBACK.md)** - **NEW** Per-page and per-component analysis with interaction states, accessibility checks, and priority fixes
 
 ### Features & Implementation
 - **[Embeddings Guide](EMBEDDINGS_GUIDE.md)** - Complete guide to multimodal embeddings and semantic search functionality
@@ -34,6 +35,7 @@ Start with:
 Start with:
 1. [Design System](DESIGN_SYSTEM.md) - Learn the design language
 2. [UI/UX Feedback](UI_UX_FEEDBACK.md) - See improvement opportunities
+3. [UI/UX Detailed Feedback](UI_UX_DETAILED_FEEDBACK.md) - Per-component analysis
 
 ### For Developers
 Start with:
@@ -89,6 +91,16 @@ Professional UI/UX audit with:
 
 **When to use**: Planning improvements or understanding user experience issues
 
+### UI/UX Detailed Feedback (NEW - Per-Page Analysis)
+Comprehensive per-page and per-component analysis with:
+- 7 pages analyzed (Landing, Auth, Dashboard, Bookmarks, Subscriptions, Health, 404)
+- 20+ key components reviewed
+- Interaction states documented (default/hover/pressed/disabled/loading/error)
+- Accessibility checks (contrast, tap targets, focus order, labels)
+- Priority matrix (P0/P1/P2) with effort estimates
+
+**When to use**: Working on a specific page or component improvement
+
 ### Testing Checklist (400+ lines)
 Complete testing guide including:
 - Pre-testing setup
@@ -128,7 +140,9 @@ Technical optimization strategies:
 → See [Embeddings Guide](EMBEDDINGS_GUIDE.md)
 
 ### "I want to improve the UI"
-→ See [UI/UX Feedback](UI_UX_FEEDBACK.md)
+→ See [UI/UX Feedback](UI_UX_FEEDBACK.md) for general analysis
+
+→ See [UI/UX Detailed Feedback](UI_UX_DETAILED_FEEDBACK.md) for page-by-page and component-by-component breakdown
 
 ### "I need to test embeddings"
 → See [Testing Checklist](TESTING_CHECKLIST.md)
@@ -203,6 +217,6 @@ When adding new documentation:
 
 ---
 
-**Last Updated**: 2025-11-22
-**Total Documentation**: 7 files
-**Combined Size**: ~65KB of essential developer knowledge
+**Last Updated**: 2026-01-14
+**Total Documentation**: 8 files
+**Combined Size**: ~100KB of essential developer knowledge
