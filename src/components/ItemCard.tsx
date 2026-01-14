@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { isVideoUrl } from "@/lib/video-utils";
+import { NotePreview } from "@/components/NotePreview";
+import { parseNotes, getChecklistStats } from "@/lib/notes-parser";
+import { ChecklistProgress } from "@/components/ChecklistProgress";
 interface ItemCardProps {
   id: string;
   type: ItemType;
@@ -124,7 +127,20 @@ export const ItemCard = ({
         </DropdownMenu>
       </div>
 
-      {previewImageUrl ? <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">
+      {/* Note type: show note preview */}
+      {type === 'note' && content ? (
+        <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">
+          <div className="w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-amber-50/80 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/30 dark:border-amber-800/20">
+            <NotePreview 
+              content={content} 
+              maxLines={4} 
+              variant="compact" 
+              showProgress={true}
+            />
+          </div>
+        </AspectRatio>
+      ) : previewImageUrl ? (
+        <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">
           <div className="relative w-full h-full rounded-xl overflow-hidden bg-muted/50">
             <img src={previewImageUrl} alt={title} className="w-full h-full object-cover group-hover:scale-110 premium-transition" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 premium-transition"></div>
@@ -137,11 +153,14 @@ export const ItemCard = ({
               </div>
             )}
           </div>
-        </AspectRatio> : <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">
+        </AspectRatio>
+      ) : (
+        <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">
           <div className="flex items-center justify-center w-full h-full rounded-xl bg-muted/30">
             <div className="text-muted-foreground/40">{getIcon()}</div>
           </div>
-        </AspectRatio>}
+        </AspectRatio>
+      )}
       
       <div className="space-y-3 md:space-y-4">
         <div className="gap-3 flex-row flex items-start justify-start">
