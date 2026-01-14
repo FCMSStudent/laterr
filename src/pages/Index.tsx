@@ -12,9 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterBar, type SortOption, type ViewMode } from "@/components/FilterBar";
-import { RecentlyViewedSection } from "@/components/RecentlyViewedSection";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
-import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { SUPABASE_ITEMS_TABLE } from "@/constants";
 import type { Item, User, ItemType } from "@/types";
@@ -74,9 +72,6 @@ const Index = () => {
   const { toast } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const isMobile = useIsMobile();
-  
-  // Recently viewed hook
-  const { recentIds, trackViewed } = useRecentlyViewed();
 
   // Persist view mode
   useEffect(() => {
@@ -349,15 +344,7 @@ const Index = () => {
     setFilteredItems(sorted);
   }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption]);
 
-  // Get recently viewed items
-  const recentlyViewedItems = useMemo(() => {
-    return recentIds
-      .map(id => items.find(item => item.id === id))
-      .filter((item): item is Item => item !== undefined);
-  }, [recentIds, items]);
-
   const handleItemClick = (item: Item) => {
-    trackViewed(item.id);
     setSelectedItem(item);
     setShowDetailModal(true);
   };
@@ -375,8 +362,6 @@ const Index = () => {
   if (!user) {
     return null;
   }
-
-  const showRecentlyViewed = recentlyViewedItems.length > 0 && !searchQuery && !selectedTag && !typeFilter;
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -417,13 +402,6 @@ const Index = () => {
             {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
           </div>
 
-          {/* Recently Viewed Section */}
-          {!loading && showRecentlyViewed && (
-            <RecentlyViewedSection 
-              items={recentlyViewedItems} 
-              onItemClick={handleItemClick} 
-            />
-          )}
 
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
