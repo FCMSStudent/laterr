@@ -153,7 +153,7 @@ export const FilterBar = ({
       {isMobile ? <div className="flex items-center justify-between gap-2">
           <Drawer>
             <DrawerTrigger asChild>
-              <Button variant="outline" size="sm" className="min-h-[44px] flex-1">
+              <Button variant="outline" size="sm" className="min-h-[44px] flex-1 border-0 border-none">
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
                 {hasActiveFilters && (() => {
