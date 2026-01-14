@@ -384,63 +384,45 @@ const Index = () => {
         Skip to main content
       </a>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center justify-between gap-4 mb-4">
           <NavigationHeader 
-            title="Laterr" 
-            subtitle="Your personal knowledge space"
-            breadcrumbs={[
-              { label: "Dashboard", path: "/" },
-              { label: "Bookmarks" }
-            ]}
+            title="Bookmarks" 
+            subtitle="Your saved items"
           />
           
-          {/* Desktop Add Item Button */}
+          {/* Desktop Add Button */}
           {!isMobile && (
-            <div className="flex items-center gap-2">
-              {/* Keyboard shortcuts hint */}
-              <div className="hidden lg:flex items-center gap-3 text-xs text-muted-foreground mr-2">
-                <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px] font-mono">/</kbd>
-                  <span>search</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px] font-mono">n</kbd>
-                  <span>new</span>
-                </span>
-              </div>
-              <Button 
-                onClick={() => setShowAddModal(true)} 
-                className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" 
-                aria-label="Add new item to your collection"
-              >
-                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-                Add Item
-              </Button>
-            </div>
+            <Button 
+              onClick={() => setShowAddModal(true)} 
+              size="sm"
+              className="h-8 gap-1.5"
+              aria-label="Add new item"
+            >
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              Add
+            </Button>
           )}
         </div>
 
-        <div className="max-w-2xl mx-auto mb-4">
+        <div className="max-w-xl mx-auto mb-4">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        <div className="mb-4">
-          <FilterBar 
-            selectedTag={selectedTag} 
-            selectedSort={sortOption} 
-            selectedTypeFilter={typeFilter} 
-            onTagSelect={setSelectedTag} 
-            onSortChange={setSortOption} 
-            onTypeFilterChange={setTypeFilter} 
-            onClearAll={handleClearAllFilters}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            isSelectionMode={isSelectionMode}
-            selectedCount={selectedItems.size}
-            onSelectionModeToggle={handleSelectionModeToggle}
-          />
-        </div>
+        <FilterBar 
+          selectedTag={selectedTag} 
+          selectedSort={sortOption} 
+          selectedTypeFilter={typeFilter} 
+          onTagSelect={setSelectedTag} 
+          onSortChange={setSortOption} 
+          onTypeFilterChange={setTypeFilter} 
+          onClearAll={handleClearAllFilters}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          isSelectionMode={isSelectionMode}
+          selectedCount={selectedItems.size}
+          onSelectionModeToggle={handleSelectionModeToggle}
+        />
 
         <main id="main-content">
           <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
