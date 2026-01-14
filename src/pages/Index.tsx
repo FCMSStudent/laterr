@@ -4,9 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { ItemCard } from "@/components/ItemCard";
 import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
 import { SearchBar } from "@/components/SearchBar";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { NavigationHeader } from "@/components/NavigationHeader";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LogOut, Plus, ArrowLeft, Home } from "lucide-react";
+import { Sparkles, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,9 +14,8 @@ import { FilterBar, type SortOption } from "@/components/FilterBar";
 import { SUPABASE_ITEMS_TABLE } from "@/constants";
 import type { Item, User, ItemType } from "@/types";
 import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
-import { formatError } from "@/lib/error-utils";
-import { AuthError, NetworkError, toTypedError } from "@/types/errors";
-import { AUTH_ERRORS, getNetworkErrorMessage } from "@/lib/error-messages";
+import { NetworkError, toTypedError } from "@/types/errors";
+import { getNetworkErrorMessage } from "@/lib/error-messages";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({
@@ -34,9 +33,7 @@ const EditItemModal = lazy(() => import("@/components/EditItemModal").then(({
 }) => ({
   default: EditItemModal
 })));
-type RawItem = Omit<Item, 'tags'> & {
-  tags: string[] | null;
-};
+
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -52,9 +49,7 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const isMobile = useIsMobile();
 
@@ -69,6 +64,7 @@ const Index = () => {
       }
     }
   }, []);
+
   const handleBookmarkToggle = useCallback((itemId: string) => {
     setBookmarkedItems(prev => {
       const newSet = new Set(prev);
@@ -81,17 +77,14 @@ const Index = () => {
       return newSet;
     });
   }, []);
+
   const fetchItems = useCallback(async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from(SUPABASE_ITEMS_TABLE).select('*').order('created_at', {
+      const { data, error } = await supabase.from(SUPABASE_ITEMS_TABLE).select('*').order('created_at', {
         ascending: false
       });
       if (error) throw error;
 
-      // Generate signed URLs for preview images
       const rawItems = (data ?? []) as any[];
       const normalizedItems: Item[] = rawItems.map(item => ({
         ...item,
@@ -119,11 +112,10 @@ const Index = () => {
       setLoading(false);
     }
   }, [toast]);
+
   const handleDeleteItem = useCallback(async (itemId: string) => {
     try {
-      const {
-        error
-      } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq('id', itemId);
+      const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq('id', itemId);
       if (error) throw error;
       toast({
         title: "Success",
@@ -140,6 +132,7 @@ const Index = () => {
       });
     }
   }, [toast, fetchItems]);
+
   const handleEditItem = useCallback((itemId: string) => {
     const item = items.find(i => i.id === itemId);
     if (item) {
@@ -147,13 +140,9 @@ const Index = () => {
       setShowEditModal(true);
     }
   }, [items]);
+
   useEffect(() => {
-    // Check authentication
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null;
       if (!currentUser) {
         navigate('/auth');
@@ -163,12 +152,7 @@ const Index = () => {
       }
     });
 
-    // Listen for auth changes
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate('/auth');
       } else {
@@ -177,26 +161,27 @@ const Index = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate, fetchItems]);
+
   useEffect(() => {
     let filtered = items;
 
-    // Filter by search (sanitize input)
     if (debouncedSearchQuery) {
       const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
-      filtered = filtered.filter(item => item.title.toLowerCase().includes(sanitizedQuery) || item.summary?.toLowerCase().includes(sanitizedQuery) || item.user_notes?.toLowerCase().includes(sanitizedQuery));
+      filtered = filtered.filter(item => 
+        item.title.toLowerCase().includes(sanitizedQuery) || 
+        item.summary?.toLowerCase().includes(sanitizedQuery) || 
+        item.user_notes?.toLowerCase().includes(sanitizedQuery)
+      );
     }
 
-    // Filter by tag
     if (selectedTag) {
       filtered = filtered.filter(item => item.tags?.includes(selectedTag));
     }
 
-    // Filter by type
     if (typeFilter) {
       filtered = filtered.filter(item => item.type === typeFilter);
     }
 
-    // Sort items
     const sorted = [...filtered];
     switch (sortOption) {
       case "date-asc":
@@ -217,116 +202,110 @@ const Index = () => {
     }
     setFilteredItems(sorted);
   }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption]);
+
   const handleItemClick = (item: Item) => {
     setSelectedItem(item);
     setShowDetailModal(true);
   };
+
   const handleClearAllFilters = () => {
     setSelectedTag(null);
     setTypeFilter(null);
   };
-  const handleSignOut = async () => {
-    const {
-      error
-    } = await supabase.auth.signOut();
-    if (error) {
-      const authError = new AuthError(AUTH_ERRORS.SIGN_OUT_FAILED.message, error instanceof Error ? error : undefined);
-      toast({
-        title: AUTH_ERRORS.SIGN_OUT_FAILED.title,
-        description: authError.message,
-        variant: "destructive"
-      });
-    } else {
-      navigate('/');
-    }
-  };
+
   if (!user) {
     return null;
   }
-  return <div className="min-h-screen pb-20 md:pb-0">
-      {/* Skip Navigation Link */}
+
+  return (
+    <div className="min-h-screen pb-20 md:pb-0">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
         Skip to main content
       </a>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-        <header className="mb-4 md:mb-6 items-center justify-between flex flex-col sm:flex-row gap-4">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <Button
-              onClick={() => navigate(-1)}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
-              aria-label="Go back"
-              disabled={window.history.length <= 1}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <Button
-              onClick={() => navigate('/dashboard')}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
-              aria-label="Go to dashboard"
-            >
-              <Home className="w-5 h-5" />
-            </Button>
-            <div className="flex-1 sm:flex-none">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold text-justify">Laterr</h1>
-              <p className="text-muted-foreground text-xs sm:text-sm font-medium">Your personal knowledge space</p>
-            </div>
-          </div>
-          <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
-            {/* Desktop Add Item Button */}
-            {!isMobile && (
-              <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" aria-label="Add new item to your collection">
-                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-                Add Item
-              </Button>
-            )}
-            {/* Sign Out Button - Icon only on mobile */}
+        <div className="flex items-center justify-between mb-4">
+          <NavigationHeader 
+            title="Laterr" 
+            subtitle="Your personal knowledge space"
+            breadcrumbs={[
+              { label: "Dashboard", path: "/" },
+              { label: "Bookmarks" }
+            ]}
+          />
+          
+          {/* Desktop Add Item Button */}
+          {!isMobile && (
             <Button 
-              onClick={handleSignOut} 
-              variant="ghost" 
-              size={isMobile ? "icon" : "sm"}
-              className="text-muted-foreground hover:text-foreground smooth-transition min-h-[44px] min-w-[44px]" 
-              aria-label="Sign out of your account"
+              onClick={() => setShowAddModal(true)} 
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" 
+              aria-label="Add new item to your collection"
             >
-              <LogOut className="w-4 h-4" aria-hidden="true" />
-              {!isMobile && <span className="ml-2">Sign Out</span>}
+              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+              Add Item
             </Button>
-          </nav>
-        </header>
+          )}
+        </div>
 
         <div className="max-w-2xl mx-auto mb-4">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
         <div className="mb-4">
-          <FilterBar selectedTag={selectedTag} selectedSort={sortOption} selectedTypeFilter={typeFilter} onTagSelect={setSelectedTag} onSortChange={setSortOption} onTypeFilterChange={setTypeFilter} onClearAll={handleClearAllFilters} />
+          <FilterBar 
+            selectedTag={selectedTag} 
+            selectedSort={sortOption} 
+            selectedTypeFilter={typeFilter} 
+            onTagSelect={setSelectedTag} 
+            onSortChange={setSortOption} 
+            onTypeFilterChange={setTypeFilter} 
+            onClearAll={handleClearAllFilters} 
+          />
         </div>
 
         <main id="main-content">
-          {/* Screen reader announcement for filtered results */}
           <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
             {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
           </div>
 
-          {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
-              {Array.from({
-            length: 8
-          }).map((_, index) => <ItemCardSkeleton key={index} />)}
-            </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
+              {Array.from({ length: 8 }).map((_, index) => <ItemCardSkeleton key={index} />)}
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-32 space-y-5">
               <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
               <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
               <p className="text-muted-foreground text-base max-w-md mx-auto">
                 Start building your knowledge by adding your first item
               </p>
-            </div> : <section aria-label="Items collection">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
-                {filteredItems.map(item => <ItemCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} isBookmarked={bookmarkedItems.has(item.id)} onBookmarkToggle={handleBookmarkToggle} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} />)}
             </div>
-          </section>}
+          ) : (
+            <section aria-label="Items collection">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
+                {filteredItems.map(item => (
+                  <ItemCard 
+                    key={item.id} 
+                    id={item.id} 
+                    type={item.type} 
+                    title={item.title} 
+                    summary={item.summary} 
+                    previewImageUrl={item.preview_image_url} 
+                    content={item.content} 
+                    tags={item.tags} 
+                    createdAt={item.created_at} 
+                    updatedAt={item.updated_at} 
+                    isBookmarked={bookmarkedItems.has(item.id)} 
+                    onBookmarkToggle={handleBookmarkToggle} 
+                    onDelete={handleDeleteItem} 
+                    onEdit={handleEditItem} 
+                    onClick={() => handleItemClick(item)} 
+                    onTagClick={setSelectedTag} 
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </main>
       </div>
 
@@ -344,12 +323,15 @@ const Index = () => {
       <Suspense fallback={null}>
         <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={fetchItems} />
 
-        {selectedItem && <>
+        {selectedItem && (
+          <>
             <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={fetchItems} />
-
             <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={fetchItems} />
-          </>}
+          </>
+        )}
       </Suspense>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

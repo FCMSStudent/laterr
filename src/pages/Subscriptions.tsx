@@ -4,18 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
 import { SearchBar } from "@/components/SearchBar";
+import { NavigationHeader } from "@/components/NavigationHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, LogOut, Plus, TrendingUp, Calendar, DollarSign, ArrowLeft, Home } from "lucide-react";
+import { CreditCard, Plus, TrendingUp, Calendar, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SUBSCRIPTION_TABLES } from "@/constants/subscriptions";
 import { formatCurrency, calculateMonthlyCost, calculateAnnualCost } from "@/lib/currency-utils";
 import type { Subscription, SubscriptionStatus, SubscriptionBillingCycle } from "@/types/subscription";
-import { formatError } from "@/lib/error-utils";
-import { AuthError, toTypedError } from "@/types/errors";
-import { AUTH_ERRORS } from "@/lib/error-messages";
+import { toTypedError } from "@/types/errors";
 import { differenceInDays, parseISO } from "date-fns";
 
 // Lazy load modal components
@@ -140,7 +139,6 @@ const Subscriptions = () => {
   useEffect(() => {
     let filtered = subscriptions;
 
-    // Filter by search
     if (debouncedSearchQuery) {
       const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
       filtered = filtered.filter(sub =>
@@ -151,12 +149,10 @@ const Subscriptions = () => {
       );
     }
 
-    // Filter by category
     if (selectedCategory) {
       filtered = filtered.filter(sub => sub.category === selectedCategory);
     }
 
-    // Filter by status
     if (statusFilter) {
       filtered = filtered.filter(sub => sub.status === statusFilter);
     }
@@ -167,20 +163,6 @@ const Subscriptions = () => {
   const handleSubscriptionClick = (subscription: Subscription) => {
     setSelectedSubscription(subscription);
     setShowDetailModal(true);
-  };
-
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      const authError = new AuthError(AUTH_ERRORS.SIGN_OUT_FAILED.message, error instanceof Error ? error : undefined);
-      toast({
-        title: AUTH_ERRORS.SIGN_OUT_FAILED.title,
-        description: authError.message,
-        variant: "destructive"
-      });
-    } else {
-      navigate('/');
-    }
   };
 
   if (!user) {
@@ -194,56 +176,28 @@ const Subscriptions = () => {
       </a>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <header className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center justify-between mb-6">
+          <NavigationHeader 
+            title="Subscriptions" 
+            subtitle="Track your recurring expenses"
+            breadcrumbs={[
+              { label: "Dashboard", path: "/" },
+              { label: "Subscriptions" }
+            ]}
+          />
+          
+          {/* Desktop Add Button */}
+          {!isMobile && (
             <Button
-              onClick={() => navigate(-1)}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
-              aria-label="Go back"
-              disabled={window.history.length <= 1}
+              onClick={() => setShowAddModal(true)}
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
+              aria-label="Add new subscription"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+              Add Subscription
             </Button>
-            <Button
-              onClick={() => navigate('/dashboard')}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
-              aria-label="Go to dashboard"
-            >
-              <Home className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">Subscriptions</h1>
-              <p className="text-muted-foreground text-xs sm:text-sm font-medium">Track your recurring expenses</p>
-            </div>
-          </div>
-          <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
-            {/* Desktop Add Button */}
-            {!isMobile && (
-              <Button
-                onClick={() => setShowAddModal(true)}
-                className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
-                aria-label="Add new subscription"
-              >
-                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-                Add Subscription
-              </Button>
-            )}
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              size={isMobile ? "icon" : "sm"}
-              className="text-muted-foreground hover:text-foreground smooth-transition min-h-[44px] min-w-[44px]"
-              aria-label="Sign out"
-            >
-              <LogOut className="w-4 h-4" aria-hidden="true" />
-              {!isMobile && <span className="ml-2">Sign Out</span>}
-            </Button>
-          </nav>
-        </header>
+          )}
+        </div>
 
         {/* Stats Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
