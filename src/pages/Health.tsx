@@ -5,22 +5,20 @@ import { MeasurementCard } from "@/components/MeasurementCard";
 import { HealthDocumentCard } from "@/components/HealthDocumentCard";
 import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
 import { SearchBar } from "@/components/SearchBar";
+import { NavigationHeader } from "@/components/NavigationHeader";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { 
-  Activity, LogOut, Plus, Heart, FileText, Target, Pill, 
-  Scale, Droplet, TrendingUp, TrendingDown, Minus, Calendar,
-  ArrowLeft, Home
+  Activity, Plus, Heart, FileText, Target, Pill, 
+  Scale, Droplet, TrendingUp, TrendingDown, Minus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { HEALTH_TABLES, MEASUREMENT_TYPES } from "@/constants/health";
+import { HEALTH_TABLES } from "@/constants/health";
 import type { HealthMeasurement, HealthDocument, MeasurementType } from "@/types/health";
 import type { User } from "@/types";
-import { formatHealthValue, extractNumericValue, calculateTrend } from "@/lib/health-utils";
-import { formatDistanceToNow } from "date-fns";
+import { extractNumericValue, calculateTrend } from "@/lib/health-utils";
 
 // Lazy load modal components
 const AddMeasurementModal = lazy(() => import("@/components/AddMeasurementModal").then(({ AddMeasurementModal }) => ({ default: AddMeasurementModal })));
@@ -70,7 +68,6 @@ const Health = () => {
       setMeasurements(measurementsData);
       setFilteredMeasurements(measurementsData);
 
-      // Update stats
       const latestWeight = measurementsData.find(m => m.measurement_type === 'weight');
       const latestBP = measurementsData.find(m => m.measurement_type === 'blood_pressure');
       const latestGlucose = measurementsData.find(m => m.measurement_type === 'glucose');
@@ -129,7 +126,6 @@ const Health = () => {
     return () => subscription.unsubscribe();
   }, [navigate, fetchAll]);
 
-  // Filter measurements
   useEffect(() => {
     if (!debouncedSearchQuery) {
       setFilteredMeasurements(measurements);
@@ -143,7 +139,6 @@ const Health = () => {
     ));
   }, [debouncedSearchQuery, measurements]);
 
-  // Filter documents
   useEffect(() => {
     if (!debouncedSearchQuery) {
       setFilteredDocuments(documents);
@@ -183,11 +178,6 @@ const Health = () => {
     }
   }, [toast, fetchDocuments]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-
   const getMeasurementTrend = (type: MeasurementType) => {
     const typeMeasurements = measurements.filter(m => m.measurement_type === type);
     return calculateTrend(typeMeasurements);
@@ -199,59 +189,27 @@ const Health = () => {
     <div className="min-h-screen pb-20 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <header className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center justify-between mb-6">
+          <NavigationHeader 
+            title="Health Hub" 
+            subtitle="Track your wellness journey"
+            breadcrumbs={[
+              { label: "Dashboard", path: "/" },
+              { label: "Health" }
+            ]}
+          />
+          
+          {/* Desktop Add Button */}
+          {!isMobile && (
             <Button
-              onClick={() => navigate(-1)}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
-              aria-label="Go back"
-              disabled={window.history.length <= 1}
+              onClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <Plus className="w-4 h-4 mr-2" />
+              {activeTab === "measurements" ? "Log Measurement" : "Add Document"}
             </Button>
-            <Button
-              onClick={() => navigate('/dashboard')}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
-              aria-label="Go to dashboard"
-            >
-              <Home className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl text-foreground mb-1 tracking-tight font-sans font-semibold">
-                Health Hub
-              </h1>
-              <p className="text-muted-foreground text-xs sm:text-sm font-medium">
-                Track your wellness journey
-              </p>
-            </div>
-          </div>
-          <nav className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
-            {/* Desktop Add Button */}
-            {!isMobile && (
-              <Button
-                onClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
-                className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {activeTab === "measurements" ? "Log Measurement" : "Add Document"}
-              </Button>
-            )}
-            <Button 
-              onClick={handleSignOut} 
-              variant="ghost" 
-              size={isMobile ? "icon" : "sm"}
-              className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px]"
-              aria-label="Sign out"
-            >
-              <LogOut className="w-4 h-4" aria-hidden="true" />
-              {!isMobile && <span className="ml-2">Sign Out</span>}
-            </Button>
-          </nav>
-        </header>
+          )}
+        </div>
 
         {/* Stats Bar */}
         <div className="glass-card rounded-2xl p-4 mb-6">
@@ -386,7 +344,7 @@ const Health = () => {
                 <FileText className="h-16 w-16 mx-auto text-muted-foreground/60" />
                 <h2 className="text-2xl font-bold text-foreground tracking-tight">No documents yet</h2>
                 <p className="text-muted-foreground text-base max-w-md mx-auto">
-                  Upload your health documents for easy access and insights
+                  Upload your health records and documents for safekeeping
                 </p>
                 <Button onClick={() => setShowAddDocumentModal(true)}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -395,12 +353,12 @@ const Health = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-                {filteredDocuments.map(doc => (
+                {filteredDocuments.map(document => (
                   <HealthDocumentCard
-                    key={doc.id}
-                    document={doc}
+                    key={document.id}
+                    document={document}
                     onClick={() => {
-                      setSelectedDocument(doc);
+                      setSelectedDocument(document);
                       setShowDocumentDetailModal(true);
                     }}
                     onDelete={handleDeleteDocument}
@@ -410,31 +368,31 @@ const Health = () => {
             )}
           </TabsContent>
 
-          {/* Goals Tab - Placeholder */}
+          {/* Goals Tab */}
           <TabsContent value="goals">
             <div className="text-center py-32 space-y-5">
               <Target className="h-16 w-16 mx-auto text-muted-foreground/60" />
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Coming Soon</h2>
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Goals coming soon</h2>
               <p className="text-muted-foreground text-base max-w-md mx-auto">
-                Health goals tracking will be available soon
+                Set and track your health goals
               </p>
             </div>
           </TabsContent>
 
-          {/* Medications Tab - Placeholder */}
+          {/* Medications Tab */}
           <TabsContent value="medications">
             <div className="text-center py-32 space-y-5">
               <Pill className="h-16 w-16 mx-auto text-muted-foreground/60" />
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Coming Soon</h2>
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Medications coming soon</h2>
               <p className="text-muted-foreground text-base max-w-md mx-auto">
-                Medication tracking will be available soon
+                Track your medications and reminders
               </p>
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Floating Action Button (FAB) for mobile */}
+      {/* FAB for mobile */}
       {isMobile && (
         <Button
           onClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
@@ -445,7 +403,6 @@ const Health = () => {
         </Button>
       )}
 
-      {/* Modals */}
       <Suspense fallback={null}>
         <AddMeasurementModal
           open={showAddMeasurementModal}
@@ -480,7 +437,6 @@ const Health = () => {
           />
         )}
 
-        {/* AI Chat Panel */}
         <HealthChatPanel />
       </Suspense>
     </div>
