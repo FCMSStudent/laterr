@@ -176,27 +176,12 @@ const Subscriptions = () => {
       </a>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <NavigationHeader 
-            title="Subscriptions" 
-            subtitle="Track your recurring expenses"
-            breadcrumbs={[
-              { label: "Dashboard", path: "/" },
-              { label: "Subscriptions" }
-            ]}
+            title="Subscriptions"
+            onAddClick={() => setShowAddModal(true)}
+            addLabel="Add"
           />
-          
-          {/* Desktop Add Button */}
-          {!isMobile && (
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
-              aria-label="Add new subscription"
-            >
-              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-              Add Subscription
-            </Button>
-          )}
         </div>
 
         {/* Stats Bar */}

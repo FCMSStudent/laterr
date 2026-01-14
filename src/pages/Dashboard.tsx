@@ -57,10 +57,11 @@ const Dashboard = () => {
       </a>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <NavigationHeader 
-          title="Laterr Dashboard"
-          subtitle="Your unified personal hub"
-        />
+        <div className="mb-6">
+          <NavigationHeader 
+            title="Dashboard"
+          />
+        </div>
 
         <main id="main-content" className="space-y-8">
           {/* Quick Stats */}

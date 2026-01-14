@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft } from "lucide-react";
+import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AuthError } from "@/types/errors";
 import { AUTH_ERRORS } from "@/lib/error-messages";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog,
@@ -22,23 +22,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
-interface BreadcrumbItem {
-  label: string;
-  path?: string;
-}
-
 interface NavigationHeaderProps {
   title: string;
-  subtitle?: string;
   hideNavigation?: boolean;
-  breadcrumbs?: BreadcrumbItem[];
+  onAddClick?: () => void;
+  addLabel?: string;
 }
 
 export const NavigationHeader = ({ 
   title, 
-  subtitle,
   hideNavigation = false,
-  breadcrumbs
+  onAddClick,
+  addLabel = "Add",
 }: NavigationHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +49,6 @@ export const NavigationHeader = ({
   // Global "/" shortcut to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if typing in an input
       if (
         e.target instanceof HTMLInputElement || 
         e.target instanceof HTMLTextAreaElement ||
@@ -101,31 +95,27 @@ export const NavigationHeader = ({
   ];
 
   return (
-    <header className="flex items-center gap-2 flex-wrap">
+    <header className="flex items-center gap-1 w-full">
       {/* Back button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            onClick={() => navigate(-1)}
-            variant="ghost"
-            size="icon"
-            disabled={!canGoBack}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Go back</TooltipContent>
-      </Tooltip>
+      <Button
+        onClick={() => navigate(-1)}
+        variant="ghost"
+        size="icon"
+        disabled={!canGoBack}
+        className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+        aria-label="Go back"
+      >
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+      </Button>
 
-      {/* Module navigation - inline */}
+      {/* Module navigation tabs */}
       {!hideNavigation && !isMobile && (
-        <nav aria-label="Module navigation" className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
+        <nav aria-label="Module navigation" className="flex items-center">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || 
-              (item.path === '/' && location.pathname === '/app');
+              (item.path === '/' && location.pathname === '/app') ||
+              (item.path === '/bookmarks' && location.pathname === '/bookmarks');
             
             return (
               <Button
@@ -134,45 +124,38 @@ export const NavigationHeader = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-7 px-2.5 gap-1.5 text-xs font-medium rounded-md",
+                  "h-9 px-3 gap-2 text-sm font-medium rounded-full transition-colors",
                   isActive 
-                    ? "bg-background text-foreground shadow-sm" 
+                    ? "bg-secondary text-foreground" 
                     : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                 )}
               >
-                <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                <span className="hidden sm:inline">{item.label}</span>
+                <Icon className="w-4 h-4" aria-hidden="true" />
+                {item.label}
               </Button>
             );
           })}
         </nav>
       )}
 
-      {/* Title - mobile only or when nav hidden */}
-      {(isMobile || hideNavigation) && (
-        <h1 className="text-lg font-semibold text-foreground">
+      {/* Title - mobile only */}
+      {isMobile && (
+        <h1 className="text-lg font-semibold text-foreground ml-1">
           {title}
         </h1>
       )}
 
-      <div className="flex-1" />
-
       {/* Sign Out */}
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
-                aria-label="Sign out"
-              >
-                <LogOut className="w-4 h-4" aria-hidden="true" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Sign out</TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Sign out"
+          >
+            <LogOut className="w-4 h-4" aria-hidden="true" />
+          </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -200,6 +183,19 @@ export const NavigationHeader = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add button - integrated */}
+      {onAddClick && !isMobile && (
+        <Button 
+          onClick={onAddClick}
+          size="sm"
+          className="h-9 gap-2 px-4 rounded-full bg-foreground text-background hover:bg-foreground/90"
+          aria-label={`${addLabel} new item`}
+        >
+          <Plus className="w-4 h-4" aria-hidden="true" />
+          {addLabel}
+        </Button>
+      )}
     </header>
   );
 };

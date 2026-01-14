@@ -385,23 +385,12 @@ const Index = () => {
       </a>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="mb-4">
           <NavigationHeader 
-            title="Bookmarks" 
+            title="Bookmarks"
+            onAddClick={() => setShowAddModal(true)}
+            addLabel="Add"
           />
-          
-          {/* Desktop Add Button */}
-          {!isMobile && (
-            <Button 
-              onClick={() => setShowAddModal(true)} 
-              size="sm"
-              className="h-8 gap-1.5 shrink-0"
-              aria-label="Add new item"
-            >
-              <Plus className="w-4 h-4" aria-hidden="true" />
-              Add
-            </Button>
-          )}
         </div>
 
         <div className="max-w-xl mx-auto mb-4">
