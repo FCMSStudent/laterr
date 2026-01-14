@@ -385,10 +385,9 @@ const Index = () => {
       </a>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="flex items-center gap-2 mb-4">
           <NavigationHeader 
             title="Bookmarks" 
-            subtitle="Your saved items"
           />
           
           {/* Desktop Add Button */}
@@ -396,7 +395,7 @@ const Index = () => {
             <Button 
               onClick={() => setShowAddModal(true)} 
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 gap-1.5 shrink-0"
               aria-label="Add new item"
             >
               <Plus className="w-4 h-4" aria-hidden="true" />
