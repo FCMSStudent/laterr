@@ -1,16 +1,21 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ItemCard } from "@/components/ItemCard";
+import { ItemListRow } from "@/components/ItemListRow";
 import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
 import { SearchBar } from "@/components/SearchBar";
 import { NavigationHeader } from "@/components/NavigationHeader";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Plus } from "lucide-react";
+import { Sparkles, Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { FilterBar, type SortOption } from "@/components/FilterBar";
+import { FilterBar, type SortOption, type ViewMode } from "@/components/FilterBar";
+import { RecentlyViewedSection } from "@/components/RecentlyViewedSection";
+import { BulkActionsBar } from "@/components/BulkActionsBar";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { SUPABASE_ITEMS_TABLE } from "@/constants";
 import type { Item, User, ItemType } from "@/types";
 import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
@@ -34,6 +39,8 @@ const EditItemModal = lazy(() => import("@/components/EditItemModal").then(({
   default: EditItemModal
 })));
 
+const PAGE_SIZE = 20;
+
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -46,12 +53,59 @@ const Index = () => {
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [typeFilter, setTypeFilter] = useState<ItemType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
+  
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  
+  // View mode state with localStorage persistence
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    return (localStorage.getItem('bookmarks-view-mode') as ViewMode) || 'grid';
+  });
+  
+  // Selection mode state
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const isMobile = useIsMobile();
+  
+  // Recently viewed hook
+  const { recentIds, trackViewed } = useRecentlyViewed();
+
+  // Persist view mode
+  useEffect(() => {
+    localStorage.setItem('bookmarks-view-mode', viewMode);
+  }, [viewMode]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input
+      if (e.target instanceof HTMLInputElement || 
+          e.target instanceof HTMLTextAreaElement) return;
+      
+      // "n" for new item
+      if (e.key === 'n' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setShowAddModal(true);
+      }
+      
+      // Escape to exit selection mode
+      if (e.key === 'Escape' && isSelectionMode) {
+        setIsSelectionMode(false);
+        setSelectedItems(new Set());
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSelectionMode]);
 
   // Load bookmarks from localStorage
   useEffect(() => {
@@ -78,11 +132,20 @@ const Index = () => {
     });
   }, []);
 
-  const fetchItems = useCallback(async () => {
+  const fetchItems = useCallback(async (pageNum: number = 0, append: boolean = false) => {
     try {
-      const { data, error } = await supabase.from(SUPABASE_ITEMS_TABLE).select('*').order('created_at', {
-        ascending: false
-      });
+      if (pageNum === 0) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const { data, error } = await supabase
+        .from(SUPABASE_ITEMS_TABLE)
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE - 1);
+      
       if (error) throw error;
 
       const rawItems = (data ?? []) as any[];
@@ -95,9 +158,16 @@ const Index = () => {
         content: item.content ?? null,
         embedding: item.embedding ? JSON.parse(item.embedding) : null
       }));
+      
       const itemsWithSignedUrls = await generateSignedUrlsForItems(normalizedItems);
-      setItems(itemsWithSignedUrls);
-      setFilteredItems(itemsWithSignedUrls);
+      
+      setHasMore(rawItems.length === PAGE_SIZE);
+      
+      if (append) {
+        setItems(prev => [...prev, ...itemsWithSignedUrls]);
+      } else {
+        setItems(itemsWithSignedUrls);
+      }
     } catch (error: unknown) {
       const errorMessage = getNetworkErrorMessage('fetch');
       const typedError = toTypedError(error);
@@ -110,8 +180,23 @@ const Index = () => {
       });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [toast]);
+
+  // Load more when page changes
+  useEffect(() => {
+    if (page > 0) {
+      fetchItems(page, true);
+    }
+  }, [page, fetchItems]);
+
+  // Infinite scroll hook
+  const { loadMoreRef } = useInfiniteScroll({
+    loading: loadingMore,
+    hasMore,
+    onLoadMore: () => setPage(prev => prev + 1)
+  });
 
   const handleDeleteItem = useCallback(async (itemId: string) => {
     try {
@@ -121,7 +206,9 @@ const Index = () => {
         title: "Success",
         description: "Item deleted successfully"
       });
-      fetchItems();
+      // Reset pagination and refetch
+      setPage(0);
+      fetchItems(0, false);
     } catch (error: unknown) {
       const typedError = toTypedError(error);
       console.error('Error deleting item:', typedError);
@@ -133,6 +220,36 @@ const Index = () => {
     }
   }, [toast, fetchItems]);
 
+  const handleBulkDelete = useCallback(async () => {
+    try {
+      const ids = Array.from(selectedItems);
+      const { error } = await supabase
+        .from(SUPABASE_ITEMS_TABLE)
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: `${ids.length} items deleted successfully`
+      });
+      
+      setIsSelectionMode(false);
+      setSelectedItems(new Set());
+      setPage(0);
+      fetchItems(0, false);
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      console.error('Error deleting items:', typedError);
+      toast({
+        title: "Error",
+        description: "Failed to delete items",
+        variant: "destructive"
+      });
+    }
+  }, [selectedItems, toast, fetchItems]);
+
   const handleEditItem = useCallback((itemId: string) => {
     const item = items.find(i => i.id === itemId);
     if (item) {
@@ -141,6 +258,35 @@ const Index = () => {
     }
   }, [items]);
 
+  const handleSelectionChange = useCallback((itemId: string, selected: boolean) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (selected) {
+        newSet.add(itemId);
+      } else {
+        newSet.delete(itemId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedItems(new Set(filteredItems.map(item => item.id)));
+  }, [filteredItems]);
+
+  const handleDeselectAll = useCallback(() => {
+    setSelectedItems(new Set());
+  }, []);
+
+  const handleSelectionModeToggle = useCallback(() => {
+    setIsSelectionMode(prev => {
+      if (prev) {
+        setSelectedItems(new Set());
+      }
+      return !prev;
+    });
+  }, []);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null;
@@ -148,7 +294,7 @@ const Index = () => {
         navigate('/auth');
       } else {
         setUser(currentUser);
-        fetchItems();
+        fetchItems(0, false);
       }
     });
 
@@ -203,7 +349,15 @@ const Index = () => {
     setFilteredItems(sorted);
   }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption]);
 
+  // Get recently viewed items
+  const recentlyViewedItems = useMemo(() => {
+    return recentIds
+      .map(id => items.find(item => item.id === id))
+      .filter((item): item is Item => item !== undefined);
+  }, [recentIds, items]);
+
   const handleItemClick = (item: Item) => {
+    trackViewed(item.id);
     setSelectedItem(item);
     setShowDetailModal(true);
   };
@@ -213,9 +367,16 @@ const Index = () => {
     setTypeFilter(null);
   };
 
+  const handleRefresh = useCallback(() => {
+    setPage(0);
+    fetchItems(0, false);
+  }, [fetchItems]);
+
   if (!user) {
     return null;
   }
+
+  const showRecentlyViewed = recentlyViewedItems.length > 0 && !searchQuery && !selectedTag && !typeFilter;
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -236,14 +397,27 @@ const Index = () => {
           
           {/* Desktop Add Item Button */}
           {!isMobile && (
-            <Button 
-              onClick={() => setShowAddModal(true)} 
-              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" 
-              aria-label="Add new item to your collection"
-            >
-              <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-              Add Item
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Keyboard shortcuts hint */}
+              <div className="hidden lg:flex items-center gap-3 text-xs text-muted-foreground mr-2">
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px] font-mono">/</kbd>
+                  <span>search</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px] font-mono">n</kbd>
+                  <span>new</span>
+                </span>
+              </div>
+              <Button 
+                onClick={() => setShowAddModal(true)} 
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold" 
+                aria-label="Add new item to your collection"
+              >
+                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+                Add Item
+              </Button>
+            </div>
           )}
         </div>
 
@@ -259,7 +433,12 @@ const Index = () => {
             onTagSelect={setSelectedTag} 
             onSortChange={setSortOption} 
             onTypeFilterChange={setTypeFilter} 
-            onClearAll={handleClearAllFilters} 
+            onClearAll={handleClearAllFilters}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            isSelectionMode={isSelectionMode}
+            selectedCount={selectedItems.size}
+            onSelectionModeToggle={handleSelectionModeToggle}
           />
         </div>
 
@@ -267,6 +446,14 @@ const Index = () => {
           <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
             {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
           </div>
+
+          {/* Recently Viewed Section */}
+          {!loading && showRecentlyViewed && (
+            <RecentlyViewedSection 
+              items={recentlyViewedItems} 
+              onItemClick={handleItemClick} 
+            />
+          )}
 
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
@@ -282,35 +469,78 @@ const Index = () => {
             </div>
           ) : (
             <section aria-label="Items collection">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
-                {filteredItems.map(item => (
-                  <ItemCard 
-                    key={item.id} 
-                    id={item.id} 
-                    type={item.type} 
-                    title={item.title} 
-                    summary={item.summary} 
-                    previewImageUrl={item.preview_image_url} 
-                    content={item.content} 
-                    tags={item.tags} 
-                    createdAt={item.created_at} 
-                    updatedAt={item.updated_at} 
-                    isBookmarked={bookmarkedItems.has(item.id)} 
-                    onBookmarkToggle={handleBookmarkToggle} 
-                    onDelete={handleDeleteItem} 
-                    onEdit={handleEditItem} 
-                    onClick={() => handleItemClick(item)} 
-                    onTagClick={setSelectedTag} 
-                  />
-                ))}
-              </div>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
+                  {filteredItems.map(item => (
+                    <ItemCard 
+                      key={item.id} 
+                      id={item.id} 
+                      type={item.type} 
+                      title={item.title} 
+                      summary={item.summary} 
+                      previewImageUrl={item.preview_image_url} 
+                      content={item.content} 
+                      tags={item.tags} 
+                      createdAt={item.created_at} 
+                      updatedAt={item.updated_at} 
+                      isBookmarked={bookmarkedItems.has(item.id)} 
+                      onBookmarkToggle={handleBookmarkToggle} 
+                      onDelete={handleDeleteItem} 
+                      onEdit={handleEditItem} 
+                      onClick={() => handleItemClick(item)} 
+                      onTagClick={setSelectedTag}
+                      isSelectionMode={isSelectionMode}
+                      isSelected={selectedItems.has(item.id)}
+                      onSelectionChange={handleSelectionChange}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2 pb-12">
+                  {filteredItems.map(item => (
+                    <ItemListRow 
+                      key={item.id} 
+                      id={item.id} 
+                      type={item.type} 
+                      title={item.title} 
+                      summary={item.summary} 
+                      previewImageUrl={item.preview_image_url} 
+                      content={item.content} 
+                      tags={item.tags} 
+                      createdAt={item.created_at} 
+                      updatedAt={item.updated_at} 
+                      isBookmarked={bookmarkedItems.has(item.id)} 
+                      onBookmarkToggle={handleBookmarkToggle} 
+                      onDelete={handleDeleteItem} 
+                      onEdit={handleEditItem} 
+                      onClick={() => handleItemClick(item)} 
+                      onTagClick={setSelectedTag}
+                      isSelectionMode={isSelectionMode}
+                      isSelected={selectedItems.has(item.id)}
+                      onSelectionChange={handleSelectionChange}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Infinite scroll sentinel */}
+              {hasMore && (
+                <div ref={loadMoreRef} className="flex justify-center py-8">
+                  {loadingMore && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="text-sm">Loading more...</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
           )}
         </main>
       </div>
 
       {/* Floating Action Button (FAB) for Add Item on mobile */}
-      {isMobile && (
+      {isMobile && !isSelectionMode && (
         <Button
           onClick={() => setShowAddModal(true)}
           className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-xl premium-transition hover:scale-110 p-0"
@@ -320,13 +550,26 @@ const Index = () => {
         </Button>
       )}
 
+      {/* Bulk Actions Bar */}
+      <BulkActionsBar
+        selectedCount={selectedItems.size}
+        totalCount={filteredItems.length}
+        onSelectAll={handleSelectAll}
+        onDeselectAll={handleDeselectAll}
+        onDelete={handleBulkDelete}
+        onCancel={() => {
+          setIsSelectionMode(false);
+          setSelectedItems(new Set());
+        }}
+      />
+
       <Suspense fallback={null}>
-        <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={fetchItems} />
+        <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={handleRefresh} />
 
         {selectedItem && (
           <>
-            <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={fetchItems} />
-            <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={fetchItems} />
+            <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={handleRefresh} />
+            <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={handleRefresh} />
           </>
         )}
       </Suspense>

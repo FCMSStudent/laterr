@@ -11,6 +11,7 @@ import { isVideoUrl } from "@/lib/video-utils";
 import { NotePreview } from "@/components/NotePreview";
 import { parseNotes, getChecklistStats } from "@/lib/notes-parser";
 import { ChecklistProgress } from "@/components/ChecklistProgress";
+import { useIsMobile } from "@/hooks/use-mobile";
 interface ItemCardProps {
   id: string;
   type: ItemType;
@@ -50,6 +51,9 @@ export const ItemCard = ({
   onEdit
 }: ItemCardProps) => {
   const [showAllTags, setShowAllTags] = useState(false);
+  const [expandedTags, setExpandedTags] = useState(false);
+  const isMobile = useIsMobile();
+  
   const getIcon = () => {
     switch (type) {
       case 'url':
@@ -175,23 +179,52 @@ export const ItemCard = ({
           {updatedAt && updatedAt !== createdAt ? <span>Updated {formatDate(updatedAt)}</span> : <span>Created {formatDate(createdAt)}</span>}
         </div>
         
-        {/* Tags section with overflow handling */}
+        {/* Tags section with overflow handling - mobile tap to expand */}
         <div className="flex flex-wrap gap-2 pt-2">
-          {(showAllTags ? tags : tags.slice(0, 3)).map((tag, index) => <Badge key={index} variant="secondary" className="cursor-pointer hover:bg-accent premium-transition text-xs font-semibold shadow-sm min-h-[32px] px-3" role="button" tabIndex={0} aria-label={`Filter by tag ${tag}`} onClick={e => {
-          e.stopPropagation();
-          onTagClick(tag);
-        }} onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            e.stopPropagation();
-            onTagClick(tag);
-          }
-        }}>
+          {(isMobile ? (expandedTags ? tags : tags.slice(0, 2)) : (showAllTags ? tags : tags.slice(0, 3))).map((tag, index) => (
+            <Badge 
+              key={index} 
+              variant="secondary" 
+              className="cursor-pointer hover:bg-accent premium-transition text-xs font-semibold shadow-sm min-h-[32px] px-3" 
+              role="button" 
+              tabIndex={0} 
+              aria-label={`Filter by tag ${tag}`} 
+              onClick={e => {
+                e.stopPropagation();
+                onTagClick(tag);
+              }} 
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onTagClick(tag);
+                }
+              }}
+            >
               #{tag}
-            </Badge>)}
-          {!showAllTags && tags.length > 3 && <Badge variant="outline" className="text-xs font-medium min-h-[32px] px-3" aria-label={`${tags.length - 3} more tags`}>
-              +{tags.length - 3}
-            </Badge>}
+            </Badge>
+          ))}
+          {isMobile ? (
+            tags.length > 2 && (
+              <Badge 
+                variant="outline" 
+                className="text-xs font-medium min-h-[32px] px-3 cursor-pointer" 
+                aria-label={expandedTags ? 'Show less tags' : `${tags.length - 2} more tags`}
+                onClick={e => {
+                  e.stopPropagation();
+                  setExpandedTags(!expandedTags);
+                }}
+              >
+                {expandedTags ? 'Less' : `+${tags.length - 2}`}
+              </Badge>
+            )
+          ) : (
+            !showAllTags && tags.length > 3 && (
+              <Badge variant="outline" className="text-xs font-medium min-h-[32px] px-3" aria-label={`${tags.length - 3} more tags`}>
+                +{tags.length - 3}
+              </Badge>
+            )
+          )}
         </div>
       </div>
     </div>;

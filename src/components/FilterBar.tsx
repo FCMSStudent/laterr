@@ -2,11 +2,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown, Filter } from "lucide-react";
+import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown, Filter, LayoutGrid, LayoutList, CheckSquare } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ItemType } from "@/types";
 import { CATEGORY_OPTIONS } from "@/constants";
+
 export type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc" | "type";
+export type ViewMode = "grid" | "list";
+
 interface FilterBarProps {
   selectedTag: string | null;
   selectedSort: SortOption;
@@ -15,6 +18,12 @@ interface FilterBarProps {
   onSortChange: (sort: SortOption) => void;
   onTypeFilterChange: (type: ItemType | null) => void;
   onClearAll: () => void;
+  // New props for view mode and selection
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
+  isSelectionMode?: boolean;
+  selectedCount?: number;
+  onSelectionModeToggle?: () => void;
 }
 export const FilterBar = ({
   selectedTag,
@@ -23,7 +32,12 @@ export const FilterBar = ({
   onTagSelect,
   onSortChange,
   onTypeFilterChange,
-  onClearAll
+  onClearAll,
+  viewMode = "grid",
+  onViewModeChange,
+  isSelectionMode = false,
+  selectedCount = 0,
+  onSelectionModeToggle
 }: FilterBarProps) => {
   const hasActiveFilters = selectedTag || selectedTypeFilter;
   const isMobile = useIsMobile();
@@ -241,88 +255,127 @@ export const FilterBar = ({
         </div>
       ) : (
         /* Desktop: Original single-line filter controls */
-        <div className="flex-wrap flex-row flex items-center justify-start gap-[10px] border-0 shadow-none rounded-none opacity-100 text-primary bg-white/[0.01]">
-          {/* Tags Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant={selectedTag ? "default" : "outline"} size="sm" className="h-8">
-                {getSelectedTagLabel()}
-                <ChevronDown className="h-3 w-3 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onTagSelect(null)}>
-                All Tags
-              </DropdownMenuItem>
-              {CATEGORY_OPTIONS.map(category => <DropdownMenuItem key={category.value} onClick={() => onTagSelect(category.value)}>
-                  {category.label}
-                </DropdownMenuItem>)}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex-wrap flex-row flex items-center justify-between gap-[10px] border-0 shadow-none rounded-none opacity-100 text-primary bg-white/[0.01]">
+          <div className="flex items-center gap-2">
+            {/* Tags Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={selectedTag ? "default" : "outline"} size="sm" className="h-8">
+                  {getSelectedTagLabel()}
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onTagSelect(null)}>
+                  All Tags
+                </DropdownMenuItem>
+                {CATEGORY_OPTIONS.map(category => <DropdownMenuItem key={category.value} onClick={() => onTagSelect(category.value)}>
+                    {category.label}
+                  </DropdownMenuItem>)}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {/* Type Filter Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant={selectedTypeFilter ? "default" : "outline"} size="sm" className="h-8">
-                {getTypeLabel(selectedTypeFilter)}
-                <ChevronDown className="h-3 w-3 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-40">
-              <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onTypeFilterChange(null)}>
-                All Types
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTypeFilterChange("url")}>
-                <Link2 className="h-3 w-3 mr-2" />
-                URL
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTypeFilterChange("note")}>
-                <FileText className="h-3 w-3 mr-2" />
-                Note
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTypeFilterChange("document")}>
-                <FileText className="h-3 w-3 mr-2" />
-                Document
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTypeFilterChange("image")}>
-                <ImageIcon className="h-3 w-3 mr-2" />
-                Image
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            {/* Type Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={selectedTypeFilter ? "default" : "outline"} size="sm" className="h-8">
+                  {getTypeLabel(selectedTypeFilter)}
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-40">
+                <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onTypeFilterChange(null)}>
+                  All Types
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onTypeFilterChange("url")}>
+                  <Link2 className="h-3 w-3 mr-2" />
+                  URL
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onTypeFilterChange("note")}>
+                  <FileText className="h-3 w-3 mr-2" />
+                  Note
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onTypeFilterChange("document")}>
+                  <FileText className="h-3 w-3 mr-2" />
+                  Document
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onTypeFilterChange("image")}>
+                  <ImageIcon className="h-3 w-3 mr-2" />
+                  Image
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {/* Sort Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8">
-                <ArrowUpDown className="h-3 w-3 mr-1" />
-                {getSortLabel(selectedSort)}
+            {/* Sort Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8">
+                  <ArrowUpDown className="h-3 w-3 mr-1" />
+                  {getSortLabel(selectedSort)}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
+                  Newest First
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
+                  Oldest First
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
+                  Title (A-Z)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
+                  Title (Z-A)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onSortChange("type")}>
+                  By Type
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Selection Mode Toggle */}
+            {onSelectionModeToggle && (
+              <Button
+                variant={isSelectionMode ? "default" : "outline"}
+                size="sm"
+                onClick={onSelectionModeToggle}
+                className="h-8"
+              >
+                <CheckSquare className="h-3 w-3 mr-1" />
+                {isSelectionMode ? `${selectedCount} Selected` : 'Select'}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Sort By</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
-                Newest First
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
-                Oldest First
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
-                Title (A-Z)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
-                Title (Z-A)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange("type")}>
-                By Type
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+          </div>
+
+          {/* View Mode Toggle */}
+          {onViewModeChange && (
+            <div className="flex items-center gap-0.5 border rounded-lg p-0.5 bg-muted/30">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => onViewModeChange('grid')}
+                className="h-7 w-7 p-0"
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => onViewModeChange('list')}
+                className="h-7 w-7 p-0"
+                aria-label="List view"
+              >
+                <LayoutList className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
