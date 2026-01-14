@@ -189,26 +189,12 @@ const Health = () => {
     <div className="min-h-screen pb-20 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <NavigationHeader 
-            title="Health Hub" 
-            subtitle="Track your wellness journey"
-            breadcrumbs={[
-              { label: "Dashboard", path: "/" },
-              { label: "Health" }
-            ]}
+            title="Health"
+            onAddClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
+            addLabel={activeTab === "measurements" ? "Log" : "Add"}
           />
-          
-          {/* Desktop Add Button */}
-          {!isMobile && (
-            <Button
-              onClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
-              className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl premium-transition hover:scale-[1.03] font-semibold"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {activeTab === "measurements" ? "Log Measurement" : "Add Document"}
-            </Button>
-          )}
         </div>
 
         {/* Stats Bar */}
