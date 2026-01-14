@@ -6,10 +6,8 @@ import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown, Filte
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ItemType } from "@/types";
 import { CATEGORY_OPTIONS } from "@/constants";
-
 export type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc" | "type";
 export type ViewMode = "grid" | "list";
-
 interface FilterBarProps {
   selectedTag: string | null;
   selectedSort: SortOption;
@@ -80,31 +78,17 @@ export const FilterBar = ({
   };
 
   // Mobile filter drawer content
-  const FilterContent = () => (
-    <div className="space-y-6 p-4">
+  const FilterContent = () => <div className="space-y-6 p-4">
       {/* Tags Section */}
       <div>
         <h3 className="text-sm font-semibold mb-3">Filter by Tag</h3>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant={!selectedTag ? "default" : "outline"}
-            size="sm"
-            onClick={() => onTagSelect(null)}
-            className="min-h-[44px]"
-          >
+          <Button variant={!selectedTag ? "default" : "outline"} size="sm" onClick={() => onTagSelect(null)} className="min-h-[44px]">
             All Tags
           </Button>
-          {CATEGORY_OPTIONS.map(category => (
-            <Button
-              key={category.value}
-              variant={selectedTag === category.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => onTagSelect(category.value)}
-              className="min-h-[44px]"
-            >
+          {CATEGORY_OPTIONS.map(category => <Button key={category.value} variant={selectedTag === category.value ? "default" : "outline"} size="sm" onClick={() => onTagSelect(category.value)} className="min-h-[44px]">
               {category.label}
-            </Button>
-          ))}
+            </Button>)}
         </div>
       </div>
 
@@ -112,47 +96,22 @@ export const FilterBar = ({
       <div>
         <h3 className="text-sm font-semibold mb-3">Filter by Type</h3>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant={!selectedTypeFilter ? "default" : "outline"}
-            size="sm"
-            onClick={() => onTypeFilterChange(null)}
-            className="min-h-[44px]"
-          >
+          <Button variant={!selectedTypeFilter ? "default" : "outline"} size="sm" onClick={() => onTypeFilterChange(null)} className="min-h-[44px]">
             All Types
           </Button>
-          <Button
-            variant={selectedTypeFilter === "url" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onTypeFilterChange("url")}
-            className="min-h-[44px]"
-          >
+          <Button variant={selectedTypeFilter === "url" ? "default" : "outline"} size="sm" onClick={() => onTypeFilterChange("url")} className="min-h-[44px]">
             <Link2 className="h-3 w-3 mr-2" />
             URL
           </Button>
-          <Button
-            variant={selectedTypeFilter === "note" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onTypeFilterChange("note")}
-            className="min-h-[44px]"
-          >
+          <Button variant={selectedTypeFilter === "note" ? "default" : "outline"} size="sm" onClick={() => onTypeFilterChange("note")} className="min-h-[44px]">
             <FileText className="h-3 w-3 mr-2" />
             Note
           </Button>
-          <Button
-            variant={selectedTypeFilter === "document" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onTypeFilterChange("document")}
-            className="min-h-[44px]"
-          >
+          <Button variant={selectedTypeFilter === "document" ? "default" : "outline"} size="sm" onClick={() => onTypeFilterChange("document")} className="min-h-[44px]">
             <FileText className="h-3 w-3 mr-2" />
             Document
           </Button>
-          <Button
-            variant={selectedTypeFilter === "image" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onTypeFilterChange("image")}
-            className="min-h-[44px]"
-          >
+          <Button variant={selectedTypeFilter === "image" ? "default" : "outline"} size="sm" onClick={() => onTypeFilterChange("image")} className="min-h-[44px]">
             <ImageIcon className="h-3 w-3 mr-2" />
             Image
           </Button>
@@ -163,56 +122,46 @@ export const FilterBar = ({
       <div>
         <h3 className="text-sm font-semibold mb-3">Sort By</h3>
         <div className="flex flex-col gap-2">
-          {[
-            { value: "date-desc" as SortOption, label: "Newest First" },
-            { value: "date-asc" as SortOption, label: "Oldest First" },
-            { value: "title-asc" as SortOption, label: "Title (A-Z)" },
-            { value: "title-desc" as SortOption, label: "Title (Z-A)" },
-            { value: "type" as SortOption, label: "By Type" },
-          ].map(option => (
-            <Button
-              key={option.value}
-              variant={selectedSort === option.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => onSortChange(option.value)}
-              className="min-h-[44px] justify-start"
-            >
+          {[{
+          value: "date-desc" as SortOption,
+          label: "Newest First"
+        }, {
+          value: "date-asc" as SortOption,
+          label: "Oldest First"
+        }, {
+          value: "title-asc" as SortOption,
+          label: "Title (A-Z)"
+        }, {
+          value: "title-desc" as SortOption,
+          label: "Title (Z-A)"
+        }, {
+          value: "type" as SortOption,
+          label: "By Type"
+        }].map(option => <Button key={option.value} variant={selectedSort === option.value ? "default" : "outline"} size="sm" onClick={() => onSortChange(option.value)} className="min-h-[44px] justify-start">
               {option.label}
-            </Button>
-          ))}
+            </Button>)}
         </div>
       </div>
 
       {/* Clear All */}
-      {hasActiveFilters && (
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={onClearAll}
-          className="w-full min-h-[44px]"
-        >
+      {hasActiveFilters && <Button variant="destructive" size="sm" onClick={onClearAll} className="w-full min-h-[44px]">
           Clear All Filters
-        </Button>
-      )}
-    </div>
-  );
+        </Button>}
+    </div>;
   return <div className="space-y-2">
       {/* Mobile: Single Filters button that opens drawer */}
-      {isMobile ? (
-        <div className="flex items-center justify-between gap-2">
+      {isMobile ? <div className="flex items-center justify-between gap-2">
           <Drawer>
             <DrawerTrigger asChild>
               <Button variant="outline" size="sm" className="min-h-[44px] flex-1">
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
                 {hasActiveFilters && (() => {
-                  const activeFilterCount = (selectedTag ? 1 : 0) + (selectedTypeFilter ? 1 : 0);
-                  return (
-                    <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+              const activeFilterCount = (selectedTag ? 1 : 0) + (selectedTypeFilter ? 1 : 0);
+              return <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
                       {activeFilterCount}
-                    </Badge>
-                  );
-                })()}
+                    </Badge>;
+            })()}
               </Button>
             </DrawerTrigger>
             <DrawerContent className="max-h-[85vh]">
@@ -252,10 +201,8 @@ export const FilterBar = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      ) : (
-        /* Desktop: Original single-line filter controls */
-        <div className="flex-wrap flex-row flex items-center justify-between gap-[10px] border-0 shadow-none rounded-none opacity-100 text-primary bg-white/[0.01]">
+        </div> : (/* Desktop: Original single-line filter controls */
+    <div className="flex-wrap shadow-none rounded-none opacity-100 text-primary bg-white/[0.01] flex-row flex items-center justify-between gap-[10px] border-2">
           <div className="flex items-center gap-2">
             {/* Tags Dropdown */}
             <DropdownMenu>
@@ -340,44 +287,22 @@ export const FilterBar = ({
             </DropdownMenu>
 
             {/* Selection Mode Toggle */}
-            {onSelectionModeToggle && (
-              <Button
-                variant={isSelectionMode ? "default" : "outline"}
-                size="sm"
-                onClick={onSelectionModeToggle}
-                className="h-8"
-              >
+            {onSelectionModeToggle && <Button variant={isSelectionMode ? "default" : "outline"} size="sm" onClick={onSelectionModeToggle} className="h-8">
                 <CheckSquare className="h-3 w-3 mr-1" />
                 {isSelectionMode ? `${selectedCount} Selected` : 'Select'}
-              </Button>
-            )}
+              </Button>}
           </div>
 
           {/* View Mode Toggle */}
-          {onViewModeChange && (
-            <div className="flex items-center gap-0.5 border rounded-lg p-0.5 bg-muted/30">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => onViewModeChange('grid')}
-                className="h-7 w-7 p-0"
-                aria-label="Grid view"
-              >
+          {onViewModeChange && <div className="flex items-center gap-0.5 border rounded-lg p-0.5 bg-muted/30">
+              <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => onViewModeChange('grid')} className="h-7 w-7 p-0" aria-label="Grid view">
                 <LayoutGrid className="h-3.5 w-3.5" />
               </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => onViewModeChange('list')}
-                className="h-7 w-7 p-0"
-                aria-label="List view"
-              >
+              <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => onViewModeChange('list')} className="h-7 w-7 p-0" aria-label="List view">
                 <LayoutList className="h-3.5 w-3.5" />
               </Button>
-            </div>
-          )}
-        </div>
-      )}
+            </div>}
+        </div>)}
 
       {/* Active Filter Pills */}
       {hasActiveFilters && <div className="flex flex-wrap gap-2 items-center justify-center">
