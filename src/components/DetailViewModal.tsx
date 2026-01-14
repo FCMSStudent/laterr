@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PDFPreview } from "@/components/PDFPreview";
 import { DOCXPreview } from "@/components/DOCXPreview";
+import { VideoPreview } from "@/components/VideoPreview";
+import { ThumbnailPreview } from "@/components/ThumbnailPreview";
+import { RichNotesEditor } from "@/components/RichNotesEditor";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,12 +32,12 @@ import {
 import { generateSignedUrl } from "@/lib/supabase-utils";
 import { NetworkError, toTypedError } from "@/types/errors";
 import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/lib/error-messages";
+import { isVideoUrl } from "@/lib/video-utils";
 
 import type { Item } from "@/types";
 
 // Character counter constants
 const USER_NOTES_MAX_LENGTH = 100000;
-const CHAR_WARNING_THRESHOLD = 0.9;
 
 interface DetailViewModalProps {
   open: boolean;
@@ -55,9 +57,23 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
+  // Reset state when item changes
+  useEffect(() => {
+    if (item) {
+      setUserNotes(item.user_notes || "");
+      setSelectedTag(item.tags?.[0] || DEFAULT_ITEM_TAG);
+    }
+  }, [item]);
+
   useEffect(() => {
     const generateSignedUrlForItem = async () => {
       if (!item?.content) {
+        setSignedUrl(null);
+        return;
+      }
+      
+      // Skip signed URL for URL-type items (they use the URL directly)
+      if (item.type === 'url') {
         setSignedUrl(null);
         return;
       }
@@ -154,13 +170,13 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       // Delete shortcut: Ctrl+D or Cmd+D
       if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
         e.preventDefault();
-        handleDelete();
+        setShowDeleteAlert(true);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, handleSave, handleDelete]);
+  }, [open, handleSave]);
 
   const getIcon = useCallback(() => {
     if (!item) return null;
@@ -177,6 +193,81 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
         return null;
     }
   }, [item]);
+
+  // Render preview section based on item type
+  const renderPreview = () => {
+    if (!item) return null;
+
+    // For URL-type items
+    if (item.type === 'url' && item.content) {
+      // Check if it's a video URL (YouTube, Vimeo)
+      if (isVideoUrl(item.content)) {
+        return (
+          <VideoPreview 
+            url={item.content} 
+            title={item.title}
+            className="mb-4"
+          />
+        );
+      }
+      
+      // Show thumbnail for non-video URLs
+      if (item.preview_image_url) {
+        return (
+          <ThumbnailPreview
+            imageUrl={item.preview_image_url}
+            linkUrl={item.content}
+            title={item.title}
+            className="mb-4"
+          />
+        );
+      }
+      
+      // Fallback for URLs without thumbnail
+      return null;
+    }
+
+    // For file-type items (PDF, DOCX, etc.)
+    if (item.content && item.type !== 'url') {
+      return (
+        <div className="rounded-xl overflow-hidden bg-muted">
+          {loadingSignedUrl ? (
+            <div className="p-4 h-64 md:h-80 flex items-center justify-center">
+              <LoadingSpinner size="sm" text="Loading file preview..." />
+            </div>
+          ) : signedUrl ? (
+            <>
+              {item.content?.toLowerCase().endsWith(".pdf") ? (
+                <PDFPreview url={signedUrl} className="h-64 md:h-80" />
+              ) : item.content?.toLowerCase().endsWith(".docx") ? (
+                <DOCXPreview url={signedUrl} className="h-64 md:h-80" />
+              ) : (
+                <div className="p-4 h-64 md:h-80 flex items-center justify-center">
+                  <div className="text-center">
+                    <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">File preview</p>
+                  </div>
+                </div>
+              )}
+              <a 
+                href={signedUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50 min-h-[44px] flex items-center"
+              >
+                {item.content?.toLowerCase().endsWith(".pdf") ? "Open full PDF" : 
+                 item.content?.toLowerCase().endsWith(".docx") ? "Open full document" : "Open file"}
+              </a>
+            </>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">File preview unavailable</div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   if (!item) return null;
 
@@ -216,51 +307,19 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full overflow-hidden">
         {/* LEFT COLUMN */}
         <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
-          {item.content && (
-            <div className="rounded-xl overflow-hidden bg-muted">
-              {loadingSignedUrl ? (
-                <div className="p-4 h-64 md:h-80 flex items-center justify-center">
-                  <LoadingSpinner size="sm" text="Loading file preview..." />
-                </div>
-              ) : signedUrl ? (
-                <>
-                  {item.content?.toLowerCase().endsWith(".pdf") ? (
-                    <PDFPreview url={signedUrl} className="h-64 md:h-80" />
-                  ) : item.content?.toLowerCase().endsWith(".docx") ? (
-                    <DOCXPreview url={signedUrl} className="h-64 md:h-80" />
-                  ) : (
-                    <div className="p-4 h-64 md:h-80 flex items-center justify-center">
-                      <div className="text-center">
-                        <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">File preview</p>
-                      </div>
-                    </div>
-                  )}
-                  <a 
-                    href={signedUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50 min-h-[44px] flex items-center"
-                  >
-                    {item.content?.toLowerCase().endsWith(".pdf") ? "Open full PDF" : 
-                     item.content?.toLowerCase().endsWith(".docx") ? "Open full document" : "Open file"}
-                  </a>
-                </>
-              ) : (
-                <div className="p-4 text-sm text-muted-foreground">File preview unavailable</div>
-              )}
-            </div>
-          )}
+          {/* Preview Section */}
+          {renderPreview()}
 
-          {item.type === "url" && (
+          {/* Visit Link for URL items */}
+          {item.type === "url" && item.content && (
             <a
-              href={item.content ?? "#"}
+              href={item.content}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline flex items-center gap-2 min-h-[44px]"
+              className="text-sm text-primary hover:underline flex items-center gap-2 min-h-[44px] px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
               <Link2 className="h-4 w-4" />
-              Visit Link
+              Open Original Link
             </a>
           )}
 
@@ -288,40 +347,23 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
 
         {/* RIGHT COLUMN */}
         <div className="md:flex-1 flex flex-col gap-6 min-w-0">
-          <div>
-            <h3 className="font-semibold text-sm text-muted-foreground mb-2">Summary</h3>
-            <p className="text-base leading-body prose-wide">{item.summary}</p>
-          </div>
+          {/* Summary */}
+          {item.summary && (
+            <div>
+              <h3 className="font-semibold text-sm text-muted-foreground mb-2">Summary</h3>
+              <p className="text-base leading-body prose-wide">{item.summary}</p>
+            </div>
+          )}
 
-          {/* Notes Section */}
+          {/* Rich Notes Section */}
           <div>
             <h3 className="font-semibold text-sm text-muted-foreground mb-3">Personal Notes</h3>
-
-            <div className="space-y-2">
-              <label htmlFor="user-notes-textarea" className="sr-only">Personal notes</label>
-              <Textarea
-                id="user-notes-textarea"
-                value={userNotes}
-                onChange={(e) => setUserNotes(e.target.value)}
-                placeholder="Add your personal notes..."
-                maxLength={USER_NOTES_MAX_LENGTH}
-                className="glass-input border-0 min-h-[150px] text-base leading-body resize-none"
-                aria-describedby="notes-char-count"
-              />
-              <div className="flex justify-end">
-                <p 
-                  id="notes-char-count" 
-                  className={`text-xs font-medium transition-colors ${
-                    userNotes.length > USER_NOTES_MAX_LENGTH * CHAR_WARNING_THRESHOLD 
-                      ? 'text-destructive' 
-                      : 'text-muted-foreground'
-                  }`}
-                  aria-live="polite"
-                >
-                  {userNotes.length.toLocaleString()} / {USER_NOTES_MAX_LENGTH.toLocaleString()}
-                </p>
-              </div>
-            </div>
+            <RichNotesEditor
+              value={userNotes}
+              onChange={setUserNotes}
+              placeholder="Add your personal notes, checklists, or tasks..."
+              maxLength={USER_NOTES_MAX_LENGTH}
+            />
           </div>
 
           {/* Action Buttons */}

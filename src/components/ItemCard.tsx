@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play } from "lucide-react";
 import type { ItemType } from "@/types";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -7,12 +7,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
+import { isVideoUrl } from "@/lib/video-utils";
 interface ItemCardProps {
   id: string;
   type: ItemType;
   title: string;
   summary?: string | null;
   previewImageUrl?: string | null;
+  content?: string | null;
   tags: string[];
   createdAt: string;
   updatedAt?: string;
@@ -32,6 +34,7 @@ export const ItemCard = ({
   title,
   summary,
   previewImageUrl,
+  content,
   tags,
   createdAt,
   updatedAt,
@@ -125,6 +128,14 @@ export const ItemCard = ({
           <div className="relative w-full h-full rounded-xl overflow-hidden bg-muted/50">
             <img src={previewImageUrl} alt={title} className="w-full h-full object-cover group-hover:scale-110 premium-transition" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 premium-transition"></div>
+            {/* Video play icon overlay */}
+            {content && isVideoUrl(content) && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center group-hover:scale-110 premium-transition">
+                  <Play className="h-5 w-5 text-white ml-0.5" fill="currentColor" />
+                </div>
+              </div>
+            )}
           </div>
         </AspectRatio> : <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">
           <div className="flex items-center justify-center w-full h-full rounded-xl bg-muted/30">
