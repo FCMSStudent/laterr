@@ -20,6 +20,7 @@ import { DOCXPreview } from "@/components/DOCXPreview";
 import { VideoPreview } from "@/components/VideoPreview";
 import { ThumbnailPreview } from "@/components/ThumbnailPreview";
 import { RichNotesEditor } from "@/components/RichNotesEditor";
+import { NotePreview } from "@/components/NotePreview";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -198,6 +199,20 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
   const renderPreview = () => {
     if (!item) return null;
 
+    // For note-type items - show the note content as a styled preview
+    if (item.type === 'note' && item.content) {
+      return (
+        <div className="rounded-xl overflow-hidden bg-gradient-to-br from-amber-50/80 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/30 dark:border-amber-800/20 mb-4">
+          <NotePreview 
+            content={item.content} 
+            variant="full" 
+            showProgress={true}
+            className="min-h-[200px]"
+          />
+        </div>
+      );
+    }
+
     // For URL-type items
     if (item.type === 'url' && item.content) {
       // Check if it's a video URL (YouTube, Vimeo)
@@ -228,7 +243,7 @@ export const DetailViewModal = ({ open, onOpenChange, item, onUpdate }: DetailVi
     }
 
     // For file-type items (PDF, DOCX, etc.)
-    if (item.content && item.type !== 'url') {
+    if (item.content && item.type !== 'url' && item.type !== 'note') {
       return (
         <div className="rounded-xl overflow-hidden bg-muted">
           {loadingSignedUrl ? (
