@@ -2,25 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Bookmark, CreditCard, Activity } from "lucide-react";
-import { useDashboardStats } from "@/shared/hooks/useDashboardStats";
-import { useUnifiedActivity } from "@/shared/hooks/useUnifiedActivity";
-import { QuickStatsGrid } from "@/shared/components/QuickStatsGrid";
-import { ModuleNavigationCard } from "@/shared/components/ModuleNavigationCard";
-import { ActivityFeedCard } from "@/shared/components/ActivityFeedCard";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
 type User = { id: string; email?: string };
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
-  
-  const stats = useDashboardStats();
-  const { activities, loading: activitiesLoading } = useUnifiedActivity(10);
 
   useEffect(() => {
-    // Check authentication
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null;
       if (!currentUser) {
@@ -30,7 +20,6 @@ const Dashboard = () => {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate('/auth');
@@ -46,108 +35,67 @@ const Dashboard = () => {
     return null;
   }
 
-  return (
-    <div className="min-h-screen pb-20 md:pb-0">
-      {/* Skip Navigation Link */}
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md"
-      >
-        Skip to main content
-      </a>
+  const modules = [
+    {
+      icon: Bookmark,
+      title: "Bookmarks",
+      description: "Save and organize your links, notes, and files",
+      href: "/bookmarks",
+      gradient: "from-blue-500 to-cyan-500",
+    },
+    {
+      icon: CreditCard,
+      title: "Subscriptions",
+      description: "Track and manage your recurring payments",
+      href: "/subscriptions",
+      gradient: "from-purple-500 to-pink-500",
+    },
+    {
+      icon: Activity,
+      title: "Health",
+      description: "Monitor your health metrics and documents",
+      href: "/health",
+      gradient: "from-green-500 to-emerald-500",
+    },
+  ];
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="mb-6">
-          <NavigationHeader 
-            title="Dashboard"
-          />
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="mb-8">
+          <NavigationHeader title="Dashboard" />
         </div>
 
-        <main id="main-content" className="space-y-8">
-          {/* Quick Stats */}
-          <section aria-label="Quick Statistics">
-            {stats.loading ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : (
-              <QuickStatsGrid
-                totalBookmarks={stats.totalBookmarks}
-                activeSubscriptions={stats.activeSubscriptions}
-                recentMeasurements={stats.recentMeasurements}
-                goalsProgress={stats.goalsProgress}
-              />
-            )}
-          </section>
+        <main className="flex flex-col items-center justify-center min-h-[60vh]">
+          <h1 className="text-3xl font-bold text-center mb-2">Welcome back</h1>
+          <p className="text-muted-foreground text-center mb-10">
+            Choose a module to get started
+          </p>
 
-          {/* Module Navigation Cards */}
-          <section aria-label="Module Navigation">
-            <h2 className="text-2xl font-semibold mb-4">Your Modules</h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <ModuleNavigationCard
-                icon={Bookmark}
-                title="Bookmarks"
-                description="Manage your saved links and notes"
-                count={stats.totalBookmarks}
-                href="/bookmarks"
-                onClick={() => navigate('/bookmarks')}
-              />
-              <ModuleNavigationCard
-                icon={CreditCard}
-                title="Subscriptions"
-                description="Track your recurring payments"
-                count={stats.activeSubscriptions}
-                href="/subscriptions"
-                onClick={() => navigate('/subscriptions')}
-              />
-              <ModuleNavigationCard
-                icon={Activity}
-                title="Health"
-                description="Monitor your health metrics"
-                count={stats.recentMeasurements}
-                href="/health"
-                onClick={() => navigate('/health')}
-              />
-            </div>
-          </section>
-
-          {/* Activity Feed */}
-          <section aria-label="Recent Activity">
-            <h2 className="text-2xl font-semibold mb-4">Recent Activity</h2>
-            {activitiesLoading ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : activities.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                No recent activity. Start using the modules to see your activity here.
-              </div>
-            ) : (
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {activities.map((activity) => (
-                  <ActivityFeedCard key={activity.id} activity={activity} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Upcoming Events */}
-          <section aria-label="Upcoming Events">
-            <h2 className="text-2xl font-semibold mb-4">Upcoming Events</h2>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {activities
-                .filter((a) => a.activity_type === 'renewal_due')
-                .slice(0, 6)
-                .map((activity) => (
-                  <ActivityFeedCard key={activity.id} activity={activity} />
-                ))}
-              {activities.filter((a) => a.activity_type === 'renewal_due').length === 0 && (
-                <div className="text-center py-8 text-muted-foreground col-span-full">
-                  No upcoming subscription renewals in the next 7 days.
+          <div className="grid gap-6 w-full max-w-2xl">
+            {modules.map((module) => (
+              <button
+                key={module.title}
+                onClick={() => navigate(module.href)}
+                className="group relative flex items-center gap-6 p-6 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 text-left"
+              >
+                <div className={`flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br ${module.gradient} flex items-center justify-center shadow-lg`}>
+                  <module.icon className="w-7 h-7 text-white" />
                 </div>
-              )}
-            </div>
-          </section>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                    {module.title}
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    {module.description}
+                  </p>
+                </div>
+                <div className="text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all">
+                  →
+                </div>
+              </button>
+            ))}
+          </div>
         </main>
       </div>
     </div>
