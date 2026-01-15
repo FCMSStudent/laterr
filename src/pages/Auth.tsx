@@ -311,12 +311,6 @@ export default function Auth() {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/5 rounded-full blur-2xl animate-pulse" />
       <div className="absolute inset-2 bg-gradient-to-tr from-primary/20 to-transparent rounded-full blur-xl" />
       
-      {/* Central icon */}
-      <div className="relative flex items-center justify-center w-full h-full">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 backdrop-blur-sm flex items-center justify-center border border-primary/20">
-          <Bookmark className="w-8 h-8 text-primary" />
-        </div>
-      </div>
       
       {/* Floating accent icons */}
       <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-primary/10 backdrop-blur-sm flex items-center justify-center border border-primary/20 animate-bounce" style={{ animationDuration: '3s' }}>
