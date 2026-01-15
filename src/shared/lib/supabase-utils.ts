@@ -10,8 +10,8 @@ import {
   SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX,
   SUPABASE_STORAGE_THUMBNAILS_PATH_PREFIX,
   PREVIEW_SIGNED_URL_EXPIRATION,
-} from "@/constants";
-import type { Item } from "@/types";
+} from "@/features/bookmarks/constants";
+import type { Item } from "@/features/bookmarks/types";
 
 /**
  * Generates a signed URL from a storage path
