@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Item } from "@/features/bookmarks/types";
+import { Item } from "@/types";
 import { getRecommendations } from "@/features/bookmarks/utils/semantic-search";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Loader2, Lightbulb } from "lucide-react";
-import { ItemCard } from "@/features/bookmarks/components/ItemCard";
+import { ItemCard } from "./ItemCard";
 
 interface RecommendationsPanelProps {
   onItemClick?: (item: Item) => void;
