@@ -1,18 +1,18 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/shared/components/ui/toaster";
+import { Toaster as Sonner } from "@/shared/components/ui/sonner";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { MobileBottomNav } from "@/components/MobileBottomNav";
-import GradientBackground from "./components/GradientBackground";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
+import GradientBackground from "@/shared/components/GradientBackground";
 import "./styles/gradient.css";
 
 // Lazy load route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Index = lazy(() => import("./pages/Index"));
+const Bookmarks = lazy(() => import("./pages/Bookmarks"));
 const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Health = lazy(() => import("./pages/Health"));
@@ -45,8 +45,8 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/app" element={<Index />} />
-                <Route path="/bookmarks" element={<Index />} />
+                <Route path="/app" element={<Bookmarks />} />
+                <Route path="/bookmarks" element={<Bookmarks />} />
                 <Route path="/subscriptions" element={<Subscriptions />} />
                 <Route path="/health" element={<Health />} />
                 <Route path="/auth" element={<Auth />} />
