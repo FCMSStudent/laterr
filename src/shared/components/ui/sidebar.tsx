@@ -6,7 +6,7 @@ import { PanelLeft } from "lucide-react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/lib/utils";
 import { sidebarMenuButtonVariants } from "@/shared/lib/ui-utils";
-import { SidebarContext, useSidebar } from "@/hooks/use-sidebar";
+import { SidebarContext, useSidebar } from "@/shared/hooks/use-sidebar";
 import { Button } from "./button";
 import { Input } from "./input";
 import { Separator } from "./separator";

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { HEALTH_TABLES } from '@/constants/health';
 import { EMBEDDING_DIMENSION, isValidEmbedding } from '@/features/bookmarks/constants';
-import type { HealthDocument, HealthDocumentFormData } from '@/types/health';
+import type { HealthDocument, HealthDocumentFormData } from '../types';
 
 interface UseHealthDocumentsState {
   loading: boolean;
