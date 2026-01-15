@@ -292,23 +292,7 @@ export default function Auth() {
   };
 
   // Visual illustration component
-  const AuthIllustration = () => <div className="relative w-28 h-28 mx-auto mb-6">
-      {/* Gradient orb background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/5 rounded-full blur-2xl animate-pulse" />
-      <div className="absolute inset-2 bg-gradient-to-tr from-primary/20 to-transparent rounded-full blur-xl" />
-      
-      {/* Central icon */}
-      <div className="relative flex items-center justify-center w-full h-full">
-        
-      </div>
-      
-      {/* Floating accent icons */}
-      <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-primary/10 backdrop-blur-sm flex items-center justify-center border border-primary/20 animate-bounce" style={{
-      animationDuration: '3s'
-    }}>
-        <Sparkles className="w-4 h-4 text-primary/80" />
-      </div>
-    </div>;
+  const AuthIllustration = () => {};
 
   // Success state for signup
   if (signupSuccess) {
