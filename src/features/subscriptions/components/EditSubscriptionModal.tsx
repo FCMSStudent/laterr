@@ -1,22 +1,22 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { LoadingButton } from "@/shared/components/ui/loading-button";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
+import { Badge } from "@/shared/components/ui/badge";
+import { Switch } from "@/shared/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
+import { Calendar } from "@/shared/components/ui/calendar";
 import { CalendarIcon, X, Ban } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SUBSCRIPTION_TABLES, DEFAULT_CATEGORIES, CURRENCY_OPTIONS, BILLING_CYCLES } from "@/constants/subscriptions";
-import type { Subscription, SubscriptionBillingCycle } from "@/types/subscription";
+import { SUBSCRIPTION_TABLES, DEFAULT_CATEGORIES, CURRENCY_OPTIONS, BILLING_CYCLES } from "@/features/subscriptions/constants";
+import type { Subscription, SubscriptionBillingCycle } from "@/features/subscriptions/types";
 
 interface EditSubscriptionModalProps {
   open: boolean;

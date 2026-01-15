@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/components/ui/dropdown-menu";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/shared/components/ui/drawer";
 import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown, Filter, LayoutGrid, LayoutList, CheckSquare } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import type { ItemType } from "@/types";
-import { CATEGORY_OPTIONS } from "@/constants";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import type { ItemType } from "@/features/bookmarks/types";
+import { CATEGORY_OPTIONS } from "@/features/bookmarks/constants";
 export type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc" | "type";
 export type ViewMode = "grid" | "list";
 interface FilterBarProps {

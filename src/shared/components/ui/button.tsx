@@ -2,9 +2,9 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/lib/ui-utils";
-import { useRipple } from "@/hooks/useRipple";
+import { cn } from "@/shared/lib/utils";
+import { buttonVariants } from "@/shared/lib/ui-utils";
+import { useRipple } from "@/shared/hooks/useRipple";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,

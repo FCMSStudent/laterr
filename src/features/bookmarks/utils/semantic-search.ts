@@ -3,8 +3,8 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import type { Item } from "@/types";
-import { isValidEmbedding } from "@/constants";
+import type { Item } from "@/features/bookmarks/types";
+import { isValidEmbedding } from "@/features/bookmarks/constants";
 
 /**
  * Find similar items based on embedding similarity

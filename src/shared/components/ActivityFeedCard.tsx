@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "./ui/card";
+import { Badge } from "./ui/badge";
 import { Bookmark, CreditCard, Activity } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import type { UnifiedActivity } from "@/hooks/useUnifiedActivity";
+import type { UnifiedActivity } from "@/shared/hooks/useUnifiedActivity";
 
 interface ActivityFeedCardProps {
   activity: UnifiedActivity;

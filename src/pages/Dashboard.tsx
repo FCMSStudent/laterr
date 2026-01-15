@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Bookmark, CreditCard, Activity } from "lucide-react";
-import { useDashboardStats } from "@/hooks/useDashboardStats";
-import { useUnifiedActivity } from "@/hooks/useUnifiedActivity";
-import { QuickStatsGrid } from "@/components/QuickStatsGrid";
-import { ModuleNavigationCard } from "@/components/ModuleNavigationCard";
-import { ActivityFeedCard } from "@/components/ActivityFeedCard";
-import { NavigationHeader } from "@/components/NavigationHeader";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useDashboardStats } from "@/shared/hooks/useDashboardStats";
+import { useUnifiedActivity } from "@/shared/hooks/useUnifiedActivity";
+import { QuickStatsGrid } from "@/shared/components/QuickStatsGrid";
+import { ModuleNavigationCard } from "@/shared/components/ModuleNavigationCard";
+import { ActivityFeedCard } from "@/shared/components/ActivityFeedCard";
+import { NavigationHeader } from "@/shared/components/NavigationHeader";
+import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
 type User = { id: string; email?: string };
 

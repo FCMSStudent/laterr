@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ExternalLink, Image as ImageIcon } from 'lucide-react';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Button } from '@/components/ui/button';
+import { AspectRatio } from '@/shared/components/ui/aspect-ratio';
+import { Button } from '@/shared/components/ui/button';
 
 interface ThumbnailPreviewProps {
   imageUrl: string;

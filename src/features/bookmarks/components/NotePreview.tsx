@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import { parseNotes, getChecklistStats } from "@/lib/notes-parser";
+import { cn } from "@/shared/lib/utils";
+import { parseNotes, getChecklistStats } from "@/features/bookmarks/utils/notes-parser";
 import { CheckSquare, Square, FileText } from "lucide-react";
 import { ChecklistProgress } from "./ChecklistProgress";
 

@@ -1,32 +1,32 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui/drawer";
+import { LoadingButton } from "@/shared/components/ui/loading-button";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Switch } from "@/shared/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
+import { Calendar } from "@/shared/components/ui/calendar";
 import { CalendarIcon, X, Sparkles } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import {
   SUBSCRIPTION_TABLES,
   DEFAULT_CATEGORIES,
   CURRENCY_OPTIONS,
   BILLING_CYCLES,
   POPULAR_SUBSCRIPTIONS
-} from "@/constants/subscriptions";
-import { calculateAnnualCost, formatCurrency } from "@/lib/currency-utils";
-import type { SubscriptionBillingCycle } from "@/types/subscription";
+} from "@/features/subscriptions/constants";
+import { calculateAnnualCost, formatCurrency } from "@/features/subscriptions/utils/currency-utils";
+import type { SubscriptionBillingCycle } from "@/features/subscriptions/types";
 
 const subscriptionSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),

@@ -1,4 +1,4 @@
-import { NotesData, NoteBlock, createTextBlock, createChecklistBlock } from '@/types/notes';
+import { NotesData, NoteBlock, createTextBlock, createChecklistBlock } from '../types';
 
 /**
  * Parse a string (plain text or JSON) into NotesData

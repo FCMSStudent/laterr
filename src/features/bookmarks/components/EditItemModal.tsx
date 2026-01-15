@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui/drawer";
+import { LoadingButton } from "@/shared/components/ui/loading-button";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
+import { Badge } from "@/shared/components/ui/badge";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { SUPABASE_ITEMS_TABLE } from "@/constants";
-import type { Item } from "@/types";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
+import type { Item } from "@/features/bookmarks/types";
 
 interface EditItemModalProps {
   open: boolean;

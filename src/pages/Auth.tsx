@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { EnhancedInput } from '@/components/ui/input';
-import { LoadingButton } from '@/components/ui/loading-button';
-import { useToast } from '@/hooks/use-toast';
+import { EnhancedInput } from '@/shared/components/ui/input';
+import { LoadingButton } from '@/shared/components/ui/loading-button';
+import { useToast } from '@/shared/hooks/use-toast';
 import { z } from 'zod';
-import { AuthError, toTypedError } from '@/types/errors';
-import { AUTH_ERRORS, getAuthErrorMessage } from '@/lib/error-messages';
+import { AuthError, toTypedError } from '@/shared/types/errors';
+import { AUTH_ERRORS, getAuthErrorMessage } from '@/shared/lib/error-messages';
 import { Bookmark, Sparkles, Check, Mail, ArrowLeft, KeyRound } from 'lucide-react';
 
 const emailSchema = z.string().email('Invalid email address').max(255);

@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Play, ExternalLink } from 'lucide-react';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Button } from '@/components/ui/button';
+import { AspectRatio } from '@/shared/components/ui/aspect-ratio';
+import { Button } from '@/shared/components/ui/button';
 import { 
   isYouTubeUrl, 
   getYouTubeVideoId, 
   getYouTubeThumbnail,
   getVideoEmbedUrl,
   isVideoUrl 
-} from '@/lib/video-utils';
+} from '@/features/bookmarks/utils/video-utils';
 
 interface VideoPreviewProps {
   url: string;

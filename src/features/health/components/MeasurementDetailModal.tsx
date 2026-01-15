@@ -1,13 +1,13 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Trash2, Plus, TrendingUp, TrendingDown, Minus, Calendar, Clock } from "lucide-react";
 import { format } from "date-fns";
-import type { HealthMeasurement, MeasurementType } from "@/types/health";
-import { formatHealthValue, extractNumericValue, calculateAverageValue } from "@/lib/health-utils";
-import { MEASUREMENT_TYPES } from "@/constants/health";
-import { HealthChartPanel } from "@/components/HealthChartPanel";
+import type { HealthMeasurement, MeasurementType } from "@/features/health/types";
+import { formatHealthValue, extractNumericValue, calculateAverageValue } from "@/features/health/utils/health-utils";
+import { MEASUREMENT_TYPES } from "@/features/health/constants";
+import { HealthChartPanel } from "@/features/health/components/HealthChartPanel";
 
 interface MeasurementDetailModalProps {
   open: boolean;

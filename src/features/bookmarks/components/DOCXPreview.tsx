@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import mammoth from 'mammoth';
 import DOMPurify from 'dompurify';
 

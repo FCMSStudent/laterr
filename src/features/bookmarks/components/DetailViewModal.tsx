@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui/drawer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,32 +10,32 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { PDFPreview } from "@/components/PDFPreview";
-import { DOCXPreview } from "@/components/DOCXPreview";
-import { VideoPreview } from "@/components/VideoPreview";
-import { ThumbnailPreview } from "@/components/ThumbnailPreview";
-import { RichNotesEditor } from "@/components/RichNotesEditor";
-import { NotePreview } from "@/components/NotePreview";
+} from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
+import { LoadingButton } from "@/shared/components/ui/loading-button";
+import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { Breadcrumbs } from "@/shared/components/Breadcrumbs";
+import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
+import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
+import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
+import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
+import { RichNotesEditor } from "@/features/bookmarks/components/RichNotesEditor";
+import { NotePreview } from "@/features/bookmarks/components/NotePreview";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import {
   CATEGORY_OPTIONS,
   DEFAULT_ITEM_TAG,
   SUPABASE_ITEMS_TABLE,
-} from "@/constants";
-import { generateSignedUrl } from "@/lib/supabase-utils";
-import { NetworkError, toTypedError } from "@/types/errors";
-import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/lib/error-messages";
-import { isVideoUrl } from "@/lib/video-utils";
+} from "@/features/bookmarks/constants";
+import { generateSignedUrl } from "@/shared/lib/supabase-utils";
+import { NetworkError, toTypedError } from "@/shared/types/errors";
+import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/shared/lib/error-messages";
+import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 
-import type { Item } from "@/types";
+import type { Item } from "@/features/bookmarks/types";
 
 // Character counter constants
 const USER_NOTES_MAX_LENGTH = 100000;

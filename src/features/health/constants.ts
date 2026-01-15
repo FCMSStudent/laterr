@@ -1,4 +1,4 @@
-import type { MeasurementType, DocumentType, GoalType, MedicationFrequency } from '@/types/health';
+import type { MeasurementType, DocumentType, GoalType, MedicationFrequency } from './types';
 
 // Table name constants
 export const HEALTH_TABLES = {

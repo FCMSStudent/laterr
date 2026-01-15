@@ -1,7 +1,7 @@
 import * as React from "react";
 import { X, Check, AlertCircle, Eye, EyeOff, Search, Mail, Lock } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 // Base input component
 const BaseInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(

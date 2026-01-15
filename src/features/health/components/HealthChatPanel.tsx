@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/shared/components/ui/sheet';
 import { MessageCircle, Send, Loader2, Bot, User, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 
 interface Message {
   role: 'user' | 'assistant';

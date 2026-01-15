@@ -1,6 +1,6 @@
 import * as React from "react";
 import { AlertCircle, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 // Base textarea component for backward compatibility

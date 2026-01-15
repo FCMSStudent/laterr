@@ -6,16 +6,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+} from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Progress } from "@/shared/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Sparkles, Loader2, CheckCircle, XCircle, Info } from "lucide-react";
 import { 
   backfillAllEmbeddings, 
   countItemsNeedingEmbeddings,
   BackfillProgress 
-} from "@/lib/embedding-backfill";
+} from "@/features/health/utils/embedding-backfill";
 import { toast } from "sonner";
 
 interface EmbeddingBackfillDialogProps {

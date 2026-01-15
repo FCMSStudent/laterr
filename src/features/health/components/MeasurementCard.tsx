@@ -1,14 +1,14 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui/dropdown-menu";
 import { 
   MoreVertical, Trash2, TrendingUp, TrendingDown, Minus,
   Scale, Heart, Droplet, Activity, Moon, Footprints, Flame, Thermometer, Wind, Percent
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
-import type { HealthMeasurement, MeasurementType } from "@/types/health";
-import { formatHealthValue } from "@/lib/health-utils";
-import { MEASUREMENT_TYPES } from "@/constants/health";
+import type { HealthMeasurement, MeasurementType } from "@/features/health/types";
+import { formatHealthValue } from "@/features/health/utils/health-utils";
+import { MEASUREMENT_TYPES } from "@/features/health/constants";
 
 interface MeasurementCardProps {
   measurement: HealthMeasurement;

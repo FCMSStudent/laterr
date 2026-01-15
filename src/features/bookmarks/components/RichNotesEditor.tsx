@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ChecklistItem } from '@/components/ChecklistItem';
+import { Button } from '@/shared/components/ui/button';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { ChecklistItem } from './ChecklistItem';
 import { 
   CheckSquare, 
   Plus, 
@@ -9,14 +9,14 @@ import {
   List,
   Check
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import { 
   NotesData, 
   NoteBlock, 
   createTextBlock, 
   createChecklistBlock 
-} from '@/types/notes';
-import { parseNotes, serializeNotes, getChecklistStats } from '@/lib/notes-parser';
+} from '../types';
+import { parseNotes, serializeNotes, getChecklistStats } from '../utils/notes-parser';
 
 interface RichNotesEditorProps {
   value: string | null | undefined;

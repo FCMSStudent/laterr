@@ -1,5 +1,5 @@
-import { UNIT_CONVERSIONS, BMI_CATEGORIES, NORMAL_RANGES, MEASUREMENT_TYPES } from '@/constants/health';
-import type { MeasurementType, HealthMeasurement, BloodPressureValue, NumericValue } from '@/types/health';
+import { UNIT_CONVERSIONS, BMI_CATEGORIES, NORMAL_RANGES, MEASUREMENT_TYPES } from '../constants';
+import type { MeasurementType, HealthMeasurement, BloodPressureValue, NumericValue } from '../types';
 
 /**
  * Convert health units between different measurement systems

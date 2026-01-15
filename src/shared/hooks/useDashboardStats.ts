@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SUPABASE_ITEMS_TABLE } from "@/constants";
-import { SUBSCRIPTION_TABLES } from "@/constants/subscriptions";
+import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
+import { SUBSCRIPTION_TABLES } from "@/features/subscriptions/constants";
 
 export interface DashboardStats {
   totalBookmarks: number;

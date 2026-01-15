@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { format, subDays, subMonths, subYears, isAfter } from "date-fns";
-import type { HealthMeasurement, MeasurementType } from "@/types/health";
-import { extractNumericValue } from "@/lib/health-utils";
-import { NORMAL_RANGES, MEASUREMENT_TYPES } from "@/constants/health";
+import type { HealthMeasurement, MeasurementType } from "@/features/health/types";
+import { extractNumericValue } from "@/features/health/utils/health-utils";
+import { NORMAL_RANGES, MEASUREMENT_TYPES } from "@/features/health/constants";
 
 type DateRange = '7d' | '30d' | '90d' | '1y';
 

@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 import { MoreVertical, Trash2, Edit, ExternalLink } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui/dropdown-menu";
+import { Button } from "@/shared/components/ui/button";
 import { formatDistanceToNow, differenceInDays, parseISO } from "date-fns";
-import { formatCurrency, calculateMonthlyCost, formatBillingCycle } from "@/lib/currency-utils";
-import { CATEGORY_COLORS } from "@/constants/subscriptions";
-import type { Subscription, SubscriptionBillingCycle, SubscriptionStatus } from "@/types/subscription";
+import { formatCurrency, calculateMonthlyCost, formatBillingCycle } from "@/features/subscriptions/utils/currency-utils";
+import { CATEGORY_COLORS } from "@/features/subscriptions/constants";
+import type { Subscription, SubscriptionBillingCycle, SubscriptionStatus } from "@/features/subscriptions/types";
 
 interface SubscriptionCardProps {
   subscription: Subscription;

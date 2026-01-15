@@ -1,14 +1,14 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui/dropdown-menu";
+import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
 import { 
   MoreVertical, Trash2, FileText, TestTube, Pill, Scan, 
   Shield, Syringe, ClipboardCheck, Forward, Calendar, Building
 } from "lucide-react";
 import { format } from "date-fns";
-import type { HealthDocument, DocumentType } from "@/types/health";
-import { DOCUMENT_TYPES } from "@/constants/health";
+import type { HealthDocument, DocumentType } from "@/features/health/types";
+import { DOCUMENT_TYPES } from "@/features/health/constants";
 
 interface HealthDocumentCardProps {
   document: HealthDocument;

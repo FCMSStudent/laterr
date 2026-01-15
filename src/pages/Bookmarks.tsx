@@ -1,37 +1,37 @@
 import { useState, useEffect, useCallback, lazy, Suspense, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ItemCard } from "@/components/ItemCard";
-import { ItemListRow } from "@/components/ItemListRow";
-import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
-import { SearchBar } from "@/components/SearchBar";
-import { NavigationHeader } from "@/components/NavigationHeader";
-import { Button } from "@/components/ui/button";
+import { ItemCard } from "@/features/bookmarks/components/ItemCard";
+import { ItemListRow } from "@/features/bookmarks/components/ItemListRow";
+import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
+import { SearchBar } from "@/shared/components/SearchBar";
+import { NavigationHeader } from "@/shared/components/NavigationHeader";
+import { Button } from "@/shared/components/ui/button";
 import { Sparkles, Plus, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { FilterBar, type SortOption, type ViewMode } from "@/components/FilterBar";
-import { BulkActionsBar } from "@/components/BulkActionsBar";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import { SUPABASE_ITEMS_TABLE } from "@/constants";
-import type { Item, User, ItemType } from "@/types";
-import { generateSignedUrlsForItems } from "@/lib/supabase-utils";
-import { NetworkError, toTypedError } from "@/types/errors";
-import { getNetworkErrorMessage } from "@/lib/error-messages";
+import { useToast } from "@/shared/hooks/use-toast";
+import { useDebounce } from "@/shared/hooks/useDebounce";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { FilterBar, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
+import { BulkActionsBar } from "@/features/bookmarks/components/BulkActionsBar";
+import { useInfiniteScroll } from "@/features/bookmarks/hooks/useInfiniteScroll";
+import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
+import type { Item, User, ItemType } from "@/features/bookmarks/types";
+import { generateSignedUrlsForItems } from "@/shared/lib/supabase-utils";
+import { NetworkError, toTypedError } from "@/shared/types/errors";
+import { getNetworkErrorMessage } from "@/shared/lib/error-messages";
 
 // Lazy load modal components for better code splitting
-const AddItemModal = lazy(() => import("@/components/AddItemModal").then(({
+const AddItemModal = lazy(() => import("@/features/bookmarks/components/AddItemModal").then(({
   AddItemModal
 }) => ({
   default: AddItemModal
 })));
-const DetailViewModal = lazy(() => import("@/components/DetailViewModal").then(({
+const DetailViewModal = lazy(() => import("@/features/bookmarks/components/DetailViewModal").then(({
   DetailViewModal
 }) => ({
   default: DetailViewModal
 })));
-const EditItemModal = lazy(() => import("@/components/EditItemModal").then(({
+const EditItemModal = lazy(() => import("@/features/bookmarks/components/EditItemModal").then(({
   EditItemModal
 }) => ({
   default: EditItemModal

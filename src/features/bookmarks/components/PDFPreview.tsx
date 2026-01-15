@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { Button } from '@/shared/components/ui/button';
+import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';

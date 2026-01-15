@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { LoadingButton } from "@/shared/components/ui/loading-button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Breadcrumbs } from "@/shared/components/Breadcrumbs";
 import {
   ArrowLeft,
   CreditCard,
@@ -20,9 +20,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays } from "date-fns";
-import { SUBSCRIPTION_TABLES, CATEGORY_COLORS } from "@/constants/subscriptions";
-import { formatCurrency, calculateMonthlyCost, calculateAnnualCost, formatBillingCycle } from "@/lib/currency-utils";
-import type { Subscription, SubscriptionBillingCycle, SubscriptionTransaction, SubscriptionStatus } from "@/types/subscription";
+import { SUBSCRIPTION_TABLES, CATEGORY_COLORS } from "@/features/subscriptions/constants";
+import { formatCurrency, calculateMonthlyCost, calculateAnnualCost, formatBillingCycle } from "@/features/subscriptions/utils/currency-utils";
+import type { Subscription, SubscriptionBillingCycle, SubscriptionTransaction, SubscriptionStatus } from "@/features/subscriptions/types";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface SubscriptionDetailModalProps {

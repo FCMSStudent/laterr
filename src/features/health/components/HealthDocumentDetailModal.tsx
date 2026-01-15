@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { 
   Trash2, Download, RefreshCw, Calendar, Building, FileText, 
   ExternalLink, Sparkles, Beaker, Loader2 
@@ -11,11 +11,11 @@ import {
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { HealthDocument, DocumentType } from "@/types/health";
-import { DOCUMENT_TYPES, HEALTH_TABLES } from "@/constants/health";
-import { PDFPreview } from "@/components/PDFPreview";
-import { DOCXPreview } from "@/components/DOCXPreview";
-import { ExtractedHealthDataDisplay } from "@/components/ExtractedHealthDataDisplay";
+import type { HealthDocument, DocumentType } from "@/features/health/types";
+import { DOCUMENT_TYPES, HEALTH_TABLES } from "@/features/health/constants";
+import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
+import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
+import { ExtractedHealthDataDisplay } from "@/features/health/components/ExtractedHealthDataDisplay";
 
 interface HealthDocumentDetailModalProps {
   open: boolean;

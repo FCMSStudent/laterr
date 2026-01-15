@@ -1,5 +1,5 @@
-import { CURRENCY_OPTIONS } from '@/constants/subscriptions';
-import type { SubscriptionBillingCycle } from '@/types/subscription';
+import { CURRENCY_OPTIONS } from '../constants';
+import type { SubscriptionBillingCycle } from '../types';
 
 /**
  * Get currency symbol for a given currency code

@@ -1,26 +1,26 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { SubscriptionCard } from "@/components/SubscriptionCard";
-import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
-import { SearchBar } from "@/components/SearchBar";
-import { NavigationHeader } from "@/components/NavigationHeader";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { SubscriptionCard } from "@/features/subscriptions/components/SubscriptionCard";
+import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
+import { SearchBar } from "@/shared/components/SearchBar";
+import { NavigationHeader } from "@/shared/components/NavigationHeader";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import { CreditCard, Plus, TrendingUp, Calendar, DollarSign } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { SUBSCRIPTION_TABLES } from "@/constants/subscriptions";
-import { formatCurrency, calculateMonthlyCost, calculateAnnualCost } from "@/lib/currency-utils";
-import type { Subscription, SubscriptionStatus, SubscriptionBillingCycle } from "@/types/subscription";
-import { toTypedError } from "@/types/errors";
+import { useToast } from "@/shared/hooks/use-toast";
+import { useDebounce } from "@/shared/hooks/useDebounce";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { SUBSCRIPTION_TABLES } from "@/features/subscriptions/constants";
+import { formatCurrency, calculateMonthlyCost, calculateAnnualCost } from "@/features/subscriptions/utils/currency-utils";
+import type { Subscription, SubscriptionStatus, SubscriptionBillingCycle } from "@/features/subscriptions/types";
+import { toTypedError } from "@/shared/types/errors";
 import { differenceInDays, parseISO } from "date-fns";
 
 // Lazy load modal components
-const AddSubscriptionModal = lazy(() => import("@/components/AddSubscriptionModal").then(({ AddSubscriptionModal }) => ({ default: AddSubscriptionModal })));
-const SubscriptionDetailModal = lazy(() => import("@/components/SubscriptionDetailModal").then(({ SubscriptionDetailModal }) => ({ default: SubscriptionDetailModal })));
-const EditSubscriptionModal = lazy(() => import("@/components/EditSubscriptionModal").then(({ EditSubscriptionModal }) => ({ default: EditSubscriptionModal })));
+const AddSubscriptionModal = lazy(() => import("@/features/subscriptions/components/AddSubscriptionModal").then(({ AddSubscriptionModal }) => ({ default: AddSubscriptionModal })));
+const SubscriptionDetailModal = lazy(() => import("@/features/subscriptions/components/SubscriptionDetailModal").then(({ SubscriptionDetailModal }) => ({ default: SubscriptionDetailModal })));
+const EditSubscriptionModal = lazy(() => import("@/features/subscriptions/components/EditSubscriptionModal").then(({ EditSubscriptionModal }) => ({ default: EditSubscriptionModal })));
 
 type User = { id: string; email?: string };
 

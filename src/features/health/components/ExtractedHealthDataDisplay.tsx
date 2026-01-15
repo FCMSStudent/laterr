@@ -1,6 +1,6 @@
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/shared/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Separator } from '@/shared/components/ui/separator';
 import { 
   Beaker, 
   Pill, 
@@ -14,7 +14,7 @@ import {
   TrendingUp,
   TrendingDown
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 
 interface LabValue {
   name: string;

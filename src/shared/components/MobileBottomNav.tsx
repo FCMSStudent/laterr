@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { BookMarked, CreditCard, Heart, LayoutDashboard, Menu } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 interface NavItem {
   icon: React.ElementType;

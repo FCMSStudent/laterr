@@ -7,7 +7,7 @@ import { pdfjs } from 'react-pdf';
 import mammoth from 'mammoth';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_QUALITY } from '@/constants';
+import { THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_QUALITY } from '@/features/bookmarks/constants';
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;

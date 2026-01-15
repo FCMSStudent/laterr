@@ -1,14 +1,14 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "./ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { AuthError } from "@/types/errors";
-import { AUTH_ERRORS } from "@/lib/error-messages";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/shared/hooks/use-toast";
+import { AuthError } from "@/shared/types/errors";
+import { AUTH_ERRORS } from "@/shared/lib/error-messages";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useState, useEffect, ReactNode } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,8 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+} from "./ui/alert-dialog";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 interface NavigationHeaderProps {
   title: string;

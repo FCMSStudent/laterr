@@ -1,19 +1,19 @@
 import { useState, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui/drawer";
+import { Button } from "@/shared/components/ui/button";
+import { LoadingButton } from "@/shared/components/ui/loading-button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Badge } from "@/shared/components/ui/badge";
 import { Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { HEALTH_TABLES, DOCUMENT_TYPES } from "@/constants/health";
-import type { DocumentType } from "@/types/health";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { HEALTH_TABLES, DOCUMENT_TYPES } from "@/features/health/constants";
+import type { DocumentType } from "@/features/health/types";
 import { format } from "date-fns";
 
 const ALLOWED_FILE_TYPES = [

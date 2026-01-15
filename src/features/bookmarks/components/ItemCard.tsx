@@ -1,17 +1,17 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, Bookmark, BookmarkCheck, Clock } from "lucide-react";
-import type { ItemType } from "@/types";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import type { ItemType } from "@/features/bookmarks/types";
+import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
+import { Checkbox } from "@/shared/components/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui/dropdown-menu";
+import { Button } from "@/shared/components/ui/button";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { useState, useRef, useCallback } from "react";
-import { isVideoUrl } from "@/lib/video-utils";
-import { NotePreview } from "@/components/NotePreview";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
+import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
+import { NotePreview } from "@/features/bookmarks/components/NotePreview";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { cn } from "@/shared/lib/utils";
 
 interface ItemCardProps {
   id: string;

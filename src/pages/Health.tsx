@@ -1,31 +1,31 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { MeasurementCard } from "@/components/MeasurementCard";
-import { HealthDocumentCard } from "@/components/HealthDocumentCard";
-import { ItemCardSkeleton } from "@/components/ItemCardSkeleton";
-import { SearchBar } from "@/components/SearchBar";
-import { NavigationHeader } from "@/components/NavigationHeader";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MeasurementCard } from "@/features/health/components/MeasurementCard";
+import { HealthDocumentCard } from "@/features/health/components/HealthDocumentCard";
+import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
+import { SearchBar } from "@/shared/components/SearchBar";
+import { NavigationHeader } from "@/shared/components/NavigationHeader";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { 
   Activity, Plus, Heart, FileText, Target, Pill, 
   Scale, Droplet, TrendingUp, TrendingDown, Minus
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { HEALTH_TABLES } from "@/constants/health";
-import type { HealthMeasurement, HealthDocument, MeasurementType } from "@/types/health";
-import type { User } from "@/types";
-import { extractNumericValue, calculateTrend } from "@/lib/health-utils";
+import { useToast } from "@/shared/hooks/use-toast";
+import { useDebounce } from "@/shared/hooks/useDebounce";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { HEALTH_TABLES } from "@/features/health/constants";
+import type { HealthMeasurement, HealthDocument, MeasurementType } from "@/features/health/types";
+import type { User } from "@/features/bookmarks/types";
+import { extractNumericValue, calculateTrend } from "@/features/health/utils/health-utils";
 
 // Lazy load modal components
-const AddMeasurementModal = lazy(() => import("@/components/AddMeasurementModal").then(({ AddMeasurementModal }) => ({ default: AddMeasurementModal })));
-const MeasurementDetailModal = lazy(() => import("@/components/MeasurementDetailModal").then(({ MeasurementDetailModal }) => ({ default: MeasurementDetailModal })));
-const AddHealthDocumentModal = lazy(() => import("@/components/AddHealthDocumentModal").then(({ AddHealthDocumentModal }) => ({ default: AddHealthDocumentModal })));
-const HealthDocumentDetailModal = lazy(() => import("@/components/HealthDocumentDetailModal").then(({ HealthDocumentDetailModal }) => ({ default: HealthDocumentDetailModal })));
-const HealthChatPanel = lazy(() => import("@/components/HealthChatPanel").then(({ HealthChatPanel }) => ({ default: HealthChatPanel })));
+const AddMeasurementModal = lazy(() => import("@/features/health/components/AddMeasurementModal").then(({ AddMeasurementModal }) => ({ default: AddMeasurementModal })));
+const MeasurementDetailModal = lazy(() => import("@/features/health/components/MeasurementDetailModal").then(({ MeasurementDetailModal }) => ({ default: MeasurementDetailModal })));
+const AddHealthDocumentModal = lazy(() => import("@/features/health/components/AddHealthDocumentModal").then(({ AddHealthDocumentModal }) => ({ default: AddHealthDocumentModal })));
+const HealthDocumentDetailModal = lazy(() => import("@/features/health/components/HealthDocumentDetailModal").then(({ HealthDocumentDetailModal }) => ({ default: HealthDocumentDetailModal })));
+const HealthChatPanel = lazy(() => import("@/features/health/components/HealthChatPanel").then(({ HealthChatPanel }) => ({ default: HealthChatPanel })));
 
 const Health = () => {
   const [activeTab, setActiveTab] = useState("measurements");

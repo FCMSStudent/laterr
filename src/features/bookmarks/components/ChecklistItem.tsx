@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Button } from '@/shared/components/ui/button';
 import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 
 interface ChecklistItemProps {
   id: string;

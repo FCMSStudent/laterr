@@ -1,7 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { Home, Search, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
