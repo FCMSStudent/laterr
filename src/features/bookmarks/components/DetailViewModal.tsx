@@ -5,7 +5,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/shared/components/ui/button";
 import { LoadingButton } from "@/shared/components/ui/loading-button";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
-import { Breadcrumbs } from "@/shared/components/Breadcrumbs";
+
 import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
 import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
@@ -222,85 +222,102 @@ export const DetailViewModal = ({
     return null;
   };
   if (!item) return null;
-  const breadcrumbItems = [{
-    label: "Home",
-    onClick: () => onOpenChange(false)
-  }, ...(selectedTag ? [{
-    label: selectedTag
-  }] : []), {
-    label: item.title
-  }];
 
   // Shared content component
-  const DetailContent = () => <>
-      {/* Breadcrumbs and Header */}
-      <div className="mb-4">
-        <Breadcrumbs items={breadcrumbItems} />
-        <div className="flex items-center justify-between gap-3 mt-4">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="text-primary opacity-60">{getIcon()}</div>
-            <h2 className="text-lg md:text-xl font-semibold">{item.title}</h2>
+  const DetailContent = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <span className="text-primary">{getIcon()}</span>
           </div>
-          {!isMobile && <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground min-h-[44px]" aria-label="Go back to list">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>}
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold truncate">{item.title}</h2>
+            <p className="text-xs text-muted-foreground">{selectedTag}</p>
+          </div>
         </div>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="text-muted-foreground hover:text-foreground flex-shrink-0"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
-      {/* RESPONSIVE LAYOUT */}
-      <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full overflow-hidden">
-        {/* LEFT COLUMN */}
-        <div className="md:w-1/3 flex flex-col gap-4 min-w-0">
-          {/* Preview Section */}
-          {renderPreview()}
+      {/* Preview */}
+      {renderPreview()}
 
-          {/* Visit Link for URL items */}
-          {item.type === "url" && item.content && <a href={item.content} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-2 min-h-[44px] px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-              <Link2 className="h-4 w-4" />
-              Open Original Link
-            </a>}
+      {/* URL Link */}
+      {item.type === "url" && item.content && (
+        <a
+          href={item.content}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+        >
+          <Link2 className="h-4 w-4" />
+          Open original
+        </a>
+      )}
 
-          {/* Category Tag Section */}
-          <div>
-            <label htmlFor="category-select" className="font-semibold text-sm text-muted-foreground mb-2 block">Category</label>
-            <select id="category-select" value={selectedTag} onChange={e => setSelectedTag(e.target.value)} className="w-full px-3 py-3 md:py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[48px] md:min-h-0" aria-label="Select category for this item">
-              {CATEGORY_OPTIONS.map(({
-              value,
-              label
-            }) => <option key={value} value={value}>
-                  {label}
-                </option>)}
-              {!CATEGORY_OPTIONS.some(option => option.value === selectedTag) && <option value={selectedTag}>{selectedTag}</option>}
-            </select>
-          </div>
+      {/* Summary */}
+      {item.summary && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Summary</h3>
+          <p className="text-sm leading-relaxed">{item.summary}</p>
         </div>
+      )}
 
-        {/* RIGHT COLUMN */}
-        <div className="md:flex-1 flex flex-col gap-6 min-w-0">
-          {/* Summary */}
-          {item.summary && <div>
-              <h3 className="font-semibold text-sm text-muted-foreground mb-2">Summary</h3>
-              <p className="text-base leading-body prose-wide">{item.summary}</p>
-            </div>}
-
-          {/* Rich Notes Section */}
-          
-
-          {/* Action Buttons */}
-          <div className="gap-2 pt-4 border-t border-border items-center justify-center flex flex-row py-px px-0">
-            <LoadingButton onClick={handleSave} loading={saving} size="lg" className="flex-1 min-h-[48px]" aria-label="Save changes (Ctrl+S or Cmd+S)">
-              <Save className="h-4 w-4 mr-2" aria-hidden="true" />
-              Save Changes
-            </LoadingButton>
-            <Button onClick={() => setShowDeleteAlert(true)} disabled={deleting} variant="outline" size="lg" className="border-destructive/20 text-destructive hover:bg-destructive/10 min-h-[48px]" aria-label="Delete item (Ctrl+D or Cmd+D)">
-              <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
-              Delete
-            </Button>
-          </div>
-        </div>
+      {/* Category */}
+      <div className="space-y-2">
+        <label htmlFor="category-select" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Category
+        </label>
+        <select
+          id="category-select"
+          value={selectedTag}
+          onChange={(e) => setSelectedTag(e.target.value)}
+          className="w-full px-3 py-2.5 rounded-lg border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
+          aria-label="Select category"
+        >
+          {CATEGORY_OPTIONS.map(({ value, label }) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+          {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
+            <option value={selectedTag}>{selectedTag}</option>
+          )}
+        </select>
       </div>
-    </>;
+
+      {/* Actions */}
+      <div className="flex gap-2 pt-4 border-t border-border/50">
+        <LoadingButton
+          onClick={handleSave}
+          loading={saving}
+          className="flex-1"
+          aria-label="Save changes"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Save
+        </LoadingButton>
+        <Button
+          onClick={() => setShowDeleteAlert(true)}
+          disabled={deleting}
+          variant="ghost"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          aria-label="Delete item"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
   return <>
       {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
           <DrawerContent className="max-h-[95vh] pb-safe">
