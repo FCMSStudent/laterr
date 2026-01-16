@@ -291,8 +291,7 @@ export default function Auth() {
     }
   };
 
-  // Visual illustration component
-  const AuthIllustration = () => {};
+  // Visual illustration component (returns null - no illustration)
 
   // Success state for signup
   if (signupSuccess) {
@@ -475,8 +474,6 @@ export default function Auth() {
   return <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="glass-card rounded-3xl p-10 shadow-apple">
-          {/* Visual illustration */}
-          <AuthIllustration />
           
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Laterr</h1>

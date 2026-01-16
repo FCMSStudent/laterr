@@ -95,17 +95,17 @@ export const NavigationHeader = ({
   ];
 
   return (
-    <header className="flex items-center gap-1 w-full">
-      {/* Back button */}
+    <header className="flex items-center gap-1 md:gap-2 w-full">
+      {/* Back button - larger touch target on mobile */}
       <Button
         onClick={() => navigate(-1)}
         variant="ghost"
         size="icon"
         disabled={!canGoBack}
-        className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+        className="h-11 w-11 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
         aria-label="Go back"
       >
-        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+        <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" aria-hidden="true" />
       </Button>
 
       {/* Module navigation tabs */}
@@ -138,23 +138,19 @@ export const NavigationHeader = ({
         </nav>
       )}
 
-      {/* Title - mobile only */}
-      {isMobile && (
-        <h1 className="text-lg font-semibold text-foreground ml-1">
-          {title}
-        </h1>
-      )}
+      {/* Spacer to push sign out to right on mobile */}
+      {isMobile && <div className="flex-1" />}
 
-      {/* Sign Out */}
+      {/* Sign Out - larger touch target on mobile */}
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+            className="h-11 w-11 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
             aria-label="Sign out"
           >
-            <LogOut className="w-4 h-4" aria-hidden="true" />
+            <LogOut className="w-5 h-5 md:w-4 md:h-4" aria-hidden="true" />
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
