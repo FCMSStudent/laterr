@@ -272,9 +272,14 @@ export const FilterBar = ({
     );
   }
 
+  // On mobile with hideMobileControls, hide the entire FilterBar
+  if (isMobile && hideMobileControls) {
+    return null;
+  }
+
   return (
     <div className="space-y-2">
-      {/* Collapsed mode: Show only Filters button with badge */}
+      {/* Collapsed mode: Show only Filters button with badge - desktop only */}
       {collapsed && onToggleCollapse ? (
         <div className="flex items-center justify-center">
           <Button 
