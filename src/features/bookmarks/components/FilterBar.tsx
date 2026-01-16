@@ -16,9 +16,13 @@ interface FilterBarProps {
   onSortChange: (sort: SortOption) => void;
   onTypeFilterChange: (type: ItemType | null) => void;
   onClearAll: () => void;
-  // New props for view mode and selection
+  // New props for collapsible mode
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+  // View mode props (hidden from UI but kept for functionality)
   viewMode?: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
+  // Selection mode props (removed from UI, triggered by long-press)
   isSelectionMode?: boolean;
   selectedCount?: number;
   onSelectionModeToggle?: () => void;
@@ -31,6 +35,8 @@ export const FilterBar = ({
   onSortChange,
   onTypeFilterChange,
   onClearAll,
+  collapsed = false,
+  onToggleCollapse,
   viewMode = "grid",
   onViewModeChange,
   isSelectionMode = false,
@@ -38,6 +44,7 @@ export const FilterBar = ({
   onSelectionModeToggle
 }: FilterBarProps) => {
   const hasActiveFilters = selectedTag || selectedTypeFilter;
+  const activeFilterCount = (selectedTag ? 1 : 0) + (selectedTypeFilter ? 1 : 0);
   const isMobile = useIsMobile();
   const getSortLabel = (sort: SortOption) => {
     switch (sort) {
@@ -149,160 +156,178 @@ export const FilterBar = ({
         </Button>}
     </div>;
   return <div className="space-y-2">
-      {/* Mobile: Single Filters button that opens drawer */}
-      {isMobile ? <div className="flex items-center justify-between gap-2">
-          <Drawer>
-            <DrawerTrigger asChild>
-              <Button variant="outline" size="sm" className="min-h-[44px] flex-1 border-0 border-none">
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-                {hasActiveFilters && (() => {
-              const activeFilterCount = (selectedTag ? 1 : 0) + (selectedTypeFilter ? 1 : 0);
-              return <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                      {activeFilterCount}
-                    </Badge>;
-            })()}
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent className="max-h-[85vh]">
-              <DrawerHeader>
-                <DrawerTitle>Filters & Sort</DrawerTitle>
-              </DrawerHeader>
-              <div className="overflow-y-auto">
-                <FilterContent />
+      {/* Collapsed mode: Show only Filters button with badge */}
+      {collapsed && onToggleCollapse ? (
+        <div className="flex items-center justify-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onToggleCollapse}
+            className="h-9"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                {activeFilterCount}
+              </Badge>
+            )}
+          </Button>
+        </div>
+      ) : (
+        <>
+          {/* Mobile: Single Filters button that opens drawer */}
+          {isMobile ? <div className="flex items-center justify-between gap-2">
+              <Drawer>
+                <DrawerTrigger asChild>
+                  <Button variant="outline" size="sm" className="min-h-[44px] flex-1 border-0 border-none">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                    {hasActiveFilters && (
+                      <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="max-h-[85vh]">
+                  <DrawerHeader>
+                    <DrawerTitle>Filters & Sort</DrawerTitle>
+                  </DrawerHeader>
+                  <div className="overflow-y-auto">
+                    <FilterContent />
+                  </div>
+                </DrawerContent>
+              </Drawer>
+
+              {/* Sort dropdown on mobile */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="min-h-[44px]">
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
+                    Newest First
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
+                    Oldest First
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
+                    Title (A-Z)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
+                    Title (Z-A)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSortChange("type")}>
+                    By Type
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div> : (/* Desktop: Expanded filter controls (removed view mode toggle and selection button) */
+        <div className="flex-wrap shadow-none rounded-none opacity-100 text-primary bg-white/[0.01] flex-row flex items-center justify-between gap-[10px] border-2">
+              <div className="flex items-center gap-2">
+                {/* Tags Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant={selectedTag ? "default" : "outline"} size="sm" className="h-8">
+                      {getSelectedTagLabel()}
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onTagSelect(null)}>
+                      All Tags
+                    </DropdownMenuItem>
+                    {CATEGORY_OPTIONS.map(category => <DropdownMenuItem key={category.value} onClick={() => onTagSelect(category.value)}>
+                        {category.label}
+                      </DropdownMenuItem>)}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Type Filter Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant={selectedTypeFilter ? "default" : "outline"} size="sm" className="h-8">
+                      {getTypeLabel(selectedTypeFilter)}
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-40">
+                    <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onTypeFilterChange(null)}>
+                      All Types
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onTypeFilterChange("url")}>
+                      <Link2 className="h-3 w-3 mr-2" />
+                      URL
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onTypeFilterChange("note")}>
+                      <FileText className="h-3 w-3 mr-2" />
+                      Note
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onTypeFilterChange("document")}>
+                      <FileText className="h-3 w-3 mr-2" />
+                      Document
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onTypeFilterChange("image")}>
+                      <ImageIcon className="h-3 w-3 mr-2" />
+                      Image
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Sort Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8">
+                      <ArrowUpDown className="h-3 w-3 mr-1" />
+                      {getSortLabel(selectedSort)}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
+                      Newest First
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
+                      Oldest First
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
+                      Title (A-Z)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
+                      Title (Z-A)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onSortChange("type")}>
+                      By Type
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </DrawerContent>
-          </Drawer>
 
-          {/* Sort dropdown on mobile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="min-h-[44px]">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Sort By</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
-                Newest First
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
-                Oldest First
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
-                Title (A-Z)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
-                Title (Z-A)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange("type")}>
-                By Type
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div> : (/* Desktop: Original single-line filter controls */
-    <div className="flex-wrap shadow-none rounded-none opacity-100 text-primary bg-white/[0.01] flex-row flex items-center justify-between gap-[10px] border-2">
-          <div className="flex items-center gap-2">
-            {/* Tags Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant={selectedTag ? "default" : "outline"} size="sm" className="h-8">
-                  {getSelectedTagLabel()}
-                  <ChevronDown className="h-3 w-3 ml-1" />
+              {/* Collapse button for desktop */}
+              {onToggleCollapse && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onToggleCollapse}
+                  className="h-8"
+                  aria-label="Collapse filters"
+                >
+                  <ChevronDown className="h-4 w-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onTagSelect(null)}>
-                  All Tags
-                </DropdownMenuItem>
-                {CATEGORY_OPTIONS.map(category => <DropdownMenuItem key={category.value} onClick={() => onTagSelect(category.value)}>
-                    {category.label}
-                  </DropdownMenuItem>)}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Type Filter Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant={selectedTypeFilter ? "default" : "outline"} size="sm" className="h-8">
-                  {getTypeLabel(selectedTypeFilter)}
-                  <ChevronDown className="h-3 w-3 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-40">
-                <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onTypeFilterChange(null)}>
-                  All Types
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onTypeFilterChange("url")}>
-                  <Link2 className="h-3 w-3 mr-2" />
-                  URL
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onTypeFilterChange("note")}>
-                  <FileText className="h-3 w-3 mr-2" />
-                  Note
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onTypeFilterChange("document")}>
-                  <FileText className="h-3 w-3 mr-2" />
-                  Document
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onTypeFilterChange("image")}>
-                  <ImageIcon className="h-3 w-3 mr-2" />
-                  Image
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Sort Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8">
-                  <ArrowUpDown className="h-3 w-3 mr-1" />
-                  {getSortLabel(selectedSort)}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Sort By</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
-                  Newest First
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
-                  Oldest First
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
-                  Title (A-Z)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
-                  Title (Z-A)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSortChange("type")}>
-                  By Type
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Selection Mode Toggle */}
-            {onSelectionModeToggle && <Button variant={isSelectionMode ? "default" : "outline"} size="sm" onClick={onSelectionModeToggle} className="h-8">
-                <CheckSquare className="h-3 w-3 mr-1" />
-                {isSelectionMode ? `${selectedCount} Selected` : 'Select'}
-              </Button>}
-          </div>
-
-          {/* View Mode Toggle */}
-          {onViewModeChange && <div className="flex items-center gap-0.5 border rounded-lg p-0.5 bg-muted/30">
-              <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => onViewModeChange('grid')} className="h-7 w-7 p-0" aria-label="Grid view">
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => onViewModeChange('list')} className="h-7 w-7 p-0" aria-label="List view">
-                <LayoutList className="h-3.5 w-3.5" />
-              </Button>
-            </div>}
-        </div>)}
+              )}
+            </div>)}
+        </>
+      )}
 
       {/* Active Filter Pills */}
       {hasActiveFilters && <div className="flex flex-wrap gap-2 items-center justify-center">
