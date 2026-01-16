@@ -134,10 +134,21 @@ export const ItemCard = ({
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     
-    if (isMobile && !isSelectionMode) {
-      longPressTimerRef.current = setTimeout(() => {
-        setShowMobileActions(true);
-      }, 500);
+    if (isMobile) {
+      // Long press for selection mode
+      if (!isSelectionMode && onSelectionChange) {
+        longPressTimerRef.current = setTimeout(() => {
+          // Enter selection mode and select this item
+          onSelectionChange(id, true);
+        }, 500);
+      }
+      
+      // Also show mobile actions if not in selection mode
+      if (!isSelectionMode) {
+        setTimeout(() => {
+          setShowMobileActions(true);
+        }, 500);
+      }
     }
   };
 

@@ -11,6 +11,7 @@ import { Sparkles, Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useProgressiveDisclosure } from "@/shared/hooks/useProgressiveDisclosure";
 import { FilterBar, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
 import { BulkActionsBar } from "@/features/bookmarks/components/BulkActionsBar";
 import { useInfiniteScroll } from "@/features/bookmarks/hooks/useInfiniteScroll";
@@ -67,6 +68,12 @@ const Index = () => {
   // Selection mode state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+  // Filter bar collapsed state
+  const { expanded: filtersExpanded, toggle: toggleFilters } = useProgressiveDisclosure({
+    storageKey: 'bookmarks-filters-expanded',
+    defaultExpanded: false,
+  });
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -258,12 +265,20 @@ const Index = () => {
       const newSet = new Set(prev);
       if (selected) {
         newSet.add(itemId);
+        // Enable selection mode when first item is selected
+        if (!isSelectionMode) {
+          setIsSelectionMode(true);
+        }
       } else {
         newSet.delete(itemId);
+        // Exit selection mode if no items selected
+        if (newSet.size === 0) {
+          setIsSelectionMode(false);
+        }
       }
       return newSet;
     });
-  }, []);
+  }, [isSelectionMode]);
 
   const handleSelectAll = useCallback(() => {
     setSelectedItems(new Set(filteredItems.map(item => item.id)));
@@ -390,6 +405,8 @@ const Index = () => {
           onSortChange={setSortOption} 
           onTypeFilterChange={setTypeFilter} 
           onClearAll={handleClearAllFilters}
+          collapsed={!filtersExpanded}
+          onToggleCollapse={toggleFilters}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           isSelectionMode={isSelectionMode}
@@ -414,6 +431,10 @@ const Index = () => {
               <p className="text-muted-foreground text-base max-w-md mx-auto">
                 Start building your knowledge by adding your first item
               </p>
+              <Button onClick={() => setShowAddModal(true)} size="lg">
+                <Plus className="w-5 h-5 mr-2" />
+                Add your first bookmark
+              </Button>
             </div>
           ) : (
             <section aria-label="Items collection">

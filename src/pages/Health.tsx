@@ -2,16 +2,17 @@ import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MeasurementCard } from "@/features/health/components/MeasurementCard";
+import { MeasurementGroup } from "@/features/health/components/MeasurementGroup";
+import { InlineHealthStats } from "@/features/health/components/InlineHealthStats";
 import { HealthDocumentCard } from "@/features/health/components/HealthDocumentCard";
+import { HealthSpeedDial } from "@/features/health/components/HealthSpeedDial";
+import { FloatingAIChatButton } from "@/features/health/components/FloatingAIChatButton";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
 import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { 
-  Activity, Plus, Heart, FileText, Target, Pill, 
-  Scale, Droplet, TrendingUp, TrendingDown, Minus
-} from "lucide-react";
+import { Activity, Plus, FileText } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -19,13 +20,13 @@ import { HEALTH_TABLES } from "@/features/health/constants";
 import type { HealthMeasurement, HealthDocument, MeasurementType } from "@/features/health/types";
 import type { User } from "@/features/bookmarks/types";
 import { extractNumericValue, calculateTrend } from "@/features/health/utils/health-utils";
+import { format, parseISO, isToday, isYesterday, startOfDay } from "date-fns";
 
 // Lazy load modal components
 const AddMeasurementModal = lazy(() => import("@/features/health/components/AddMeasurementModal").then(({ AddMeasurementModal }) => ({ default: AddMeasurementModal })));
 const MeasurementDetailModal = lazy(() => import("@/features/health/components/MeasurementDetailModal").then(({ MeasurementDetailModal }) => ({ default: MeasurementDetailModal })));
 const AddHealthDocumentModal = lazy(() => import("@/features/health/components/AddHealthDocumentModal").then(({ AddHealthDocumentModal }) => ({ default: AddHealthDocumentModal })));
 const HealthDocumentDetailModal = lazy(() => import("@/features/health/components/HealthDocumentDetailModal").then(({ HealthDocumentDetailModal }) => ({ default: HealthDocumentDetailModal })));
-const HealthChatPanel = lazy(() => import("@/features/health/components/HealthChatPanel").then(({ HealthChatPanel }) => ({ default: HealthChatPanel })));
 
 const Health = () => {
   const [activeTab, setActiveTab] = useState("measurements");
@@ -46,6 +47,23 @@ const Health = () => {
   const { toast } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const isMobile = useIsMobile();
+
+  // Group measurements by date
+  const groupedMeasurements = filteredMeasurements.reduce((groups, measurement) => {
+    const date = startOfDay(parseISO(measurement.measured_at)).toISOString();
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(measurement);
+    return groups;
+  }, {} as Record<string, HealthMeasurement[]>);
+
+  const getDateLabel = (dateStr: string) => {
+    const date = parseISO(dateStr);
+    if (isToday(date)) return 'Today';
+    if (isYesterday(date)) return 'Yesterday';
+    return format(date, 'MMMM d, yyyy');
+  };
 
   // Stats
   const [stats, setStats] = useState({
@@ -197,69 +215,12 @@ const Health = () => {
           />
         </div>
 
-        {/* Stats Bar */}
-        <div className="glass-card rounded-2xl p-4 mb-6">
-          <div className="grid grid-cols-2 md:flex md:flex-wrap gap-3 md:gap-4 md:justify-around">
-            {stats.latestWeight && (
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="p-2 rounded-full bg-primary/10">
-                  <Scale className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Weight</p>
-                  <p className="text-sm md:text-lg font-semibold">{stats.latestWeight} kg</p>
-                </div>
-                {getMeasurementTrend('weight') === 'increasing' && <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-orange-500" />}
-                {getMeasurementTrend('weight') === 'decreasing' && <TrendingDown className="w-3 h-3 md:w-4 md:h-4 text-green-500" />}
-                {getMeasurementTrend('weight') === 'stable' && <Minus className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground" />}
-              </div>
-            )}
-            {stats.latestBP && (
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="p-2 rounded-full bg-red-500/10">
-                  <Heart className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Blood Pressure</p>
-                  <p className="text-sm md:text-lg font-semibold">{stats.latestBP.systolic}/{stats.latestBP.diastolic} mmHg</p>
-                </div>
-              </div>
-            )}
-            {stats.latestGlucose && (
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="p-2 rounded-full bg-blue-500/10">
-                  <Droplet className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Glucose</p>
-                  <p className="text-sm md:text-lg font-semibold">{stats.latestGlucose} mg/dL</p>
-                </div>
-              </div>
-            )}
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="p-2 rounded-full bg-green-500/10">
-                <Target className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Active Goals</p>
-                <p className="text-sm md:text-lg font-semibold">{stats.activeGoals}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="p-2 rounded-full bg-purple-500/10">
-                <Pill className="w-4 h-4 md:w-5 md:h-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Medications</p>
-                <p className="text-sm md:text-lg font-semibold">{stats.upcomingMeds} today</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Inline Stats Summary - Collapsible */}
+        <InlineHealthStats measurements={measurements} />
 
-        {/* Tabs */}
+        {/* Tabs - Only Measurements and Documents */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-muted rounded-xl">
+          <TabsList className="grid w-full grid-cols-2 bg-muted rounded-xl">
             <TabsTrigger value="measurements" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
               <Activity className="h-4 w-4" />
               <span className="hidden sm:inline">Measurements</span>
@@ -268,14 +229,6 @@ const Health = () => {
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">Documents</span>
             </TabsTrigger>
-            <TabsTrigger value="goals" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Target className="h-4 w-4" />
-              <span className="hidden sm:inline">Goals</span>
-            </TabsTrigger>
-            <TabsTrigger value="medications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Pill className="h-4 w-4" />
-              <span className="hidden sm:inline">Medications</span>
-            </TabsTrigger>
           </TabsList>
 
           {/* Search */}
@@ -283,7 +236,7 @@ const Health = () => {
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
           </div>
 
-          {/* Measurements Tab */}
+          {/* Measurements Tab - Date-grouped */}
           <TabsContent value="measurements">
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
@@ -302,19 +255,20 @@ const Health = () => {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-                {filteredMeasurements.map(measurement => (
-                  <MeasurementCard
-                    key={measurement.id}
-                    measurement={measurement}
-                    trend={getMeasurementTrend(measurement.measurement_type as MeasurementType)}
-                    onClick={() => {
-                      setSelectedMeasurement(measurement);
-                      setShowMeasurementDetailModal(true);
-                    }}
-                    onDelete={handleDeleteMeasurement}
-                  />
-                ))}
+              <div className="pb-12">
+                {Object.entries(groupedMeasurements)
+                  .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+                  .map(([date, measurements]) => (
+                    <MeasurementGroup
+                      key={date}
+                      date={getDateLabel(date)}
+                      measurements={measurements}
+                      onMeasurementClick={(measurement) => {
+                        setSelectedMeasurement(measurement);
+                        setShowMeasurementDetailModal(true);
+                      }}
+                    />
+                  ))}
               </div>
             )}
           </TabsContent>
@@ -353,41 +307,19 @@ const Health = () => {
               </div>
             )}
           </TabsContent>
-
-          {/* Goals Tab */}
-          <TabsContent value="goals">
-            <div className="text-center py-32 space-y-5">
-              <Target className="h-16 w-16 mx-auto text-muted-foreground/60" />
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Goals coming soon</h2>
-              <p className="text-muted-foreground text-base max-w-md mx-auto">
-                Set and track your health goals
-              </p>
-            </div>
-          </TabsContent>
-
-          {/* Medications Tab */}
-          <TabsContent value="medications">
-            <div className="text-center py-32 space-y-5">
-              <Pill className="h-16 w-16 mx-auto text-muted-foreground/60" />
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Medications coming soon</h2>
-              <p className="text-muted-foreground text-base max-w-md mx-auto">
-                Track your medications and reminders
-              </p>
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
 
-      {/* FAB for mobile */}
+      {/* Health Speed Dial FAB - Replace single FAB */}
       {isMobile && (
-        <Button
-          onClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
-          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-xl premium-transition hover:scale-110 p-0"
-          aria-label={activeTab === "measurements" ? "Log measurement" : "Add document"}
-        >
-          <Plus className="w-6 h-6" aria-hidden="true" />
-        </Button>
+        <HealthSpeedDial
+          onAddMeasurement={() => setShowAddMeasurementModal(true)}
+          onAddDocument={() => setShowAddDocumentModal(true)}
+        />
       )}
+
+      {/* Floating AI Chat Button */}
+      <FloatingAIChatButton />
 
       <Suspense fallback={null}>
         <AddMeasurementModal
@@ -422,8 +354,6 @@ const Health = () => {
             onDelete={handleDeleteDocument}
           />
         )}
-
-        <HealthChatPanel />
       </Suspense>
     </div>
   );
