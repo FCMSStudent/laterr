@@ -137,9 +137,9 @@ export const NavigationHeader = ({
         </div>
       )}
 
-      {/* Filter and Sort buttons inline on mobile */}
-      {isMobile && filterButton}
-      {isMobile && sortButton}
+      {/* Filter and Sort buttons */}
+      {filterButton}
+      {sortButton}
 
       {/* Module navigation tabs - desktop only */}
       {!hideNavigation && !isMobile && (
