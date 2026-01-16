@@ -390,12 +390,18 @@ const Index = () => {
             title="Bookmarks"
             onAddClick={() => setShowAddModal(true)}
             addLabel="Add"
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search your space..."
           />
         </div>
 
-        <div className="max-w-xl mx-auto mb-4">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
+        {/* Desktop search bar - hidden on mobile since it's in header */}
+        {!isMobile && (
+          <div className="max-w-xl mx-auto mb-4">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          </div>
+        )}
 
         <FilterBar 
           selectedTag={selectedTag} 

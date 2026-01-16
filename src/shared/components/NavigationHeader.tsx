@@ -1,6 +1,6 @@
 import { Button } from "./ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft, Plus } from "lucide-react";
+import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft, Plus, Search } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/shared/hooks/use-toast";
@@ -9,6 +9,7 @@ import { AUTH_ERRORS } from "@/shared/lib/error-messages";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useState, useEffect, ReactNode } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { Input } from "./ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,9 @@ interface NavigationHeaderProps {
   hideNavigation?: boolean;
   onAddClick?: () => void;
   addLabel?: string;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
 }
 
 export const NavigationHeader = ({ 
@@ -34,6 +38,9 @@ export const NavigationHeader = ({
   hideNavigation = false,
   onAddClick,
   addLabel = "Add",
+  searchValue,
+  onSearchChange,
+  searchPlaceholder = "Search...",
 }: NavigationHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -94,8 +101,10 @@ export const NavigationHeader = ({
     { path: '/health', label: 'Health', icon: Activity },
   ];
 
+  const showInlineSearch = isMobile && onSearchChange !== undefined;
+
   return (
-    <header className="flex items-center gap-1 md:gap-2 w-full">
+    <header className="flex items-center gap-2 w-full">
       {/* Back button - larger touch target on mobile */}
       <Button
         onClick={() => navigate(-1)}
@@ -108,7 +117,22 @@ export const NavigationHeader = ({
         <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" aria-hidden="true" />
       </Button>
 
-      {/* Module navigation tabs */}
+      {/* Inline search bar on mobile */}
+      {showInlineSearch && (
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            type="search"
+            value={searchValue || ""}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="h-10 pl-9 pr-3 rounded-full bg-secondary/50 border-0 text-sm"
+            data-search-input
+          />
+        </div>
+      )}
+
+      {/* Module navigation tabs - desktop only */}
       {!hideNavigation && !isMobile && (
         <nav aria-label="Module navigation" className="flex items-center">
           {navItems.map((item) => {
@@ -138,8 +162,8 @@ export const NavigationHeader = ({
         </nav>
       )}
 
-      {/* Spacer to push sign out to right on mobile */}
-      {isMobile && <div className="flex-1" />}
+      {/* Spacer - only when no inline search on mobile */}
+      {!showInlineSearch && <div className="flex-1" />}
 
       {/* Sign Out - larger touch target on mobile */}
       <AlertDialog>
@@ -180,7 +204,7 @@ export const NavigationHeader = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Add button - integrated */}
+      {/* Add button - integrated, desktop only */}
       {onAddClick && !isMobile && (
         <Button 
           onClick={onAddClick}
