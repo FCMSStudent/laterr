@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionCard } from "@/features/subscriptions/components/SubscriptionCard";
+import { SubscriptionListRow } from "@/features/subscriptions/components/SubscriptionListRow";
+import { CollapsibleStatsSummary } from "@/features/subscriptions/components/CollapsibleStatsSummary";
+import { StatusFilterTabs } from "@/features/subscriptions/components/StatusFilterTabs";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
 import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/shared/components/ui/button";
-import { Badge } from "@/shared/components/ui/badge";
-import { CreditCard, Plus, TrendingUp, Calendar, DollarSign } from "lucide-react";
+import { CreditCard, Plus } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -33,7 +35,7 @@ const Subscriptions = () => {
   const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | null>(null);
+  const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | 'all' | 'due_soon'>('all');
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
@@ -153,7 +155,16 @@ const Subscriptions = () => {
       filtered = filtered.filter(sub => sub.category === selectedCategory);
     }
 
-    if (statusFilter) {
+    // Apply status filter
+    if (statusFilter === 'active') {
+      filtered = filtered.filter(sub => sub.status === 'active');
+    } else if (statusFilter === 'due_soon') {
+      filtered = filtered.filter(sub => {
+        if (sub.status !== 'active') return false;
+        const daysUntil = differenceInDays(parseISO(sub.next_billing_date), new Date());
+        return daysUntil >= 0 && daysUntil <= 7;
+      });
+    } else if (statusFilter !== 'all') {
       filtered = filtered.filter(sub => sub.status === statusFilter);
     }
 
@@ -184,81 +195,25 @@ const Subscriptions = () => {
           />
         </div>
 
-        {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="glass-card rounded-xl p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <DollarSign className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">Monthly</p>
-              <p className="text-lg font-bold text-foreground">{formatCurrency(totalMonthly, 'SAR')}</p>
-            </div>
-          </div>
-          <div className="glass-card rounded-xl p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-accent/10">
-              <TrendingUp className="h-5 w-5 text-accent" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">Yearly</p>
-              <p className="text-lg font-bold text-foreground">{formatCurrency(totalYearly, 'SAR')}</p>
-            </div>
-          </div>
-          <div className="glass-card rounded-xl p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-secondary/50">
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">Active</p>
-              <p className="text-lg font-bold text-foreground">{activeSubscriptions.length}</p>
-            </div>
-          </div>
-          <div className="glass-card rounded-xl p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-destructive/10">
-              <Calendar className="h-5 w-5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">Due in 7 days</p>
-              <p className="text-lg font-bold text-foreground">{upcomingRenewals}</p>
-            </div>
-          </div>
-        </div>
+        {/* Stats Summary - Collapsible */}
+        <CollapsibleStatsSummary
+          monthlyTotal={totalMonthly}
+          yearlyTotal={totalYearly}
+          activeCount={activeSubscriptions.length}
+          dueSoonCount={upcomingRenewals}
+          currency="SAR"
+        />
 
         <div className="max-w-2xl mx-auto mb-4">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        {/* Filter chips */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Badge
-            variant={statusFilter === null ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setStatusFilter(null)}
-          >
-            All
-          </Badge>
-          <Badge
-            variant={statusFilter === 'active' ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setStatusFilter('active')}
-          >
-            Active
-          </Badge>
-          <Badge
-            variant={statusFilter === 'paused' ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setStatusFilter('paused')}
-          >
-            Paused
-          </Badge>
-          <Badge
-            variant={statusFilter === 'cancelled' ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setStatusFilter('cancelled')}
-          >
-            Cancelled
-          </Badge>
-        </div>
+        {/* Status Filter Tabs */}
+        <StatusFilterTabs
+          activeFilter={statusFilter}
+          onFilterChange={setStatusFilter}
+          dueSoonCount={upcomingRenewals}
+        />
 
         <main id="main-content">
           <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
@@ -281,15 +236,13 @@ const Subscriptions = () => {
             </div>
           ) : (
             <section aria-label="Subscriptions collection">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+              {/* Use compact list rows by default */}
+              <div className="glass-card rounded-2xl overflow-hidden mb-12">
                 {filteredSubscriptions.map(subscription => (
-                  <SubscriptionCard
+                  <SubscriptionListRow
                     key={subscription.id}
                     subscription={subscription}
-                    onDelete={handleDeleteSubscription}
-                    onEdit={handleEditSubscription}
                     onClick={() => handleSubscriptionClick(subscription)}
-                    onCategoryClick={setSelectedCategory}
                   />
                 ))}
               </div>
