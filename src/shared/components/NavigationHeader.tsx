@@ -1,15 +1,15 @@
 import { Button } from "./ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft, Plus, Search } from "lucide-react";
+import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft, Plus, Search, Filter, ArrowUpDown } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/shared/hooks/use-toast";
 import { AuthError } from "@/shared/types/errors";
 import { AUTH_ERRORS } from "@/shared/lib/error-messages";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useState, useEffect, ReactNode } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { Input } from "./ui/input";
+import { Badge } from "./ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +31,9 @@ interface NavigationHeaderProps {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+  // Filter props for mobile inline display
+  filterButton?: ReactNode;
+  sortButton?: ReactNode;
 }
 
 export const NavigationHeader = ({ 
@@ -41,6 +44,8 @@ export const NavigationHeader = ({
   searchValue,
   onSearchChange,
   searchPlaceholder = "Search...",
+  filterButton,
+  sortButton,
 }: NavigationHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -111,7 +116,7 @@ export const NavigationHeader = ({
         variant="ghost"
         size="icon"
         disabled={!canGoBack}
-        className="h-11 w-11 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
+        className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
         aria-label="Go back"
       >
         <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" aria-hidden="true" />
@@ -131,6 +136,10 @@ export const NavigationHeader = ({
           />
         </div>
       )}
+
+      {/* Filter and Sort buttons inline on mobile */}
+      {isMobile && filterButton}
+      {isMobile && sortButton}
 
       {/* Module navigation tabs - desktop only */}
       {!hideNavigation && !isMobile && (
@@ -171,7 +180,7 @@ export const NavigationHeader = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-11 w-11 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
+            className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
             aria-label="Sign out"
           >
             <LogOut className="w-5 h-5 md:w-4 md:h-4" aria-hidden="true" />

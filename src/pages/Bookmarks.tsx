@@ -12,7 +12,7 @@ import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useProgressiveDisclosure } from "@/shared/hooks/useProgressiveDisclosure";
-import { FilterBar, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
+import { FilterBar, MobileFilterButton, MobileSortButton, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
 import { BulkActionsBar } from "@/features/bookmarks/components/BulkActionsBar";
 import { useInfiniteScroll } from "@/features/bookmarks/hooks/useInfiniteScroll";
 import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
@@ -393,6 +393,23 @@ const Index = () => {
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
             searchPlaceholder="Search your space..."
+            filterButton={
+              <MobileFilterButton
+                selectedTag={selectedTag}
+                selectedTypeFilter={typeFilter}
+                selectedSort={sortOption}
+                onTagSelect={setSelectedTag}
+                onTypeFilterChange={setTypeFilter}
+                onSortChange={setSortOption}
+                onClearAll={handleClearAllFilters}
+              />
+            }
+            sortButton={
+              <MobileSortButton
+                selectedSort={sortOption}
+                onSortChange={setSortOption}
+              />
+            }
           />
         </div>
 
@@ -418,6 +435,7 @@ const Index = () => {
           isSelectionMode={isSelectionMode}
           selectedCount={selectedItems.size}
           onSelectionModeToggle={handleSelectionModeToggle}
+          hideMobileControls={true}
         />
 
         <main id="main-content">
