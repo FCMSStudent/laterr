@@ -31,7 +31,7 @@ export const NavigationHeader = ({
   addLabel = "Add",
   searchValue,
   onSearchChange,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search",
   filterButton,
   sortButton
 }: NavigationHeaderProps) => {
