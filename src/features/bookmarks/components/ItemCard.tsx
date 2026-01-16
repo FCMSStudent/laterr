@@ -1,5 +1,5 @@
 import { Badge } from "@/shared/components/ui/badge";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, Bookmark, BookmarkCheck, Clock } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, Clock } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
 import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -25,8 +25,6 @@ interface ItemCardProps {
   updatedAt?: string;
   onClick: () => void;
   onTagClick: (tag: string) => void;
-  isBookmarked?: boolean;
-  onBookmarkToggle?: (id: string) => void;
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onSelectionChange?: (id: string, selected: boolean) => void;
@@ -46,8 +44,6 @@ export const ItemCard = ({
   updatedAt,
   onClick,
   onTagClick,
-  isBookmarked = false,
-  onBookmarkToggle,
   isSelectionMode = false,
   isSelected = false,
   onSelectionChange,
@@ -249,36 +245,6 @@ export const ItemCard = ({
           </div>
         )}
 
-        {/* Bookmark indicator */}
-        {(isBookmarked || onBookmarkToggle) && (
-          <div className={cn(
-            "absolute z-10",
-            isSelectionMode ? "top-4 right-14" : "top-4 right-14"
-          )}>
-            {onBookmarkToggle ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 rounded-full bg-background/80 hover:bg-background"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBookmarkToggle(id);
-                }}
-                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
-              >
-                {isBookmarked ? (
-                  <BookmarkCheck className="h-4 w-4 text-primary fill-primary" />
-                ) : (
-                  <Bookmark className="h-4 w-4" />
-                )}
-              </Button>
-            ) : isBookmarked ? (
-              <div className="h-8 w-8 flex items-center justify-center">
-                <BookmarkCheck className="h-4 w-4 text-primary fill-primary" />
-              </div>
-            ) : null}
-          </div>
-        )}
 
         {/* Actions menu */}
         <div className={cn(

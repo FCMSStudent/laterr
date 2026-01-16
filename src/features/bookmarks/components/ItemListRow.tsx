@@ -1,5 +1,5 @@
 import { Badge } from "@/shared/components/ui/badge";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Clock, Bookmark, BookmarkCheck } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Clock } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui/dropdown-menu";
@@ -22,8 +22,6 @@ interface ItemListRowProps {
   updatedAt?: string;
   onClick: () => void;
   onTagClick: (tag: string) => void;
-  isBookmarked?: boolean;
-  onBookmarkToggle?: (id: string) => void;
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onSelectionChange?: (id: string, selected: boolean) => void;
@@ -42,8 +40,6 @@ export const ItemListRow = ({
   updatedAt,
   onClick,
   onTagClick,
-  isBookmarked = false,
-  onBookmarkToggle,
   isSelectionMode = false,
   isSelected = false,
   onSelectionChange,
@@ -256,10 +252,6 @@ export const ItemListRow = ({
             <Badge variant="outline" className="text-xs flex-shrink-0 hidden sm:flex">
               {getTypeLabel()}
             </Badge>
-            {/* Bookmark indicator */}
-            {isBookmarked && !onBookmarkToggle && (
-              <BookmarkCheck className="h-3.5 w-3.5 text-primary fill-primary flex-shrink-0" />
-            )}
           </div>
           
           {summary && (
@@ -309,25 +301,6 @@ export const ItemListRow = ({
           </div>
         </div>
 
-        {/* Bookmark toggle button */}
-        {onBookmarkToggle && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 rounded-full flex-shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              onBookmarkToggle(id);
-            }}
-            aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
-          >
-            {isBookmarked ? (
-              <BookmarkCheck className="h-4 w-4 text-primary fill-primary" />
-            ) : (
-              <Bookmark className="h-4 w-4" />
-            )}
-          </Button>
-        )}
 
         {/* Date */}
         <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground/70 flex-shrink-0">

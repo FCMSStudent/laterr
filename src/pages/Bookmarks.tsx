@@ -54,7 +54,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
+  
   
   // Pagination state
   const [page, setPage] = useState(0);
@@ -109,30 +109,6 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSelectionMode]);
 
-  // Load bookmarks from localStorage
-  useEffect(() => {
-    const savedBookmarks = localStorage.getItem('bookmarkedItems');
-    if (savedBookmarks) {
-      try {
-        setBookmarkedItems(new Set(JSON.parse(savedBookmarks)));
-      } catch (e) {
-        console.error('Error loading bookmarks:', e);
-      }
-    }
-  }, []);
-
-  const handleBookmarkToggle = useCallback((itemId: string) => {
-    setBookmarkedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
-      localStorage.setItem('bookmarkedItems', JSON.stringify(Array.from(newSet)));
-      return newSet;
-    });
-  }, []);
 
   const fetchItems = useCallback(async (pageNum: number = 0, append: boolean = false) => {
     try {
@@ -476,8 +452,6 @@ const Index = () => {
                       tags={item.tags} 
                       createdAt={item.created_at} 
                       updatedAt={item.updated_at} 
-                      isBookmarked={bookmarkedItems.has(item.id)} 
-                      onBookmarkToggle={handleBookmarkToggle} 
                       onDelete={handleDeleteItem} 
                       onEdit={handleEditItem} 
                       onClick={() => handleItemClick(item)} 
@@ -489,7 +463,7 @@ const Index = () => {
                   ))}
                 </div>
               ) : (
-                <div className="space-y-2 pb-12">
+              <div className="space-y-2 pb-12">
                   {filteredItems.map(item => (
                     <ItemListRow 
                       key={item.id} 
@@ -502,8 +476,6 @@ const Index = () => {
                       tags={item.tags} 
                       createdAt={item.created_at} 
                       updatedAt={item.updated_at} 
-                      isBookmarked={bookmarkedItems.has(item.id)} 
-                      onBookmarkToggle={handleBookmarkToggle} 
                       onDelete={handleDeleteItem} 
                       onEdit={handleEditItem} 
                       onClick={() => handleItemClick(item)} 
