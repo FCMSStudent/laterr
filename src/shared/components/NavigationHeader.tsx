@@ -10,19 +10,8 @@ import { useState, useEffect, ReactNode } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "./ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { LoadingSpinner } from "./LoadingSpinner";
-
 interface NavigationHeaderProps {
   title: string;
   hideNavigation?: boolean;
@@ -35,9 +24,8 @@ interface NavigationHeaderProps {
   filterButton?: ReactNode;
   sortButton?: ReactNode;
 }
-
-export const NavigationHeader = ({ 
-  title, 
+export const NavigationHeader = ({
+  title,
   hideNavigation = false,
   onAddClick,
   addLabel = "Add",
@@ -45,15 +33,16 @@ export const NavigationHeader = ({
   onSearchChange,
   searchPlaceholder = "Search...",
   filterButton,
-  sortButton,
+  sortButton
 }: NavigationHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [canGoBack, setCanGoBack] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const isMobile = useIsMobile();
-
   useEffect(() => {
     setCanGoBack(window.history.state?.idx !== undefined && window.history.state.idx > 0);
   }, [location]);
@@ -61,115 +50,80 @@ export const NavigationHeader = ({
   // Global "/" shortcut to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement || 
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target as HTMLElement)?.isContentEditable
-      ) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement)?.isContentEditable) {
         return;
       }
-      
       if (e.key === '/') {
         e.preventDefault();
         const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
         searchInput?.focus();
       }
     };
-    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
   const handleSignOut = async () => {
     setSigningOut(true);
-    const { error } = await supabase.auth.signOut();
+    const {
+      error
+    } = await supabase.auth.signOut();
     if (error) {
-      const authError = new AuthError(
-        AUTH_ERRORS.SIGN_OUT_FAILED.message,
-        error instanceof Error ? error : undefined
-      );
+      const authError = new AuthError(AUTH_ERRORS.SIGN_OUT_FAILED.message, error instanceof Error ? error : undefined);
       toast({
         title: AUTH_ERRORS.SIGN_OUT_FAILED.title,
         description: authError.message,
-        variant: "destructive",
+        variant: "destructive"
       });
       setSigningOut(false);
     } else {
       navigate('/');
     }
   };
-
-  const navItems = [
-    { path: '/', label: 'Dashboard', icon: Home },
-    { path: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
-    { path: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
-    { path: '/health', label: 'Health', icon: Activity },
-  ];
-
+  const navItems = [{
+    path: '/',
+    label: 'Dashboard',
+    icon: Home
+  }, {
+    path: '/bookmarks',
+    label: 'Bookmarks',
+    icon: Bookmark
+  }, {
+    path: '/subscriptions',
+    label: 'Subscriptions',
+    icon: CreditCard
+  }, {
+    path: '/health',
+    label: 'Health',
+    icon: Activity
+  }];
   const showInlineSearch = onSearchChange !== undefined;
-
-  return (
-    <header className="flex items-center gap-2 w-full">
+  return <header className="flex items-center gap-2 w-full">
       {/* Back button - larger touch target on mobile */}
-      <Button
-        onClick={() => navigate(-1)}
-        variant="ghost"
-        size="icon"
-        disabled={!canGoBack}
-        className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
-        aria-label="Go back"
-      >
+      <Button onClick={() => navigate(-1)} variant="ghost" size="icon" disabled={!canGoBack} className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform" aria-label="Go back">
         <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" aria-hidden="true" />
       </Button>
 
       {/* Inline search bar on mobile */}
-      {showInlineSearch && (
-        <div className="flex-1 relative">
+      {showInlineSearch && <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <Input
-            type="search"
-            value={searchValue || ""}
-            onChange={(e) => onSearchChange?.(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="h-10 pl-9 pr-3 rounded-full bg-secondary/50 border-0 text-sm"
-            data-search-input
-          />
-        </div>
-      )}
+          <Input type="search" value={searchValue || ""} onChange={e => onSearchChange?.(e.target.value)} placeholder={searchPlaceholder} className="h-10 pl-9 pr-3 rounded-full bg-secondary/50 border-0 text-sm" data-search-input />
+        </div>}
 
       {/* Filter and Sort buttons */}
       {filterButton}
       {sortButton}
 
       {/* Module navigation tabs - desktop only */}
-      {!hideNavigation && !isMobile && (
-        <nav aria-label="Module navigation" className="flex items-center">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path || 
-              (item.path === '/' && location.pathname === '/app') ||
-              (item.path === '/bookmarks' && location.pathname === '/bookmarks');
-            
-            return (
-              <Button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-9 px-3 gap-2 text-sm font-medium rounded-full transition-colors",
-                  isActive 
-                    ? "bg-secondary text-foreground" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-transparent"
-                )}
-              >
+      {!hideNavigation && !isMobile && <nav aria-label="Module navigation" className="flex items-center">
+          {navItems.map(item => {
+        const Icon = item.icon;
+        const isActive = location.pathname === item.path || item.path === '/' && location.pathname === '/app' || item.path === '/bookmarks' && location.pathname === '/bookmarks';
+        return <Button key={item.path} onClick={() => navigate(item.path)} variant="ghost" size="sm" className={cn("h-9 px-3 gap-2 text-sm font-medium rounded-full transition-colors", isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-transparent")}>
                 <Icon className="w-4 h-4" aria-hidden="true" />
                 {item.label}
-              </Button>
-            );
-          })}
-        </nav>
-      )}
+              </Button>;
+      })}
+        </nav>}
 
       {/* Spacer - only when no inline search on mobile */}
       {!showInlineSearch && <div className="flex-1" />}
@@ -177,12 +131,7 @@ export const NavigationHeader = ({
       {/* Sign Out - larger touch target on mobile */}
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
-            aria-label="Sign out"
-          >
+          <Button variant="ghost" size="icon" className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform" aria-label="Sign out">
             <LogOut className="w-5 h-5 md:w-4 md:h-4" aria-hidden="true" />
           </Button>
         </AlertDialogTrigger>
@@ -195,36 +144,20 @@ export const NavigationHeader = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={signingOut}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleSignOut}
-              disabled={signingOut}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {signingOut ? (
-                <>
+            <AlertDialogAction onClick={handleSignOut} disabled={signingOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {signingOut ? <>
                   <LoadingSpinner size="sm" className="mr-2" />
                   Signing out...
-                </>
-              ) : (
-                "Sign Out"
-              )}
+                </> : "Sign Out"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Add button - integrated, desktop only */}
-      {onAddClick && !isMobile && (
-        <Button 
-          onClick={onAddClick}
-          size="sm"
-          className="h-9 gap-2 px-4 rounded-full bg-foreground text-background hover:bg-foreground/90"
-          aria-label={`${addLabel} new item`}
-        >
+      {onAddClick && !isMobile && <Button onClick={onAddClick} size="sm" className="h-9 gap-2 px-4 rounded-full text-background bg-primary" aria-label={`${addLabel} new item`}>
           <Plus className="w-4 h-4" aria-hidden="true" />
           {addLabel}
-        </Button>
-      )}
-    </header>
-  );
+        </Button>}
+    </header>;
 };
