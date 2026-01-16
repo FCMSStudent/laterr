@@ -341,10 +341,6 @@ const Index = () => {
           <NavigationHeader title="Bookmarks" onAddClick={() => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search your space..." filterButton={<MobileFilterButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} sortButton={<MobileSortButton selectedSort={sortOption} onSortChange={setSortOption} />} />
         </div>
 
-        {/* Desktop search bar - hidden on mobile since it's in header */}
-        {!isMobile && <div className="max-w-xl mx-auto mb-4">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-          </div>}
 
         
 
