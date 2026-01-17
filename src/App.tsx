@@ -39,7 +39,7 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Suspense fallback={<LoadingFallback />}>
-            <div className="animate-in fade-in duration-500">
+            <div>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
