@@ -6,7 +6,6 @@ import { SubscriptionListRow } from "@/features/subscriptions/components/Subscri
 import { CollapsibleStatsSummary } from "@/features/subscriptions/components/CollapsibleStatsSummary";
 import { StatusFilterTabs } from "@/features/subscriptions/components/StatusFilterTabs";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
-import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/shared/components/ui/button";
 import { CreditCard, Plus } from "lucide-react";
@@ -192,6 +191,8 @@ const Subscriptions = () => {
             title="Subscriptions"
             onAddClick={() => setShowAddModal(true)}
             addLabel="Add"
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
           />
         </div>
 
@@ -203,10 +204,6 @@ const Subscriptions = () => {
           dueSoonCount={upcomingRenewals}
           currency="SAR"
         />
-
-        <div className="max-w-2xl mx-auto mb-4">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
 
         {/* Status Filter Tabs */}
         <StatusFilterTabs
