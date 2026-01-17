@@ -338,7 +338,7 @@ const Index = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="mb-4">
-          <NavigationHeader title="Bookmarks" onAddClick={() => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search your space..." filterButton={<MobileFilterButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} sortButton={<MobileSortButton selectedSort={sortOption} onSortChange={setSortOption} />} />
+          <NavigationHeader title="Bookmarks" onAddClick={() => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search" filterButton={<MobileFilterButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} sortButton={<MobileSortButton selectedSort={sortOption} onSortChange={setSortOption} />} />
         </div>
 
 
