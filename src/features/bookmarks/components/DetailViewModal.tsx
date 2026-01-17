@@ -450,7 +450,7 @@ export const DetailViewModal = ({
             </div>
           </DrawerContent>
         </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="w-[800px] max-w-[90vw] h-[600px] max-h-[85vh] overflow-hidden border-0 glass-card p-6">
+          <DialogContent className="w-[1000px] max-w-[95vw] h-[400px] max-h-[70vh] overflow-hidden border-0 glass-card p-6">
             <DialogHeader className="sr-only">
               <DialogTitle>{item.title}</DialogTitle>
               <DialogDescription>Detailed item view</DialogDescription>
