@@ -37,11 +37,17 @@ const EditItemModal = lazy(() => import("@/features/bookmarks/components/EditIte
 }) => ({
   default: EditItemModal
 })));
+const NoteEditorModal = lazy(() => import("@/features/bookmarks/components/NoteEditorModal").then(({
+  NoteEditorModal
+}) => ({
+  default: NoteEditorModal
+})));
 const PAGE_SIZE = 20;
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
@@ -318,7 +324,12 @@ const Index = () => {
   }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption]);
   const handleItemClick = (item: Item) => {
     setSelectedItem(item);
-    setShowDetailModal(true);
+    // Open note editor for note-type items, detail modal for others
+    if (item.type === 'note') {
+      setShowNoteEditor(true);
+    } else {
+      setShowDetailModal(true);
+    }
   };
   const handleClearAllFilters = () => {
     setSelectedTag(null);
@@ -399,6 +410,7 @@ const Index = () => {
         {selectedItem && <>
             <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={handleRefresh} />
             <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={handleRefresh} />
+            <NoteEditorModal open={showNoteEditor} onOpenChange={setShowNoteEditor} item={selectedItem} onUpdate={handleRefresh} />
           </>}
       </Suspense>
     </div>;
