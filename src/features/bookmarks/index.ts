@@ -1,4 +1,6 @@
 // Components
+export { BookmarkCard } from './components/BookmarkCard';
+export { DetailPanel } from './components/DetailPanel';
 export { ItemCard } from './components/ItemCard';
 export { ItemListRow } from './components/ItemListRow';
 export { ItemCardSkeleton } from './components/ItemCardSkeleton';
