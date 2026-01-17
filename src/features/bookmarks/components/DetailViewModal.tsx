@@ -223,8 +223,121 @@ export const DetailViewModal = ({
   };
   if (!item) return null;
 
-  // Shared content component
+  // Shared content component - Horizontal layout
   const DetailContent = () => (
+    <div className="flex gap-6 h-full">
+      {/* Left side - Preview */}
+      <div className="w-1/2 flex-shrink-0">
+        <div className="h-full flex flex-col">
+          {renderPreview() || (
+            <div className="flex-1 rounded-xl bg-muted flex items-center justify-center">
+              <div className="text-center p-8">
+                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-primary">{getIcon()}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">No preview available</p>
+              </div>
+            </div>
+          )}
+          
+          {/* URL Link */}
+          {item.type === "url" && item.content && (
+            <a
+              href={item.content}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-4"
+            >
+              <Link2 className="h-4 w-4" />
+              Open original
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Right side - Details */}
+      <div className="w-1/2 flex flex-col">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="text-primary">{getIcon()}</span>
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold truncate">{item.title}</h2>
+              <p className="text-xs text-muted-foreground">{selectedTag}</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="text-muted-foreground hover:text-foreground flex-shrink-0"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Summary */}
+        {item.summary && (
+          <div className="space-y-2 mb-6">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Summary</h3>
+            <p className="text-sm leading-relaxed">{item.summary}</p>
+          </div>
+        )}
+
+        {/* Category */}
+        <div className="space-y-2 mb-6">
+          <label htmlFor="category-select" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Category
+          </label>
+          <select
+            id="category-select"
+            value={selectedTag}
+            onChange={(e) => setSelectedTag(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
+            aria-label="Select category"
+          >
+            {CATEGORY_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+            {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
+              <option value={selectedTag}>{selectedTag}</option>
+            )}
+          </select>
+        </div>
+
+        {/* Spacer to push actions to bottom */}
+        <div className="flex-1" />
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-4 border-t border-border/50">
+          <LoadingButton
+            onClick={handleSave}
+            loading={saving}
+            className="flex-1"
+            aria-label="Save changes"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Save
+          </LoadingButton>
+          <Button
+            onClick={() => setShowDeleteAlert(true)}
+            disabled={deleting}
+            variant="ghost"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            aria-label="Delete item"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Mobile content - vertical layout
+  const MobileDetailContent = () => (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -237,17 +350,6 @@ export const DetailViewModal = ({
             <p className="text-xs text-muted-foreground">{selectedTag}</p>
           </div>
         </div>
-        {!isMobile && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="text-muted-foreground hover:text-foreground flex-shrink-0"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        )}
       </div>
 
       {/* Preview */}
@@ -276,11 +378,11 @@ export const DetailViewModal = ({
 
       {/* Category */}
       <div className="space-y-2">
-        <label htmlFor="category-select" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <label htmlFor="category-select-mobile" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Category
         </label>
         <select
-          id="category-select"
+          id="category-select-mobile"
           value={selectedTag}
           onChange={(e) => setSelectedTag(e.target.value)}
           className="w-full px-3 py-2.5 rounded-lg border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
@@ -326,11 +428,11 @@ export const DetailViewModal = ({
               <DrawerDescription>Detailed item view</DrawerDescription>
             </DrawerHeader>
             <div className="overflow-y-auto px-4 pb-4">
-              <DetailContent />
+              <MobileDetailContent />
             </div>
           </DrawerContent>
         </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto border-0 glass-card">
+          <DialogContent className="w-[800px] max-w-[90vw] h-[500px] max-h-[80vh] overflow-hidden border-0 glass-card p-6">
             <DialogHeader className="sr-only">
               <DialogTitle>{item.title}</DialogTitle>
               <DialogDescription>Detailed item view</DialogDescription>
