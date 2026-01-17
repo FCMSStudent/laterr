@@ -285,14 +285,14 @@ export const DetailViewModal = ({
       </div>
 
       {/* Right side - Details */}
-      <div className="w-1/2 flex flex-col">
+      <div className="w-1/2 flex flex-col pr-6">
         {/* Header */}
         <div className="flex items-start gap-3 mb-6">
           <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <span className="text-primary">{getIcon()}</span>
           </div>
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold truncate">{item.title}</h2>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-semibold line-clamp-2" title={item.title}>{item.title}</h2>
             <p className="text-xs text-muted-foreground">{selectedTag}</p>
           </div>
         </div>
@@ -363,8 +363,8 @@ export const DetailViewModal = ({
           <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <span className="text-primary">{getIcon()}</span>
           </div>
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold truncate">{item.title}</h2>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-semibold line-clamp-2" title={item.title}>{item.title}</h2>
             <p className="text-xs text-muted-foreground">{selectedTag}</p>
           </div>
         </div>
@@ -450,7 +450,7 @@ export const DetailViewModal = ({
             </div>
           </DrawerContent>
         </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="w-[1000px] max-w-[95vw] h-[400px] max-h-[70vh] overflow-hidden border-0 glass-card p-6">
+          <DialogContent className="w-[1100px] max-w-[95vw] h-[450px] max-h-[75vh] overflow-hidden border-0 glass-card p-6">
             <DialogHeader className="sr-only">
               <DialogTitle>{item.title}</DialogTitle>
               <DialogDescription>Detailed item view</DialogDescription>
