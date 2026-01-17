@@ -12,7 +12,7 @@ import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { RichNotesEditor } from "@/features/bookmarks/components/RichNotesEditor";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, ArrowLeft } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -203,21 +203,50 @@ export const DetailViewModal = ({
 
     // For file-type items (PDF, DOCX, etc.)
     if (item.content && item.type !== 'url' && item.type !== 'note') {
-      return <div className="rounded-xl overflow-hidden bg-muted">
-          {loadingSignedUrl ? <div className="p-4 h-64 md:h-80 flex items-center justify-center">
-              <LoadingSpinner size="sm" text="Loading file preview..." />
-            </div> : signedUrl ? <>
-              {item.content?.toLowerCase().endsWith(".pdf") ? <PDFPreview url={signedUrl} className="h-64 md:h-80" /> : item.content?.toLowerCase().endsWith(".docx") ? <DOCXPreview url={signedUrl} className="h-64 md:h-80" /> : <div className="p-4 h-64 md:h-80 flex items-center justify-center">
-                  <div className="text-center">
-                    <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">File preview</p>
+      return (
+        <div className="h-full flex flex-col rounded-xl overflow-hidden bg-muted">
+          <div className="flex-1 min-h-0">
+            {loadingSignedUrl ? (
+              <div className="h-full flex items-center justify-center">
+                <LoadingSpinner size="sm" text="Loading file preview..." />
+              </div>
+            ) : signedUrl ? (
+              <>
+                {item.content?.toLowerCase().endsWith(".pdf") ? (
+                  <PDFPreview url={signedUrl} className="h-full" />
+                ) : item.content?.toLowerCase().endsWith(".docx") ? (
+                  <DOCXPreview url={signedUrl} className="h-full" />
+                ) : (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">File preview</p>
+                    </div>
                   </div>
-                </div>}
-              <a href={signedUrl} target="_blank" rel="noopener noreferrer" className="block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50 min-h-[44px] flex items-center">
-                {item.content?.toLowerCase().endsWith(".pdf") ? "Open full PDF" : item.content?.toLowerCase().endsWith(".docx") ? "Open full document" : "Open file"}
-              </a>
-            </> : <div className="p-4 text-sm text-muted-foreground">File preview unavailable</div>}
-        </div>;
+                )}
+              </>
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                File preview unavailable
+              </div>
+            )}
+          </div>
+          {signedUrl && (
+            <a
+              href={signedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50 min-h-[44px] flex items-center"
+            >
+              {item.content?.toLowerCase().endsWith(".pdf")
+                ? "Open full PDF"
+                : item.content?.toLowerCase().endsWith(".docx")
+                ? "Open full document"
+                : "Open file"}
+            </a>
+          )}
+        </div>
+      );
     }
     return null;
   };
@@ -227,10 +256,10 @@ export const DetailViewModal = ({
   const DetailContent = () => (
     <div className="flex gap-6 h-full">
       {/* Left side - Preview */}
-      <div className="w-1/2 flex-shrink-0">
-        <div className="h-full flex flex-col">
+      <div className="w-1/2 h-full flex flex-col">
+        <div className="flex-1 min-h-0">
           {renderPreview() || (
-            <div className="flex-1 rounded-xl bg-muted flex items-center justify-center">
+            <div className="h-full rounded-xl bg-muted flex items-center justify-center">
               <div className="text-center p-8">
                 <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   <span className="text-primary">{getIcon()}</span>
@@ -239,44 +268,33 @@ export const DetailViewModal = ({
               </div>
             </div>
           )}
-          
-          {/* URL Link */}
-          {item.type === "url" && item.content && (
-            <a
-              href={item.content}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-4"
-            >
-              <Link2 className="h-4 w-4" />
-              Open original
-            </a>
-          )}
         </div>
+        
+        {/* URL Link */}
+        {item.type === "url" && item.content && (
+          <a
+            href={item.content}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-shrink-0 flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-3"
+          >
+            <Link2 className="h-4 w-4" />
+            Open original
+          </a>
+        )}
       </div>
 
       {/* Right side - Details */}
       <div className="w-1/2 flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <span className="text-primary">{getIcon()}</span>
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-lg font-semibold truncate">{item.title}</h2>
-              <p className="text-xs text-muted-foreground">{selectedTag}</p>
-            </div>
+        <div className="flex items-start gap-3 mb-6">
+          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <span className="text-primary">{getIcon()}</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="text-muted-foreground hover:text-foreground flex-shrink-0"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold truncate">{item.title}</h2>
+            <p className="text-xs text-muted-foreground">{selectedTag}</p>
+          </div>
         </div>
 
         {/* Summary */}
@@ -432,7 +450,7 @@ export const DetailViewModal = ({
             </div>
           </DrawerContent>
         </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="w-[800px] max-w-[90vw] h-[500px] max-h-[80vh] overflow-hidden border-0 glass-card p-6">
+          <DialogContent className="w-[800px] max-w-[90vw] h-[600px] max-h-[85vh] overflow-hidden border-0 glass-card p-6">
             <DialogHeader className="sr-only">
               <DialogTitle>{item.title}</DialogTitle>
               <DialogDescription>Detailed item view</DialogDescription>
