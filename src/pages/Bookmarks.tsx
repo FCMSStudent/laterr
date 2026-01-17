@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, lazy, Suspense, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
+import { ItemCard } from "@/features/bookmarks/components/ItemCard";
 import { ItemListRow } from "@/features/bookmarks/components/ItemListRow";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
-import { DetailPanel } from "@/features/bookmarks/components/DetailPanel";
+import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/shared/components/ui/button";
 import { Sparkles, Plus, Loader2 } from "lucide-react";
@@ -26,6 +26,11 @@ const AddItemModal = lazy(() => import("@/features/bookmarks/components/AddItemM
   AddItemModal
 }) => ({
   default: AddItemModal
+})));
+const DetailViewModal = lazy(() => import("@/features/bookmarks/components/DetailViewModal").then(({
+  DetailViewModal
+}) => ({
+  default: DetailViewModal
 })));
 const EditItemModal = lazy(() => import("@/features/bookmarks/components/EditItemModal").then(({
   EditItemModal
@@ -361,16 +366,7 @@ const Index = () => {
               </Button>
             </div> : <section aria-label="Items collection">
               {viewMode === 'grid' ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
-                  {filteredItems.map(item => <BookmarkCard 
-                    key={item.id} 
-                    item={item}
-                    onClick={() => handleItemClick(item)} 
-                    onEdit={() => handleEditItem(item.id)}
-                    onDelete={() => handleDeleteItem(item.id)}
-                    isSelectionMode={isSelectionMode} 
-                    isSelected={selectedItems.has(item.id)} 
-                    onSelectionChange={(selected) => handleSelectionChange(item.id, selected)} 
-                  />)}
+                  {filteredItems.map(item => <ItemCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
                 </div> : <div className="space-y-2 pb-12">
                   {filteredItems.map(item => <ItemListRow key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
                 </div>}
@@ -397,30 +393,13 @@ const Index = () => {
       setSelectedItems(new Set());
     }} />
 
-      {/* Right-side Detail Panel */}
-      <DetailPanel 
-        item={selectedItem} 
-        isOpen={showDetailModal} 
-        onClose={() => setShowDetailModal(false)}
-        onEdit={() => {
-          setShowDetailModal(false);
-          setShowEditModal(true);
-        }}
-        onDelete={() => {
-          if (selectedItem) {
-            handleDeleteItem(selectedItem.id);
-            setShowDetailModal(false);
-            setSelectedItem(null);
-          }
-        }}
-      />
-
       <Suspense fallback={null}>
         <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={handleRefresh} />
 
-        {selectedItem && 
+        {selectedItem && <>
+            <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={handleRefresh} />
             <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={handleRefresh} />
-        }
+          </>}
       </Suspense>
     </div>;
 };
