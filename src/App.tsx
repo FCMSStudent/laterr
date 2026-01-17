@@ -6,8 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
-import GradientBackground from "@/shared/components/GradientBackground";
-import "./styles/gradient.css";
 
 // Lazy load route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -36,7 +34,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <GradientBackground />
+        
         <Toaster />
         <Sonner />
         <BrowserRouter>
