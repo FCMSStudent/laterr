@@ -1,5 +1,6 @@
 // Components
 export { ItemCard } from './components/ItemCard';
+export { BookmarkCard } from './components/BookmarkCard';
 export { ItemListRow } from './components/ItemListRow';
 export { ItemCardSkeleton } from './components/ItemCardSkeleton';
 export { AddItemModal } from './components/AddItemModal';
