@@ -8,7 +8,6 @@ import { HealthDocumentCard } from "@/features/health/components/HealthDocumentC
 import { HealthSpeedDial } from "@/features/health/components/HealthSpeedDial";
 import { FloatingAIChatButton } from "@/features/health/components/FloatingAIChatButton";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
-import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
@@ -212,6 +211,8 @@ const Health = () => {
             title="Health"
             onAddClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
             addLabel={activeTab === "measurements" ? "Log" : "Add"}
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
           />
         </div>
 
@@ -230,11 +231,6 @@ const Health = () => {
               <span className="hidden sm:inline">Documents</span>
             </TabsTrigger>
           </TabsList>
-
-          {/* Search */}
-          <div className="max-w-2xl mx-auto my-4">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-          </div>
 
           {/* Measurements Tab - Date-grouped */}
           <TabsContent value="measurements">
