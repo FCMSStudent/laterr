@@ -6,6 +6,7 @@ export { ItemCardSkeleton } from './components/ItemCardSkeleton';
 export { AddItemModal } from './components/AddItemModal';
 export { EditItemModal } from './components/EditItemModal';
 export { DetailViewModal } from './components/DetailViewModal';
+export { NoteEditorModal } from './components/NoteEditorModal';
 export { FilterBar } from './components/FilterBar';
 export { BulkActionsBar } from './components/BulkActionsBar';
 export { ThumbnailPreview } from './components/ThumbnailPreview';
