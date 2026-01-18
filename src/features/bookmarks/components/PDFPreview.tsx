@@ -3,6 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/shared/components/ui/button';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, RefreshCw } from 'lucide-react';
+import { ViewerShell } from './ViewerShell';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -82,135 +83,133 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
     setScale(1.0);
   };
 
-  return (
-    <div className={`flex flex-col ${className}`}>
-      {/* Controls */}
-      <div className="flex items-center justify-between gap-2 p-2 bg-muted/50 rounded-t-xl border-b border-border/50">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goToPrevPage}
-            disabled={pageNumber <= 1 || loading}
-            className="h-8 w-8 p-0"
-            aria-label="Previous page"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center">
-            {loading ? '...' : `${pageNumber} / ${numPages}`}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goToNextPage}
-            disabled={pageNumber >= numPages || loading}
-            className="h-8 w-8 p-0"
-            aria-label="Next page"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={zoomOut}
-            disabled={scale <= 0.5 || loading}
-            className="h-8 w-8 p-0"
-            aria-label="Zoom out"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fitToWidth}
-            disabled={loading}
-            className="h-8 w-8 p-0"
-            aria-label="Fit to width"
-          >
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={zoomIn}
-            disabled={scale >= 2.0 || loading}
-            className="h-8 w-8 p-0"
-            aria-label="Zoom in"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-        </div>
+  const controls = (
+    <>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={goToPrevPage}
+          disabled={pageNumber <= 1 || loading}
+          className="h-8 w-8 p-0"
+          aria-label="Previous page"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center">
+          {loading ? '...' : `${pageNumber} / ${numPages}`}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={goToNextPage}
+          disabled={pageNumber >= numPages || loading}
+          className="h-8 w-8 p-0"
+          aria-label="Next page"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
 
-      {/* PDF Viewer */}
-      <div className="flex-1 overflow-auto bg-muted/30 rounded-b-xl flex items-center justify-center min-h-[300px]">
-        {loading && (
-          <div className="w-full h-full flex items-center justify-center p-8">
-            <div className="w-full max-w-2xl space-y-4">
-              {/* Skeleton placeholder */}
-              <div className="bg-card rounded-lg shadow-lg p-6 space-y-4 animate-pulse">
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-4 bg-muted rounded w-full"></div>
-                <div className="h-4 bg-muted rounded w-5/6"></div>
-                <div className="h-4 bg-muted rounded w-full"></div>
-                <div className="h-4 bg-muted rounded w-4/5"></div>
-                <div className="h-4 bg-muted rounded w-full"></div>
-                <div className="h-4 bg-muted rounded w-2/3"></div>
-              </div>
-              <div className="text-center space-y-2">
-                <LoadingSpinner size="sm" text={isSlowLoading ? "Still loading PDF... This may take a moment." : "Loading PDF..."} />
-              </div>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={zoomOut}
+          disabled={scale <= 0.5 || loading}
+          className="h-8 w-8 p-0"
+          aria-label="Zoom out"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={fitToWidth}
+          disabled={loading}
+          className="h-8 w-8 p-0"
+          aria-label="Fit to width"
+        >
+          <Maximize2 className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={zoomIn}
+          disabled={scale >= 2.0 || loading}
+          className="h-8 w-8 p-0"
+          aria-label="Zoom in"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+      </div>
+    </>
+  );
+
+  return (
+    <ViewerShell controls={controls} className={className}>
+      {loading && (
+        <div className="w-full h-full flex items-center justify-center p-8">
+          <div className="w-full max-w-2xl space-y-4">
+            {/* Skeleton placeholder */}
+            <div className="bg-card rounded-lg shadow-lg p-6 space-y-4 animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+              <div className="h-4 bg-muted rounded w-full"></div>
+              <div className="h-4 bg-muted rounded w-5/6"></div>
+              <div className="h-4 bg-muted rounded w-full"></div>
+              <div className="h-4 bg-muted rounded w-4/5"></div>
+              <div className="h-4 bg-muted rounded w-full"></div>
+              <div className="h-4 bg-muted rounded w-2/3"></div>
+            </div>
+            <div className="text-center space-y-2">
+              <LoadingSpinner size="sm" text={isSlowLoading ? "Still loading PDF... This may take a moment." : "Loading PDF..."} />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {error && !loading && (
-          <div className="p-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-2">
-              <svg className="h-8 w-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <p className="text-sm text-destructive font-medium">{error}</p>
-            <Button 
-              onClick={handleRetry}
-              variant="outline"
-              size="sm"
-              className="mt-4"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
+      {error && !loading && (
+        <div className="p-8 text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-2">
+            <svg className="h-8 w-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </div>
-        )}
+          <p className="text-sm text-destructive font-medium">{error}</p>
+          <Button 
+            onClick={handleRetry}
+            variant="outline"
+            size="sm"
+            className="mt-4"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      )}
 
-        {!error && (
-          <Document
-            key={retryKey}
-            file={url}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
+      {!error && (
+        <Document
+          key={retryKey}
+          file={url}
+          onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={onDocumentLoadError}
+          loading=""
+          error=""
+          className="flex items-center justify-center"
+        >
+          <Page
+            pageNumber={pageNumber}
+            scale={scale}
+            devicePixelRatio={getDevicePixelRatio()}
             loading=""
             error=""
-            className="flex items-center justify-center"
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              devicePixelRatio={getDevicePixelRatio()}
-              loading=""
-              error=""
-              className="shadow-lg"
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
-            />
-          </Document>
-        )}
-      </div>
-    </div>
+            className="shadow-lg"
+            renderTextLayer={true}
+            renderAnnotationLayer={true}
+          />
+        </Document>
+      )}
+    </ViewerShell>
   );
 };
