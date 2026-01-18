@@ -299,15 +299,15 @@ export const DetailViewModal = ({
 
         {/* Summary */}
         {item.summary && (
-          <div className="space-y-2 mb-6">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Summary</h3>
-            <p className="text-sm leading-relaxed">{item.summary}</p>
+          <div className="space-y-2.5 mb-6 pb-6 border-b border-border/50">
+            <h3 className="text-sm font-semibold text-foreground">Summary</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
           </div>
         )}
 
         {/* Category */}
-        <div className="space-y-2 mb-6">
-          <label htmlFor="category-select" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2.5 mb-6">
+          <label htmlFor="category-select" className="text-sm font-semibold text-foreground block">
             Category
           </label>
           <select
@@ -326,8 +326,8 @@ export const DetailViewModal = ({
           </select>
         </div>
 
-        {/* Spacer to push actions to bottom */}
-        <div className="flex-1" />
+        {/* Reduced spacer */}
+        <div className="flex-1 min-h-4" />
 
         {/* Actions */}
         <div className="flex gap-2 pt-4 border-t border-border/50">
@@ -388,15 +388,15 @@ export const DetailViewModal = ({
 
       {/* Summary */}
       {item.summary && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Summary</h3>
-          <p className="text-sm leading-relaxed">{item.summary}</p>
+        <div className="space-y-2.5 pb-6 border-b border-border/50">
+          <h3 className="text-sm font-semibold text-foreground">Summary</h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
         </div>
       )}
 
       {/* Category */}
-      <div className="space-y-2">
-        <label htmlFor="category-select-mobile" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="space-y-2.5">
+        <label htmlFor="category-select-mobile" className="text-sm font-semibold text-foreground block">
           Category
         </label>
         <select
