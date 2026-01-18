@@ -12,7 +12,7 @@ import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { RichNotesEditor } from "@/features/bookmarks/components/RichNotesEditor";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -205,7 +205,8 @@ export const DetailViewModal = ({
     if (item.content && item.type !== 'url' && item.type !== 'note') {
       return (
         <div className="h-full flex flex-col rounded-xl overflow-hidden bg-muted">
-          <div className="flex-1 min-h-0">
+          {/* Fixed height container for preview - clips content */}
+          <div className="h-[400px] overflow-hidden">
             {loadingSignedUrl ? (
               <div className="h-full flex items-center justify-center">
                 <LoadingSpinner size="sm" text="Loading file preview..." />
@@ -231,18 +232,20 @@ export const DetailViewModal = ({
               </div>
             )}
           </div>
+          {/* "Open full PDF" link - always visible at bottom */}
           {signedUrl && (
             <a
               href={signedUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-shrink-0 block text-xs text-primary hover:underline px-3 py-2 bg-muted/50 border-t border-border/50 min-h-[44px] flex items-center"
+              className="flex-shrink-0 flex items-center gap-2 text-sm font-medium text-primary hover:underline px-3 py-3 bg-muted/50 border-t border-border/50"
             >
+              <ExternalLink className="h-4 w-4" />
               {item.content?.toLowerCase().endsWith(".pdf")
-                ? "Open full PDF"
+                ? "Open full PDF in browser"
                 : item.content?.toLowerCase().endsWith(".docx")
-                ? "Open full document"
-                : "Open file"}
+                ? "Open full document in browser"
+                : "Open file in browser"}
             </a>
           )}
         </div>
