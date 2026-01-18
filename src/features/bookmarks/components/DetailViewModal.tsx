@@ -451,13 +451,13 @@ export const DetailViewModal = ({
           </DrawerContent>
         </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
           <DialogContent 
-            className={`w-[1100px] max-w-[95vw] overflow-hidden border-0 glass-card p-6 ${
+            className={`w-[1100px] max-w-[95vw] overflow-y-auto border-0 glass-card p-6 ${
               // Taller for documents/PDFs, medium for notes, shorter for URLs
               item.content?.toLowerCase().endsWith('.pdf') || item.content?.toLowerCase().endsWith('.docx')
-                ? 'h-[600px]'
+                ? 'h-[600px] max-h-[85vh]'
                 : item.type === 'note'
-                ? 'h-[500px]'
-                : 'h-[380px]'
+                ? 'h-[500px] max-h-[80vh]'
+                : 'h-[380px] max-h-[75vh]'
             }`}
           >
             <DialogHeader className="sr-only">
