@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/shared/components/ui/button';
 import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, RefreshCw } from 'lucide-react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -23,17 +23,43 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
   const [scale, setScale] = useState<number>(1.0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSlowLoading, setIsSlowLoading] = useState<boolean>(false);
+  const [retryKey, setRetryKey] = useState<number>(0);
+
+  // Timeout for slow loading detection (10 seconds)
+  useEffect(() => {
+    if (loading) {
+      setIsSlowLoading(false);
+      const timer = setTimeout(() => {
+        if (loading) {
+          setIsSlowLoading(true);
+        }
+      }, 10000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsSlowLoading(false);
+    }
+  }, [loading, retryKey]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
     setLoading(false);
     setError(null);
+    setIsSlowLoading(false);
   };
 
   const onDocumentLoadError = (error: Error) => {
     console.error('Error loading PDF:', error);
     setError('Failed to load PDF. Please try again.');
     setLoading(false);
+    setIsSlowLoading(false);
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    setIsSlowLoading(false);
+    setRetryKey(prev => prev + 1);
   };
 
   const goToPrevPage = () => {
@@ -123,19 +149,48 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
       {/* PDF Viewer */}
       <div className="flex-1 overflow-auto bg-muted/30 rounded-b-xl flex items-center justify-center min-h-[300px]">
         {loading && (
-          <div className="p-8">
-            <LoadingSpinner size="sm" text="Loading PDF..." />
+          <div className="w-full h-full flex items-center justify-center p-8">
+            <div className="w-full max-w-2xl space-y-4">
+              {/* Skeleton placeholder */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 space-y-4 animate-pulse">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/5"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+              </div>
+              <div className="text-center space-y-2">
+                <LoadingSpinner size="sm" text={isSlowLoading ? "Still loading PDF... This may take a moment." : "Loading PDF..."} />
+              </div>
+            </div>
           </div>
         )}
 
         {error && !loading && (
-          <div className="p-8 text-center">
-            <p className="text-sm text-destructive">{error}</p>
+          <div className="p-8 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-2">
+              <svg className="h-8 w-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p className="text-sm text-destructive font-medium">{error}</p>
+            <Button 
+              onClick={handleRetry}
+              variant="outline"
+              size="sm"
+              className="mt-4"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
           </div>
         )}
 
         {!error && (
           <Document
+            key={retryKey}
             file={url}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
