@@ -17,10 +17,13 @@ interface ViewerShellProps {
  * - Consistent border radius and visual treatment
  */
 export const ViewerShell = ({ controls, children, className = '' }: ViewerShellProps) => {
+  const hasControls = Boolean(controls);
+  const contentRoundedClass = hasControls ? 'rounded-b-xl' : 'rounded-xl';
+  
   return (
     <div className={`flex flex-col ${className}`}>
       {/* Controls bar - only rendered if controls are provided */}
-      {controls && (
+      {hasControls && (
         <div className="flex items-center justify-between gap-2 p-2 bg-muted/50 rounded-t-xl border-b border-border/50">
           {controls}
         </div>
@@ -28,7 +31,7 @@ export const ViewerShell = ({ controls, children, className = '' }: ViewerShellP
       
       {/* Content area */}
       <div 
-        className={`flex-1 overflow-auto bg-muted/30 ${controls ? 'rounded-b-xl' : 'rounded-xl'} flex items-center justify-center`}
+        className={`flex-1 overflow-auto bg-muted/30 ${contentRoundedClass} flex items-center justify-center`}
         style={{ minHeight: VIEWER_MIN_HEIGHT }}
       >
         {children}
