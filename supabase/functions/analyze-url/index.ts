@@ -128,6 +128,58 @@ serve(async (req) => {
       }
     };
 
+    // Firecrawl fallback function
+    const fetchWithFirecrawl = async (targetUrl: string): Promise<{
+      title: string;
+      content: string;
+      description: string;
+      imageUrl: string | null;
+    } | null> => {
+      const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
+      if (!apiKey) {
+        console.log('Firecrawl API key not configured, skipping fallback');
+        return null;
+      }
+      
+      try {
+        console.log('Attempting Firecrawl fallback for:', targetUrl);
+        const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: targetUrl,
+            formats: ['markdown'],
+            onlyMainContent: true,
+          }),
+        });
+        
+        if (!response.ok) {
+          console.error('Firecrawl API returned status:', response.status);
+          return null;
+        }
+        
+        const data = await response.json();
+        console.log('Firecrawl response received successfully');
+        
+        // Access nested data structure
+        const scrapeData = data.data || data;
+        const metadata = scrapeData?.metadata || {};
+        
+        return {
+          title: metadata.title || '',
+          content: (scrapeData?.markdown || '').substring(0, 3000),
+          description: metadata.description || metadata.ogDescription || '',
+          imageUrl: metadata.ogImage || null,
+        };
+      } catch (error) {
+        console.error('Firecrawl fallback failed:', error);
+        return null;
+      }
+    };
+
     console.log('Fetching URL:', url);
 
     // Detect video platform
@@ -165,52 +217,73 @@ serve(async (req) => {
 
     // Fallback to HTML scraping if needed
     let cleanText = '';
+    let firecrawlUsed = false;
+    
     if (shouldFetchHtml) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      
-      const pageResponse = await fetch(url, {
-        signal: controller.signal,
-        redirect: 'follow',
-        headers: { 'User-Agent': 'Laterr-Bot/1.0' }
-      });
-      clearTimeout(timeoutId);
-      const html = await pageResponse.text();
-      
-      // Extract Open Graph image
-      const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']*)["']/i);
-      previewImageUrl = previewImageUrl || (ogImageMatch ? ogImageMatch[1] : null);
-      
-      // Extract page title
-      const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-      pageTitle = pageTitle || (titleMatch ? titleMatch[1] : 'Untitled');
-      
-      // Extract meta description
-      const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
-      metaDescription = descMatch ? descMatch[1] : '';
-      
-      // Use Readability to extract main article content
       try {
-        const parsed: any = parseHTML(html);
-        const doc = parsed.document || parsed;
-        const reader = new Readability(doc, { 
-          keepClasses: false 
-        });
-        const article = reader.parse();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         
-        if (article && article.textContent) {
-          // Use the extracted article text content (already cleaned by Readability)
-          cleanText = article.textContent.trim().replace(/\s+/g, ' ').substring(0, 3000);
-          console.log('Successfully extracted article content using Readability');
-        } else {
-          // Fallback to simple HTML stripping if Readability fails
+        const pageResponse = await fetch(url, {
+          signal: controller.signal,
+          redirect: 'follow',
+          headers: { 'User-Agent': 'Laterr-Bot/1.0' }
+        });
+        clearTimeout(timeoutId);
+        const html = await pageResponse.text();
+        
+        // Extract Open Graph image
+        const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']*)["']/i);
+        previewImageUrl = previewImageUrl || (ogImageMatch ? ogImageMatch[1] : null);
+        
+        // Extract page title
+        const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+        pageTitle = pageTitle || (titleMatch ? titleMatch[1] : 'Untitled');
+        
+        // Extract meta description
+        const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
+        metaDescription = descMatch ? descMatch[1] : '';
+        
+        // Use Readability to extract main article content
+        try {
+          const parsed: any = parseHTML(html);
+          const doc = parsed.document || parsed;
+          const reader = new Readability(doc, { 
+            keepClasses: false 
+          });
+          const article = reader.parse();
+          
+          if (article && article.textContent) {
+            // Use the extracted article text content (already cleaned by Readability)
+            cleanText = article.textContent.trim().replace(/\s+/g, ' ').substring(0, 3000);
+            console.log('Successfully extracted article content using Readability');
+          } else {
+            // Fallback to simple HTML stripping if Readability fails
+            cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
+            console.log('Readability extraction failed, using fallback HTML stripping');
+          }
+        } catch (error) {
+          // Fallback to simple HTML stripping on error
+          console.error('Error using Readability:', error);
           cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
-          console.log('Readability extraction failed, using fallback HTML stripping');
         }
-      } catch (error) {
-        // Fallback to simple HTML stripping on error
-        console.error('Error using Readability:', error);
-        cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
+      } catch (primaryError) {
+        console.log('Primary fetch failed, trying Firecrawl fallback:', primaryError);
+        
+        // Firecrawl fallback
+        const firecrawlData = await fetchWithFirecrawl(url);
+        if (firecrawlData) {
+          pageTitle = firecrawlData.title || pageTitle || 'Untitled';
+          cleanText = firecrawlData.content;
+          metaDescription = firecrawlData.description;
+          previewImageUrl = firecrawlData.imageUrl || previewImageUrl;
+          firecrawlUsed = true;
+          console.log('Successfully retrieved content via Firecrawl fallback');
+        } else {
+          // Both methods failed
+          console.error('Both primary fetch and Firecrawl fallback failed');
+          throw new Error('Failed to fetch URL content');
+        }
       }
     }
     
