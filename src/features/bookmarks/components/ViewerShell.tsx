@@ -1,5 +1,8 @@
 import { ReactNode } from 'react';
 
+// Minimum height for viewer content area to ensure consistent sizing
+const VIEWER_MIN_HEIGHT = '300px';
+
 interface ViewerShellProps {
   controls?: ReactNode;
   children: ReactNode;
@@ -24,7 +27,10 @@ export const ViewerShell = ({ controls, children, className = '' }: ViewerShellP
       )}
       
       {/* Content area */}
-      <div className={`flex-1 overflow-auto bg-muted/30 ${controls ? 'rounded-b-xl' : 'rounded-xl'} flex items-center justify-center min-h-[300px]`}>
+      <div 
+        className={`flex-1 overflow-auto bg-muted/30 ${controls ? 'rounded-b-xl' : 'rounded-xl'} flex items-center justify-center`}
+        style={{ minHeight: VIEWER_MIN_HEIGHT }}
+      >
         {children}
       </div>
     </div>

@@ -76,6 +76,7 @@ export const VideoPreview = ({ url, title, className = '' }: VideoPreviewProps) 
               {/* Smaller play button positioned in bottom-right corner */}
               <div className="absolute bottom-3 right-3 opacity-90 group-hover:opacity-100 transition-opacity">
                 <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  {/* Slight margin-left for visual centering of the play triangle icon */}
                   <Play className="h-6 w-6 text-primary-foreground ml-0.5" fill="currentColor" />
                 </div>
               </div>
