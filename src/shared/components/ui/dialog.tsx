@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/shared/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/shared/components/ui/tooltip";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -54,7 +55,7 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-5 top-5 rounded-lg opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-accent/50 p-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+      <DialogPrimitive.Close className="absolute right-6 top-5 rounded-lg opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-accent/50 p-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -64,7 +65,7 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
+  <div className={cn("flex flex-col space-y-2 text-center sm:text-left sm:pr-12", className)} {...props} />
 );
 DialogHeader.displayName = "DialogHeader";
 
@@ -76,12 +77,23 @@ DialogFooter.displayName = "DialogFooter";
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title
-    ref={ref}
-    className={cn("text-xl font-bold leading-none tracking-tight", className)}
-    {...props}
-  />
+>(({ className, children, ...props }, ref) => (
+  <TooltipProvider delayDuration={300}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <DialogPrimitive.Title
+          ref={ref}
+          className={cn("text-xl font-bold leading-tight tracking-tight line-clamp-2", className)}
+          {...props}
+        >
+          {children}
+        </DialogPrimitive.Title>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" align="start" className="max-w-md">
+        <p className="text-sm">{children}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
