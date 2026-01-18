@@ -254,9 +254,9 @@ export const DetailViewModal = ({
 
   // Shared content component - Horizontal layout
   const DetailContent = () => (
-    <div className="flex gap-6 h-full">
+    <div className="grid md:grid-cols-2 gap-6 h-full">
       {/* Left side - Preview */}
-      <div className="w-1/2 h-full flex flex-col">
+      <div className="h-full flex flex-col">
         <div className="flex-1 min-h-0">
           {renderPreview() || (
             <div className="h-full rounded-xl bg-muted flex items-center justify-center">
@@ -285,7 +285,7 @@ export const DetailViewModal = ({
       </div>
 
       {/* Right side - Details */}
-      <div className="w-1/2 flex flex-col pr-6">
+      <div className="flex flex-col">
         {/* Header */}
         <div className="flex items-start gap-3 mb-6">
           <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
