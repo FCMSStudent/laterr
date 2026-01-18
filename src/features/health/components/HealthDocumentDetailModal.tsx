@@ -180,8 +180,8 @@ export const HealthDocumentDetailModal = ({
 
         <div className="grid md:grid-cols-2 gap-6 mt-4">
           {/* Left: Preview */}
-          <div className="space-y-4">
-            <div className="rounded-xl overflow-hidden bg-muted/50 min-h-[300px]">
+          <div className="flex flex-col">
+            <div className="rounded-xl overflow-hidden bg-muted/50 flex-1">
               {isPdf && (
                 <PDFPreview url={document.file_url} />
               )}
@@ -209,7 +209,7 @@ export const HealthDocumentDetailModal = ({
           </div>
 
           {/* Right: Details */}
-          <div className="space-y-4">
+          <div className="flex flex-col space-y-4">
             {/* Metadata */}
             <div className="space-y-3">
               {document.provider_name && (
