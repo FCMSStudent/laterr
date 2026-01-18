@@ -152,14 +152,14 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
           <div className="w-full h-full flex items-center justify-center p-8">
             <div className="w-full max-w-2xl space-y-4">
               {/* Skeleton placeholder */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 space-y-4 animate-pulse">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/5"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+              <div className="bg-card rounded-lg shadow-lg p-6 space-y-4 animate-pulse">
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-4 bg-muted rounded w-full"></div>
+                <div className="h-4 bg-muted rounded w-5/6"></div>
+                <div className="h-4 bg-muted rounded w-full"></div>
+                <div className="h-4 bg-muted rounded w-4/5"></div>
+                <div className="h-4 bg-muted rounded w-full"></div>
+                <div className="h-4 bg-muted rounded w-2/3"></div>
               </div>
               <div className="text-center space-y-2">
                 <LoadingSpinner size="sm" text={isSlowLoading ? "Still loading PDF... This may take a moment." : "Loading PDF..."} />
