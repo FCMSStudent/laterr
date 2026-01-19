@@ -14,6 +14,16 @@ dist-ssr
 .env
 tmp
 
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+playwright/.auth/
+
+# Screenshots (if you want to exclude them from git)
+# Uncomment the following line if screenshots should not be committed
+# screenshots/*.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
