@@ -205,8 +205,8 @@ export const DetailViewModal = ({
     if (item.content && item.type !== 'url' && item.type !== 'note') {
       return (
         <div className="h-full flex flex-col rounded-xl overflow-hidden bg-muted">
-          {/* Scrollable container for preview */}
-          <div className="flex-1 overflow-y-auto">
+          {/* PDF/File preview with internal scrolling */}
+          <div className="flex-1 min-h-0">
             {loadingSignedUrl ? (
               <div className="h-full flex items-center justify-center">
                 <LoadingSpinner size="sm" text="Loading file preview..." />
@@ -257,102 +257,105 @@ export const DetailViewModal = ({
 
   // Shared content component - Horizontal layout
   const DetailContent = () => (
-    <div className="grid md:grid-cols-2 gap-6 h-full">
-      {/* Left side - Preview */}
-      <div className="h-full flex flex-col">
-        <div className="flex-1 min-h-0">
-          {renderPreview() || (
-            <div className="h-full rounded-xl bg-muted flex items-center justify-center">
-              <div className="text-center p-8">
-                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-primary">{getIcon()}</span>
+    <div className="flex flex-col h-full">
+      {/* Content grid - fills available space */}
+      <div className="grid md:grid-cols-2 gap-6 flex-1 min-h-0">
+        {/* Left side - Preview */}
+        <div className="flex flex-col min-h-0">
+          <div className="flex-1 min-h-0">
+            {renderPreview() || (
+              <div className="h-full rounded-xl bg-muted flex items-center justify-center">
+                <div className="text-center p-8">
+                  <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-primary">{getIcon()}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">No preview available</p>
                 </div>
-                <p className="text-sm text-muted-foreground">No preview available</p>
               </div>
-            </div>
+            )}
+          </div>
+          
+          {/* URL Link */}
+          {item.type === "url" && item.content && (
+            <a
+              href={item.content}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-3"
+            >
+              <Link2 className="h-4 w-4" />
+              Open original
+            </a>
           )}
         </div>
-        
-        {/* URL Link */}
-        {item.type === "url" && item.content && (
-          <a
-            href={item.content}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-3"
-          >
-            <Link2 className="h-4 w-4" />
-            Open original
-          </a>
-        )}
+
+        {/* Right side - Details */}
+        <div className="flex flex-col min-h-0 overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-start gap-3 mb-6">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="text-primary">{getIcon()}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-semibold line-clamp-2" title={item.title}>{item.title}</h2>
+              <p className="text-xs text-muted-foreground">{selectedTag}</p>
+            </div>
+          </div>
+
+          {/* Summary */}
+          {item.summary && (
+            <div className="space-y-2.5 mb-6 pb-6 border-b border-border/50">
+              <h3 className="text-sm font-semibold text-foreground">Summary</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
+            </div>
+          )}
+
+          {/* Category */}
+          <div className="space-y-2.5 mb-6">
+            <label htmlFor="category-select" className="text-sm font-semibold text-foreground block">
+              Category
+            </label>
+            <select
+              id="category-select"
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
+              aria-label="Select category"
+            >
+              {CATEGORY_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+              {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
+                <option value={selectedTag}>{selectedTag}</option>
+              )}
+            </select>
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1 min-h-4" />
+        </div>
       </div>
 
-      {/* Right side - Details */}
-      <div className="flex flex-col">
-        {/* Header */}
-        <div className="flex items-start gap-3 mb-6">
-          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <span className="text-primary">{getIcon()}</span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold line-clamp-2" title={item.title}>{item.title}</h2>
-            <p className="text-xs text-muted-foreground">{selectedTag}</p>
-          </div>
-        </div>
-
-        {/* Summary */}
-        {item.summary && (
-          <div className="space-y-2.5 mb-6 pb-6 border-b border-border/50">
-            <h3 className="text-sm font-semibold text-foreground">Summary</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
-          </div>
-        )}
-
-        {/* Category */}
-        <div className="space-y-2.5 mb-6">
-          <label htmlFor="category-select" className="text-sm font-semibold text-foreground block">
-            Category
-          </label>
-          <select
-            id="category-select"
-            value={selectedTag}
-            onChange={(e) => setSelectedTag(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
-            aria-label="Select category"
-          >
-            {CATEGORY_OPTIONS.map(({ value, label }) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-            {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
-              <option value={selectedTag}>{selectedTag}</option>
-            )}
-          </select>
-        </div>
-
-        {/* Reduced spacer */}
-        <div className="flex-1 min-h-4" />
-
-        {/* Actions */}
-        <div className="flex gap-2 pt-4 border-t border-border/50">
-          <LoadingButton
-            onClick={handleSave}
-            loading={saving}
-            className="flex-1"
-            aria-label="Save changes"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Save
-          </LoadingButton>
-          <Button
-            onClick={() => setShowDeleteAlert(true)}
-            disabled={deleting}
-            variant="ghost"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            aria-label="Delete item"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+      {/* Footer Actions - Fixed at bottom */}
+      <div className="flex gap-2 pt-4 mt-4 border-t border-border/50 flex-shrink-0">
+        <LoadingButton
+          onClick={handleSave}
+          loading={saving}
+          className="flex-1"
+          aria-label="Save changes"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Save
+        </LoadingButton>
+        <Button
+          onClick={() => setShowDeleteAlert(true)}
+          disabled={deleting}
+          variant="ghost"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          aria-label="Delete item"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
@@ -454,7 +457,7 @@ export const DetailViewModal = ({
           </DrawerContent>
         </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
           <DialogContent 
-            className="w-[1100px] max-w-[95vw] h-[600px] overflow-hidden border-0 glass-card p-6"
+            className="w-[1100px] max-w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden border-0 glass-card p-6 flex flex-col"
           >
             <DialogHeader className="sr-only">
               <DialogTitle>{item.title}</DialogTitle>

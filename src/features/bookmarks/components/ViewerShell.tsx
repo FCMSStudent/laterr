@@ -31,7 +31,7 @@ export const ViewerShell = ({ controls, children, className = '' }: ViewerShellP
       
       {/* Content area */}
       <div 
-        className={`flex-1 overflow-y-auto bg-muted/30 ${contentRoundedClass} flex items-start justify-center`}
+        className={`flex-1 min-h-0 overflow-y-auto bg-muted/30 ${contentRoundedClass} flex items-center justify-center`}
         style={{ minHeight: VIEWER_MIN_HEIGHT }}
       >
         {children}
