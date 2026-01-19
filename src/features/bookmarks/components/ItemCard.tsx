@@ -221,7 +221,7 @@ export const ItemCard = ({
 
         {/* Note type: show note preview */}
         {type === 'note' && content ? <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">
-            <div className="w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-amber-50/80 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/30 dark:border-amber-800/20">
+            <div className="w-full h-full rounded-xl overflow-hidden bg-card border border-border/50">
               <NotePreview content={content} maxLines={4} variant="compact" showProgress={true} />
             </div>
           </AspectRatio> : previewImageUrl && !imageError ? <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">

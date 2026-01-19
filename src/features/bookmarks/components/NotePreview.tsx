@@ -21,10 +21,11 @@ export const NotePreview = ({
   if (!content) {
     return (
       <div className={cn(
-        "flex items-center justify-center h-full text-muted-foreground/40",
+        "flex flex-col items-center justify-center h-full gap-2",
         className
       )}>
-        <FileText className="h-8 w-8" />
+        <FileText className="h-8 w-8 text-muted-foreground/40" />
+        <p className="text-sm text-muted-foreground/60">No notes yet</p>
       </div>
     );
   }
@@ -43,7 +44,7 @@ export const NotePreview = ({
   return (
     <div className={cn(
       "flex flex-col h-full",
-      variant === 'compact' ? "p-3" : "p-4",
+      "p-4",
       className
     )}>
       {/* Progress indicator at top */}
@@ -55,7 +56,7 @@ export const NotePreview = ({
 
       {/* Note content */}
       <div className={cn(
-        "space-y-1.5 flex-1 overflow-hidden",
+        "space-y-2 flex-1 overflow-hidden",
         variant === 'compact' && "text-sm"
       )}>
         {visibleBlocks.map((block) => {
@@ -72,11 +73,11 @@ export const NotePreview = ({
                   {block.checked ? (
                     <CheckSquare className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   ) : (
-                    <Square className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <Square className="h-4 w-4 text-primary/40 shrink-0 mt-0.5" />
                   )}
                   <span className={cn(
-                    "leading-snug",
-                    block.checked && "line-through text-muted-foreground"
+                    "leading-snug text-foreground/85",
+                    block.checked && "line-through text-foreground/50"
                   )}>
                     {block.content || <span className="text-muted-foreground/50 italic">Empty task</span>}
                   </span>
@@ -89,7 +90,7 @@ export const NotePreview = ({
                 <HeadingTag 
                   key={block.id}
                   className={cn(
-                    "font-semibold leading-snug",
+                    "font-bold leading-snug text-foreground",
                     block.level === 1 && "text-base",
                     block.level === 2 && "text-sm",
                     block.level === 3 && "text-sm opacity-80"
@@ -102,16 +103,16 @@ export const NotePreview = ({
             case 'bullet':
               return (
                 <div key={block.id} className="flex items-start gap-2">
-                  <span className="text-muted-foreground shrink-0">•</span>
-                  <span className="leading-snug">{block.content}</span>
+                  <span className="text-primary/50 shrink-0">•</span>
+                  <span className="leading-snug text-foreground/85">{block.content}</span>
                 </div>
               );
 
             case 'numbered':
               return (
                 <div key={block.id} className="flex items-start gap-2">
-                  <span className="text-muted-foreground shrink-0">-</span>
-                  <span className="leading-snug">{block.content}</span>
+                  <span className="text-primary/50 shrink-0">-</span>
+                  <span className="leading-snug text-foreground/85">{block.content}</span>
                 </div>
               );
 
@@ -119,7 +120,7 @@ export const NotePreview = ({
             default:
               if (!block.content?.trim()) return null;
               return (
-                <p key={block.id} className="leading-snug text-muted-foreground">
+                <p key={block.id} className="leading-snug text-foreground/85">
                   {block.content}
                 </p>
               );

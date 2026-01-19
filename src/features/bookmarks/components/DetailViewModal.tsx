@@ -180,7 +180,7 @@ export const DetailViewModal = ({
 
     // For note-type items - show the note content as a styled preview
     if (item.type === 'note' && item.content) {
-      return <div className="rounded-xl overflow-hidden bg-gradient-to-br from-amber-50/80 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/30 dark:border-amber-800/20 mb-4">
+      return <div className="rounded-xl overflow-hidden bg-card border border-border/50 mb-4">
           <NotePreview content={item.content} variant="full" showProgress={true} className="min-h-[200px]" />
         </div>;
     }
