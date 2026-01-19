@@ -61,7 +61,7 @@ export const ThumbnailPreview = ({
         <img 
           src={imageUrl} 
           alt={title || 'Preview'}
-          className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           onLoad={() => setImageLoaded(true)}
