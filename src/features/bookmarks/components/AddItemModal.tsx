@@ -39,6 +39,15 @@ export const AddItemModal = ({
   const [statusStep, setStatusStep] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
+
+  const resetFormState = () => {
+    setActiveTab("url");
+    setUrl("");
+    setNote("");
+    setFile(null);
+    setSuggestedCategory("");
+  };
+
   const handleUrlSubmit = async () => {
     // Validate URL
     const urlResult = urlSchema.safeParse(url.trim());
@@ -114,9 +123,7 @@ export const AddItemModal = ({
       });
       if (insertError) throw insertError;
       toast.success("URL added to your space! 🌱");
-      setUrl("");
-      setSuggestedCategory("");
-      setActiveTab("url");
+      resetFormState();
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -209,8 +216,7 @@ export const AddItemModal = ({
       });
       if (error) throw error;
       toast.success("Note planted in your space! 📝");
-      setNote("");
-      setActiveTab("url");
+      resetFormState();
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -367,8 +373,7 @@ export const AddItemModal = ({
       if (insertError) throw insertError;
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : file.type === 'application/pdf' ? 'PDF' : file.type.startsWith('video/') ? 'Video' : 'Document';
       toast.success(`${fileTypeLabel} added to your space! 📁`);
-      setFile(null);
-      setActiveTab("url");
+      resetFormState();
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -403,11 +408,7 @@ export const AddItemModal = ({
   const handleModalClose = (open: boolean) => {
     if (!open && !loading) {
       // Reset form state when closing if not currently loading
-      setActiveTab("url");
-      setUrl("");
-      setNote("");
-      setFile(null);
-      setSuggestedCategory("");
+      resetFormState();
     }
     onOpenChange(open);
   };
