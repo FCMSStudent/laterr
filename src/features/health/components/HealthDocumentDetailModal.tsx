@@ -192,7 +192,7 @@ export const HealthDocumentDetailModal = ({
                 <img 
                   src={document.file_url} 
                   alt={document.title}
-                  className="w-full h-auto object-contain"
+                  className="w-full max-h-[500px] object-contain"
                 />
               )}
               {!isPdf && !isDocx && !isImage && (
