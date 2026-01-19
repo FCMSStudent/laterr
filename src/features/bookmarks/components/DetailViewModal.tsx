@@ -290,7 +290,7 @@ export const DetailViewModal = ({
         </div>
 
         {/* Right side - Details */}
-        <div className="flex flex-col min-h-0 overflow-y-auto">
+        <div className="flex flex-col min-h-0 overflow-y-auto scrollbar-hide">
           {/* Header */}
           <div className="flex items-start gap-3 mb-6">
             <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
