@@ -30,6 +30,7 @@ export const AddItemModal = ({
   onItemAdded
 }: AddItemModalProps) => {
   // Modal for adding URLs, notes, and files to your space
+  const [activeTab, setActiveTab] = useState<"url" | "note" | "image">("url");
   const [url, setUrl] = useState("");
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
   const [note, setNote] = useState("");
@@ -115,6 +116,7 @@ export const AddItemModal = ({
       toast.success("URL added to your space! 🌱");
       setUrl("");
       setSuggestedCategory("");
+      setActiveTab("url");
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -208,6 +210,7 @@ export const AddItemModal = ({
       if (error) throw error;
       toast.success("Note planted in your space! 📝");
       setNote("");
+      setActiveTab("url");
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -365,6 +368,7 @@ export const AddItemModal = ({
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : file.type === 'application/pdf' ? 'PDF' : file.type.startsWith('video/') ? 'Video' : 'Document';
       toast.success(`${fileTypeLabel} added to your space! 📁`);
       setFile(null);
+      setActiveTab("url");
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
@@ -396,6 +400,17 @@ export const AddItemModal = ({
       setStatusStep(null);
     }
   };
+  const handleModalClose = (open: boolean) => {
+    if (!open && !loading) {
+      // Reset form state when closing if not currently loading
+      setActiveTab("url");
+      setUrl("");
+      setNote("");
+      setFile(null);
+      setSuggestedCategory("");
+    }
+    onOpenChange(open);
+  };
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -422,7 +437,7 @@ export const AddItemModal = ({
 
   // Shared content for both Dialog and Drawer
   const ModalContent = () => (
-    <Tabs defaultValue="url" className="w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
         <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition min-h-[44px] md:min-h-0">
           <Link2 className="h-4 w-4" />
@@ -559,7 +574,7 @@ export const AddItemModal = ({
   );
 
   return isMobile ? (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={handleModalClose}>
       <DrawerContent className="max-h-[90vh] pb-safe">
         <DrawerHeader>
           <DrawerTitle className="text-xl font-semibold text-foreground">
@@ -573,7 +588,7 @@ export const AddItemModal = ({
       </DrawerContent>
     </Drawer>
   ) : (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleModalClose}>
       <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground">
