@@ -419,7 +419,7 @@ export const DetailViewModal = ({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-4 border-t border-border/50">
+      <div className="flex gap-2 pt-3 border-t border-border/50">
         <LoadingButton
           onClick={handleSave}
           loading={saving}
