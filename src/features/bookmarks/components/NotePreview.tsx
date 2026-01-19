@@ -21,10 +21,10 @@ export const NotePreview = ({
   if (!content) {
     return (
       <div className={cn(
-        "flex flex-col items-center justify-center h-full text-muted-foreground/40 gap-2",
+        "flex flex-col items-center justify-center h-full gap-2",
         className
       )}>
-        <FileText className="h-8 w-8" />
+        <FileText className="h-8 w-8 text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground/60">No notes yet</p>
       </div>
     );
