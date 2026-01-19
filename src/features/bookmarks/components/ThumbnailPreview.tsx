@@ -40,7 +40,7 @@ export const ThumbnailPreview = ({
   if (imageError || !imageUrl) {
     return (
       <div className={`rounded-xl overflow-hidden bg-muted ${className}`}>
-        <AspectRatio ratio={16 / 9}>
+        <AspectRatio ratio={1}>
           <div className="w-full h-full flex items-center justify-center">
             <ImageIcon className="h-12 w-12 text-muted-foreground/40" />
           </div>
@@ -54,7 +54,7 @@ export const ThumbnailPreview = ({
       className={`relative rounded-xl overflow-hidden bg-muted group cursor-pointer ${className}`}
       onClick={handleClick}
     >
-      <AspectRatio ratio={16 / 9}>
+      <AspectRatio ratio={1}>
         {!imageLoaded && (
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
