@@ -259,7 +259,7 @@ export const DetailViewModal = ({
   const DetailContent = () => (
     <div className="flex flex-col h-full">
       {/* Content grid - fills available space */}
-      <div className="grid md:grid-cols-2 gap-6 flex-1 min-h-0">
+      <div className="grid md:grid-cols-2 gap-4 flex-1 min-h-0">
         {/* Left side - Preview */}
         <div className="flex flex-col min-h-0">
           <div className="flex-1 min-h-0">
@@ -304,14 +304,14 @@ export const DetailViewModal = ({
 
           {/* Summary */}
           {item.summary && (
-            <div className="space-y-2.5 mb-6 pb-6 border-b border-border/50">
+            <div className="space-y-2.5 mb-4 pb-4 border-b border-border/50">
               <h3 className="text-sm font-semibold text-foreground">Summary</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
             </div>
           )}
 
           {/* Category */}
-          <div className="space-y-2.5 mb-6">
+          <div className="space-y-2.5 mb-4">
             <label htmlFor="category-select" className="text-sm font-semibold text-foreground block">
               Category
             </label>
@@ -330,14 +330,11 @@ export const DetailViewModal = ({
               )}
             </select>
           </div>
-
-          {/* Spacer */}
-          <div className="flex-1 min-h-4" />
         </div>
       </div>
 
       {/* Footer Actions - Fixed at bottom */}
-      <div className="flex gap-2 pt-4 mt-4 border-t border-border/50 flex-shrink-0">
+      <div className="flex gap-2 pt-3 mt-3 border-t border-border/50 flex-shrink-0">
         <LoadingButton
           onClick={handleSave}
           loading={saving}
@@ -422,7 +419,7 @@ export const DetailViewModal = ({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-4 border-t border-border/50">
+      <div className="flex gap-2 pt-3 border-t border-border/50">
         <LoadingButton
           onClick={handleSave}
           loading={saving}
