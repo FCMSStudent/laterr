@@ -292,13 +292,13 @@ export const DetailViewModal = ({
         {/* Right side - Details */}
         <div className="flex flex-col min-h-0 overflow-y-auto scrollbar-hide">
           {/* Header */}
-          <div className="flex items-start gap-3 mb-6">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <div className="flex items-start gap-2.5 mb-5">
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <span className="text-primary">{getIcon()}</span>
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-semibold line-clamp-2" title={item.title}>{item.title}</h2>
-              <p className="text-xs text-muted-foreground">{selectedTag}</p>
+              <h2 className="text-base font-semibold leading-snug line-clamp-2" title={item.title}>{item.title}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{selectedTag}</p>
             </div>
           </div>
 
