@@ -196,7 +196,7 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
           onLoadError={onDocumentLoadError}
           loading=""
           error=""
-          className="w-full flex flex-col items-center p-4"
+          className="flex flex-col items-center py-4"
         >
           <Page
             pageNumber={pageNumber}
@@ -204,7 +204,7 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
             devicePixelRatio={getDevicePixelRatio()}
             loading=""
             error=""
-            className="shadow-lg mb-4"
+            className="shadow-lg"
             renderTextLayer={true}
             renderAnnotationLayer={true}
           />
