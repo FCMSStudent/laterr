@@ -431,6 +431,16 @@ All colors MUST be HSL.
     background: hsl(var(--muted-foreground) / 0.5);
   }
 
+  /* Hide scrollbar but keep scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
   /* Selection styling */
   ::selection {
     background: hsl(var(--primary) / 0.2);
