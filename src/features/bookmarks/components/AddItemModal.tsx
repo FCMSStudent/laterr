@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui/drawer";
 import { Button } from "@/shared/components/ui/button";
@@ -40,13 +40,13 @@ export const AddItemModal = ({
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
 
-  const resetFormState = () => {
+  const resetFormState = useCallback(() => {
     setActiveTab("url");
     setUrl("");
     setNote("");
     setFile(null);
     setSuggestedCategory("");
-  };
+  }, []);
 
   const handleUrlSubmit = async () => {
     // Validate URL
@@ -405,13 +405,13 @@ export const AddItemModal = ({
       setStatusStep(null);
     }
   };
-  const handleModalClose = (open: boolean) => {
+  const handleModalClose = useCallback((open: boolean) => {
     if (!open && !loading) {
       // Reset form state when closing if not currently loading
       resetFormState();
     }
     onOpenChange(open);
-  };
+  }, [loading, resetFormState, onOpenChange]);
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
