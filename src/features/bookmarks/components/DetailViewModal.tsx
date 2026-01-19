@@ -205,8 +205,8 @@ export const DetailViewModal = ({
     if (item.content && item.type !== 'url' && item.type !== 'note') {
       return (
         <div className="h-full flex flex-col rounded-xl overflow-hidden bg-muted">
-          {/* Fixed height container for preview - clips content */}
-          <div className="h-[400px] overflow-hidden">
+          {/* Scrollable container for preview */}
+          <div className="flex-1 overflow-y-auto">
             {loadingSignedUrl ? (
               <div className="h-full flex items-center justify-center">
                 <LoadingSpinner size="sm" text="Loading file preview..." />
