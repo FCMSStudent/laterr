@@ -475,7 +475,7 @@ export default function Auth() {
       <div className="w-full max-w-md">
         <div className="glass-card rounded-3xl p-10 shadow-apple">
           
-          <div className="text-center mb-8">
+          <div className="text-left mb-8">
             <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Laterr</h1>
             <p className="text-muted-foreground text-sm">Your personal knowledge space</p>
           </div>
@@ -492,7 +492,7 @@ export default function Auth() {
               password: true
             })} required maxLength={72} className="glass-input h-12 text-base" prefixIcon="password" error={passwordError} success={!passwordError && password.length > 0 && touched.password} showPasswordToggle={true} autoComplete={mode === 'login' ? "current-password" : "new-password"} aria-label="Password" />
               
-              {mode === 'login' && <div className="text-right">
+              {mode === 'login' && <div className="text-left">
                   <button type="button" onClick={() => {
                 setMode('forgot-password');
                 setPassword('');
@@ -516,7 +516,7 @@ export default function Auth() {
             </LoadingButton>
           </form>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 text-left">
             <button onClick={() => {
             setMode(mode === 'login' ? 'signup' : 'login');
             resetForm();
