@@ -60,7 +60,7 @@ export default function Auth() {
       }
     }) => {
       if (session && mode !== 'reset-password') {
-        navigate('/app');
+        navigate('/dashboard');
       }
     });
   }, [navigate, mode]);
@@ -171,9 +171,9 @@ export default function Auth() {
           title: 'Welcome back!',
           description: 'Successfully signed in.'
         });
-        navigate('/app');
+        navigate('/dashboard');
       } else if (mode === 'signup') {
-        const redirectUrl = `${window.location.origin}/app`;
+        const redirectUrl = `${window.location.origin}/dashboard`;
         const {
           error
         } = await supabase.auth.signUp({
@@ -271,7 +271,7 @@ export default function Auth() {
     if (!email) return;
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/app`;
+      const redirectUrl = `${window.location.origin}/dashboard`;
       const {
         error
       } = await supabase.auth.resend({
