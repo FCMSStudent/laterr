@@ -15,7 +15,7 @@ The application requires three critical environment variables. Verify they are a
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
 
-# Required for AI features (set in Supabase Edge Functions)
+# Required for AI features (for local development; in production set in Supabase Edge Functions)
 LOVABLE_API_KEY=your_openai_api_key
 ```
 

@@ -1,7 +1,7 @@
-# Viewer Loading State Improvements
+# Viewer Loading State Implementation
 
 ## Overview
-This document describes the improvements made to PDF and DOCX viewer loading states to provide better user feedback and error handling.
+This document describes the PDF and DOCX viewer loading state implementation, which provides better user feedback and error handling.
 
 ## Problem Statement
 Previously, when loading PDF or DOCX files in the viewer:
