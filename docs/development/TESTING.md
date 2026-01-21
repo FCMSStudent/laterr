@@ -1,6 +1,6 @@
-# Testing Checklist for Embeddings & Thumbnail Features
+# Testing Checklist for Embeddings & AI Features
 
-This document provides a comprehensive testing checklist for the newly implemented features.
+This document provides a comprehensive testing checklist for the embeddings and AI-powered features.
 
 ## Pre-Testing Setup
 
