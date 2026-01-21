@@ -1,222 +1,198 @@
-# Documentation Index
+# Laterr Documentation
 
-Welcome to the Laterr Garden documentation! This directory contains all technical and design documentation for the project.
-
-## 📚 Table of Contents
-
-### Architecture & System Design
-- **[Architecture Overview](ARCHITECTURE.md)** - System architecture, component responsibilities, Supabase vs Lovable AI breakdown
-
-### Design & UI/UX
-- **[Design System](DESIGN_SYSTEM.md)** - Comprehensive design guidelines including colors, typography, spacing, and buttons
-- **[UI/UX Feedback](UI_UX_FEEDBACK.md)** - Detailed UI/UX analysis and improvement recommendations (Grade: B+ 85/100)
-- **[UI/UX Detailed Feedback](UI_UX_DETAILED_FEEDBACK.md)** - **NEW** Per-page and per-component analysis with interaction states, accessibility checks, and priority fixes
-
-### Features & Implementation
-- **[Embeddings Guide](EMBEDDINGS_GUIDE.md)** - Complete guide to multimodal embeddings and semantic search functionality
-- **[Testing Checklist](TESTING_CHECKLIST.md)** - Comprehensive testing guide for embeddings and features
-
-### Performance & Optimization
-- **[Optimization Plan](OPTIMIZATION_PLAN.md)** - Technical optimization strategies and performance improvements
-
-### Troubleshooting & Support
-- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions, especially for "Failed to Add Item" errors
+Welcome to the Laterr Garden documentation! This guide will help you navigate all available documentation organized by role and purpose.
 
 ---
 
-## 🚀 Quick Start Guides
+## 📖 Quick Navigation
 
-### For New Team Members
-Start with:
-1. [Architecture Overview](ARCHITECTURE.md) - Understand the system design
-2. [Main README](../README.md) - Project overview and quick start
+### 🚀 New to Laterr?
+Start here:
+- **[Main README](../README.md)** - Project overview and quick start
+- **[Troubleshooting Guide](getting-started/TROUBLESHOOTING.md)** - Common issues and solutions
 
-### For Designers
-Start with:
-1. [Design System](DESIGN_SYSTEM.md) - Learn the design language
-2. [UI/UX Feedback](UI_UX_FEEDBACK.md) - See improvement opportunities
-3. [UI/UX Detailed Feedback](UI_UX_DETAILED_FEEDBACK.md) - Per-component analysis
+### 👨‍💻 For Developers
+Building features or contributing:
+- **[Architecture Overview](architecture/ARCHITECTURE.md)** - System design and components
+- **[Embeddings Guide](architecture/EMBEDDINGS_GUIDE.md)** - Semantic search implementation
+- **[Testing Guide](development/TESTING.md)** - Comprehensive testing checklist
+- **[Screenshot Testing](development/SCREENSHOT_TESTING.md)** - Playwright screenshot setup
+- **[Development Roadmap](development/ROADMAP.md)** - Optimization and improvement plans
+- **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute
 
-### For Developers
-Start with:
-1. [Architecture Overview](ARCHITECTURE.md) - Understand Supabase vs Lovable AI
-2. [Embeddings Guide](EMBEDDINGS_GUIDE.md) - Understand the semantic search system
-3. [Testing Checklist](TESTING_CHECKLIST.md) - Test your changes
+### 🎨 For Designers
+Designing features or reviewing UI/UX:
+- **[Design System](architecture/DESIGN_SYSTEM.md)** - Colors, typography, spacing, components
+- **[UI/UX Feedback](design/UI_UX_FEEDBACK.md)** - Comprehensive UI analysis and recommendations
+- **[UI/UX Detailed Analysis](design/UI_UX_DETAILED.md)** - Per-page and per-component breakdown
+- **[Viewer Loading UX](design/VIEWER_LOADING.md)** - Loading state improvements
 
-### For Product Managers
-Start with:
-1. [Architecture Overview](ARCHITECTURE.md) - System components and data flow
-2. [UI/UX Feedback](UI_UX_FEEDBACK.md) - Understand the roadmap
-3. [Optimization Plan](OPTIMIZATION_PLAN.md) - Performance strategy
+### 📊 For Product Managers
+Understanding features and planning:
+- **[Architecture Overview](architecture/ARCHITECTURE.md)** - What each service handles
+- **[UI/UX Feedback](design/UI_UX_FEEDBACK.md)** - User experience improvements
+- **[Development Roadmap](development/ROADMAP.md)** - Planned enhancements
 
 ---
 
-## 📖 Documentation Overview
+## 📁 Documentation Structure
 
-### Architecture Overview (400+ lines)
-Complete system architecture documentation:
-- Component responsibilities (Supabase vs Lovable AI)
-- System diagrams
-- Data flow examples
-- Deployment pipeline
-- Technology stack breakdown
+```
+docs/
+├── README.md                              This file
+│
+├── getting-started/                       For new users
+│   └── TROUBLESHOOTING.md                Common issues and solutions
+│
+├── architecture/                          System design
+│   ├── ARCHITECTURE.md                   Component responsibilities
+│   ├── DESIGN_SYSTEM.md                  UI/UX guidelines
+│   └── EMBEDDINGS_GUIDE.md               Semantic search details
+│
+├── development/                           For contributors
+│   ├── TESTING.md                        Testing checklist
+│   ├── SCREENSHOT_TESTING.md             Playwright screenshots
+│   └── ROADMAP.md                        Future improvements
+│
+└── design/                                For designers
+    ├── UI_UX_FEEDBACK.md                 Overall UI analysis
+    ├── UI_UX_DETAILED.md                 Per-page analysis
+    └── VIEWER_LOADING.md                 Loading states
+```
 
-**When to use**: Understanding how the system works, onboarding new team members, or planning infrastructure changes
+---
 
-### Design System (20KB)
-Consolidates all design guidelines in one place:
-- **Color System**: WCAG-compliant color palette with light/dark mode
-- **Typography**: Font scales, line heights, and responsive rules
-- **Spacing**: Consistent spacing scale and layout guidelines
-- **Buttons**: Size guidelines, touch targets, and accessibility
+## 📚 Complete Documentation List
 
-**When to use**: When designing or implementing any UI component
+### Getting Started
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [TROUBLESHOOTING.md](getting-started/TROUBLESHOOTING.md) | Fix common errors | Everyone |
 
-### Embeddings Guide (250+ lines)
-Everything about semantic search and AI features:
-- Architecture overview
-- API reference
-- Usage examples
-- Troubleshooting
-- Performance benchmarks
+### Architecture
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [ARCHITECTURE.md](architecture/ARCHITECTURE.md) | System design, Supabase vs Lovable | Developers, PMs |
+| [DESIGN_SYSTEM.md](architecture/DESIGN_SYSTEM.md) | Colors, typography, components | Designers, Developers |
+| [EMBEDDINGS_GUIDE.md](architecture/EMBEDDINGS_GUIDE.md) | Semantic search, AI features | Developers |
 
-**When to use**: Working with search, recommendations, or embeddings
+### Development
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [TESTING.md](development/TESTING.md) | Testing checklist and procedures | Developers, QA |
+| [SCREENSHOT_TESTING.md](development/SCREENSHOT_TESTING.md) | Playwright screenshot setup | Developers, QA |
+| [ROADMAP.md](development/ROADMAP.md) | Optimization plan and future work | Developers, PMs |
 
-### UI/UX Feedback (Comprehensive)
-Professional UI/UX audit with:
-- 10 analysis categories
-- 100+ actionable items
-- Prioritized roadmap
-- Effort estimates
-
-**When to use**: Planning improvements or understanding user experience issues
-
-### UI/UX Detailed Feedback (NEW - Per-Page Analysis)
-Comprehensive per-page and per-component analysis with:
-- 7 pages analyzed (Landing, Auth, Dashboard, Bookmarks, Subscriptions, Health, 404)
-- 20+ key components reviewed
-- Interaction states documented (default/hover/pressed/disabled/loading/error)
-- Accessibility checks (contrast, tap targets, focus order, labels)
-- Priority matrix (P0/P1/P2) with effort estimates
-
-**When to use**: Working on a specific page or component improvement
-
-### Testing Checklist (400+ lines)
-Complete testing guide including:
-- Pre-testing setup
-- Feature testing
-- Database testing
-- Performance testing
-- Security checks
-
-**When to use**: Before deploying changes or verifying features
-
-### Optimization Plan
-Technical optimization strategies:
-- Code organization
-- Performance improvements
-- Bundle size optimization
-- Best practices
-
-**When to use**: Planning technical improvements
+### Design
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [UI_UX_FEEDBACK.md](design/UI_UX_FEEDBACK.md) | Comprehensive UI/UX analysis (B+ grade) | Designers, PMs |
+| [UI_UX_DETAILED.md](design/UI_UX_DETAILED.md) | Per-page and per-component analysis | Designers |
+| [VIEWER_LOADING.md](design/VIEWER_LOADING.md) | Loading state improvements | Designers, Developers |
 
 ---
 
 ## 🎯 Common Tasks
 
-### "I'm new to the project"
-→ See [Architecture Overview](ARCHITECTURE.md)
+### "I need to set up my development environment"
+1. Read [Main README](../README.md) - Quick Start section
+2. Check [TROUBLESHOOTING.md](getting-started/TROUBLESHOOTING.md) if you hit errors
 
-### "Which services handle what?"
-→ See [Architecture Overview - Summary](ARCHITECTURE.md#summary)
+### "I want to understand the architecture"
+→ Read [ARCHITECTURE.md](architecture/ARCHITECTURE.md)
 
-### "I want to add a new button"
-→ See [Design System - Button Guidelines](DESIGN_SYSTEM.md#button-guidelines)
+### "I'm implementing a new feature"
+1. Review [ARCHITECTURE.md](architecture/ARCHITECTURE.md) for system structure
+2. Check [DESIGN_SYSTEM.md](architecture/DESIGN_SYSTEM.md) for UI guidelines
+3. Follow [TESTING.md](development/TESTING.md) for testing
+4. See [CONTRIBUTING.md](../CONTRIBUTING.md) for PR process
 
-### "I need to choose a color"
-→ See [Design System - Color System](DESIGN_SYSTEM.md#color-system)
+### "I'm designing a new component"
+1. Review [DESIGN_SYSTEM.md](architecture/DESIGN_SYSTEM.md) for standards
+2. Check [UI_UX_FEEDBACK.md](design/UI_UX_FEEDBACK.md) for patterns
+3. Reference [UI_UX_DETAILED.md](design/UI_UX_DETAILED.md) for similar components
 
-### "I'm implementing semantic search"
-→ See [Embeddings Guide](EMBEDDINGS_GUIDE.md)
+### "I need to test my changes"
+→ Use [TESTING.md](development/TESTING.md) checklist
 
-### "I want to improve the UI"
-→ See [UI/UX Feedback](UI_UX_FEEDBACK.md) for general analysis
+### "I'm getting errors when adding items"
+→ Follow [TROUBLESHOOTING.md](getting-started/TROUBLESHOOTING.md) - "Failed to Add Item" section
 
-→ See [UI/UX Detailed Feedback](UI_UX_DETAILED_FEEDBACK.md) for page-by-page and component-by-component breakdown
+### "I want to add semantic search"
+→ Read [EMBEDDINGS_GUIDE.md](architecture/EMBEDDINGS_GUIDE.md)
 
-### "I need to test embeddings"
-→ See [Testing Checklist](TESTING_CHECKLIST.md)
-
-### "I want to optimize performance"
-→ See [Optimization Plan](OPTIMIZATION_PLAN.md)
-
-### "How does deployment work?"
-→ See [Architecture Overview - Deployment Pipeline](ARCHITECTURE.md#deployment-pipeline)
-
-### "I'm getting 'Failed to Add Item' errors"
-→ See [Troubleshooting Guide](TROUBLESHOOTING.md)
+### "I want to take screenshots for testing"
+→ Follow [SCREENSHOT_TESTING.md](development/SCREENSHOT_TESTING.md)
 
 ---
 
-## 📝 Documentation Standards
+## 🔄 Documentation Maintenance
 
-### File Naming
-- Use `UPPERCASE_WITH_UNDERSCORES.md` for major docs
-- Use descriptive names (e.g., `DESIGN_SYSTEM.md` not `DESIGN.md`)
+### When to Update Documentation
+
+**Always update docs when:**
+- Adding a new feature
+- Changing environment variables
+- Modifying database schema
+- Updating dependencies
+- Changing API endpoints
+- Implementing new design patterns
+
+**Which docs to update:**
+- Feature changes → Update relevant guide + ROADMAP.md
+- Design changes → Update DESIGN_SYSTEM.md
+- Architecture changes → Update ARCHITECTURE.md
+- Bug fixes → Update TROUBLESHOOTING.md if common
+
+### Documentation Standards
+
+**File Naming:**
+- Use `UPPERCASE.md` for major docs
+- Use descriptive names (TESTING.md not TEST.md)
 - Keep names concise but clear
 
-### Content Structure
-- Start with a table of contents for long documents
+**Content Structure:**
+- Start with table of contents for 150+ line docs
 - Use clear headings and sections
 - Include code examples where applicable
-- Add usage guidelines and best practices
-- Include testing/validation steps
+- Add "Last Updated" date for time-sensitive content
 
-### Maintenance
-- Update docs when implementing related features
-- Keep examples current with the codebase
-- Remove outdated information
-- Link to related documentation
+**Writing Style:**
+- Write for the target audience (developers vs designers vs users)
+- Use bullet points for scannability
+- Include diagrams for complex concepts
+- Add working examples
 
 ---
 
 ## 🔗 External Resources
 
-- [Lovable Project](https://lovable.dev/projects/28683ca3-713b-4aac-a657-44ab3b98e337)
+- [Lovable Project Dashboard](https://lovable.dev/projects/28683ca3-713b-4aac-a657-44ab3b98e337)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [shadcn/ui Components](https://ui.shadcn.com/)
+- [Supabase Documentation](https://supabase.com/docs)
+- [React Documentation](https://react.dev/)
 - [WCAG Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
 
 ---
 
-## 💡 Contributing to Documentation
+## 📝 Contributing to Documentation
 
-When adding new documentation:
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for general contribution guidelines.
 
-1. **Place it in the right category**
-   - Design/UI → Design System or new design doc
-   - Features → New feature guide or update existing
-   - Testing → Testing Checklist
-   - Performance → Optimization Plan
-
-2. **Update this README**
-   - Add to table of contents
-   - Add to relevant quick start section
-   - Add to common tasks if applicable
-
-3. **Follow the standards**
-   - Use consistent formatting
-   - Include examples
-   - Add clear headings
-   - Keep it maintainable
-
-4. **Link related docs**
-   - Cross-reference related documentation
-   - Update related docs when changes affect them
-   - Keep the doc graph connected
+**Documentation-specific tips:**
+1. Place docs in the right category folder
+2. Update this README's navigation
+3. Update related docs when making changes
+4. Test all links and code examples
+5. Keep documentation DRY - link instead of duplicating
 
 ---
 
-**Last Updated**: 2026-01-14
-**Total Documentation**: 8 files
-**Combined Size**: ~100KB of essential developer knowledge
+**Last Updated:** January 21, 2026  
+**Documentation Files:** 11  
+**Organization:** Role-based folders (getting-started, architecture, development, design)
+
+---
+
+**Questions or feedback?** Open an issue on GitHub.

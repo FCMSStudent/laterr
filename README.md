@@ -64,16 +64,14 @@ See [Architecture Documentation](docs/ARCHITECTURE.md) for detailed component br
 
 ## 📚 Documentation
 
-All documentation has been organized in the [`/docs`](docs/) folder:
+All documentation has been organized in the [`/docs`](docs/) folder by category:
 
-- **[Documentation Index](docs/README.md)** - Start here for navigation
-- **[Architecture Overview](docs/ARCHITECTURE.md)** - System design and component responsibilities
-- **[Design System](docs/DESIGN_SYSTEM.md)** - Colors, typography, spacing, buttons
-- **[Embeddings Guide](docs/EMBEDDINGS_GUIDE.md)** - Semantic search implementation
-- **[UI/UX Feedback](docs/UI_UX_FEEDBACK.md)** - Comprehensive UI analysis
-- **[Testing Checklist](docs/TESTING_CHECKLIST.md)** - Testing guidelines
-- **[Optimization Plan](docs/OPTIMIZATION_PLAN.md)** - Performance improvements
-- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Documentation Index](docs/README.md)** - Complete navigation guide
+
+### Quick Links by Role
+- **New Users:** [Troubleshooting Guide](docs/getting-started/TROUBLESHOOTING.md)
+- **Developers:** [Architecture](docs/architecture/ARCHITECTURE.md) • [Testing](docs/development/TESTING.md) • [Roadmap](docs/development/ROADMAP.md)
+- **Designers:** [Design System](docs/architecture/DESIGN_SYSTEM.md) • [UI/UX Feedback](docs/design/UI_UX_FEEDBACK.md)
 
 ## 🎨 Design System
 
@@ -130,6 +128,6 @@ Private project - All rights reserved
 ## 🔗 Links
 
 - **Project**: https://lovable.dev/projects/28683ca3-713b-4aac-a657-44ab3b98e337
-- **Documentation**: [/docs](docs/)
-- **Design System**: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
+- **Documentation**: [/docs](docs/) - Complete documentation index
+- **Design System**: [Design System Guide](docs/architecture/DESIGN_SYSTEM.md)
 
