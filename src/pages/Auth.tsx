@@ -7,7 +7,8 @@ import { useToast } from '@/shared/hooks/use-toast';
 import { z } from 'zod';
 import { AuthError, toTypedError } from '@/shared/types/errors';
 import { AUTH_ERRORS, getAuthErrorMessage } from '@/shared/lib/error-messages';
-import { Bookmark, Sparkles, Check, Mail, ArrowLeft, KeyRound } from 'lucide-react';
+import { Sparkles, Check, Mail, ArrowLeft, KeyRound } from 'lucide-react';
+import logo from '@/assets/logo.svg';
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(72);
 type AuthMode = 'login' | 'signup' | 'forgot-password' | 'reset-password';
@@ -483,7 +484,7 @@ export default function Auth() {
         <div className="glass-card rounded-3xl p-10 shadow-apple">
           
           <div className="text-left mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Laterr</h1>
+            <img src={logo} alt="Laterr" className="h-12 mb-3" />
             <p className="text-muted-foreground text-sm">Your personal knowledge space</p>
           </div>
 
