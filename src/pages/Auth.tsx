@@ -38,7 +38,6 @@ export default function Auth() {
   const {
     toast
   } = useToast();
-
   useEffect(() => {
     document.body.classList.add('auth-page');
     return () => {
@@ -484,7 +483,7 @@ export default function Auth() {
         <div className="glass-card rounded-3xl p-10 shadow-apple">
           
           <div className="text-left mb-8">
-            <img src={logo} alt="Laterr" className="h-12 mb-3" />
+            <img alt="Laterr" className="h-12 mb-3" src="/lovable-uploads/9382ae30-888c-4d72-b3bc-422289913c8d.png" />
             <p className="text-muted-foreground text-sm">Your personal knowledge space</p>
           </div>
 
