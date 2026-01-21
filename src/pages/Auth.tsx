@@ -38,6 +38,13 @@ export default function Auth() {
     toast
   } = useToast();
 
+  useEffect(() => {
+    document.body.classList.add('auth-page');
+    return () => {
+      document.body.classList.remove('auth-page');
+    };
+  }, []);
+
   // Check for password reset token in URL
   useEffect(() => {
     const accessToken = searchParams.get('access_token');

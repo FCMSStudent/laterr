@@ -186,6 +186,12 @@ All colors MUST be HSL.
     letter-spacing: -0.011em;
   }
 
+  @media (max-width: 767px) {
+    body.auth-page {
+      overflow: hidden;
+    }
+  }
+
   /* Glassmorphism with browser fallbacks and performance optimization */
   .glass-card {
     /* Fallback for older browsers that don't support backdrop-filter */
