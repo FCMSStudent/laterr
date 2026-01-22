@@ -291,7 +291,7 @@ export const BookmarkCard = ({
               {!imageLoaded && <div className="absolute inset-0 z-10">
                   <Skeleton className="w-full h-full rounded-[20px]" />
                 </div>}
-              <img src={previewImageUrl} alt="" className={cn("w-full h-full transition-transform duration-300 group-hover:scale-105 object-contain", !imageLoaded && "opacity-0")} loading="lazy" onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
+              <img src={previewImageUrl} alt="" className={cn("w-full h-full transition-transform duration-300 group-hover:scale-105 object-cover", !imageLoaded && "opacity-0")} loading="lazy" onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
             </> :
         // Fallback: gradient background with icon
         <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
