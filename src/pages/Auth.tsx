@@ -9,6 +9,7 @@ import { AuthError, toTypedError } from '@/shared/types/errors';
 import { AUTH_ERRORS, getAuthErrorMessage } from '@/shared/lib/error-messages';
 import { Sparkles, Check, Mail, ArrowLeft, KeyRound } from 'lucide-react';
 import logo from '@/assets/logo.svg';
+import { ThemeToggle } from '@/shared/components/ThemeToggle';
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(72);
 type AuthMode = 'login' | 'signup' | 'forgot-password' | 'reset-password';
@@ -478,7 +479,11 @@ export default function Auth() {
   }
 
   // Main login/signup form
-  return <div className="min-h-screen flex items-center justify-center p-4">
+  return <div className="min-h-screen flex items-center justify-center p-4 relative">
+      {/* Theme toggle in corner */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md">
         <div className="glass-card rounded-3xl p-10 shadow-apple">
           

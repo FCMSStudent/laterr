@@ -12,6 +12,7 @@ import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
 interface NavigationHeaderProps {
   title: string;
   hideNavigation?: boolean;
@@ -127,6 +128,9 @@ export const NavigationHeader = ({
 
       {/* Spacer - only when no inline search on mobile */}
       {!showInlineSearch && <div className="flex-1" />}
+
+      {/* Theme Toggle */}
+      <ThemeToggle />
 
       {/* Sign Out - larger touch target on mobile */}
       <AlertDialog>
