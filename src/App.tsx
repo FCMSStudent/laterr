@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
+import { ThemeProvider } from "@/shared/components/ThemeProvider";
 
 // Lazy load route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -56,15 +57,17 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
