@@ -15,6 +15,7 @@ const Bookmarks = lazy(() => import("./pages/Bookmarks"));
 const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Health = lazy(() => import("./pages/Health"));
+const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const AppContent = () => {
           <Route path="/bookmarks" element={<Bookmarks />} />
           <Route path="/subscriptions" element={<Subscriptions />} />
           <Route path="/health" element={<Health />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/landing" element={<Landing />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
