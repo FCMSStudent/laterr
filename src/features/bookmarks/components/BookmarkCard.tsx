@@ -181,155 +181,155 @@ export const BookmarkCard = ({
   // Note type: white card with text overlay
   if (isNoteType) {
     return <div className="relative overflow-hidden rounded-[20px]">
-        {/* Swipe delete action background */}
-        {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-[20px] transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
-        width: `${Math.max(swipeOffset, 0)}px`
-      }}>
-            <Trash2 className="h-5 w-5 text-destructive-foreground" />
-          </div>}
-
-        <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
-        transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
-      }} className={cn("bg-card border border-border/30 rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-all duration-200 ease-out", "hover:shadow-xl hover:-translate-y-1", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
-          {/* Selection checkbox */}
-          {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
-              <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-background/90" />
-            </div>}
-
-          {/* Actions menu */}
-          <div className={cn("absolute top-4 right-4 z-20 transition-opacity duration-200", isSelectionMode && "hidden", isMobile ? showMobileActions ? "opacity-100" : "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100")}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-muted/80 hover:bg-muted shadow-sm" aria-label="Card actions">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>}
-                {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <AspectRatio ratio={3 / 4}>
-            <div className="w-full h-full p-5 flex flex-col justify-between">
-              {/* Note content preview */}
-              <div className="flex-1 overflow-hidden">
-                <p className="text-foreground/80 text-sm leading-relaxed line-clamp-6">
-                  {summary || title}
-                </p>
-              </div>
-              
-              {/* Bottom section */}
-              <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/30">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-foreground text-base line-clamp-2 mb-1">
-                    {title}
-                  </h3>
-                  <span className="text-muted-foreground text-xs">{dateText}</span>
-                </div>
-                <button className="text-muted-foreground hover:text-foreground transition-colors ml-3 flex-shrink-0" onClick={e => {
-                e.stopPropagation();
-                onClick();
-              }}>
-                  <ArrowUpRight className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </AspectRatio>
-        </div>
-      </div>;
-  }
-
-  // Image/URL variant - full-bleed image with text overlay
-  return <div className="relative overflow-hidden rounded-[20px]">
       {/* Swipe delete action background */}
       {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-[20px] transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
-      width: `${Math.max(swipeOffset, 0)}px`
-    }}>
-          <Trash2 className="h-5 w-5 text-destructive-foreground" />
-        </div>}
+        width: `${Math.max(swipeOffset, 0)}px`
+      }}>
+        <Trash2 className="h-5 w-5 text-destructive-foreground" />
+      </div>}
 
       <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
-      transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
-    }} className={cn("rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-all duration-200 ease-out", "hover:shadow-xl hover:-translate-y-1", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+        transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
+      }} className={cn("bg-card border border-border/30 rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-all duration-200 ease-out", "hover:shadow-xl hover:-translate-y-1", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
         {/* Selection checkbox */}
         {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
-            <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-white/80 backdrop-blur-sm border-white/50" />
-          </div>}
+          <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-background/90" />
+        </div>}
 
         {/* Actions menu */}
         <div className={cn("absolute top-4 right-4 z-20 transition-opacity duration-200", isSelectionMode && "hidden", isMobile ? showMobileActions ? "opacity-100" : "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100")}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-black/30 backdrop-blur-md hover:bg-black/50 text-white shadow-sm" aria-label="Card actions">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-muted/80 hover:bg-muted shadow-sm" aria-label="Card actions">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>}
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>}
               {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>}
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
         <AspectRatio ratio={3 / 4}>
-          {/* Full-bleed image */}
-          {previewImageUrl && !imageError ? <>
-              {!imageLoaded && <div className="absolute inset-0 z-10">
-                  <Skeleton className="w-full h-full rounded-[20px]" />
-                </div>}
-              <img src={previewImageUrl} alt="" className={cn("w-full h-full transition-transform duration-300 group-hover:scale-105 object-cover", !imageLoaded && "opacity-0")} loading="lazy" onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
-            </> :
-        // Fallback: gradient background with icon
-        <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-              <contentBadge.icon className="h-16 w-16 text-muted-foreground/30" />
-            </div>}
-          
-          {/* Strong dark gradient overlay from bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
-          
-          {/* Content type badge - top left */}
-          <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 text-white bg-primary/[0.83]")}>
-            <contentBadge.icon className="h-3 w-3" />
-            {contentBadge.label}
-          </Badge>
+          <div className="w-full h-full p-5 flex flex-col justify-between">
+            {/* Note content preview */}
+            <div className="flex-1 overflow-hidden">
+              <p className="text-foreground/80 text-sm leading-relaxed line-clamp-6">
+                {summary || title}
+              </p>
+            </div>
 
-          {/* Play button overlay for videos */}
-          {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Play className="h-6 w-6 text-white fill-white ml-0.5" />
+            {/* Bottom section */}
+            <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/30">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-foreground text-base line-clamp-2 mb-1">
+                  {title}
+                </h3>
+                <span className="text-muted-foreground text-xs">{dateText}</span>
               </div>
-            </div>}
-          
-          {/* Text overlay - bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-            {/* Title */}
-            <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 mb-3">
-              {title}
-            </h3>
-            
-            {/* Date and action */}
-            <div className="flex items-center justify-between">
-              <span className="text-white/70 text-sm">{dateText}</span>
-              <span className="text-white text-sm font-medium underline underline-offset-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                OPEN
-              </span>
+              <button className="text-muted-foreground hover:text-foreground transition-colors ml-3 flex-shrink-0" onClick={e => {
+                e.stopPropagation();
+                onClick();
+              }}>
+                <ArrowUpRight className="h-5 w-5" />
+              </button>
             </div>
           </div>
         </AspectRatio>
       </div>
     </div>;
+  }
+
+  // Image/URL variant - full-bleed image with text overlay
+  return <div className="relative overflow-hidden rounded-[20px]">
+    {/* Swipe delete action background */}
+    {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-[20px] transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
+      width: `${Math.max(swipeOffset, 0)}px`
+    }}>
+      <Trash2 className="h-5 w-5 text-destructive-foreground" />
+    </div>}
+
+    <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
+      transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
+    }} className={cn("rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-all duration-200 ease-out", "hover:shadow-xl hover:-translate-y-1", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+      {/* Selection checkbox */}
+      {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
+        <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-white/80 backdrop-blur-sm border-white/50" />
+      </div>}
+
+      {/* Actions menu */}
+      <div className={cn("absolute top-4 right-4 z-20 transition-opacity duration-200", isSelectionMode && "hidden", isMobile ? showMobileActions ? "opacity-100" : "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100")}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-black/30 backdrop-blur-md hover:bg-black/50 text-white shadow-sm" aria-label="Card actions">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>}
+            {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <AspectRatio ratio={3 / 4}>
+        {/* Full-bleed image */}
+        {previewImageUrl && !imageError ? <>
+          {!imageLoaded && <div className="absolute inset-0 z-10">
+            <Skeleton className="w-full h-full rounded-[20px]" />
+          </div>}
+          <img src={previewImageUrl} alt="" className={cn("w-full h-full transition-transform duration-300 group-hover:scale-105 object-cover", !imageLoaded && "opacity-0")} loading="lazy" onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
+        </> :
+          // Fallback: gradient background with icon
+          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+            <contentBadge.icon className="h-16 w-16 text-muted-foreground/30" />
+          </div>}
+
+        {/* Strong dark gradient overlay from bottom */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+
+        {/* Content type badge - top left */}
+        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 text-white bg-primary/[0.83]")}>
+          <contentBadge.icon className="h-3 w-3" />
+          {contentBadge.label}
+        </Badge>
+
+        {/* Play button overlay for videos */}
+        {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Play className="h-6 w-6 text-white fill-white ml-0.5" />
+          </div>
+        </div>}
+
+        {/* Text overlay - bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+          {/* Title */}
+          <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 mb-3">
+            {title}
+          </h3>
+
+          {/* Date and action */}
+          <div className="flex items-center justify-between">
+            <span className="text-white/70 text-sm">{dateText}</span>
+            <span className="text-white text-sm font-medium underline underline-offset-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              OPEN
+            </span>
+          </div>
+        </div>
+      </AspectRatio>
+    </div>
+  </div>;
 };

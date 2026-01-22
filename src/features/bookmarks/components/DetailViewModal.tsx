@@ -181,8 +181,8 @@ export const DetailViewModal = ({
     // For note-type items - show the note content as a styled preview
     if (item.type === 'note' && item.content) {
       return <div className="rounded-xl overflow-hidden bg-card border border-border/50 mb-4">
-          <NotePreview content={item.content} variant="full" showProgress={true} className="min-h-[200px]" />
-        </div>;
+        <NotePreview content={item.content} variant="full" showProgress={true} className="min-h-[200px]" />
+      </div>;
     }
 
     // For URL-type items
@@ -194,7 +194,7 @@ export const DetailViewModal = ({
 
       // Show thumbnail for non-video URLs
       if (item.preview_image_url) {
-        return <ThumbnailPreview imageUrl={item.preview_image_url} linkUrl={item.content} title={item.title} className="mb-4" />;
+        return <ThumbnailPreview imageUrl={item.preview_image_url} linkUrl={item.content} title={item.title} className="h-full" variant="contain" />;
       }
 
       // Fallback for URLs without thumbnail
@@ -244,8 +244,8 @@ export const DetailViewModal = ({
               {item.content?.toLowerCase().endsWith(".pdf")
                 ? "Open full PDF in browser"
                 : item.content?.toLowerCase().endsWith(".docx")
-                ? "Open full document in browser"
-                : "Open file in browser"}
+                  ? "Open full document in browser"
+                  : "Open file in browser"}
             </a>
           )}
         </div>
@@ -274,7 +274,7 @@ export const DetailViewModal = ({
               </div>
             )}
           </div>
-          
+
           {/* URL Link */}
           {item.type === "url" && item.content && (
             <a
@@ -442,44 +442,44 @@ export const DetailViewModal = ({
     </div>
   );
   return <>
-      {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent className="max-h-[95vh] pb-safe">
-            <DrawerHeader className="sr-only">
-              <DrawerTitle>{item.title}</DrawerTitle>
-              <DrawerDescription>Detailed item view</DrawerDescription>
-            </DrawerHeader>
-            <div className="overflow-y-auto px-4 pb-4">
-              <MobileDetailContent />
-            </div>
-          </DrawerContent>
-        </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent 
-            className="w-[1100px] max-w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden border-0 glass-card p-6 flex flex-col"
-          >
-            <DialogHeader className="sr-only">
-              <DialogTitle>{item.title}</DialogTitle>
-              <DialogDescription>Detailed item view</DialogDescription>
-            </DialogHeader>
-            <DetailContent />
-          </DialogContent>
-        </Dialog>}
+    {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[95vh] pb-safe">
+        <DrawerHeader className="sr-only">
+          <DrawerTitle>{item.title}</DrawerTitle>
+          <DrawerDescription>Detailed item view</DrawerDescription>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-4 pb-4">
+          <MobileDetailContent />
+        </div>
+      </DrawerContent>
+    </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="w-[1100px] max-w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden border-0 glass-card p-6 flex flex-col"
+      >
+        <DialogHeader className="sr-only">
+          <DialogTitle>{item.title}</DialogTitle>
+          <DialogDescription>Detailed item view</DialogDescription>
+        </DialogHeader>
+        <DetailContent />
+      </DialogContent>
+    </Dialog>}
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent className="glass-card border-0">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete "{item?.title}" from your space. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="glass-input min-h-[44px]">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>;
+    {/* Delete Confirmation Dialog */}
+    <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+      <AlertDialogContent className="glass-card border-0">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently delete "{item?.title}" from your space. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="glass-input min-h-[44px]">Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]">
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>;
 };

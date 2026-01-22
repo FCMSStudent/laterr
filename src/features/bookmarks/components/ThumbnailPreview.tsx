@@ -8,15 +8,17 @@ interface ThumbnailPreviewProps {
   linkUrl?: string;
   title?: string;
   className?: string;
+  variant?: 'square' | 'contain';
   onClick?: () => void;
 }
 
-export const ThumbnailPreview = ({ 
-  imageUrl, 
-  linkUrl, 
-  title, 
+export const ThumbnailPreview = ({
+  imageUrl,
+  linkUrl,
+  title,
   className = '',
-  onClick 
+  variant = 'square',
+  onClick
 }: ThumbnailPreviewProps) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -37,37 +39,39 @@ export const ThumbnailPreview = ({
     }
   };
 
+  const Wrapper = variant === 'square' ? AspectRatio : 'div';
+  const wrapperProps = variant === 'square' ? { ratio: 1 } : { className: 'w-full h-full' };
+
   if (imageError || !imageUrl) {
     return (
-      <div className={`rounded-xl overflow-hidden bg-muted ${className}`}>
-        <AspectRatio ratio={1}>
+      <div className={`rounded-xl overflow-hidden bg-muted ${className} ${variant === 'contain' ? 'h-full w-full' : ''}`}>
+        <Wrapper {...wrapperProps}>
           <div className="w-full h-full flex items-center justify-center">
             <ImageIcon className="h-12 w-12 text-muted-foreground/40" />
           </div>
-        </AspectRatio>
+        </Wrapper>
       </div>
     );
   }
 
   return (
-    <div 
-      className={`relative rounded-xl overflow-hidden bg-muted group cursor-pointer ${className}`}
+    <div
+      className={`relative rounded-xl overflow-hidden bg-muted group cursor-pointer ${className} ${variant === 'contain' ? 'h-full w-full' : ''}`}
       onClick={handleClick}
     >
-      <AspectRatio ratio={1}>
+      <Wrapper {...wrapperProps}>
         {!imageLoaded && (
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
-        <img 
-          src={imageUrl} 
+        <img
+          src={imageUrl}
           alt={title || 'Preview'}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`absolute inset-0 w-full h-full ${variant === 'contain' ? 'object-contain bg-black/5' : 'object-cover'} transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageError(true)}
         />
-        
+
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
           {linkUrl && (
@@ -79,8 +83,8 @@ export const ThumbnailPreview = ({
             </div>
           )}
         </div>
-      </AspectRatio>
-      
+      </Wrapper>
+
       {/* External link button */}
       {linkUrl && (
         <Button
