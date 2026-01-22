@@ -41,7 +41,7 @@ export const CollapsibleStatsSummary = ({
             {dueSoonCount > 0 && (
               <>
                 <span className="text-muted-foreground mx-2">•</span>
-                <span className="text-amber-600 dark:text-amber-500">{dueSoonCount} due soon</span>
+                <span className="text-warning">{dueSoonCount} due soon</span>
               </>
             )}
           </span>

@@ -114,8 +114,9 @@ All colors MUST be HSL.
     --popover: 266 4% 20.8%;
     --popover-foreground: 248 0.3% 98.4%;
 
-    --primary: 256 1.3% 92.9%;
-    --primary-foreground: 266 4% 20.8%;
+    /* Keep the vibrant pink primary color from light mode */
+    --primary: 330 81.1881% 60.3922%;
+    --primary-foreground: 248 0.3% 98.4%;
 
     --secondary: 260 4.1% 27.9%;
     --secondary-foreground: 248 0.3% 98.4%;
@@ -123,10 +124,12 @@ All colors MUST be HSL.
     --muted: 260 4.1% 27.9%;
     --muted-foreground: 257 4% 70.4%;
 
-    --accent: 260 4.1% 27.9%;
+    /* Keep blue tint in accent for consistency */
+    --accent: 210 40% 25%;
     --accent-foreground: 248 0.3% 98.4%;
 
-    --destructive: 22 19.1% 70.4%;
+    /* Keep vibrant red for destructive actions */
+    --destructive: 358 81% 60%;
     --destructive-foreground: 248 0.3% 98.4%;
 
     /* Semantic colors for success, warning, and info states (dark mode) */
@@ -168,8 +171,12 @@ All colors MUST be HSL.
     --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
     --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
-    --radius: 0.5rem;
+    /* Match light mode font families */
+    --font-sans: "Source Sans Pro", ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    --font-serif: "Source Serif Pro", ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+    --font-mono: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+    /* Match light mode border radius */
+    --radius: 1.5rem;
   }
 }
 

@@ -308,8 +308,8 @@ export default function Auth() {
           <div className="glass-card rounded-3xl p-10 shadow-apple">
             <div className="animate-in zoom-in-50 duration-500 text-center">
               {/* Success checkmark */}
-              <div className="w-20 h-20 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6">
-                <Check className="w-10 h-10 text-green-600 dark:text-green-400" />
+              <div className="w-20 h-20 mx-auto rounded-full bg-success/10 flex items-center justify-center mb-6">
+                <Check className="w-10 h-10 text-success" />
               </div>
               
               <h2 className="text-2xl font-bold text-foreground mb-3">Account Created!</h2>
@@ -379,8 +379,8 @@ export default function Auth() {
         <div className="w-full max-w-md">
           <div className="glass-card rounded-3xl p-10 shadow-apple">
             <div className="animate-in zoom-in-50 duration-500 text-center">
-              <div className="w-20 h-20 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6">
-                <Check className="w-10 h-10 text-green-600 dark:text-green-400" />
+              <div className="w-20 h-20 mx-auto rounded-full bg-success/10 flex items-center justify-center mb-6">
+                <Check className="w-10 h-10 text-success" />
               </div>
               
               <h2 className="text-2xl font-bold text-foreground mb-3">Password Updated!</h2>

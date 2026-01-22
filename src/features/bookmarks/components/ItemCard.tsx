@@ -234,7 +234,7 @@ export const ItemCard = ({
               <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 premium-transition"></div>
               {/* Video play icon overlay - only when loaded */}
               {imageLoaded && content && isVideoUrl(content) && <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 premium-transition bg-[#ec4699]/[0.67]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 premium-transition bg-primary/[0.67]">
                     <Play className="h-5 w-5 text-white ml-0.5" fill="currentColor" />
                   </div>
                 </div>}

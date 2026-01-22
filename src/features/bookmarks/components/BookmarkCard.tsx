@@ -302,7 +302,7 @@ export const BookmarkCard = ({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
           
           {/* Content type badge - top left */}
-          <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 text-white bg-[#ec4699]/[0.83]")}>
+          <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 text-white bg-primary/[0.83]")}>
             <contentBadge.icon className="h-3 w-3" />
             {contentBadge.label}
           </Badge>

@@ -88,7 +88,7 @@ export const MeasurementGroup = ({
                 {getDisplayValue(measurement)}
               </div>
               {getChange(measurement) && (
-                <div className="text-xs text-green-600 dark:text-green-500">
+                <div className="text-xs text-success">
                   {getChange(measurement)}
                 </div>
               )}
