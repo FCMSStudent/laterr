@@ -343,76 +343,73 @@ const Index = () => {
     return null;
   }
   return <div className="min-h-screen pb-20 md:pb-0">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
-        Skip to main content
-      </a>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="mb-4">
-          <NavigationHeader title="Bookmarks" onAddClick={() => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search" filterButton={<MobileFilterButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} sortButton={<MobileSortButton selectedSort={sortOption} onSortChange={setSortOption} />} />
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md">
+      Skip to main content
+    </a>
+
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="mb-4">
+        <NavigationHeader title="Bookmarks" onAddClick={() => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search" filterButton={<MobileFilterButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} sortButton={<MobileSortButton selectedSort={sortOption} onSortChange={setSortOption} />} />
+      </div>
+
+
+
+
+      <main id="main-content">
+        <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
         </div>
 
 
-        
-
-        <main id="main-content">
-          <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-            {loading ? "Loading items..." : `Showing ${filteredItems.length} ${filteredItems.length === 1 ? 'item' : 'items'}`}
-          </div>
-
-
-          {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
-              {Array.from({
+        {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
+          {Array.from({
             length: 8
           }).map((_, index) => <ItemCardSkeleton key={index} />)}
-            </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
-              <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
-              <p className="text-muted-foreground text-base max-w-md mx-auto">
-                Start building your knowledge by adding your first item
-              </p>
-              <Button onClick={() => setShowAddModal(true)} size="lg">
-                <Plus className="w-5 h-5 mr-2" />
-                Add your first bookmark
-              </Button>
-            </div> : <section aria-label="Items collection">
-              {viewMode === 'grid' ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6 pb-12">
-                  {filteredItems.map(item => <BookmarkCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
-                </div> : <div className="space-y-2 pb-12">
-                  {filteredItems.map(item => <ItemListRow key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
-                </div>}
+        </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
+          <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
+          <p className="text-muted-foreground text-base max-w-md mx-auto">
+            Start building your knowledge by adding your first item
+          </p>
+          <Button onClick={() => setShowAddModal(true)} size="lg">
+            <Plus className="w-5 h-5 mr-2" />
+            Add your first bookmark
+          </Button>
+        </div> : <section aria-label="Items collection">
+          {viewMode === 'grid' ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6 pb-12">
+            {filteredItems.map(item => <BookmarkCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
+          </div> : <div className="space-y-2 pb-12">
+            {filteredItems.map(item => <ItemListRow key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
+          </div>}
 
-              {/* Infinite scroll sentinel */}
-              {hasMore && <div ref={loadMoreRef} className="flex justify-center py-8">
-                  {loadingMore && <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span className="text-sm">Loading more...</span>
-                    </div>}
-                </div>}
-            </section>}
-        </main>
-      </div>
+          {/* Infinite scroll sentinel */}
+          {hasMore && <div ref={loadMoreRef} className="flex justify-center py-8">
+            {loadingMore && <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span className="text-sm">Loading more...</span>
+            </div>}
+          </div>}
+        </section>}
+      </main>
+    </div>
 
-      {/* Floating Action Button (FAB) for Add Item on mobile */}
-      {isMobile && !isSelectionMode && <Button onClick={() => setShowAddModal(true)} className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-xl premium-transition hover:scale-110 p-0" aria-label="Add new item to your collection">
-          <Plus className="w-6 h-6" aria-hidden="true" />
-        </Button>}
 
-      {/* Bulk Actions Bar */}
-      <BulkActionsBar selectedCount={selectedItems.size} totalCount={filteredItems.length} onSelectAll={handleSelectAll} onDeselectAll={handleDeselectAll} onDelete={handleBulkDelete} onCancel={() => {
+
+    {/* Bulk Actions Bar */}
+    <BulkActionsBar selectedCount={selectedItems.size} totalCount={filteredItems.length} onSelectAll={handleSelectAll} onDeselectAll={handleDeselectAll} onDelete={handleBulkDelete} onCancel={() => {
       setIsSelectionMode(false);
       setSelectedItems(new Set());
     }} />
 
-      <Suspense fallback={null}>
-        <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={handleRefresh} />
+    <Suspense fallback={null}>
+      <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={handleRefresh} />
 
-        {selectedItem && <>
-            <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={handleRefresh} />
-            <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={handleRefresh} />
-            <NoteEditorModal open={showNoteEditor} onOpenChange={setShowNoteEditor} item={selectedItem} onUpdate={handleRefresh} />
-          </>}
-      </Suspense>
-    </div>;
+      {selectedItem && <>
+        <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={handleRefresh} />
+        <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={handleRefresh} />
+        <NoteEditorModal open={showNoteEditor} onOpenChange={setShowNoteEditor} item={selectedItem} onUpdate={handleRefresh} />
+      </>}
+    </Suspense>
+  </div>;
 };
 export default Index;

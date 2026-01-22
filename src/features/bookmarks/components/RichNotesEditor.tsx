@@ -4,21 +4,21 @@ import { ChecklistItem } from './ChecklistItem';
 import { BulletItem } from './BulletItem';
 import { NumberedItem } from './NumberedItem';
 import { HeadingItem } from './HeadingItem';
-import { 
-  CheckSquare, 
-  Plus, 
-  Type, 
-  List, 
-  ListOrdered, 
+import {
+  CheckSquare,
+  Plus,
+  Type,
+  List,
+  ListOrdered,
   Heading1,
   Heading2,
   Heading3
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
-import { 
-  NotesData, 
-  NoteBlock, 
-  createTextBlock, 
+import {
+  NotesData,
+  NoteBlock,
+  createTextBlock,
   createChecklistBlock,
   createBulletBlock,
   createNumberedBlock,
@@ -62,7 +62,7 @@ export const RichNotesEditor = ({
   // Add new block
   const handleAddBlock = useCallback((type: NoteBlock['type'], level?: 1 | 2 | 3) => {
     let newBlock: NoteBlock;
-    
+
     switch (type) {
       case 'text':
         newBlock = createTextBlock('');
@@ -109,7 +109,7 @@ export const RichNotesEditor = ({
 
     const newData = {
       ...notesData,
-      blocks: notesData.blocks.map(block => 
+      blocks: notesData.blocks.map(block =>
         block.id === id ? { ...block, content } : block
       )
     };
@@ -120,7 +120,7 @@ export const RichNotesEditor = ({
   const handleChecklistCheckedChange = useCallback((id: string, checked: boolean) => {
     const newData = {
       ...notesData,
-      blocks: notesData.blocks.map(block => 
+      blocks: notesData.blocks.map(block =>
         block.id === id ? { ...block, checked } : block
       )
     };
@@ -140,21 +140,21 @@ export const RichNotesEditor = ({
   const handleEnterPress = useCallback((id: string) => {
     const index = notesData.blocks.findIndex(b => b.id === id);
     const currentBlock = notesData.blocks[index];
-    
+
     // For headings, create a text block instead of another heading
-    const newBlock = currentBlock.type === 'heading' 
+    const newBlock = currentBlock.type === 'heading'
       ? createTextBlock('')
       : currentBlock.type === 'checklist'
-      ? createChecklistBlock('')
-      : currentBlock.type === 'bullet'
-      ? createBulletBlock('')
-      : currentBlock.type === 'numbered'
-      ? createNumberedBlock('')
-      : createTextBlock('');
+        ? createChecklistBlock('')
+        : currentBlock.type === 'bullet'
+          ? createBulletBlock('')
+          : currentBlock.type === 'numbered'
+            ? createNumberedBlock('')
+            : createTextBlock('');
 
     const newBlocks = [...notesData.blocks];
     newBlocks.splice(index + 1, 0, newBlock);
-    
+
     const newData = {
       ...notesData,
       blocks: newBlocks
@@ -183,7 +183,7 @@ export const RichNotesEditor = ({
         return block;
       })
     };
-    
+
     emitChange(newData);
     setShowCommandPalette(false);
     setActiveBlockId(null);
@@ -200,7 +200,7 @@ export const RichNotesEditor = ({
     { id: 'numbered', label: 'Numbered List', icon: ListOrdered, action: () => handleConvertBlock('numbered') },
   ];
 
-  const filteredCommands = commands.filter(cmd => 
+  const filteredCommands = commands.filter(cmd =>
     cmd.label.toLowerCase().includes(commandSearch.toLowerCase())
   );
 
@@ -209,9 +209,9 @@ export const RichNotesEditor = ({
   const isNearLimit = totalLength > maxLength * 0.9;
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-2 flex flex-col h-full", className)}>
       {/* Toolbar */}
-      <div className="flex items-center gap-1 p-2 bg-muted/30 rounded-lg border">
+      <div className="flex items-center gap-1 p-2 bg-muted/30 rounded-lg border flex-shrink-0">
         <Button
           variant="ghost"
           size="sm"
@@ -222,7 +222,7 @@ export const RichNotesEditor = ({
           <Type className="h-4 w-4" />
           <span className="text-xs">Text</span>
         </Button>
-        
+
         <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
@@ -290,7 +290,7 @@ export const RichNotesEditor = ({
       </div>
 
       {/* Blocks */}
-      <div className="space-y-1 min-h-[200px] p-3 rounded-lg border bg-background">
+      <div className="space-y-1 min-h-[200px] p-3 rounded-lg border bg-background flex-1 overflow-y-auto">
         {notesData.blocks.length === 0 ? (
           <div className="text-sm text-muted-foreground py-2">
             {placeholder}
@@ -379,7 +379,7 @@ export const RichNotesEditor = ({
                   .slice(0, index)
                   .filter(b => b.type === 'numbered')
                   .length + 1;
-                
+
                 return (
                   <NumberedItem
                     key={key}

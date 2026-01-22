@@ -255,16 +255,39 @@ export const DetailViewModal = ({
   };
   if (!item) return null;
 
+  // Calculate dynamic dimensions based on content type
+  const sizeClasses = useCallback(() => {
+    if (!item) return "w-[900px] min-h-[500px]";
+
+    // Video/Image - Cinematic view
+    if (item.type === 'video' || item.type === 'image' || (item.type === 'url' && item.content && isVideoUrl(item.content))) {
+      return "w-[1100px] min-h-[650px]";
+    }
+
+    // Documents - Taller view for reading
+    if (item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'))) {
+      return "w-[1000px] min-h-[700px]";
+    }
+
+    // Notes - Focused view
+    if (item.type === 'note') {
+      return "w-[800px] min-h-[600px]";
+    }
+
+    // Default/Links - Standard view
+    return "w-[900px] min-h-[500px]";
+  }, [item]);
+
   // Shared content component - Horizontal layout
   const DetailContent = () => (
     <div className="flex flex-col h-full">
       {/* Content grid - fills available space */}
-      <div className="grid md:grid-cols-2 gap-4 flex-1 min-h-0">
+      <div className="grid md:grid-cols-[55%_45%] gap-6 flex-1 min-h-0">
         {/* Left side - Preview */}
-        <div className="flex flex-col min-h-0">
-          <div className="flex-1 min-h-0">
+        <div className="flex flex-col min-h-0 h-full">
+          <div className="flex-1 min-h-0 bg-muted/30 rounded-xl overflow-hidden border border-border/50">
             {renderPreview() || (
-              <div className="h-full rounded-xl bg-muted flex items-center justify-center">
+              <div className="h-full flex items-center justify-center">
                 <div className="text-center p-8">
                   <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                     <span className="text-primary">{getIcon()}</span>
@@ -275,80 +298,99 @@ export const DetailViewModal = ({
             )}
           </div>
 
-          {/* URL Link */}
+          {/* URL Link - moved inside preview container or just below with tight spacing */}
           {item.type === "url" && item.content && (
             <a
               href={item.content}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-shrink-0 flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-3"
+              className="flex-shrink-0 flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors mt-2 px-1"
             >
-              <Link2 className="h-4 w-4" />
-              Open original
+              <Link2 className="h-3.5 w-3.5" />
+              Open original source
             </a>
           )}
         </div>
 
         {/* Right side - Details */}
-        <div className="flex flex-col min-h-0 overflow-y-auto scrollbar-hide">
+        <div className="flex flex-col min-h-0 overflow-y-auto scrollbar-hide pr-1">
           {/* Header */}
-          <div className="flex items-start gap-2.5 mb-5">
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shadow-sm">
               <span className="text-primary">{getIcon()}</span>
             </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold leading-snug line-clamp-2" title={item.title}>{item.title}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{selectedTag}</p>
+            <div className="min-w-0 flex-1 pt-0.5 pr-8">
+              <h2 className="text-lg font-bold leading-tight text-foreground line-clamp-2" title={item.title}>{item.title}</h2>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                  {selectedTag}
+                </span>
+                {item.type !== 'url' && (
+                  <span className="text-xs text-muted-foreground capitalize">• {item.type}</span>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Summary */}
           {item.summary && (
-            <div className="space-y-2.5 mb-4 pb-4 border-b border-border/50">
-              <h3 className="text-sm font-semibold text-foreground">Summary</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
+            <div className="space-y-2 mb-5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Summary</label>
+              <div className="p-3 rounded-lg bg-muted/30 border border-border/50 text-sm leading-relaxed text-foreground/90">
+                {item.summary}
+              </div>
             </div>
           )}
 
           {/* Category */}
-          <div className="space-y-2.5 mb-4">
-            <label htmlFor="category-select" className="text-sm font-semibold text-foreground block">
+          <div className="space-y-2 mb-4">
+            <label htmlFor="category-select" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Category
             </label>
-            <select
-              id="category-select"
-              value={selectedTag}
-              onChange={(e) => setSelectedTag(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
-              aria-label="Select category"
-            >
-              {CATEGORY_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-              {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
-                <option value={selectedTag}>{selectedTag}</option>
-              )}
-            </select>
+            <div className="relative">
+              <select
+                id="category-select"
+                value={selectedTag}
+                onChange={(e) => setSelectedTag(e.target.value)}
+                className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-border bg-background hover:bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer appearance-none"
+                aria-label="Select category"
+              >
+                {CATEGORY_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+                {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
+                  <option value={selectedTag}>{selectedTag}</option>
+                )}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
           </div>
+
+          {/* Notes area could go here later */}
+
         </div>
       </div>
 
       {/* Footer Actions - Fixed at bottom */}
-      <div className="flex gap-2 pt-3 mt-3 border-t border-border/50 flex-shrink-0">
+      <div className="flex gap-3 pt-4 mt-2 border-t border-border/50 flex-shrink-0">
         <LoadingButton
           onClick={handleSave}
           loading={saving}
-          className="flex-1"
+          className="flex-1 shadow-sm"
           aria-label="Save changes"
         >
           <Save className="h-4 w-4 mr-2" />
-          Save
+          Save Changes
         </LoadingButton>
         <Button
           onClick={() => setShowDeleteAlert(true)}
           disabled={deleting}
-          variant="ghost"
-          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          variant="outline"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
           aria-label="Delete item"
         >
           <Trash2 className="h-4 w-4" />
@@ -454,7 +496,7 @@ export const DetailViewModal = ({
       </DrawerContent>
     </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[1100px] max-w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden border-0 glass-card p-6 flex flex-col"
+        className={`${sizeClasses()} max-w-[95vw] h-fit max-h-[85vh] overflow-hidden border-0 glass-card p-6 flex flex-col shadow-2xl transition-all duration-300`}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{item.title}</DialogTitle>
