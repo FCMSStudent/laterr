@@ -255,7 +255,7 @@ export const BookmarkCard = ({
   }
 
   // Image/URL variant - full-bleed image with text overlay
-  return <div className="relative overflow-hidden rounded-[20px]">
+  return <div className="relative rounded-[20px]">
     {/* Swipe delete action background */}
     {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-[20px] transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
       width: `${Math.max(swipeOffset, 0)}px`
@@ -298,7 +298,7 @@ export const BookmarkCard = ({
           {!imageLoaded && <div className="absolute inset-0 z-10">
             <Skeleton className="w-full h-full rounded-[20px]" />
           </div>}
-          <img src={previewImageUrl} alt="" className={cn("w-full h-full transition-all duration-300 group-hover:scale-105 object-cover", imageLoaded ? "opacity-100" : "opacity-0")} loading="lazy" onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
+          <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-105 object-cover", imageLoaded ? "opacity-100" : "opacity-0")} loading="lazy" onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
         </> :
           // Fallback: gradient background with icon
           <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
