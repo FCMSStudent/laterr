@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Play, ExternalLink } from 'lucide-react';
-import { AspectRatio } from '@/shared/components/ui/aspect-ratio';
-import { Button } from '@/shared/components/ui/button';
+import { AspectRatio } from "@/ui";
+import { Button } from "@/ui";
 import { ViewerShell } from './ViewerShell';
 import { 
   isYouTubeUrl, 

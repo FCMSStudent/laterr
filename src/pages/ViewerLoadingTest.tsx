@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PDFPreview } from '@/features/bookmarks/components/PDFPreview';
 import { DOCXPreview } from '@/features/bookmarks/components/DOCXPreview';
-import { Button } from '@/shared/components/ui/button';
+import { Button } from "@/ui";
 
 /**
  * Test page to demonstrate the improved loading states for PDF and DOCX viewers.

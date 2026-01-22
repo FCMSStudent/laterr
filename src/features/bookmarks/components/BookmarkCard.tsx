@@ -1,11 +1,11 @@
-import { Badge } from "@/shared/components/ui/badge";
+import { Badge } from "@/ui";
 import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
-import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
-import { Checkbox } from "@/shared/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui/dropdown-menu";
-import { Button } from "@/shared/components/ui/button";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { AspectRatio } from "@/ui";
+import { Checkbox } from "@/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
+import { Button } from "@/ui";
+import { Skeleton } from "@/ui";
 import { useState, useRef } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import { useIsMobile } from "@/shared/hooks/use-mobile";

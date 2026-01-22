@@ -1,5 +1,5 @@
 import { Trash2, X } from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
+import { Button } from "@/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/shared/components/ui/alert-dialog";
+} from "@/ui";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 

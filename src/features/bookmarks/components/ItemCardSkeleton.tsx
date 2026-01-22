@@ -1,5 +1,5 @@
-import { Skeleton } from "@/shared/components/ui/skeleton";
-import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
+import { Skeleton } from "@/ui";
+import { AspectRatio } from "@/ui";
 
 export const ItemCardSkeleton = () => {
   return (

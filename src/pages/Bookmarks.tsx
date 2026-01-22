@@ -6,7 +6,7 @@ import { ItemListRow } from "@/features/bookmarks/components/ItemListRow";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
 import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
-import { Button } from "@/shared/components/ui/button";
+import { Button } from "@/ui";
 import { Sparkles, Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";

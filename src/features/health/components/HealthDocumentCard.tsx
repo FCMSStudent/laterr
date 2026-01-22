@@ -1,7 +1,7 @@
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui/dropdown-menu";
-import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
+import { Badge } from "@/ui";
+import { Button } from "@/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
+import { AspectRatio } from "@/ui";
 import { 
   MoreVertical, Trash2, FileText, TestTube, Pill, Scan, 
   Shield, Syringe, ClipboardCheck, Forward, Calendar, Building

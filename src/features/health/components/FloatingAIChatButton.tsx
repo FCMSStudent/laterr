@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense } from 'react';
-import { Button } from '@/shared/components/ui/button';
+import { Button } from "@/ui";
 import { Sparkles, X } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 

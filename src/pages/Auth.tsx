@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { EnhancedInput } from '@/shared/components/ui/input';
-import { LoadingButton } from '@/shared/components/ui/loading-button';
+import { EnhancedInput } from "@/ui";
+import { LoadingButton } from "@/ui";
 import { useToast } from '@/shared/hooks/use-toast';
 import { z } from 'zod';
 import { AuthError, toTypedError } from '@/shared/types/errors';

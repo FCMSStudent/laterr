@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Checkbox } from '@/shared/components/ui/checkbox';
-import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from "@/ui";
+import { Button } from "@/ui";
 import { X } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 

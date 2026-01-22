@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Item } from "@/features/bookmarks/types";
 import { getRecommendations } from "@/features/bookmarks/utils/semantic-search";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui";
 import { Loader2, Lightbulb } from "lucide-react";
 import { ItemCard } from "@/features/bookmarks/components/ItemCard";
 

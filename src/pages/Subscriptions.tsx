@@ -7,7 +7,7 @@ import { CollapsibleStatsSummary } from "@/features/subscriptions/components/Col
 import { StatusFilterTabs } from "@/features/subscriptions/components/StatusFilterTabs";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
-import { Button } from "@/shared/components/ui/button";
+import { Button } from "@/ui";
 import { CreditCard, Plus } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";

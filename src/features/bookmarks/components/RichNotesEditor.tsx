@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Button } from '@/shared/components/ui/button';
-import { Textarea } from '@/shared/components/ui/textarea';
+import { Button } from "@/ui";
+import { Textarea } from "@/ui";
 import { ChecklistItem } from './ChecklistItem';
 import { CheckSquare, Plus, Type, List, Check } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';

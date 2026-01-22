@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui/drawer";
-import { Button } from "@/shared/components/ui/button";
-import { LoadingButton } from "@/shared/components/ui/loading-button";
-import { EnhancedInput } from "@/shared/components/ui/input";
-import { EnhancedTextarea } from "@/shared/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
+import { Button } from "@/ui";
+import { LoadingButton } from "@/ui";
+import { EnhancedInput } from "@/ui";
+import { EnhancedTextarea } from "@/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
 import { Link2, FileText, File } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

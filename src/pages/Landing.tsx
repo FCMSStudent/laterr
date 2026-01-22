@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/shared/components/ui/button";
+import { Button } from "@/ui";
 import { Sparkles, Search, BookmarkIcon, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";

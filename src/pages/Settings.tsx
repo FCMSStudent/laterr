@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { ArrowLeft, Sun, Moon, Monitor, Sparkles, Eye, Trash2, LogOut, User } from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
-import { Label } from "@/shared/components/ui/label";
-import { Separator } from "@/shared/components/ui/separator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/ui";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui";
+import { RadioGroup, RadioGroupItem } from "@/ui";
+import { Label } from "@/ui";
+import { Separator } from "@/ui";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/ui";
 import { useGlassIntensity, GlassIntensity } from "@/shared/hooks/useGlassIntensity";
 import { useRecentlyViewed } from "@/shared/hooks/useRecentlyViewed";
 import { supabase } from "@/integrations/supabase/client";

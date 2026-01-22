@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui/drawer";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
-import { LoadingButton } from "@/shared/components/ui/loading-button";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui";
+import { Button } from "@/ui";
+import { LoadingButton } from "@/ui";
+import { LoadingSpinner } from "@/ui";
 
 import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
 import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
