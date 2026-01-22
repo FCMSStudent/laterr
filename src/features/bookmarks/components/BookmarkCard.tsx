@@ -265,7 +265,7 @@ export const BookmarkCard = ({
 
     <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
       transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
-    }} className={cn("rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-all duration-200 ease-out", "hover:shadow-xl hover:-translate-y-1", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+    }} className={cn("rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-shadow duration-200 ease-out", "hover:shadow-xl", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
       {/* Selection checkbox */}
       {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
         <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-white/80 backdrop-blur-sm border-white/50" />
