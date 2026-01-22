@@ -1,4 +1,4 @@
-import { NotesData, NoteBlock, createTextBlock, createChecklistBlock } from '../types';
+import { NotesData, NoteBlock, createTextBlock, createChecklistBlock, createHeadingBlock, createBulletBlock, createNumberedBlock } from '../types';
 
 /**
  * Parse a string (plain text or JSON) into NotesData
@@ -18,7 +18,7 @@ export const parseNotes = (input: string | null | undefined): NotesData => {
     // Not JSON, treat as plain text
   }
 
-  // Parse plain text - detect checklists
+  // Parse plain text - detect markdown-style formatting
   const lines = input.split('\n');
   const blocks: NoteBlock[] = [];
 
@@ -30,9 +30,33 @@ export const parseNotes = (input: string | null | undefined): NotesData => {
         checklistMatch[2],
         checklistMatch[1].toLowerCase() === 'x'
       ));
-    } else {
-      blocks.push(createTextBlock(line));
+      continue;
     }
+
+    // Check for heading syntax: # Heading, ## Heading, ### Heading
+    const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length as 1 | 2 | 3;
+      blocks.push(createHeadingBlock(headingMatch[2], level));
+      continue;
+    }
+
+    // Check for bullet list: - item or * item
+    const bulletMatch = line.match(/^\s*[-*]\s+(.*)$/);
+    if (bulletMatch) {
+      blocks.push(createBulletBlock(bulletMatch[1]));
+      continue;
+    }
+
+    // Check for numbered list: 1. item or 1) item
+    const numberedMatch = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    if (numberedMatch) {
+      blocks.push(createNumberedBlock(numberedMatch[1]));
+      continue;
+    }
+
+    // Default to text block
+    blocks.push(createTextBlock(line));
   }
 
   return { version: 1, blocks };

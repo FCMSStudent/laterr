@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { LoadingButton } from "@/ui";
 import { Button } from "@/ui";
-import { Textarea } from "@/ui";
+import { RichNotesEditor } from './RichNotesEditor';
 import { Input } from "@/ui";
 import { Trash2, Save } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui";
@@ -96,7 +96,7 @@ export const NoteEditorModal = ({
   const editorContent = <div className="flex flex-col h-full gap-4">
       <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title..." className="text-lg font-semibold border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 px-[16px] py-[16px]" maxLength={200} />
 
-      <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Start writing your note..." className="flex-1 min-h-[300px] resize-none border-0 bg-muted/30 rounded-xl p-4 focus-visible:ring-1 focus-visible:ring-primary/50" />
+      <RichNotesEditor value={content} onChange={setContent} placeholder="Type / for commands..." className="flex-1" />
 
       <div className="flex gap-2 pt-3 border-t border-border/50">
         <LoadingButton onClick={handleSave} loading={saving} className="flex-1" aria-label="Save note">

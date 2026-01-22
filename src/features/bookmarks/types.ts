@@ -80,3 +80,9 @@ export const createBulletBlock = (content: string = ''): NoteBlock => ({
   type: 'bullet',
   content,
 });
+
+export const createNumberedBlock = (content: string = ''): NoteBlock => ({
+  id: crypto.randomUUID(),
+  type: 'numbered',
+  content,
+});
