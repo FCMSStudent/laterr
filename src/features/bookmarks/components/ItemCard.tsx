@@ -230,7 +230,7 @@ export const ItemCard = ({
           {!imageLoaded && <div className="absolute inset-0 z-10">
             <Skeleton className="w-full h-full rounded-xl" />
           </div>}
-          <img src={previewImageUrl} alt={title} className={cn("w-full h-full object-cover group-hover:scale-110 premium-transition", imageLoaded ? "opacity-100" : "opacity-0")} loading="lazy" onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
+          <img src={previewImageUrl} alt={title} className={cn("w-full h-full object-cover", imageLoaded ? "opacity-100" : "opacity-0")} onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 premium-transition"></div>
           {/* Video play icon overlay - only when loaded */}
           {imageLoaded && content && isVideoUrl(content) && <div className="absolute inset-0 flex items-center justify-center">

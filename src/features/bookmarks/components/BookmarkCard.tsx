@@ -298,7 +298,7 @@ export const BookmarkCard = ({
           {!imageLoaded && <div className="absolute inset-0 z-10">
             <Skeleton className="w-full h-full rounded-[20px]" />
           </div>}
-          <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-105 object-cover", imageLoaded ? "opacity-100" : "opacity-0")} loading="lazy" onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
+          <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full object-cover", imageLoaded ? "opacity-100" : "opacity-0")} onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
         </> :
           // Fallback: gradient background with icon
           <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
@@ -316,7 +316,7 @@ export const BookmarkCard = ({
 
         {/* Play button overlay for videos */}
         {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
             <Play className="h-6 w-6 text-white fill-white ml-0.5" />
           </div>
         </div>}
