@@ -12,16 +12,17 @@ import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { RichNotesEditor } from "@/features/bookmarks/components/RichNotesEditor";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
+import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
-import { generateSignedUrl } from "@/shared/lib/supabase-utils";
+import { generateSignedUrl, generateSignedUrlsForItems } from "@/shared/lib/supabase-utils";
 import { NetworkError, toTypedError } from "@/shared/types/errors";
 import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/shared/lib/error-messages";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
-import type { Item } from "@/features/bookmarks/types";
+import type { Item, ItemType } from "@/features/bookmarks/types";
 
 // Character counter constants
 const USER_NOTES_MAX_LENGTH = 100000;
@@ -44,6 +45,8 @@ export const DetailViewModal = ({
   const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [relatedItems, setRelatedItems] = useState<Item[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
   const isMobile = useIsMobile();
 
   // Reset state when item changes
@@ -53,6 +56,49 @@ export const DetailViewModal = ({
       setSelectedTag(item.tags?.[0] || DEFAULT_ITEM_TAG);
     }
   }, [item]);
+
+  // Fetch related items (same tag, excluding current)
+  useEffect(() => {
+    const fetchRelated = async () => {
+      if (!open || !item) {
+        setRelatedItems([]);
+        return;
+      }
+      setLoadingRelated(true);
+      try {
+        const { data, error } = await supabase
+          .from(SUPABASE_ITEMS_TABLE)
+          .select("*")
+          .contains("tags", [selectedTag])
+          .neq("id", item.id)
+          .order("created_at", { ascending: false })
+          .limit(12);
+
+        if (error) throw error;
+
+        const rawItems = (data ?? []) as any[];
+        const normalized: Item[] = rawItems.map((row) => ({
+          ...row,
+          tags: row.tags ?? [],
+          preview_image_url: row.preview_image_url ?? null,
+          summary: row.summary ?? null,
+          user_notes: row.user_notes ?? null,
+          content: row.content ?? null,
+          embedding: row.embedding ? JSON.parse(row.embedding) : null,
+        }));
+
+        const withSigned = await generateSignedUrlsForItems(normalized);
+        setRelatedItems(withSigned);
+      } catch (err) {
+        console.error("Error fetching related items:", err);
+        setRelatedItems([]);
+      } finally {
+        setLoadingRelated(false);
+      }
+    };
+
+    fetchRelated();
+  }, [open, item, selectedTag]);
   useEffect(() => {
     const generateSignedUrlForItem = async () => {
       if (!item?.content) {
@@ -282,7 +328,7 @@ export const DetailViewModal = ({
   const DetailContent = () => (
     <div className="flex flex-col h-full">
       {/* Content grid - fills available space */}
-      <div className="grid md:grid-cols-[55%_45%] gap-6 flex-1 min-h-0">
+        <div className="grid md:grid-cols-[55%_45%] gap-6 flex-1 min-h-0">
         {/* Left side - Preview */}
         <div className="flex flex-col min-h-0 h-full">
           <div className="flex-1 min-h-0 bg-muted/30 rounded-xl overflow-hidden border border-border/50">
@@ -368,6 +414,44 @@ export const DetailViewModal = ({
                 </svg>
               </div>
             </div>
+          </div>
+
+          {/* Related items (masonry) */}
+          <div className="space-y-2 mb-4">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Related
+            </label>
+            {loadingRelated ? (
+              <div className="text-sm text-muted-foreground">Loading…</div>
+            ) : relatedItems.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No related items yet.</div>
+            ) : (
+              <div className="columns-1 sm:columns-2 gap-3 [column-fill:_balance]">
+                {relatedItems.map((rel) => (
+                  <div key={rel.id} className="break-inside-avoid mb-3">
+                    <BookmarkCard
+                      id={rel.id}
+                      type={rel.type as ItemType}
+                      title={rel.title}
+                      summary={rel.summary}
+                      previewImageUrl={rel.preview_image_url}
+                      content={rel.content}
+                      tags={rel.tags ?? []}
+                      createdAt={rel.created_at}
+                      onClick={() => {
+                        onOpenChange(false);
+                        window.dispatchEvent(
+                          new CustomEvent("bookmarks:open-item", {
+                            detail: { id: rel.id },
+                          })
+                        );
+                      }}
+                      onTagClick={() => {}}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Notes area could go here later */}

@@ -6,7 +6,7 @@ import { Checkbox } from "@/ui";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
 import { Button } from "@/ui";
 import { Skeleton } from "@/ui";
-import { useState, useRef } from "react";
+import { useMemo, useState, useRef } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/lib/utils";
@@ -112,6 +112,15 @@ export const BookmarkCard = ({
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
   const dateText = formatDate(createdAt);
+
+  const mediaRatio = useMemo(() => {
+    // Content-type driven sizing (works best with masonry columns)
+    if (isVideo) return 16 / 9;
+    if (type === 'image') return 4 / 5;
+    if (type === 'document' || type === 'file') return 3 / 4;
+    if (type === 'url') return 4 / 5;
+    return 3 / 4;
+  }, [isVideo, type]);
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -217,32 +226,30 @@ export const BookmarkCard = ({
           </DropdownMenu>
         </div>
 
-        <AspectRatio ratio={3 / 4}>
-          <div className="w-full h-full p-5 flex flex-col justify-between">
-            {/* Note content preview */}
-            <div className="flex-1 overflow-hidden">
-              <p className="text-foreground/80 text-sm leading-relaxed line-clamp-6">
-                {summary || title}
-              </p>
-            </div>
-
-            {/* Bottom section */}
-            <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/30">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-foreground text-base line-clamp-2 mb-1">
-                  {title}
-                </h3>
-                <span className="text-muted-foreground text-xs">{dateText}</span>
-              </div>
-              <button className="text-muted-foreground hover:text-foreground transition-colors ml-3 flex-shrink-0" onClick={e => {
-                e.stopPropagation();
-                onClick();
-              }}>
-                <ArrowUpRight className="h-5 w-5" />
-              </button>
-            </div>
+        <div className="p-5 flex flex-col justify-between min-h-[220px]">
+          {/* Note content preview */}
+          <div className="flex-1 overflow-hidden">
+            <p className="text-foreground/80 text-sm leading-relaxed line-clamp-10">
+              {summary || title}
+            </p>
           </div>
-        </AspectRatio>
+
+          {/* Bottom section */}
+          <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/30">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-foreground text-base line-clamp-2 mb-1">
+                {title}
+              </h3>
+              <span className="text-muted-foreground text-xs">{dateText}</span>
+            </div>
+            <button className="text-muted-foreground hover:text-foreground transition-colors ml-3 flex-shrink-0" onClick={e => {
+              e.stopPropagation();
+              onClick();
+            }} aria-label="Open note">
+              <ArrowUpRight className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>;
   }
@@ -285,7 +292,7 @@ export const BookmarkCard = ({
         </DropdownMenu>
       </div>
 
-      <AspectRatio ratio={3 / 4}>
+      <AspectRatio ratio={mediaRatio}>
         {/* Full-bleed image */}
         {previewImageUrl && !imageError ? <>
           {!imageLoaded && <div className="absolute inset-0 z-10">

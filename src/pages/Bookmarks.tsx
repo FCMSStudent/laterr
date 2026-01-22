@@ -43,6 +43,12 @@ const NoteEditorModal = lazy(() => import("@/features/bookmarks/components/NoteE
   default: NoteEditorModal
 })));
 const PAGE_SIZE = 20;
+
+type OpenItemEventDetail = {
+  id: string;
+};
+
+const OPEN_ITEM_EVENT = "bookmarks:open-item";
 const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -331,6 +337,36 @@ const Index = () => {
       setShowDetailModal(true);
     }
   };
+
+  // Allow nested UIs (like DetailViewModal) to request opening another item.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<OpenItemEventDetail>;
+      const id = custom.detail?.id;
+      if (!id) return;
+
+      const found = items.find((i) => i.id === id);
+      if (!found) return;
+
+      // Close any open modal first to prevent stacked dialogs.
+      setShowDetailModal(false);
+      setShowEditModal(false);
+      setShowNoteEditor(false);
+
+      // Open after a short tick.
+      setTimeout(() => {
+        setSelectedItem(found);
+        if (found.type === 'note') {
+          setShowNoteEditor(true);
+        } else {
+          setShowDetailModal(true);
+        }
+      }, 0);
+    };
+
+    window.addEventListener(OPEN_ITEM_EVENT, handler);
+    return () => window.removeEventListener(OPEN_ITEM_EVENT, handler);
+  }, [items]);
   const handleClearAllFilters = () => {
     setSelectedTag(null);
     setTypeFilter(null);
@@ -361,10 +397,14 @@ const Index = () => {
         </div>
 
 
-        {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-12">
+        {loading ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pb-12 [column-fill:_balance]">
           {Array.from({
             length: 8
-          }).map((_, index) => <ItemCardSkeleton key={index} />)}
+           }).map((_, index) => (
+             <div key={index} className="break-inside-avoid mb-5 md:mb-6">
+               <ItemCardSkeleton />
+             </div>
+           ))}
         </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
           <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
           <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
@@ -376,8 +416,12 @@ const Index = () => {
             Add your first bookmark
           </Button>
         </div> : <section aria-label="Items collection">
-          {viewMode === 'grid' ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6 pb-12">
-            {filteredItems.map(item => <BookmarkCard key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
+          {viewMode === 'grid' ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pb-12 [column-fill:_balance]">
+            {filteredItems.map(item => (
+              <div key={item.id} className="break-inside-avoid mb-5 md:mb-6">
+                <BookmarkCard id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />
+              </div>
+            ))}
           </div> : <div className="space-y-2 pb-12">
             {filteredItems.map(item => <ItemListRow key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
           </div>}
