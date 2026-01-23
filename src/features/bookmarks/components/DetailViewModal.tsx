@@ -301,39 +301,82 @@ export const DetailViewModal = ({
   };
   if (!item) return null;
 
-// Responsive size classes based on item type
-const sizeClasses = useCallback(() => {
-  if (!item) return "w-full max-w-[900px] min-h-[min(500px,60vh)]";
-  
-  const baseClasses = "w-full transition-all duration-300 ease-out";
-  
-  // Video/Image - Cinematic with aspect ratio preservation
-  if (item.type === 'video' || item.type === 'image' || (item.type === 'url' && item.content && isVideoUrl(item.content))) {
-    return `${baseClasses} max-w-[1400px] min-h-[min(650px,70vh)]`;
-  }
-  
-  // Documents - Optimized for reading
-  if (item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'))) {
-    return `${baseClasses} max-w-[1100px] min-h-[min(800px,85vh)]`;
-  }
-  
-  // Notes - Focused, distraction-free
-  if (item.type === 'note') {
-    return `${baseClasses} max-w-[850px] min-h-[min(600px,65vh)]`;
-  }
-  
-  // Default - Balanced layout
-  return `${baseClasses} max-w-[950px] min-h-[min(500px,60vh)]`;
-}, [item]);
+  // Content type detection helpers
+  const isVideoContent = item.type === 'video' || (item.type === 'url' && item.content && isVideoUrl(item.content));
+  const isDocumentContent = item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'));
+  const isNoteContent = item.type === 'note';
+  const isImageContent = item.type === 'image';
+  const isUrlContent = item.type === 'url' && !isVideoContent;
+
+  // Dynamic modal size based on content type
+  const sizeClasses = useCallback(() => {
+    const baseClasses = "w-full transition-all duration-300 ease-out";
+    
+    if (isVideoContent) {
+      return `${baseClasses} max-w-[1200px] h-[min(720px,80vh)]`;
+    }
+    if (isDocumentContent) {
+      return `${baseClasses} max-w-[1100px] h-[min(800px,85vh)]`;
+    }
+    if (isNoteContent) {
+      return `${baseClasses} max-w-[900px] h-[min(600px,70vh)]`;
+    }
+    if (isImageContent) {
+      return `${baseClasses} max-w-[1000px] h-[min(700px,75vh)]`;
+    }
+    // Default for URLs and other content
+    return `${baseClasses} max-w-[1000px] h-[min(600px,70vh)]`;
+  }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
+
+  // Dynamic grid layout based on content type
+  const getGridLayout = useCallback(() => {
+    if (isVideoContent) {
+      // Video: wider preview, narrower details
+      return "grid-cols-1 lg:grid-cols-[1.6fr_0.4fr]";
+    }
+    if (isDocumentContent) {
+      // Documents: balanced for reading
+      return "grid-cols-1 lg:grid-cols-[1.2fr_0.8fr]";
+    }
+    if (isNoteContent) {
+      // Notes: single column, content-focused
+      return "grid-cols-1 lg:grid-cols-[1fr_0.6fr]";
+    }
+    if (isImageContent) {
+      // Images: larger preview
+      return "grid-cols-1 lg:grid-cols-[1.4fr_0.6fr]";
+    }
+    // URLs: balanced
+    return "grid-cols-1 lg:grid-cols-[1fr_0.8fr]";
+  }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
+
+  // Dynamic preview container styling
+  const getPreviewContainerStyles = useCallback(() => {
+    const baseStyles = "flex-1 min-h-0 rounded-xl overflow-hidden border border-border/40 transition-all duration-300";
+    
+    if (isVideoContent) {
+      return `${baseStyles} bg-black aspect-video`;
+    }
+    if (isDocumentContent) {
+      return `${baseStyles} bg-muted/50`;
+    }
+    if (isNoteContent) {
+      return `${baseStyles} bg-card`;
+    }
+    if (isImageContent) {
+      return `${baseStyles} bg-muted/30 aspect-[4/5]`;
+    }
+    return `${baseStyles} bg-muted/30 aspect-square`;
+  }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
 
   // Desktop detail content component
   const DetailContent = () => (
     <div className="flex flex-col h-full gap-4">
-      {/* Adaptive Grid */}
-      <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-6 flex-1 min-h-0">
+      {/* Adaptive Grid based on content type */}
+      <div className={`grid ${getGridLayout()} gap-4 flex-1 min-h-0`}>
         {/* Left Panel - Preview */}
         <div className="flex flex-col min-h-0 h-full">
-          <div className="flex-1 min-h-0 bg-muted/30 rounded-xl overflow-hidden border border-border/40">
+          <div className={getPreviewContainerStyles()}>
             {renderPreview() || (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center p-8 space-y-4">
@@ -381,7 +424,7 @@ const sizeClasses = useCallback(() => {
 
           {/* Summary */}
           {item.summary && (
-            <div className="space-y-2 mb-5">
+            <div className="space-y-2 mb-4">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Summary</label>
               <div className="p-3 rounded-lg bg-muted/30 border border-border/50 text-sm leading-relaxed text-foreground/90">
                 {item.summary}
@@ -417,43 +460,45 @@ const sizeClasses = useCallback(() => {
             </div>
           </div>
 
-          {/* Related items (masonry) */}
-          <div className="space-y-2 mb-4">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Related
-            </label>
-            {loadingRelated ? (
-              <div className="text-sm text-muted-foreground">Loading…</div>
-            ) : relatedItems.length === 0 ? (
-              <div className="text-sm text-muted-foreground">No related items yet.</div>
-            ) : (
-              <div className="columns-1 sm:columns-2 gap-3 [column-fill:_balance]">
-                {relatedItems.map((rel) => (
-                  <div key={rel.id} className="break-inside-avoid mb-3">
-                    <BookmarkCard
-                      id={rel.id}
-                      type={rel.type as ItemType}
-                      title={rel.title}
-                      summary={rel.summary}
-                      previewImageUrl={rel.preview_image_url}
-                      content={rel.content}
-                      tags={rel.tags ?? []}
-                      createdAt={rel.created_at}
-                      onClick={() => {
-                        onOpenChange(false);
-                        window.dispatchEvent(
-                          new CustomEvent("bookmarks:open-item", {
-                            detail: { id: rel.id },
-                          })
-                        );
-                      }}
-                      onTagClick={() => {}}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Related items - Hide for video/image to maximize preview space */}
+          {!isVideoContent && (
+            <div className="space-y-2 mb-4">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Related
+              </label>
+              {loadingRelated ? (
+                <div className="text-sm text-muted-foreground">Loading…</div>
+              ) : relatedItems.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No related items yet.</div>
+              ) : (
+                <div className="columns-1 gap-3 [column-fill:_balance]">
+                  {relatedItems.slice(0, isDocumentContent ? 4 : 6).map((rel) => (
+                    <div key={rel.id} className="break-inside-avoid mb-3">
+                      <BookmarkCard
+                        id={rel.id}
+                        type={rel.type as ItemType}
+                        title={rel.title}
+                        summary={rel.summary}
+                        previewImageUrl={rel.preview_image_url}
+                        content={rel.content}
+                        tags={rel.tags ?? []}
+                        createdAt={rel.created_at}
+                        onClick={() => {
+                          onOpenChange(false);
+                          window.dispatchEvent(
+                            new CustomEvent("bookmarks:open-item", {
+                              detail: { id: rel.id },
+                            })
+                          );
+                        }}
+                        onTagClick={() => {}}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
