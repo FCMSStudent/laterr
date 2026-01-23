@@ -11,6 +11,7 @@ import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/lib/utils";
 import { format } from "date-fns";
+
 interface BookmarkCardProps {
   id: string;
   type: ItemType;
@@ -81,6 +82,7 @@ const formatDate = (dateString?: string): string => {
     return '';
   }
 };
+
 export const BookmarkCard = ({
   id,
   type,
@@ -121,12 +123,14 @@ export const BookmarkCard = ({
     if (type === 'url') return 4 / 5;
     return 3 / 4;
   }, [isVideo, type]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick();
     }
   };
+
   const handleMenuAction = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
@@ -149,6 +153,7 @@ export const BookmarkCard = ({
       }
     }
   };
+
   const handleTouchMove = (e: React.TouchEvent) => {
     if (longPressTimerRef.current) {
       const moveX = Math.abs(e.touches[0].clientX - touchStartX.current);
@@ -167,6 +172,7 @@ export const BookmarkCard = ({
       }
     }
   };
+
   const handleTouchEnd = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -178,6 +184,7 @@ export const BookmarkCard = ({
     setSwipeOffset(0);
     setIsSwiping(false);
   };
+
   const handleCardClick = () => {
     if (isSwiping) return;
     if (showMobileActions) {
@@ -265,7 +272,7 @@ export const BookmarkCard = ({
 
     <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
       transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
-    }} className={cn("rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-shadow duration-200 ease-out", "hover:shadow-xl", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+    }} className={cn("rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-all duration-200 ease-out", "hover:shadow-xl hover:scale-[1.02]", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
       {/* Selection checkbox */}
       {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
         <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-white/80 backdrop-blur-sm border-white/50" />
