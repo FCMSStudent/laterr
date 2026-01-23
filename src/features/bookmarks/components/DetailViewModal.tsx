@@ -623,7 +623,7 @@ export const DetailViewModal = ({
       </DrawerContent>
     </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`${sizeClasses()} max-w-[95vw] h-fit max-h-[85vh] overflow-hidden border-0 glass-card p-6 flex flex-col shadow-2xl transition-all duration-300`}
+        className={`${sizeClasses()} max-w-[95vw] max-h-[85vh] overflow-hidden border-0 glass-card p-6 flex flex-col shadow-2xl`}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{item.title}</DialogTitle>
