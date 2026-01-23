@@ -130,13 +130,7 @@ export const NavigationHeader = ({
     {!showInlineSearch && <div className="flex-1" />}
 
     {/* Settings button */}
-    <Button
-      onClick={() => navigate("/settings")}
-      variant="ghost"
-      size="icon"
-      className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform"
-      aria-label="Settings"
-    >
+    <Button onClick={() => navigate("/settings")} variant="ghost" size="icon" className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform" aria-label="Settings">
       <Settings className="w-5 h-5 md:w-4 md:h-4" aria-hidden="true" />
     </Button>
 
@@ -170,15 +164,11 @@ export const NavigationHeader = ({
     </AlertDialog>
 
     {/* Add button - integrated */}
-    {onAddClick && (isMobile ? (
-      <Button onClick={onAddClick} variant="ghost" size="icon" className="h-10 w-10 text-primary hover:text-primary/80 shrink-0" aria-label={`${addLabel} new item`}>
+    {onAddClick && (isMobile ? <Button onClick={onAddClick} variant="ghost" size="icon" className="h-10 w-10 text-primary hover:text-primary/80 shrink-0" aria-label={`${addLabel} new item`}>
         <Plus className="w-6 h-6" aria-hidden="true" />
-      </Button>
-    ) : (
-      <Button onClick={onAddClick} size="sm" className="h-9 gap-2 px-4 rounded-full text-background bg-primary" aria-label={`${addLabel} new item`}>
+      </Button> : <Button onClick={onAddClick} size="sm" className="h-9 gap-2 rounded-full text-background bg-primary px-[12px] py-0" aria-label={`${addLabel} new item`}>
         <Plus className="w-4 h-4" aria-hidden="true" />
         {addLabel}
-      </Button>
-    ))}
+      </Button>)}
   </header>;
 };
