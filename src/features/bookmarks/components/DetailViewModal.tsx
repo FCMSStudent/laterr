@@ -301,9 +301,7 @@ export const DetailViewModal = ({
   };
   if (!item) return null;
 
-// 🔥 GOD TIER IMPROVEMENTS 🔥
-
-// 1. RESPONSIVE DIMENSIONS - Adapt to viewport, not hardcoded pixels
+// Responsive size classes based on item type
 const sizeClasses = useCallback(() => {
   if (!item) return "w-full max-w-[900px] min-h-[min(500px,60vh)]";
   
@@ -311,10 +309,10 @@ const sizeClasses = useCallback(() => {
   
   // Video/Image - Cinematic with aspect ratio preservation
   if (item.type === 'video' || item.type === 'image' || (item.type === 'url' && item.content && isVideoUrl(item.content))) {
-    return `${baseClasses} max-w-[1400px] min-h-[min(650px,70vh)] aspect-video`;
+    return `${baseClasses} max-w-[1400px] min-h-[min(650px,70vh)]`;
   }
   
-  // Documents - Optimized for reading (golden ratio)
+  // Documents - Optimized for reading
   if (item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'))) {
     return `${baseClasses} max-w-[1100px] min-h-[min(800px,85vh)]`;
   }
@@ -328,110 +326,26 @@ const sizeClasses = useCallback(() => {
   return `${baseClasses} max-w-[950px] min-h-[min(500px,60vh)]`;
 }, [item]);
 
-// 2. ENHANCED CONTENT COMPONENT - Better visual hierarchy & animations
-const DetailContent = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    // Simulate content loading for smooth transitions
-    const timer = setTimeout(() => setIsLoading(false), 150);
-    return () => clearTimeout(timer);
-  }, [item]);
-
-  return (
+  // Desktop detail content component
+  const DetailContent = () => (
     <div className="flex flex-col h-full gap-4">
-      {/* Adaptive Grid - Smart breakpoints */}
-      <div className="grid lg:grid-cols-[1.2fr_0.8fr] xl:grid-cols-[1.3fr_0.7fr] gap-6 flex-1 min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        
-        {/* Left Panel - Premium Preview */}
-        <div className="flex flex-col min-h-0 h-full group">
-          <div className="flex-1 min-h-0 bg-gradient-to-br from-muted/40 via-muted/30 to-background/50 rounded-2xl overflow-hidden border border-border/40 shadow-lg shadow-black/5 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-black/10 hover:border-border/60">
-            {isLoading ? (
-              // Skeleton loader
+      {/* Adaptive Grid */}
+      <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-6 flex-1 min-h-0">
+        {/* Left Panel - Preview */}
+        <div className="flex flex-col min-h-0 h-full">
+          <div className="flex-1 min-h-0 bg-muted/30 rounded-xl overflow-hidden border border-border/40">
+            {renderPreview() || (
               <div className="h-full flex items-center justify-center">
-                <div className="space-y-4 w-full max-w-md p-8 animate-pulse">
-                  <div className="h-4 bg-muted rounded-full w-3/4"></div>
-                  <div className="h-4 bg-muted rounded-full w-1/2"></div>
-                  <div className="h-32 bg-muted rounded-xl mt-6"></div>
-                </div>
-              </div>
-            ) : renderPreview() ? (
-              <div className="h-full relative">
-                {renderPreview()}
-                {/* Subtle gradient overlay for depth */}
-                <div className="absolute inset-0 bg-gradient-to-t from-background/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-            ) : (
-              // Empty state - More engaging
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center p-8 space-y-4 animate-in fade-in zoom-in-95 duration-300">
-                  <div className="relative inline-block">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 flex items-center justify-center mx-auto shadow-lg shadow-primary/20 ring-1 ring-primary/10">
-                      <span className="text-primary text-3xl transform group-hover:scale-110 transition-transform duration-300">
-                        {getIcon()}
-                      </span>
-                    </div>
-                    {/* Animated pulse ring */}
-                    <div className="absolute inset-0 rounded-2xl bg-primary/20 animate-ping opacity-20"></div>
+                <div className="text-center p-8 space-y-4">
+                  <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
+                    <span className="text-primary text-2xl">{getIcon()}</span>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-foreground/80">No preview available</p>
-                    <p className="text-xs text-muted-foreground max-w-[250px] mx-auto">
-                      This content type doesn't support preview rendering
-                    </p>
-                  </div>
+                  <p className="text-sm text-muted-foreground">No preview available</p>
                 </div>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Right Panel - Details (your existing metadata panel) */}
-        <div className="flex flex-col min-h-0 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500 delay-100">
-          {/* Your metadata/details content here */}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 3. BONUS: Adaptive loading strategy
-const renderPreview = useCallback(() => {
-  if (!item) return null;
-  
-  // Add intersection observer for lazy loading
-  const previewRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { threshold: 0.1 }
-    );
-    
-    if (previewRef.current) observer.observe(previewRef.current);
-    return () => observer.disconnect();
-  }, []);
-  
-  return (
-    <div ref={previewRef} className="h-full">
-      {isVisible && (
-        // Your actual preview rendering logic
-        <YourPreviewComponent item={item} />
-      )}
-    </div>
-  );
-}, [item]);
-
-// 4. PERFORMANCE: Memoize expensive operations
-const contentConfig = useMemo(() => ({
-  video: { maxWidth: '1400px', minHeight: '650px', ratio: 'aspect-video' },
-  document: { maxWidth: '1100px', minHeight: '800px', ratio: 'aspect-[8.5/11]' },
-  note: { maxWidth: '850px', minHeight: '600px', ratio: 'aspect-[4/5]' },
-  default: { maxWidth: '950px', minHeight: '500px', ratio: 'aspect-[16/10]' }
-}), []);
-
-          {/* URL Link - moved inside preview container or just below with tight spacing */}
+          {/* URL Link */}
           {item.type === "url" && item.content && (
             <a
               href={item.content}
@@ -540,9 +454,6 @@ const contentConfig = useMemo(() => ({
               </div>
             )}
           </div>
-
-          {/* Notes area could go here later */}
-
         </div>
       </div>
 
