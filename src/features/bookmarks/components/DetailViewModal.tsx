@@ -48,6 +48,8 @@ export const DetailViewModal = ({
   const [tags, setTags] = useState<string[]>(item?.tags || []);
   const [newTagInput, setNewTagInput] = useState("");
   const [isAddingTag, setIsAddingTag] = useState(false);
+  const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
+  const [editingTagValue, setEditingTagValue] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -62,6 +64,7 @@ export const DetailViewModal = ({
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
+  const editTagInputRef = useRef<HTMLInputElement>(null);
 
   // Focus tag input when adding
   useEffect(() => {
@@ -70,6 +73,13 @@ export const DetailViewModal = ({
     }
   }, [isAddingTag]);
 
+  useEffect(() => {
+    if (editingTagIndex !== null && editTagInputRef.current) {
+      editTagInputRef.current.focus();
+      editTagInputRef.current.select();
+    }
+  }, [editingTagIndex]);
+
   // Reset state when item changes
   useEffect(() => {
     if (item) {
@@ -77,6 +87,8 @@ export const DetailViewModal = ({
       setTags(item.tags || []);
       setIsAddingTag(false);
       setNewTagInput("");
+      setEditingTagIndex(null);
+      setEditingTagValue("");
     }
   }, [item]);
 
@@ -191,9 +203,19 @@ export const DetailViewModal = ({
   }, [item, onUpdate]);
 
   // Tag Handlers
+  const normalizeTag = (tag: string) => tag.trim();
+  const normalizeTagKey = (tag: string) => normalizeTag(tag).toLowerCase();
+
   const handleAddTag = () => {
-    const trimmed = newTagInput.trim();
-    if (trimmed && !tags.includes(trimmed)) {
+    const trimmed = normalizeTag(newTagInput);
+    if (!trimmed) {
+      setNewTagInput("");
+      setIsAddingTag(false);
+      return;
+    }
+
+    const normalizedTrimmed = normalizeTagKey(trimmed);
+    if (!tags.some((tag) => normalizeTagKey(tag) === normalizedTrimmed)) {
       const newTags = [...tags, trimmed];
       setTags(newTags);
       handleSave(userNotes, newTags, true);
@@ -203,9 +225,49 @@ export const DetailViewModal = ({
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
+    if (editingTagIndex !== null && tags[editingTagIndex] === tagToRemove) {
+      handleCancelEditTag();
+    }
     const newTags = tags.filter(t => t !== tagToRemove);
     setTags(newTags);
     handleSave(userNotes, newTags, true);
+  };
+
+  const handleStartEditTag = (tagIndex: number) => {
+    setEditingTagIndex(tagIndex);
+    setEditingTagValue(tags[tagIndex] ?? "");
+  };
+
+  const handleCancelEditTag = () => {
+    setEditingTagIndex(null);
+    setEditingTagValue("");
+  };
+
+  const handleCommitEditTag = () => {
+    if (editingTagIndex === null) return;
+    const trimmed = normalizeTag(editingTagValue);
+    if (!trimmed) {
+      handleCancelEditTag();
+      return;
+    }
+
+    const normalizedTrimmed = normalizeTagKey(trimmed);
+    const duplicateIndex = tags.findIndex(
+      (tag, index) => index !== editingTagIndex && normalizeTagKey(tag) === normalizedTrimmed
+    );
+
+    let newTags: string[] = [];
+    if (duplicateIndex >= 0) {
+      newTags = tags.filter((_, index) => index !== editingTagIndex);
+      const adjustedIndex = duplicateIndex > editingTagIndex ? duplicateIndex - 1 : duplicateIndex;
+      newTags[adjustedIndex] = trimmed;
+    } else {
+      newTags = tags.map((tag, index) => (index === editingTagIndex ? trimmed : tag));
+    }
+
+    setTags(newTags);
+    handleSave(userNotes, newTags, true);
+    handleCancelEditTag();
   };
 
   const handleKeyDownTag = (e: React.KeyboardEvent) => {
@@ -215,6 +277,16 @@ export const DetailViewModal = ({
     } else if (e.key === 'Escape') {
       setIsAddingTag(false);
       setNewTagInput("");
+    }
+  };
+
+  const handleKeyDownEditTag = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleCommitEditTag();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleCancelEditTag();
     }
   };
 
@@ -534,20 +606,49 @@ export const DetailViewModal = ({
               )}
 
               {/* Tag List */}
-              {tags.map(tag => (
-                <div key={tag} className="group relative">
-                  <Badge
-                    variant="secondary"
-                    className="h-7 px-3 rounded-full text-xs font-medium bg-muted/50 hover:bg-muted border border-transparent hover:border-border/50 transition-all cursor-default flex items-center gap-1"
-                  >
-                    {tag}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
-                      className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-background/80 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all -mr-1"
+              {tags.map((tag, index) => (
+                <div key={`${tag}-${index}`} className="group relative">
+                  {editingTagIndex === index ? (
+                    <div className="flex items-center h-7 bg-background border border-primary rounded-full px-2 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                      <Input
+                        ref={editTagInputRef}
+                        value={editingTagValue}
+                        onChange={(e) => setEditingTagValue(e.target.value)}
+                        onKeyDown={handleKeyDownEditTag}
+                        onBlur={handleCancelEditTag}
+                        className="h-full border-0 p-0 text-xs w-24 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
+                        placeholder="Edit tag..."
+                      />
+                    </div>
+                  ) : (
+                    <Badge
+                      variant="secondary"
+                      onDoubleClick={() => handleStartEditTag(index)}
+                      className="h-7 px-3 rounded-full text-xs font-medium bg-muted/50 hover:bg-muted border border-transparent hover:border-border/50 transition-all cursor-default flex items-center gap-1"
                     >
-                      <X className="w-2.5 h-2.5" />
-                    </button>
-                  </Badge>
+                      {tag}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartEditTag(index);
+                        }}
+                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-background/80 hover:text-foreground opacity-0 group-hover:opacity-100 transition-all"
+                        title="Edit tag"
+                      >
+                        <Edit2 className="w-2.5 h-2.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveTag(tag);
+                        }}
+                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-background/80 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all -mr-1"
+                        title="Remove tag"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
+                    </Badge>
+                  )}
                 </div>
               ))}
             </div>
