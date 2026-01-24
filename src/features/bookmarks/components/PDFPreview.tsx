@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from "@/ui";
 import { LoadingSpinner } from "@/ui";
@@ -26,6 +26,9 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isSlowLoading, setIsSlowLoading] = useState<boolean>(false);
   const [retryKey, setRetryKey] = useState<number>(0);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [isFitToWidth, setIsFitToWidth] = useState<boolean>(true);
+  const viewerRef = useRef<HTMLDivElement | null>(null);
 
   // Timeout for slow loading detection (10 seconds)
   useEffect(() => {
@@ -41,6 +44,19 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
       setIsSlowLoading(false);
     }
   }, [loading, retryKey]);
+
+  useEffect(() => {
+    if (!viewerRef.current) {
+      return;
+    }
+
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentRect.width);
+    });
+
+    observer.observe(viewerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -72,14 +88,17 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
   };
 
   const zoomIn = () => {
+    setIsFitToWidth(false);
     setScale((prev) => Math.min(prev + 0.2, 2.0));
   };
 
   const zoomOut = () => {
+    setIsFitToWidth(false);
     setScale((prev) => Math.max(prev - 0.2, 0.5));
   };
 
   const fitToWidth = () => {
+    setIsFitToWidth(true);
     setScale(1.0);
   };
 
@@ -189,26 +208,30 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
       )}
 
       {!error && (
-        <Document
-          key={retryKey}
-          file={url}
-          onLoadSuccess={onDocumentLoadSuccess}
-          onLoadError={onDocumentLoadError}
-          loading=""
-          error=""
-          className="flex flex-col items-center py-4"
-        >
-          <Page
-            pageNumber={pageNumber}
-            scale={scale}
-            devicePixelRatio={getDevicePixelRatio()}
+        <div ref={viewerRef} className="w-full max-w-full px-4">
+          <Document
+            key={retryKey}
+            file={url}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
             loading=""
             error=""
-            className="shadow-lg"
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-          />
-        </Document>
+            className="flex w-full flex-col items-center py-4"
+          >
+            <Page
+              pageNumber={pageNumber}
+              {...(isFitToWidth && containerWidth > 0
+                ? { width: Math.max(containerWidth - 32, 0) }
+                : { scale })}
+              devicePixelRatio={getDevicePixelRatio()}
+              loading=""
+              error=""
+              className="shadow-lg"
+              renderTextLayer={true}
+              renderAnnotationLayer={true}
+            />
+          </Document>
+        </div>
       )}
     </ViewerShell>
   );
