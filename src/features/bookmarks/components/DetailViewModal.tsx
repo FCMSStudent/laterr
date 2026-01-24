@@ -313,41 +313,41 @@ export const DetailViewModal = ({
     const baseClasses = "w-full transition-all duration-300 ease-out";
     
     if (isVideoContent) {
-      return `${baseClasses} max-w-[1200px] h-[min(720px,80vh)]`;
+      return `${baseClasses} max-w-[1200px] min-h-[500px] max-h-[85vh]`;
     }
     if (isDocumentContent) {
       return `${baseClasses} max-w-[1100px] h-[min(800px,85vh)]`;
     }
     if (isNoteContent) {
-      return `${baseClasses} max-w-[900px] h-[min(600px,70vh)]`;
+      return `${baseClasses} max-w-[850px] h-auto max-h-[80vh]`;
     }
     if (isImageContent) {
-      return `${baseClasses} max-w-[1000px] h-[min(700px,75vh)]`;
+      return `${baseClasses} max-w-[1000px] h-[min(700px,80vh)]`;
     }
     // Default for URLs and other content
-    return `${baseClasses} max-w-[1000px] h-[min(600px,70vh)]`;
+    return `${baseClasses} max-w-[950px] h-[min(600px,75vh)]`;
   }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
 
   // Dynamic grid layout based on content type
   const getGridLayout = useCallback(() => {
     if (isVideoContent) {
-      // Video: wider preview, narrower details
-      return "grid-cols-1 lg:grid-cols-[1.6fr_0.4fr]";
+      // Video: much wider preview, minimal details
+      return "grid-cols-1 lg:grid-cols-[2fr_0.5fr]";
     }
     if (isDocumentContent) {
       // Documents: balanced for reading
-      return "grid-cols-1 lg:grid-cols-[1.2fr_0.8fr]";
+      return "grid-cols-1 lg:grid-cols-[1.3fr_0.7fr]";
     }
     if (isNoteContent) {
-      // Notes: single column, content-focused
-      return "grid-cols-1 lg:grid-cols-[1fr_0.6fr]";
+      // Notes: content-focused with narrower sidebar
+      return "grid-cols-1 lg:grid-cols-[1fr_0.5fr]";
     }
     if (isImageContent) {
-      // Images: larger preview
-      return "grid-cols-1 lg:grid-cols-[1.4fr_0.6fr]";
+      // Images: larger preview area
+      return "grid-cols-1 lg:grid-cols-[1.5fr_0.5fr]";
     }
     // URLs: balanced
-    return "grid-cols-1 lg:grid-cols-[1fr_0.8fr]";
+    return "grid-cols-1 lg:grid-cols-[1fr_0.7fr]";
   }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
 
   // Dynamic preview container styling
@@ -358,16 +358,24 @@ export const DetailViewModal = ({
       return `${baseStyles} bg-black aspect-video`;
     }
     if (isDocumentContent) {
-      return `${baseStyles} bg-muted/50`;
+      return `${baseStyles} bg-muted/30 h-full`;
     }
     if (isNoteContent) {
-      return `${baseStyles} bg-card`;
+      return `${baseStyles} bg-card p-6`;
     }
     if (isImageContent) {
-      return `${baseStyles} bg-muted/30 aspect-[4/5]`;
+      return `${baseStyles} bg-muted/20 flex items-center justify-center`;
     }
-    return `${baseStyles} bg-muted/30 aspect-square`;
+    return `${baseStyles} bg-muted/10`;
   }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
+
+  // Dynamic related items count based on content type
+  const getRelatedItemsCount = useCallback(() => {
+    if (isVideoContent) return 0; // Hide for videos to maximize player
+    if (isDocumentContent) return 3;
+    if (isImageContent) return 4;
+    return 5; // Notes, URLs
+  }, [isVideoContent, isDocumentContent, isImageContent]);
 
   // Desktop detail content component
   const DetailContent = () => (
@@ -460,8 +468,8 @@ export const DetailViewModal = ({
             </div>
           </div>
 
-          {/* Related items - Hide for video/image to maximize preview space */}
-          {!isVideoContent && (
+          {/* Related items - Dynamic count based on content type */}
+          {getRelatedItemsCount() > 0 && (
             <div className="space-y-2 mb-4">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Related
@@ -472,7 +480,7 @@ export const DetailViewModal = ({
                 <div className="text-sm text-muted-foreground">No related items yet.</div>
               ) : (
                 <div className="columns-1 gap-3 [column-fill:_balance]">
-                  {relatedItems.slice(0, isDocumentContent ? 4 : 6).map((rel) => (
+                  {relatedItems.slice(0, getRelatedItemsCount()).map((rel) => (
                     <div key={rel.id} className="break-inside-avoid mb-3">
                       <BookmarkCard
                         id={rel.id}
