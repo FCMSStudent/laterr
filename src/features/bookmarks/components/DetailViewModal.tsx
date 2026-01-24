@@ -332,7 +332,7 @@ export const DetailViewModal = ({
   // --- LAYOUT LOGIC UPGRADE ---
 
   // 1. Size Classes: responsive clamp-like sizing
-  const modalSizeClasses = "w-[min(95vw,1400px)] h-[clamp(70vh,80vh,85vh)] min-h-[600px]";
+  const modalSizeClasses = "w-[min(95vw,1400px)] max-h-[85vh] min-h-[600px] overflow-hidden";
 
   // 2. Grid Layout Ratios
   const getGridLayout = () => {
