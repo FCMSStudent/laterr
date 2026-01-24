@@ -574,7 +574,11 @@ export const DetailViewModal = ({
               </span>
             </div>
             <div className="p-4 rounded-xl border border-border/60 bg-background/50 text-sm leading-relaxed text-muted-foreground shadow-sm">
-              {item.summary || "No summary available for this item."}
+              {item.summary ? (
+                item.summary
+              ) : (
+                <span className="text-muted-foreground/60 italic">No summary yet</span>
+              )}
             </div>
           </div>
 
