@@ -29,7 +29,7 @@ import { useDebounce } from "@/shared/hooks/use-debounce";
 
 // Constants
 const USER_NOTES_MAX_LENGTH = 10000;
-const AUTO_SAVE_DELAY = 1000;
+const AUTO_SAVE_DELAY = 500;
 
 interface DetailViewModalProps {
   open: boolean;
@@ -488,6 +488,12 @@ export const DetailViewModal = ({
         <Textarea
           value={userNotes}
           onChange={(e) => setUserNotes(e.target.value)}
+          onBlur={() => {
+            const originalNotes = item?.user_notes ?? "";
+            if (userNotes !== originalNotes) {
+              handleSave(userNotes, tags, true);
+            }
+          }}
           placeholder="Add your notes..."
           className="bg-muted/30 min-h-[120px]"
         />
@@ -665,6 +671,12 @@ export const DetailViewModal = ({
                 placeholder="Type here to add a note..."
                 value={userNotes}
                 onChange={(e) => setUserNotes(e.target.value)}
+                onBlur={() => {
+                  const originalNotes = item?.user_notes ?? "";
+                  if (userNotes !== originalNotes) {
+                    handleSave(userNotes, tags, true);
+                  }
+                }}
                 className="w-full h-full min-h-[120px] resize-none border-0 bg-transparent p-0 focus-visible:ring-0 text-sm leading-relaxed placeholder:text-muted-foreground/40 -ml-1 pl-1"
               />
               {/* Optional: autosave indicator */}
