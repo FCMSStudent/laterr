@@ -7,6 +7,7 @@ import { lazy, Suspense } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
+import { Agentation, type Annotation } from "agentation";
 
 // Lazy load route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -58,18 +59,43 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <ThemeProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
-);
+const App = () => {
+  // Agentation integration (dev-only)
+  const sendToAgent = (annotation: any) => {
+    // TODO: wire to internal agent channel (no network by default)
+    console.log("Agentation: Sending annotation to agent", annotation);
+  };
+
+  const handleAnnotation = (annotation: any) => {
+    console.log("Agentation captured:", {
+      element: annotation.element,
+      path: annotation.elementPath,
+      box: annotation.boundingBox
+    });
+    sendToAgent(annotation);
+  };
+
+  return (
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+            {process.env.NODE_ENV === "development" && (
+              // @ts-ignore - Agentation might not have types in early versions or if install failed
+              <Agentation.Agentation
+                onAnnotationAdd={handleAnnotation}
+              // config={{ copyToClipboard: false }} // Placeholder for config if available
+              />
+            )}
+            {/* If Agentation is a named export, use that. Checking pattern now. */}
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
+};
 
 export default App;
