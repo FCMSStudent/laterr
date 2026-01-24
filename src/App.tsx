@@ -7,7 +7,7 @@ import { lazy, Suspense } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
-import { Agentation, type Annotation } from "agentation";
+import { Agentation } from "agentation";
 
 // Lazy load route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -85,12 +85,11 @@ const App = () => {
             <AppContent />
             {process.env.NODE_ENV === "development" && (
               // @ts-ignore - Agentation might not have types in early versions or if install failed
-              <Agentation.Agentation
+              <Agentation
                 onAnnotationAdd={handleAnnotation}
-              // config={{ copyToClipboard: false }} // Placeholder for config if available
+                // config={{ copyToClipboard: false }} // Placeholder for config if available
               />
             )}
-            {/* If Agentation is a named export, use that. Checking pattern now. */}
           </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
