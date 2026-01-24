@@ -308,80 +308,26 @@ export const DetailViewModal = ({
   const isImageContent = item.type === 'image';
   const isUrlContent = item.type === 'url' && !isVideoContent;
 
-  // Dynamic modal size based on content type
-  const sizeClasses = useCallback(() => {
-    const baseClasses = "w-full transition-all duration-300 ease-out";
-    
-    if (isVideoContent) {
-      return `${baseClasses} max-w-[1200px] min-h-[500px] max-h-[85vh]`;
-    }
-    if (isDocumentContent) {
-      return `${baseClasses} max-w-[1100px] h-[min(800px,85vh)]`;
-    }
-    if (isNoteContent) {
-      return `${baseClasses} max-w-[850px] h-auto max-h-[80vh]`;
-    }
-    if (isImageContent) {
-      return `${baseClasses} max-w-[1000px] h-[min(700px,80vh)]`;
-    }
-    // Default for URLs and other content
-    return `${baseClasses} max-w-[950px] h-[min(600px,75vh)]`;
-  }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
+  // Unified modal sizing - consistent across all content types
+  const modalClasses = "w-full max-w-[1200px] h-[min(720px,85vh)] transition-all duration-200 ease-out";
 
-  // Dynamic grid layout based on content type
-  const getGridLayout = useCallback(() => {
-    if (isVideoContent) {
-      // Video: much wider preview, minimal details
-      return "grid-cols-1 lg:grid-cols-[2fr_0.5fr]";
-    }
-    if (isDocumentContent) {
-      // Documents: balanced for reading
-      return "grid-cols-1 lg:grid-cols-[1.3fr_0.7fr]";
-    }
-    if (isNoteContent) {
-      // Notes: content-focused with narrower sidebar
-      return "grid-cols-1 lg:grid-cols-[1fr_0.5fr]";
-    }
-    if (isImageContent) {
-      // Images: larger preview area
-      return "grid-cols-1 lg:grid-cols-[1.5fr_0.5fr]";
-    }
-    // URLs: balanced
-    return "grid-cols-1 lg:grid-cols-[1fr_0.7fr]";
-  }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
+  // Unified grid layout - 70/30 split like reference design
+  const gridLayout = "grid-cols-1 lg:grid-cols-[2fr_1fr]";
 
-  // Dynamic preview container styling
-  const getPreviewContainerStyles = useCallback(() => {
-    const baseStyles = "flex-1 min-h-0 rounded-xl overflow-hidden border border-border/40 transition-all duration-300";
-    
-    if (isVideoContent) {
-      return `${baseStyles} bg-black aspect-video`;
-    }
-    if (isDocumentContent) {
-      return `${baseStyles} bg-muted/30 h-full`;
-    }
-    if (isNoteContent) {
-      return `${baseStyles} bg-card p-6`;
-    }
-    if (isImageContent) {
-      return `${baseStyles} bg-muted/20 flex items-center justify-center`;
-    }
-    return `${baseStyles} bg-muted/10`;
-  }, [isVideoContent, isDocumentContent, isNoteContent, isImageContent]);
-
-  // Dynamic related items count based on content type
-  const getRelatedItemsCount = useCallback(() => {
-    if (isVideoContent) return 0; // Hide for videos to maximize player
-    if (isDocumentContent) return 3;
-    if (isImageContent) return 4;
-    return 5; // Notes, URLs
-  }, [isVideoContent, isDocumentContent, isImageContent]);
+  // Unified preview container styling
+  const getPreviewContainerStyles = () => {
+    const baseStyles = "flex-1 min-h-0 rounded-xl overflow-hidden";
+    if (isVideoContent) return `${baseStyles} bg-black`;
+    if (isDocumentContent) return `${baseStyles} bg-muted/30`;
+    if (isNoteContent) return `${baseStyles} bg-card border border-border/40`;
+    return `${baseStyles} bg-muted/20 border border-border/40`;
+  };
 
   // Desktop detail content component
   const DetailContent = () => (
     <div className="flex flex-col h-full gap-4">
       {/* Adaptive Grid based on content type */}
-      <div className={`grid ${getGridLayout()} gap-4 flex-1 min-h-0`}>
+      <div className={`grid ${gridLayout} gap-6 flex-1 min-h-0`}>
         {/* Left Panel - Preview */}
         <div className="flex flex-col min-h-0 h-full">
           <div className={getPreviewContainerStyles()}>
@@ -468,19 +414,17 @@ export const DetailViewModal = ({
             </div>
           </div>
 
-          {/* Related items - Dynamic count based on content type */}
-          {getRelatedItemsCount() > 0 && (
+          {/* Related items */}
+          {relatedItems.length > 0 && (
             <div className="space-y-2 mb-4">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Related
               </label>
               {loadingRelated ? (
                 <div className="text-sm text-muted-foreground">Loading…</div>
-              ) : relatedItems.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No related items yet.</div>
               ) : (
                 <div className="columns-1 gap-3 [column-fill:_balance]">
-                  {relatedItems.slice(0, getRelatedItemsCount()).map((rel) => (
+                  {relatedItems.slice(0, 4).map((rel) => (
                     <div key={rel.id} className="break-inside-avoid mb-3">
                       <BookmarkCard
                         id={rel.id}
@@ -631,7 +575,7 @@ export const DetailViewModal = ({
       </DrawerContent>
     </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`${sizeClasses()} max-w-[95vw] max-h-[85vh] overflow-hidden border-0 glass-card p-6 flex flex-col shadow-2xl`}
+        className={`${modalClasses} max-w-[95vw] overflow-hidden border-0 glass-card p-6 flex flex-col shadow-2xl`}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{item.title}</DialogTitle>
