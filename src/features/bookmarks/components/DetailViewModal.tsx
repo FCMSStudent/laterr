@@ -256,7 +256,8 @@ export const DetailViewModal = ({
   const isVideoContent = item.type === 'video' || (item.type === 'url' && item.content && isVideoUrl(item.content));
   const isDocumentContent = item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'));
   const isNoteContent = item.type === 'note';
-  // const isImageContent = item.type === 'image'; // unused for now
+  const isImageContent = item.type === 'image';
+  const isUrlContent = item.type === 'url';
 
   // --- LAYOUT LOGIC UPGRADE ---
 
@@ -274,9 +275,21 @@ export const DetailViewModal = ({
   // 3. Preview Container Styling
   const getPreviewContainerStyles = () => {
     const base = "w-full rounded-2xl overflow-hidden relative";
-    if (isVideoContent) return `${base} aspect-video bg-black flex items-center justify-center`;
-    if (isDocumentContent) return `${base} h-[60vh] lg:h-full bg-muted/30 border border-border/40`;
-    if (isNoteContent) return `${base} min-h-[300px] bg-card border border-border/40 p-6`;
+    if (isVideoContent) {
+      return `${base} aspect-video bg-black flex items-center justify-center overflow-hidden`;
+    }
+    if (isDocumentContent) {
+      return `${base} h-[60vh] lg:h-full bg-muted/30 border border-border/40`;
+    }
+    if (isNoteContent) {
+      return `${base} min-h-[300px] bg-card border border-border/40 p-6`;
+    }
+    if (isImageContent) {
+      return `${base} min-h-[400px] bg-muted/30 border border-border/40 flex items-center justify-center`;
+    }
+    if (isUrlContent) {
+      return `${base} min-h-[360px] bg-muted/20 border border-border/40`;
+    }
     return `${base} min-h-[400px] bg-muted/20 border border-border/40 flex items-center justify-center`;
   };
 
@@ -296,11 +309,37 @@ export const DetailViewModal = ({
         return <VideoPreview url={item.content} title={item.title} className="w-full h-full" />;
       }
       if (item.preview_image_url) {
-        return <ThumbnailPreview imageUrl={item.preview_image_url} linkUrl={item.content} title={item.title} className="w-full h-full object-contain" variant="cover" />;
+        return (
+          <ThumbnailPreview
+            imageUrl={item.preview_image_url}
+            linkUrl={item.content}
+            title={item.title}
+            className="w-full h-full"
+            variant="cover"
+          />
+        );
       }
     }
 
-    if (item.content && item.type !== 'url' && item.type !== 'note') {
+    if (item.type === 'image' && item.content) {
+      return (
+        <div className="h-full flex items-center justify-center p-6">
+          {loadingSignedUrl ? (
+            <LoadingSpinner size="sm" text="Loading image..." />
+          ) : signedUrl ? (
+            <img
+              src={signedUrl}
+              alt={item.title || "Image preview"}
+              className="max-h-full max-w-full object-contain"
+            />
+          ) : (
+            <div className="text-muted-foreground">Preview unavailable</div>
+          )}
+        </div>
+      );
+    }
+
+    if (item.content && item.type !== 'url' && item.type !== 'note' && item.type !== 'image') {
       return (
         <div className="h-full flex flex-col">
           {loadingSignedUrl ? (
@@ -310,9 +349,9 @@ export const DetailViewModal = ({
           ) : signedUrl ? (
             <>
               {item.content?.toLowerCase().endsWith(".pdf") ? (
-                <PDFPreview url={signedUrl} className="h-full" />
+                <PDFPreview url={signedUrl} className="h-full overflow-y-auto" />
               ) : item.content?.toLowerCase().endsWith(".docx") ? (
-                <DOCXPreview url={signedUrl} className="h-full" />
+                <DOCXPreview url={signedUrl} className="h-full overflow-y-auto" />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
                   <FileText className="h-16 w-16 mb-4 opacity-50" />
