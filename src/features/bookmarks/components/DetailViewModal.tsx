@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui";
@@ -10,12 +10,11 @@ import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
 import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
-import { RichNotesEditor } from "@/features/bookmarks/components/RichNotesEditor";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
-import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Share2, Circle, Globe, CheckCircle2 } from "lucide-react";
+import { ItemCard } from "@/features/bookmarks/components/ItemCard";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Share2, Circle, Globe, CheckCircle2, Clock, X, Edit2 } from "lucide-react";
 import { Badge } from "@/ui";
-import { Input } from "@/ui";
+import { Input, Textarea } from "@/ui";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,16 +24,20 @@ import { generateSignedUrl, generateSignedUrlsForItems } from "@/shared/lib/supa
 import { NetworkError, toTypedError } from "@/shared/types/errors";
 import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/shared/lib/error-messages";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
-import type { Item, ItemType } from "@/features/bookmarks/types";
+import type { Item } from "@/features/bookmarks/types";
+import { useDebounce } from "@/shared/hooks/use-debounce";
 
-// Character counter constants
-const USER_NOTES_MAX_LENGTH = 100000;
+// Constants
+const USER_NOTES_MAX_LENGTH = 10000;
+const AUTO_SAVE_DELAY = 1000;
+
 interface DetailViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: Item | null;
   onUpdate: () => void;
 }
+
 export const DetailViewModal = ({
   open,
   onOpenChange,
@@ -42,7 +45,10 @@ export const DetailViewModal = ({
   onUpdate
 }: DetailViewModalProps) => {
   const [userNotes, setUserNotes] = useState(item?.user_notes || "");
-  const [selectedTag, setSelectedTag] = useState<string>(item?.tags?.[0] || DEFAULT_ITEM_TAG);
+  const [tags, setTags] = useState<string[]>(item?.tags || []);
+  const [newTagInput, setNewTagInput] = useState("");
+  const [isAddingTag, setIsAddingTag] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
@@ -50,15 +56,37 @@ export const DetailViewModal = ({
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [relatedItems, setRelatedItems] = useState<Item[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+
   const isMobile = useIsMobile();
+  const debouncedNotes = useDebounce(userNotes, AUTO_SAVE_DELAY);
+
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus tag input when adding
+  useEffect(() => {
+    if (isAddingTag && tagInputRef.current) {
+      tagInputRef.current.focus();
+    }
+  }, [isAddingTag]);
 
   // Reset state when item changes
   useEffect(() => {
     if (item) {
       setUserNotes(item.user_notes || "");
-      setSelectedTag(item.tags?.[0] || DEFAULT_ITEM_TAG);
+      setTags(item.tags || []);
+      setIsAddingTag(false);
+      setNewTagInput("");
     }
   }, [item]);
+
+  // Autosave notes
+  useEffect(() => {
+    if (!item || !open) return;
+    if (debouncedNotes !== (item.user_notes || "")) {
+      handleSave(debouncedNotes, tags, true);
+    }
+  }, [debouncedNotes]);
 
   // Fetch related items (same tag, excluding current)
   useEffect(() => {
@@ -69,13 +97,14 @@ export const DetailViewModal = ({
       }
       setLoadingRelated(true);
       try {
+        const primaryTag = tags[0] || DEFAULT_ITEM_TAG;
         const { data, error } = await supabase
           .from(SUPABASE_ITEMS_TABLE)
           .select("*")
-          .contains("tags", [selectedTag])
+          .contains("tags", [primaryTag])
           .neq("id", item.id)
           .order("created_at", { ascending: false })
-          .limit(12);
+          .limit(10); // Fetch a few more to filter if needed
 
         if (error) throw error;
 
@@ -101,7 +130,8 @@ export const DetailViewModal = ({
     };
 
     fetchRelated();
-  }, [open, item, selectedTag]);
+  }, [open, item?.id]); // Depend on item.id to refetch when item changes. Removed 'tags' to avoid loop, technically related items could change if tags change, but for now let's keep it stable on item open.
+
   useEffect(() => {
     const generateSignedUrlForItem = async () => {
       if (!item?.content) {
@@ -130,488 +160,448 @@ export const DetailViewModal = ({
     };
     generateSignedUrlForItem();
   }, [item]);
-  const handleSave = useCallback(async () => {
+
+  const handleSave = useCallback(async (notesToSave: string, tagsToSave: string[], silent = false) => {
     if (!item) return;
-    if (userNotes.length > USER_NOTES_MAX_LENGTH) {
+    if (notesToSave.length > USER_NOTES_MAX_LENGTH) {
       toast.error(UPDATE_ERRORS.NOTES_TOO_LONG.title, {
         description: UPDATE_ERRORS.NOTES_TOO_LONG.message
       });
       return;
     }
-    setSaving(true);
+
+    if (!silent) setSaving(true);
     try {
-      const {
-        error
-      } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
-        user_notes: userNotes,
-        tags: [selectedTag]
+      const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
+        user_notes: notesToSave,
+        tags: tagsToSave
       }).eq("id", item.id);
+
       if (error) throw error;
-      toast.success("Changes saved!");
+      if (!silent) toast.success("Changes saved!");
       onUpdate();
     } catch (error: unknown) {
       const errorMessage = getUpdateErrorMessage(error);
       const typedError = toTypedError(error);
-      const networkError = new NetworkError(errorMessage.message, typedError);
-      console.error("Error saving:", networkError);
-      toast.error(errorMessage.title, {
-        description: errorMessage.message
-      });
+      console.error("Error saving:", typedError);
+      if (!silent) toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
-      setSaving(false);
+      if (!silent) setSaving(false);
     }
-  }, [userNotes, selectedTag, item, onUpdate]);
+  }, [item, onUpdate]);
+
+  // Tag Handlers
+  const handleAddTag = () => {
+    const trimmed = newTagInput.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      const newTags = [...tags, trimmed];
+      setTags(newTags);
+      handleSave(userNotes, newTags, true);
+    }
+    setNewTagInput("");
+    setIsAddingTag(false);
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const newTags = tags.filter(t => t !== tagToRemove);
+    setTags(newTags);
+    handleSave(userNotes, newTags, true);
+  };
+
+  const handleKeyDownTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    } else if (e.key === 'Escape') {
+      setIsAddingTag(false);
+      setNewTagInput("");
+    }
+  };
+
   const handleDelete = useCallback(async () => {
     if (!item) return;
     setDeleting(true);
     setShowDeleteAlert(false);
     try {
-      const {
-        error
-      } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
+      const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
       if (error) throw error;
       toast.success("Item removed from your space.");
       onOpenChange(false);
       onUpdate();
     } catch (error: unknown) {
       const errorMessage = getUpdateErrorMessage(error);
-      const typedError = toTypedError(error);
-      const networkError = new NetworkError(errorMessage.message, typedError);
-      console.error("Error deleting:", networkError);
-      toast.error(errorMessage.title, {
-        description: errorMessage.message
-      });
+      console.error("Error deleting:", errorMessage);
+      toast.error(errorMessage.title, { description: errorMessage.message });
     } finally {
       setDeleting(false);
     }
   }, [item, onOpenChange, onUpdate]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if modal is open
-      if (!open) return;
-
-      // Save shortcut: Ctrl+S or Cmd+S
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleSave();
-      }
-
-      // Delete shortcut: Ctrl+D or Cmd+D
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-        e.preventDefault();
-        setShowDeleteAlert(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, handleSave]);
+  // Helpers
   const getIcon = useCallback(() => {
     if (!item) return null;
     switch (item.type) {
-      case "url":
-        return <Link2 className="h-5 w-5" />;
+      case "url": return <Link2 className="h-5 w-5" />;
       case "note":
       case "document":
-      case "file":
-        return <FileText className="h-5 w-5" />;
-      case "image":
-        return <ImageIcon className="h-5 w-5" />;
-      default:
-        return null;
+      case "file": return <FileText className="h-5 w-5" />;
+      case "image": return <ImageIcon className="h-5 w-5" />;
+      default: return null;
     }
   }, [item]);
 
-  // Render preview section based on item type
+  if (!item) return null;
+
+  // Type Detection
+  const isVideoContent = item.type === 'video' || (item.type === 'url' && item.content && isVideoUrl(item.content));
+  const isDocumentContent = item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'));
+  const isNoteContent = item.type === 'note';
+  // const isImageContent = item.type === 'image'; // unused for now
+
+  // --- LAYOUT LOGIC UPGRADE ---
+
+  // 1. Size Classes: responsive clamp-like sizing
+  const modalSizeClasses = "w-[95vw] max-w-[1400px] h-[85vh] min-h-[600px] max-h-[1000px]";
+
+  // 2. Grid Layout Ratios
+  const getGridLayout = () => {
+    // Base: Mobile 1 col, Desktop split
+    // Video: Maximize left col, standard sidebar
+    // Doc/Note: Standard split
+    return "grid-cols-1 lg:grid-cols-[1fr_24rem] xl:grid-cols-[1fr_26rem]";
+  };
+
+  // 3. Preview Container Styling
+  const getPreviewContainerStyles = () => {
+    const base = "w-full rounded-2xl overflow-hidden relative";
+    if (isVideoContent) return `${base} aspect-video bg-black flex items-center justify-center`;
+    if (isDocumentContent) return `${base} h-[60vh] lg:h-full bg-muted/30 border border-border/40`;
+    if (isNoteContent) return `${base} min-h-[300px] bg-card border border-border/40 p-6`;
+    return `${base} min-h-[400px] bg-muted/20 border border-border/40 flex items-center justify-center`;
+  };
+
   const renderPreview = () => {
     if (!item) return null;
 
-    // For note-type items - show the note content as a styled preview
     if (item.type === 'note' && item.content) {
-      return <div className="rounded-xl overflow-hidden bg-card border border-border/50 mb-4">
-        <NotePreview content={item.content} variant="full" showProgress={true} className="min-h-[200px]" />
-      </div>;
+      return (
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          <NotePreview content={item.content} variant="full" showProgress={false} />
+        </div>
+      );
     }
 
-    // For URL-type items
     if (item.type === 'url' && item.content) {
-      // Check if it's a video URL (YouTube, Vimeo)
       if (isVideoUrl(item.content)) {
-        return <VideoPreview url={item.content} title={item.title} className="mb-4" />;
+        return <VideoPreview url={item.content} title={item.title} className="w-full h-full" />;
       }
-
-      // Show thumbnail for non-video URLs
       if (item.preview_image_url) {
-        return <ThumbnailPreview imageUrl={item.preview_image_url} linkUrl={item.content} title={item.title} className="h-full" variant="contain" />;
+        return <ThumbnailPreview imageUrl={item.preview_image_url} linkUrl={item.content} title={item.title} className="w-full h-full object-contain" variant="cover" />;
       }
-
-      // Fallback for URLs without thumbnail
-      return null;
     }
 
-    // For file-type items (PDF, DOCX, etc.)
     if (item.content && item.type !== 'url' && item.type !== 'note') {
       return (
-        <div className="h-full flex flex-col rounded-xl overflow-hidden bg-muted">
-          {/* PDF/File preview with internal scrolling */}
-          <div className="flex-1 min-h-0">
-            {loadingSignedUrl ? (
-              <div className="h-full flex items-center justify-center">
-                <LoadingSpinner size="sm" text="Loading file preview..." />
-              </div>
-            ) : signedUrl ? (
-              <>
-                {item.content?.toLowerCase().endsWith(".pdf") ? (
-                  <PDFPreview url={signedUrl} className="h-full" />
-                ) : item.content?.toLowerCase().endsWith(".docx") ? (
-                  <DOCXPreview url={signedUrl} className="h-full" />
-                ) : (
-                  <div className="h-full flex items-center justify-center">
-                    <div className="text-center">
-                      <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">File preview</p>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                File preview unavailable
-              </div>
-            )}
-          </div>
-          {/* "Open full PDF" link - always visible at bottom */}
+        <div className="h-full flex flex-col">
+          {loadingSignedUrl ? (
+            <div className="h-full flex items-center justify-center">
+              <LoadingSpinner size="sm" text="Loading file preview..." />
+            </div>
+          ) : signedUrl ? (
+            <>
+              {item.content?.toLowerCase().endsWith(".pdf") ? (
+                <PDFPreview url={signedUrl} className="h-full" />
+              ) : item.content?.toLowerCase().endsWith(".docx") ? (
+                <DOCXPreview url={signedUrl} className="h-full" />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                  <FileText className="h-16 w-16 mb-4 opacity-50" />
+                  <p>Preview available in full view</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">Preview unavailable</div>
+          )}
+
           {signedUrl && (
             <a
               href={signedUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-shrink-0 flex items-center gap-2 text-sm font-medium text-primary hover:underline px-3 py-3 bg-muted/50 border-t border-border/50"
+              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 text-xs font-medium bg-background/90 backdrop-blur-sm px-3 py-2 rounded-full shadow-sm hover:bg-background transition-colors border border-border/50"
             >
-              <ExternalLink className="h-4 w-4" />
-              {item.content?.toLowerCase().endsWith(".pdf")
-                ? "Open full PDF in browser"
-                : item.content?.toLowerCase().endsWith(".docx")
-                  ? "Open full document in browser"
-                  : "Open file in browser"}
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open Original
             </a>
           )}
         </div>
       );
     }
-    return null;
-  };
-  if (!item) return null;
 
-  // Content type detection helpers
-  const isVideoContent = item.type === 'video' || (item.type === 'url' && item.content && isVideoUrl(item.content));
-  const isDocumentContent = item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'));
-  const isNoteContent = item.type === 'note';
-  const isImageContent = item.type === 'image';
-  const isUrlContent = item.type === 'url' && !isVideoContent;
-
-  // Unified modal sizing - consistent across all content types
-  const modalClasses = "w-full max-w-[1200px] h-[min(720px,85vh)] transition-all duration-200 ease-out";
-
-  // Unified grid layout - 70/30 split like reference design
-  const gridLayout = "grid-cols-1 lg:grid-cols-[2fr_1fr]";
-
-  // Unified preview container styling
-  const getPreviewContainerStyles = () => {
-    const baseStyles = "flex-1 min-h-0 rounded-xl overflow-hidden";
-    if (isVideoContent) return `${baseStyles} bg-black`;
-    if (isDocumentContent) return `${baseStyles} bg-muted/30`;
-    if (isNoteContent) return `${baseStyles} bg-card border border-border/40`;
-    return `${baseStyles} bg-muted/20 border border-border/40`;
+    // Fallback
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+          {getIcon()}
+        </div>
+        <p>No preview available</p>
+      </div>
+    );
   };
 
-  // Desktop detail content component
-  const DetailContent = () => (
-    <div className="flex flex-col h-full gap-4">
-      {/* Adaptive Grid based on content type */}
-      <div className={`grid ${gridLayout} gap-6 flex-1 min-h-0`}>
-        {/* Left Panel - Preview */}
-        <div className="flex flex-col min-h-0 h-full">
-          <div className={getPreviewContainerStyles()}>
-            {renderPreview() || (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center p-8 space-y-4">
-                  <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
-                    <span className="text-primary text-2xl">{getIcon()}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">No preview available</p>
-                </div>
-              </div>
-            )}
-          </div>
-          {/* URL Link */}
-          {item.type === "url" && item.content && (
-            <a
-              href={item.content}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-shrink-0 flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors mt-2 px-1"
-            >
-              <Link2 className="h-3.5 w-3.5" />
-              Open original source
-            </a>
-          )}
+  const MobileDetailContent = () => (
+    <div className="space-y-6 pb-20">
+      {/* Simplified mobile view reuse logic but adapt styling */}
+      <div className="aspect-video w-full bg-muted rounded-xl overflow-hidden relative">
+        {renderPreview()}
+      </div>
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold leading-tight">{item.title}</h2>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="w-4 h-4" />
+          <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
+        </div>
+      </div>
+
+      {/* Mobile Tabs/Sections could go here, keeping it simple for now matching reference functionally */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Notes</h3>
+        <Textarea
+          value={userNotes}
+          onChange={(e) => setUserNotes(e.target.value)}
+          placeholder="Add your notes..."
+          className="bg-muted/30 min-h-[120px]"
+        />
+      </div>
+
+      {/* Mobile Actions */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 border-t bg-background/95 backdrop-blur flex items-center justify-between">
+        <Button variant="ghost" size="icon" onClick={() => handleSave(userNotes, tags)}><Save className="w-5 h-5" /></Button>
+        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
+      </div>
+    </div>
+  );
+
+  const DesktopDetailContent = () => (
+    <div className={`grid h-full gap-8 ${getGridLayout()}`}>
+      {/* LEFT COLUMN: Preview + Related Items */}
+      <div className="flex flex-col min-h-0 gap-8 hide-scrollbar overflow-y-auto pr-2">
+        {/* Main Preview */}
+        <div className={getPreviewContainerStyles()}>
+          {renderPreview()}
         </div>
 
-        {/* Right side - Details Panel (Reference Design) */}
-        <div className="flex flex-col min-h-0 h-full bg-muted/30 rounded-xl p-5 border border-border/40">
-          {/* Scrollable content area */}
-          <div className="flex-1 overflow-y-auto scrollbar-hide space-y-5">
-            {/* Header - Title, Date, Source */}
-            <div>
-              <h2 className="text-xl font-semibold leading-tight text-foreground line-clamp-2 mb-2" title={item.title}>
-                {item.title}
-              </h2>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
-                {item.type === 'url' && item.content && (
-                  <>
-                    <Globe className="h-3.5 w-3.5" />
-                    <a 
-                      href={item.content} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline truncate max-w-[180px]"
-                    >
-                      {new URL(item.content).hostname}
-                    </a>
-                  </>
-                )}
-              </div>
+        {/* Related Items (Hidden for Video) */}
+        {!isVideoContent && relatedItems.length > 0 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h3 className="text-lg font-semibold tracking-tight">Related to this</h3>
+            <div className={`grid gap-4 ${isDocumentContent ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 masonry-grid'}`}>
+              {relatedItems.slice(0, isDocumentContent ? 4 : 6).map((related) => (
+                <ItemCard
+                  key={related.id}
+                  {...related}
+                  onClick={() => {
+                    // ItemCard might need local handling or it just works if using a global store/router
+                    // For now assuming it opens separately, ideally we switch content here
+                  }}
+                />
+              ))}
             </div>
+          </div>
+        )}
+      </div>
 
-            {/* TLDR Summary */}
-            {item.summary && (
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-primary uppercase tracking-wider">TLDR</label>
-                <div className="p-3 rounded-lg bg-background border-l-2 border-primary/50 text-sm leading-relaxed text-foreground/90">
-                  {item.summary}
+      {/* RIGHT COLUMN: Sidebar */}
+      <div className="flex flex-col h-full min-h-0 bg-muted/30 border border-t-0 border-r-0 border-b-0 border-l border-border/50 -my-6 py-6 pl-6">
+        <div className="flex-1 overflow-y-auto pr-2 space-y-8 scrollbar-thin">
+
+          {/* HEADER */}
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold leading-snug tracking-tight text-foreground">{item.title}</h2>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+              </span>
+              {item.type === 'url' && item.content && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                  <a
+                    href={item.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[200px]"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    {new URL(item.content).hostname}
+                    <ExternalLink className="w-3 h-3 opacity-50" />
+                  </a>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* SUMMARY CARD */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className={`text-[10px] font-bold tracking-widest uppercase ${isVideoContent ? 'text-orange-500' : 'text-blue-500'}`}>
+                {isVideoContent ? 'TLDW' : 'TLDR'}
+              </span>
+            </div>
+            <div className="p-4 rounded-xl border border-border/60 bg-background/50 text-sm leading-relaxed text-muted-foreground shadow-sm">
+              {item.summary || "No summary available for this item."}
+            </div>
+          </div>
+
+          {/* TAGS SECTION */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Mind Tags</span>
+              {/* Small icon if needed */}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {/* Add Tag Button */}
+              {isAddingTag ? (
+                <div className="flex items-center h-7 bg-background border border-primary rounded-full px-2 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                  <Input
+                    ref={tagInputRef}
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    onKeyDown={handleKeyDownTag}
+                    onBlur={() => {
+                      if (newTagInput.trim()) handleAddTag();
+                      else setIsAddingTag(false);
+                    }}
+                    className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
+                    placeholder="Tag name..."
+                  />
                 </div>
-              </div>
-            )}
-
-            {/* Action Button - "I've watched/read this" */}
-            {(isVideoContent || isDocumentContent) && (
-              <Button 
-                variant="outline" 
-                className="w-full justify-start gap-3 h-11 border-border/60 hover:bg-muted/50"
-                onClick={() => toast.success(isVideoContent ? "Marked as watched!" : "Marked as read!")}
-              >
-                <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm">{isVideoContent ? "I've watched this video" : "I've read this"}</span>
-              </Button>
-            )}
-
-            {/* MIND TAGS Section */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Mind Tags</label>
-                <span className="text-xs text-muted-foreground">?</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  size="sm" 
-                  className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs font-medium"
+              ) : (
+                <button
+                  onClick={() => setIsAddingTag(true)}
+                  className="h-7 px-3 flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold rounded-full transition-colors"
                 >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  <Plus className="w-3.5 h-3.5" />
                   Add tag
-                </Button>
-                {item.tags?.map((tag) => (
-                  <Badge 
-                    key={tag} 
-                    variant="secondary" 
-                    className="h-8 px-3 rounded-full text-xs font-medium bg-background border border-border hover:bg-muted cursor-pointer"
+                </button>
+              )}
+
+              {/* Tag List */}
+              {tags.map(tag => (
+                <div key={tag} className="group relative">
+                  <Badge
+                    variant="secondary"
+                    className="h-7 px-3 rounded-full text-xs font-medium bg-muted/50 hover:bg-muted border border-transparent hover:border-border/50 transition-all cursor-default flex items-center gap-1"
                   >
                     {tag}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
+                      className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-background/80 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all -mr-1"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
                   </Badge>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            {/* MIND NOTES Section */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Mind Notes</label>
-                <span className="text-xs text-muted-foreground">?</span>
-              </div>
-              <Input
+          {/* NOTES SECTION */}
+          <div className="space-y-3 flex-1 flex flex-col min-h-[150px]">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Mind Notes</span>
+            </div>
+            <div className="relative flex-1">
+              <Textarea
+                ref={notesRef}
                 placeholder="Type here to add a note..."
                 value={userNotes}
                 onChange={(e) => setUserNotes(e.target.value)}
-                className="h-11 bg-background border-border/60 placeholder:text-muted-foreground/50"
+                className="w-full h-full min-h-[120px] resize-none border-0 bg-transparent p-0 focus-visible:ring-0 text-sm leading-relaxed placeholder:text-muted-foreground/40 -ml-1 pl-1"
               />
+              {/* Optional: autosave indicator */}
+              <div className="absolute bottom-0 right-0 text-[10px] text-muted-foreground/50 transition-opacity duration-500">
+                {saving ? "Saving..." : "Autosaved"}
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Footer Actions - Fixed at bottom */}
-          <div className="flex items-center justify-center gap-4 pt-4 mt-4 border-t border-border/50">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full hover:bg-muted"
-              onClick={handleSave}
-              disabled={saving}
-              aria-label="Save"
-            >
-              <Circle className="h-5 w-5 text-muted-foreground" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full hover:bg-muted"
-              onClick={() => {
-                navigator.clipboard.writeText(item.content || item.title);
-                toast.success("Copied to clipboard!");
-              }}
-              aria-label="Share"
-            >
-              <Share2 className="h-5 w-5 text-muted-foreground" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full hover:bg-muted text-destructive hover:text-destructive"
-              onClick={() => setShowDeleteAlert(true)}
-              disabled={deleting}
-              aria-label="Delete"
-            >
-              <Trash2 className="h-5 w-5" />
-            </Button>
-          </div>
+        {/* BOTTOM ACTIONS */}
+        <div className="pt-4 mt-auto flex items-center justify-center gap-6 border-t border-border/40">
+          <button
+            onClick={() => handleSave(userNotes, tags)}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            title="Save Manually"
+          >
+            <CheckCircle2 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => {
+              if (item.content) {
+                navigator.clipboard.writeText(item.content);
+                toast.success("Copied to clipboard");
+              }
+            }}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            title="Share / Copy Link"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setShowDeleteAlert(true)}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            title="Delete Item"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>
   );
 
-  // Mobile content - vertical layout
-  const MobileDetailContent = () => (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <span className="text-primary">{getIcon()}</span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold line-clamp-2" title={item.title}>{item.title}</h2>
-            <p className="text-xs text-muted-foreground">{selectedTag}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Preview */}
-      {renderPreview()}
-
-      {/* URL Link */}
-      {item.type === "url" && item.content && (
-        <a
-          href={item.content}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-        >
-          <Link2 className="h-4 w-4" />
-          Open original
-        </a>
+  return (
+    <>
+      {isMobile ? (
+        <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>{item.title}</DrawerTitle>
+              <DrawerDescription>Item details</DrawerDescription>
+            </DrawerHeader>
+            <div className="p-4 overflow-y-auto">
+              <MobileDetailContent />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className={`${modalSizeClasses} p-8 border-0 shadow-2xl bg-background/80 backdrop-blur-md`}>
+            <DialogHeader className="sr-only">
+              <DialogTitle>{item.title}</DialogTitle>
+              <DialogDescription>Item details</DialogDescription>
+            </DialogHeader>
+            <DesktopDetailContent />
+          </DialogContent>
+        </Dialog>
       )}
 
-      {/* Summary */}
-      {item.summary && (
-        <div className="space-y-2.5 pb-6 border-b border-border/50">
-          <h3 className="text-sm font-semibold text-foreground">Summary</h3>
-          <p className="text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
-        </div>
-      )}
-
-      {/* Category */}
-      <div className="space-y-2.5">
-        <label htmlFor="category-select-mobile" className="text-sm font-semibold text-foreground block">
-          Category
-        </label>
-        <select
-          id="category-select-mobile"
-          value={selectedTag}
-          onChange={(e) => setSelectedTag(e.target.value)}
-          className="w-full px-3 py-2.5 rounded-lg border border-border bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
-          aria-label="Select category"
-        >
-          {CATEGORY_OPTIONS.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-          {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
-            <option value={selectedTag}>{selectedTag}</option>
-          )}
-        </select>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2 pt-3 border-t border-border/50">
-        <LoadingButton
-          onClick={handleSave}
-          loading={saving}
-          className="flex-1"
-          aria-label="Save changes"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Save
-        </LoadingButton>
-        <Button
-          onClick={() => setShowDeleteAlert(true)}
-          disabled={deleting}
-          variant="ghost"
-          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          aria-label="Delete item"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+      {/* Delete Alert */}
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the item from your library.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
-  return <>
-    {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[95vh] pb-safe">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>{item.title}</DrawerTitle>
-          <DrawerDescription>Detailed item view</DrawerDescription>
-        </DrawerHeader>
-        <div className="overflow-y-auto px-4 pb-4">
-          <MobileDetailContent />
-        </div>
-      </DrawerContent>
-    </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={`${modalClasses} max-w-[95vw] overflow-hidden border-0 glass-card p-6 flex flex-col shadow-2xl`}
-      >
-        <DialogHeader className="sr-only">
-          <DialogTitle>{item.title}</DialogTitle>
-          <DialogDescription>Detailed item view</DialogDescription>
-        </DialogHeader>
-        <DetailContent />
-      </DialogContent>
-    </Dialog>}
-
-    {/* Delete Confirmation Dialog */}
-    <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-      <AlertDialogContent className="glass-card border-0">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will permanently delete "{item?.title}" from your space. This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel className="glass-input min-h-[44px]">Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]">
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  </>;
 };

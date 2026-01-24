@@ -8,7 +8,7 @@ interface ThumbnailPreviewProps {
   linkUrl?: string;
   title?: string;
   className?: string;
-  variant?: 'square' | 'contain';
+  variant?: 'square' | 'contain' | 'cover';
   onClick?: () => void;
 }
 
@@ -44,7 +44,7 @@ export const ThumbnailPreview = ({
 
   if (imageError || !imageUrl) {
     return (
-      <div className={`rounded-xl overflow-hidden bg-muted ${className} ${variant === 'contain' ? 'h-full w-full' : ''}`}>
+      <div className={`rounded-xl overflow-hidden bg-muted ${className} ${variant === 'contain' || variant === 'cover' ? 'h-full w-full' : ''}`}>
         <Wrapper {...wrapperProps}>
           <div className="w-full h-full flex items-center justify-center">
             <ImageIcon className="h-12 w-12 text-muted-foreground/40" />
@@ -56,7 +56,7 @@ export const ThumbnailPreview = ({
 
   return (
     <div
-      className={`relative rounded-xl overflow-hidden bg-muted group cursor-pointer ${className} ${variant === 'contain' ? 'h-full w-full' : ''}`}
+      className={`relative rounded-xl overflow-hidden bg-muted group cursor-pointer ${className} ${variant === 'contain' || variant === 'cover' ? 'h-full w-full' : ''}`}
       onClick={handleClick}
     >
       <Wrapper {...wrapperProps}>
