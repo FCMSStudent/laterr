@@ -256,19 +256,29 @@ export const DetailViewModal = ({
   const isVideoContent = item.type === 'video' || (item.type === 'url' && item.content && isVideoUrl(item.content));
   const isDocumentContent = item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'));
   const isNoteContent = item.type === 'note';
-  // const isImageContent = item.type === 'image'; // unused for now
+  const isUrlContent = item.type === 'url';
+  const isImageContent = item.type === 'image';
 
   // --- LAYOUT LOGIC UPGRADE ---
 
   // 1. Size Classes: responsive clamp-like sizing
-  const modalSizeClasses = "w-[95vw] max-w-[1400px] h-[85vh] min-h-[600px] max-h-[1000px]";
+  const modalSizeClasses = "w-[min(95vw,1400px)] h-[clamp(70vh,80vh,85vh)] min-h-[600px]";
 
   // 2. Grid Layout Ratios
   const getGridLayout = () => {
     // Base: Mobile 1 col, Desktop split
     // Video: Maximize left col, standard sidebar
     // Doc/Note: Standard split
-    return "grid-cols-1 lg:grid-cols-[1fr_24rem] xl:grid-cols-[1fr_26rem]";
+    if (isVideoContent) {
+      return "grid-cols-1 lg:grid-cols-[1fr_0.6fr] xl:grid-cols-[1fr_0.55fr]";
+    }
+    if (isDocumentContent) {
+      return "grid-cols-1 lg:grid-cols-[1fr_0.7fr] xl:grid-cols-[1fr_0.65fr]";
+    }
+    if (isNoteContent || isUrlContent || isImageContent) {
+      return "grid-cols-1 lg:grid-cols-[1fr_0.65fr] xl:grid-cols-[1fr_0.6fr]";
+    }
+    return "grid-cols-1 lg:grid-cols-[1fr_0.7fr] xl:grid-cols-[1fr_0.65fr]";
   };
 
   // 3. Preview Container Styling
