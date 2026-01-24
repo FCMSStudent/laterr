@@ -537,8 +537,8 @@ export const DetailViewModal = ({
       </div>
 
       {/* RIGHT COLUMN: Sidebar */}
-      <div className="flex flex-col h-full min-h-0 bg-muted/30 border border-t-0 border-r-0 border-b-0 border-l border-border/50 -my-6 py-6 pl-6">
-        <div className="flex-1 overflow-y-auto pr-2 space-y-8 scrollbar-thin">
+      <div className="flex flex-col h-full min-h-0 bg-muted/30 border border-t-0 border-r-0 border-b-0 border-l border-border/50 my-0 pl-6 overflow-hidden">
+        <div className="flex-1 overflow-y-auto pt-6 pb-6 pr-2 space-y-8 scrollbar-thin">
 
           {/* HEADER */}
           <div className="space-y-3">
