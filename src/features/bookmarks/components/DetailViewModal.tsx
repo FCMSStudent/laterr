@@ -13,7 +13,10 @@ import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPrevi
 import { RichNotesEditor } from "@/features/bookmarks/components/RichNotesEditor";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
 import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Share2, Circle, Globe, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/ui";
+import { Input } from "@/ui";
+import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -356,124 +359,132 @@ export const DetailViewModal = ({
           )}
         </div>
 
-        {/* Right side - Details */}
-        <div className="flex flex-col min-h-0 overflow-y-auto scrollbar-hide pr-1">
-          {/* Header */}
-          <div className="flex items-start gap-3 mb-4">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shadow-sm">
-              <span className="text-primary">{getIcon()}</span>
-            </div>
-            <div className="min-w-0 flex-1 pt-0.5 pr-8">
-              <h2 className="text-lg font-bold leading-tight text-foreground line-clamp-2" title={item.title}>{item.title}</h2>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
-                  {selectedTag}
-                </span>
-                {item.type !== 'url' && (
-                  <span className="text-xs text-muted-foreground capitalize">• {item.type}</span>
+        {/* Right side - Details Panel (Reference Design) */}
+        <div className="flex flex-col min-h-0 h-full bg-muted/30 rounded-xl p-5 border border-border/40">
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide space-y-5">
+            {/* Header - Title, Date, Source */}
+            <div>
+              <h2 className="text-xl font-semibold leading-tight text-foreground line-clamp-2 mb-2" title={item.title}>
+                {item.title}
+              </h2>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
+                {item.type === 'url' && item.content && (
+                  <>
+                    <Globe className="h-3.5 w-3.5" />
+                    <a 
+                      href={item.content} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline truncate max-w-[180px]"
+                    >
+                      {new URL(item.content).hostname}
+                    </a>
+                  </>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Summary */}
-          {item.summary && (
-            <div className="space-y-2 mb-4">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Summary</label>
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/50 text-sm leading-relaxed text-foreground/90">
-                {item.summary}
-              </div>
-            </div>
-          )}
-
-          {/* Category */}
-          <div className="space-y-2 mb-4">
-            <label htmlFor="category-select" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Category
-            </label>
-            <div className="relative">
-              <select
-                id="category-select"
-                value={selectedTag}
-                onChange={(e) => setSelectedTag(e.target.value)}
-                className="w-full pl-3 pr-8 py-2.5 rounded-lg border border-border bg-background hover:bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer appearance-none"
-                aria-label="Select category"
-              >
-                {CATEGORY_OPTIONS.map(({ value, label }) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-                {!CATEGORY_OPTIONS.some((option) => option.value === selectedTag) && (
-                  <option value={selectedTag}>{selectedTag}</option>
-                )}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Related items */}
-          {relatedItems.length > 0 && (
-            <div className="space-y-2 mb-4">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Related
-              </label>
-              {loadingRelated ? (
-                <div className="text-sm text-muted-foreground">Loading…</div>
-              ) : (
-                <div className="columns-1 gap-3 [column-fill:_balance]">
-                  {relatedItems.slice(0, 4).map((rel) => (
-                    <div key={rel.id} className="break-inside-avoid mb-3">
-                      <BookmarkCard
-                        id={rel.id}
-                        type={rel.type as ItemType}
-                        title={rel.title}
-                        summary={rel.summary}
-                        previewImageUrl={rel.preview_image_url}
-                        content={rel.content}
-                        tags={rel.tags ?? []}
-                        createdAt={rel.created_at}
-                        onClick={() => {
-                          onOpenChange(false);
-                          window.dispatchEvent(
-                            new CustomEvent("bookmarks:open-item", {
-                              detail: { id: rel.id },
-                            })
-                          );
-                        }}
-                        onTagClick={() => {}}
-                      />
-                    </div>
-                  ))}
+            {/* TLDR Summary */}
+            {item.summary && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-primary uppercase tracking-wider">TLDR</label>
+                <div className="p-3 rounded-lg bg-background border-l-2 border-primary/50 text-sm leading-relaxed text-foreground/90">
+                  {item.summary}
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+              </div>
+            )}
 
-      {/* Footer Actions - Fixed at bottom */}
-      <div className="flex gap-3 pt-4 mt-2 border-t border-border/50 flex-shrink-0">
-        <LoadingButton
-          onClick={handleSave}
-          loading={saving}
-          className="flex-1 shadow-sm"
-          aria-label="Save changes"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Save Changes
-        </LoadingButton>
-        <Button
-          onClick={() => setShowDeleteAlert(true)}
-          disabled={deleting}
-          variant="outline"
-          className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-          aria-label="Delete item"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+            {/* Action Button - "I've watched/read this" */}
+            {(isVideoContent || isDocumentContent) && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-3 h-11 border-border/60 hover:bg-muted/50"
+                onClick={() => toast.success(isVideoContent ? "Marked as watched!" : "Marked as read!")}
+              >
+                <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+                <span className="text-sm">{isVideoContent ? "I've watched this video" : "I've read this"}</span>
+              </Button>
+            )}
+
+            {/* MIND TAGS Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Mind Tags</label>
+                <span className="text-xs text-muted-foreground">?</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  size="sm" 
+                  className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-xs font-medium"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Add tag
+                </Button>
+                {item.tags?.map((tag) => (
+                  <Badge 
+                    key={tag} 
+                    variant="secondary" 
+                    className="h-8 px-3 rounded-full text-xs font-medium bg-background border border-border hover:bg-muted cursor-pointer"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* MIND NOTES Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Mind Notes</label>
+                <span className="text-xs text-muted-foreground">?</span>
+              </div>
+              <Input
+                placeholder="Type here to add a note..."
+                value={userNotes}
+                onChange={(e) => setUserNotes(e.target.value)}
+                className="h-11 bg-background border-border/60 placeholder:text-muted-foreground/50"
+              />
+            </div>
+          </div>
+
+          {/* Footer Actions - Fixed at bottom */}
+          <div className="flex items-center justify-center gap-4 pt-4 mt-4 border-t border-border/50">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full hover:bg-muted"
+              onClick={handleSave}
+              disabled={saving}
+              aria-label="Save"
+            >
+              <Circle className="h-5 w-5 text-muted-foreground" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full hover:bg-muted"
+              onClick={() => {
+                navigator.clipboard.writeText(item.content || item.title);
+                toast.success("Copied to clipboard!");
+              }}
+              aria-label="Share"
+            >
+              <Share2 className="h-5 w-5 text-muted-foreground" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full hover:bg-muted text-destructive hover:text-destructive"
+              onClick={() => setShowDeleteAlert(true)}
+              disabled={deleting}
+              aria-label="Delete"
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
