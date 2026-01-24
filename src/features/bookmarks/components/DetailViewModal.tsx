@@ -573,7 +573,7 @@ export const DetailViewModal = ({
                 {isVideoContent ? 'TLDW' : 'TLDR'}
               </span>
             </div>
-            <div className="p-4 rounded-xl border border-border/60 bg-background/50 text-sm leading-relaxed text-muted-foreground shadow-sm">
+            <div className="p-4 rounded-xl border border-border/60 bg-background/50 text-sm leading-relaxed text-muted-foreground shadow-sm break-words max-w-full whitespace-normal">
               {item.summary ? (
                 item.summary
               ) : (
