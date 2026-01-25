@@ -12,6 +12,41 @@ import {
 } from "@/shared/lib/storage-constants";
 import type { Item } from "@/features/bookmarks/types";
 
+export interface UploadValidationOptions {
+  allowedMimeTypes?: readonly string[];
+  maxFileSizeBytes?: number;
+}
+
+export interface UploadValidationError {
+  code: 'FILE_TOO_LARGE' | 'INVALID_FILE_TYPE' | 'NO_FILE';
+  message: string;
+}
+
+/**
+ * Validates a file for upload based on provided options
+ * @throws UploadValidationError if validation fails
+ */
+export function validateFileForUpload(file: File | null, options?: UploadValidationOptions): void {
+  if (!file) {
+    throw { code: 'NO_FILE', message: 'No file provided' } as UploadValidationError;
+  }
+
+  if (options?.maxFileSizeBytes && file.size > options.maxFileSizeBytes) {
+    const maxSizeMB = Math.round(options.maxFileSizeBytes / (1024 * 1024));
+    throw { 
+      code: 'FILE_TOO_LARGE', 
+      message: `File size exceeds ${maxSizeMB}MB limit` 
+    } as UploadValidationError;
+  }
+
+  if (options?.allowedMimeTypes && !options.allowedMimeTypes.includes(file.type)) {
+    throw { 
+      code: 'INVALID_FILE_TYPE', 
+      message: `File type ${file.type} is not supported` 
+    } as UploadValidationError;
+  }
+}
+
 interface StorageUploadOptions {
   cacheControl?: string;
   contentType?: string;
@@ -144,10 +179,8 @@ export async function uploadFileToStorageWithSignedUrl({
  */
 export async function uploadFileToStorage(
   file: File,
-  userId: string,
-  options?: UploadValidationOptions
+  userId: string
 ): Promise<{ fileName: string; storagePath: string }> {
-  validateFileForUpload(file, options);
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
   

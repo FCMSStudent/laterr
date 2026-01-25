@@ -84,7 +84,7 @@ export const useHealthDocuments = () => {
         .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
-      const fileUrl = signedUrl ?? fileName;
+      const fileUrl = urlData?.signedUrl ?? fileName;
 
       // Generate summary and embedding
       let summary: string | null = null;

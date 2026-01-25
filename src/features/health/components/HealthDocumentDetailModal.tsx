@@ -110,6 +110,12 @@ export const HealthDocumentDetailModal = ({
   const handleExtractData = async () => {
     setExtracting(true);
     try {
+      // Get the current session to retrieve the access token
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) {
+        throw new Error('Authentication required');
+      }
+      
       // First get the document content - for now we'll use the summary as content
       // In a real implementation, you'd fetch and parse the actual file
       const contentToAnalyze = document.summary || `Health document: ${document.title}. Type: ${document.document_type}.`;
@@ -120,7 +126,7 @@ export const HealthDocumentDetailModal = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${sessionData.session.access_token}`,
           },
           body: JSON.stringify({
             content: contentToAnalyze,

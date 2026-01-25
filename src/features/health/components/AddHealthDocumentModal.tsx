@@ -16,7 +16,19 @@ import { HEALTH_TABLES, DOCUMENT_TYPES } from "@/features/health/constants";
 import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from "@/shared/lib/storage-constants";
 import type { DocumentType } from "@/features/health/types";
 import { format } from "date-fns";
-import { uploadFileToStorageWithSignedUrl } from "@/shared/lib/supabase-utils";
+import { uploadFileToStorageWithSignedUrl, validateFileForUpload, type UploadValidationOptions } from "@/shared/lib/supabase-utils";
+import { getUploadErrorMessage } from "@/shared/lib/error-messages";
+
+const HEALTH_DOCUMENT_VALIDATION_OPTIONS: UploadValidationOptions = {
+  allowedMimeTypes: [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  ],
+  maxFileSizeBytes: 20 * 1024 * 1024, // 20MB
+};
 
 const ALLOWED_FILE_TYPES = [
   'application/pdf',
@@ -168,7 +180,7 @@ export const AddHealthDocumentModal = ({
         .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
 
-      const fileUrl = signedUrl ?? fileName;
+      const fileUrl = urlData?.signedUrl ?? fileName;
 
       // Generate summary using AI
       setStatusStep('analyzing');
