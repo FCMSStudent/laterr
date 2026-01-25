@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui";
 import { Button } from "@/ui";
-import { LoadingButton } from "@/ui";
 import { LoadingSpinner } from "@/ui";
 
 import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
@@ -11,17 +10,16 @@ import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
-import { ItemCard } from "@/features/bookmarks/components/ItemCard";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Share2, Circle, Globe, CheckCircle2, Clock, X, Edit2 } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Share2, Globe, CheckCircle2, Clock, X, Edit2 } from "lucide-react";
 import { Badge } from "@/ui";
 import { Input, Textarea } from "@/ui";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
+import { DEFAULT_ITEM_TAG, SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
 import { generateSignedUrl, generateSignedUrlsForItems } from "@/shared/lib/supabase-utils";
-import { NetworkError, toTypedError } from "@/shared/types/errors";
+import { toTypedError } from "@/shared/types/errors";
 import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/shared/lib/error-messages";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import type { Item } from "@/features/bookmarks/types";
@@ -33,6 +31,15 @@ const AUTO_SAVE_DELAY = 500;
 const areTagsEqual = (left: string[], right: string[]) => (
   left.length === right.length && left.every((tag, index) => tag === right[index])
 );
+
+const safeParseUrl = (value: string | null | undefined) => {
+  if (!value) return null;
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+};
 
 interface DetailViewModalProps {
   open: boolean;
@@ -68,6 +75,7 @@ export const DetailViewModal = ({
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
   const editTagInputRef = useRef<HTMLInputElement>(null);
+  const autosaveItemIdRef = useRef<Item["id"] | null>(null);
 
   // Focus tag input when adding
   useEffect(() => {
@@ -108,6 +116,16 @@ export const DetailViewModal = ({
       handleSave(debouncedNotes, tags, true);
     }
   }, [debouncedNotes, open, item, tags, userNotes, handleSave]);
+    if (!item || !open) {
+      autosaveItemIdRef.current = null;
+      return;
+    }
+    autosaveItemIdRef.current = item.id;
+    if (debouncedNotes !== (item.user_notes || "")) {
+      if (autosaveItemIdRef.current !== item.id) return;
+      handleSave(debouncedNotes, tags, true);
+    }
+  }, [debouncedNotes, item?.id, open, tags, handleSave]);
 
   // Fetch related items (same tag, excluding current)
   useEffect(() => {
@@ -533,7 +551,7 @@ export const DetailViewModal = ({
                     className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[200px]"
                   >
                     <Globe className="w-3.5 h-3.5" />
-                    {new URL(item.content).hostname}
+                    {(safeParseUrl(item.content)?.hostname ?? item.content)}
                     <ExternalLink className="w-3 h-3 opacity-50" />
                   </a>
                 </>
