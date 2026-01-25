@@ -35,6 +35,68 @@ const summarizeAiResponse = (data: any, status: number) => ({
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
 const DEBUG_LOGS = Deno.env.get("DEBUG_LOGS") === "true";
+const MAX_FILE_URL_LENGTH = 2048;
+const MAX_FILE_NAME_LENGTH = 255;
+
+const createErrorResponse = (
+  status: number,
+  code: string,
+  message: string,
+  details?: string[],
+  requestId?: string
+) => {
+  const body = {
+    error: {
+      code,
+      message,
+      ...(details ? { details } : {}),
+    },
+  };
+
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      ...(requestId ? { "x-request-id": requestId } : {}),
+    },
+  });
+};
+
+const isBlockedHostname = (hostname: string): boolean => {
+  const normalized = hostname.toLowerCase();
+  const blockedHosts = new Set([
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0",
+    "169.254.169.254",
+    "::1",
+  ]);
+
+  if (blockedHosts.has(normalized) || normalized.endsWith(".localhost")) {
+    return true;
+  }
+
+  const ipv4Match = normalized.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4Match) {
+    const [_, a, b] = ipv4Match;
+    const first = Number(a);
+    const second = Number(b);
+    if (first === 10) return true;
+    if (first === 127) return true;
+    if (first === 0) return true;
+    if (first === 192 && second === 168) return true;
+    if (first === 169 && second === 254) return true;
+    if (first === 172 && second >= 16 && second <= 31) return true;
+    return false;
+  }
+
+  if (normalized.startsWith("fc") || normalized.startsWith("fd") || normalized.startsWith("fe80:")) {
+    return true;
+  }
+
+  return false;
+};
 
 type ApiErrorDetails = Record<string, unknown> | string | undefined;
 
@@ -867,36 +929,105 @@ serve(async (req) => {
   }
 
   try {
-    const { fileUrl, fileType, fileName } = await req.json();
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      statusCode = 401;
+      logger.warn('auth.missing', { message: 'Missing Authorization header' });
+      return createErrorResponse(401, 'auth_missing', 'Authorization header is required.', undefined, requestId);
+    }
 
-    console.log('🔍 Analyzing file:', { fileType, fileNameLength: fileName?.length ?? 0, hasFileUrl: Boolean(fileUrl) });
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error('Supabase credentials are not configured');
+    }
+
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      statusCode = 401;
+      logger.warn('auth.invalid', { message: 'Invalid authorization token', error: authError?.message });
+      return createErrorResponse(401, 'auth_invalid', 'Invalid authorization token.', undefined, requestId);
+    }
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      statusCode = 400;
+      logger.warn('request.invalid_json', { message: 'Invalid JSON body', error: parseError });
+      return createErrorResponse(400, 'invalid_json', 'Request body must be valid JSON.', undefined, requestId);
+    }
+
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      statusCode = 400;
+      logger.warn('request.invalid_input', { message: 'Request body must be an object' });
+      return createErrorResponse(400, 'invalid_input', 'Request body must be an object.', undefined, requestId);
+    }
+
+    const { fileUrl: rawFileUrl, fileType: rawFileType, fileName: rawFileName } = body as Record<string, unknown>;
+    const validationErrors: string[] = [];
+
+    if (typeof rawFileUrl !== 'string' || rawFileUrl.trim().length === 0) {
+      validationErrors.push('fileUrl is required and must be a non-empty string.');
+    } else if (rawFileUrl.length > MAX_FILE_URL_LENGTH) {
+      validationErrors.push(`fileUrl must be at most ${MAX_FILE_URL_LENGTH} characters.`);
+    }
+
+    if (typeof rawFileType !== 'string' || rawFileType.trim().length === 0) {
+      validationErrors.push('fileType is required and must be a non-empty string.');
+    }
+
+    if (typeof rawFileName !== 'string' || rawFileName.trim().length === 0) {
+      validationErrors.push('fileName is required and must be a non-empty string.');
+    } else if (rawFileName.length > MAX_FILE_NAME_LENGTH) {
+      validationErrors.push(`fileName must be at most ${MAX_FILE_NAME_LENGTH} characters.`);
+    }
+
+    if (validationErrors.length > 0) {
+      statusCode = 400;
+      logger.warn('request.invalid_input', { validationErrors });
+      return createErrorResponse(400, 'invalid_input', 'Invalid input parameters.', validationErrors, requestId);
+    }
+
+    const fileUrl = rawFileUrl as string;
+    const fileType = rawFileType as string;
+    const fileName = rawFileName as string;
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(fileUrl);
+    } catch (urlError) {
+      statusCode = 400;
+      logger.warn('request.invalid_input', { message: 'Invalid fileUrl format', error: urlError });
+      return createErrorResponse(400, 'invalid_input', 'fileUrl must be a valid URL.', undefined, requestId);
+    }
+
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      statusCode = 400;
+      logger.warn('request.invalid_input', { message: 'Invalid fileUrl protocol', protocol: parsedUrl.protocol });
+      return createErrorResponse(400, 'invalid_input', 'fileUrl must use http or https.', undefined, requestId);
+    }
+
+    if (isBlockedHostname(parsedUrl.hostname)) {
+      statusCode = 403;
+      logger.warn('request.url_blocked', { hostname: parsedUrl.hostname });
+      return createErrorResponse(403, 'url_blocked', 'Access to the requested URL is not allowed.', undefined, requestId);
+    }
+
+    console.log('🔍 Analyzing file:', { fileType, fileNameLength: (fileName as string).length, hasFileUrl: Boolean(fileUrl) });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Get user ID from authorization header
-    const authHeader = req.headers.get('Authorization');
-    let userId: string | null = null;
-    
-    if (authHeader) {
-      try {
-        const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-        const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          global: { headers: { Authorization: authHeader } }
-        });
-        
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (user) {
-          userId = user.id;
-          console.log('✅ User authenticated');
-        }
-      } catch (authError) {
-        console.warn('⚠️ Failed to authenticate user:', authError);
-      }
-    }
+    const userId = user.id;
+    console.log('✅ User authenticated');
     const userLogger = createLogger({ requestId, startTime, userId: userId ?? undefined });
     activeLogger = userLogger;
 
