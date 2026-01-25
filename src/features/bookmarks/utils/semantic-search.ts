@@ -31,12 +31,11 @@ export async function findSimilarItems(
       return [];
     }
 
-    // Call the find_similar_items function
+    // Call the find_similar_items function - user_id is now enforced server-side via auth.uid()
     const { data, error } = await supabase.rpc('find_similar_items', {
       query_embedding: refItem.embedding,
       match_threshold: threshold,
-      match_count: limit + 1, // +1 to account for the reference item itself
-      user_id_filter: refItem.user_id
+      match_count: limit + 1 // +1 to account for the reference item itself
     });
 
     if (error) {
@@ -93,12 +92,11 @@ export async function findSimilarItemsByText(
       return [];
     }
 
-    // Call the find_similar_items function
+    // Call the find_similar_items function - user_id is now enforced server-side via auth.uid()
     const { data, error } = await supabase.rpc('find_similar_items', {
       query_embedding: embeddingData.embedding,
       match_threshold: threshold,
-      match_count: limit,
-      user_id_filter: user.id
+      match_count: limit
     });
 
     if (error) {
