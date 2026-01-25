@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-// CreditCard and Activity icons hidden for now (Subscriptions & Health modules)
-import { Bookmark } from "lucide-react";
+import { Bookmark, CreditCard, Activity } from "lucide-react";
 import { ModuleNavigationCard } from "@/shared/components/ModuleNavigationCard";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 
@@ -50,7 +49,7 @@ const Dashboard = () => {
             <p className="text-muted-foreground">Choose a module to get started</p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-1 max-w-md mx-auto">
+          <div className="grid gap-6 md:grid-cols-3">
             <ModuleNavigationCard
               icon={Bookmark}
               title="Bookmarks"
@@ -58,7 +57,6 @@ const Dashboard = () => {
               href="/bookmarks"
               onClick={() => navigate('/bookmarks')}
             />
-            {/* Hidden for now - Subscriptions module
             <ModuleNavigationCard
               icon={CreditCard}
               title="Subscriptions"
@@ -66,8 +64,6 @@ const Dashboard = () => {
               href="/subscriptions"
               onClick={() => navigate('/subscriptions')}
             />
-            */}
-            {/* Hidden for now - Health module
             <ModuleNavigationCard
               icon={Activity}
               title="Health"
@@ -75,7 +71,6 @@ const Dashboard = () => {
               href="/health"
               onClick={() => navigate('/health')}
             />
-            */}
           </div>
         </main>
       </div>

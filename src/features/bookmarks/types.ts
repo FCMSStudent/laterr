@@ -2,8 +2,6 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export type ItemType = 'url' | 'note' | 'image' | 'document' | 'file' | 'video';
 
-export type ItemStatus = 'active' | 'archived' | 'trashed';
-
 export interface Tag {
   id?: string;
   name: string;
@@ -22,9 +20,6 @@ export interface Item {
   tags: string[];
   preview_image_url: string | null;
   embedding?: number[] | null;
-  status: ItemStatus;
-  archived_at: string | null;
-  trashed_at: string | null;
   created_at: string;
   updated_at?: string;
 }
