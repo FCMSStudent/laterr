@@ -360,7 +360,7 @@ export const DetailViewModal = ({
 
   // --- UNIFIED LAYOUT ---
   // Fixed sizing with 60/40 split for content/sidebar
-  const modalSizeClasses = "w-[min(95vw,1100px)] h-[min(85vh,720px)] overflow-hidden";
+  const modalSizeClasses = "w-[min(95vw,1100px)] max-h-[85vh] max-w-[1100px] h-full overflow-hidden";
   const gridLayout = "grid-cols-1 lg:grid-cols-[1.4fr_1fr]";
 
   // 3. Preview Container Styling
@@ -370,7 +370,7 @@ export const DetailViewModal = ({
       return `${base} aspect-video bg-black flex items-center justify-center overflow-hidden`;
     }
     if (isDocumentContent) {
-      return `${base} h-[60vh] lg:h-full bg-muted/30 border border-border/40`;
+      return `${base} flex-1 h-full bg-muted/30 border border-border/40`;
     }
     if (isNoteContent) {
       return `${base} min-h-[300px] bg-card border border-border/40 p-6`;
