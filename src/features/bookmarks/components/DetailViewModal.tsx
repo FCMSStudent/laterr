@@ -31,6 +31,15 @@ import { useDebounce } from "@/shared/hooks/use-debounce";
 const USER_NOTES_MAX_LENGTH = 10000;
 const AUTO_SAVE_DELAY = 500;
 
+const safeParseUrl = (value: string | null | undefined) => {
+  if (!value) return null;
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+};
+
 interface DetailViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -524,7 +533,7 @@ export const DetailViewModal = ({
                     className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[200px]"
                   >
                     <Globe className="w-3.5 h-3.5" />
-                    {new URL(item.content).hostname}
+                    {(safeParseUrl(item.content)?.hostname ?? item.content)}
                     <ExternalLink className="w-3 h-3 opacity-50" />
                   </a>
                 </>
