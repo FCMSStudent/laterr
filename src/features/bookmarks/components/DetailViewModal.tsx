@@ -328,28 +328,13 @@ export const DetailViewModal = ({
   const isVideoContent = item.type === 'video' || (item.type === 'url' && item.content && isVideoUrl(item.content));
   const isDocumentContent = item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'));
   const isNoteContent = item.type === 'note';
+  const isUrlContent = item.type === 'url';
+  const isImageContent = item.type === 'image';
 
-  // --- LAYOUT LOGIC UPGRADE ---
-
-  // 1. Size Classes: responsive clamp-like sizing
-  const modalSizeClasses = "w-[min(95vw,1400px)] max-h-[85vh] min-h-[600px] overflow-hidden";
-
-  // 2. Grid Layout Ratios
-  const getGridLayout = () => {
-    // Base: Mobile 1 col, Desktop split
-    // Video: Maximize left col, standard sidebar
-    // Doc/Note: Standard split
-    if (isVideoContent) {
-      return "grid-cols-1 lg:grid-cols-[1fr_0.6fr] xl:grid-cols-[1fr_0.55fr]";
-    }
-    if (isDocumentContent) {
-      return "grid-cols-1 lg:grid-cols-[1fr_0.7fr] xl:grid-cols-[1fr_0.65fr]";
-    }
-    if (isNoteContent || isUrlContent || isImageContent) {
-      return "grid-cols-1 lg:grid-cols-[1fr_0.65fr] xl:grid-cols-[1fr_0.6fr]";
-    }
-    return "grid-cols-1 lg:grid-cols-[1fr_0.7fr] xl:grid-cols-[1fr_0.65fr]";
-  };
+  // --- UNIFIED LAYOUT ---
+  // Fixed sizing with 60/40 split for content/sidebar
+  const modalSizeClasses = "w-[min(95vw,1100px)] h-[min(85vh,720px)] overflow-hidden";
+  const gridLayout = "grid-cols-1 lg:grid-cols-[1.4fr_1fr]";
 
   // 3. Preview Container Styling
   const getPreviewContainerStyles = () => {
@@ -508,32 +493,13 @@ export const DetailViewModal = ({
   );
 
   const DesktopDetailContent = () => (
-    <div className={`grid h-full gap-8 ${getGridLayout()}`}>
-      {/* LEFT COLUMN: Preview + Related Items */}
-      <div className="flex flex-col min-h-0 gap-8 hide-scrollbar overflow-y-auto pr-2">
+    <div className={`grid h-full gap-6 ${gridLayout}`}>
+      {/* LEFT COLUMN: Preview */}
+      <div className="flex flex-col min-h-0 hide-scrollbar overflow-y-auto">
         {/* Main Preview */}
         <div className={getPreviewContainerStyles()}>
           {renderPreview()}
         </div>
-
-        {/* Related Items (Hidden for Video) */}
-        {!isVideoContent && relatedItems.length > 0 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h3 className="text-lg font-semibold tracking-tight">Related to this</h3>
-            <div className={`grid gap-4 ${isDocumentContent ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 masonry-grid'}`}>
-              {relatedItems.slice(0, isDocumentContent ? 4 : 6).map((related) => (
-                <ItemCard
-                  key={related.id}
-                  {...related}
-                  onClick={() => {
-                    // ItemCard might need local handling or it just works if using a global store/router
-                    // For now assuming it opens separately, ideally we switch content here
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* RIGHT COLUMN: Sidebar */}
