@@ -13,6 +13,23 @@ import {
 } from "@/features/bookmarks/constants";
 import type { Item } from "@/features/bookmarks/types";
 
+interface StorageUploadOptions {
+  cacheControl?: string;
+  contentType?: string;
+  upsert?: boolean;
+}
+
+interface StorageUploadConfig {
+  bucket: string;
+  userId: string;
+  folder: string;
+  file: File;
+  options?: {
+    uploadOptions?: StorageUploadOptions;
+    signedUrlExpiresIn?: number;
+  };
+}
+
 /**
  * Generates a signed URL from a storage path
  * @param storagePath - The full storage path (e.g., "/item-images/path/to/file.jpg")
@@ -75,6 +92,48 @@ export async function generateSignedUrlsForItems(items: Item[]): Promise<Item[]>
       return item;
     })
   );
+}
+
+/**
+ * Uploads a file to Supabase storage with optional signed URL generation.
+ */
+export async function uploadFileToStorageWithSignedUrl({
+  bucket,
+  userId,
+  folder,
+  file,
+  options,
+}: StorageUploadConfig): Promise<{ fileName: string; storagePath: string; signedUrl?: string }> {
+  const fileExt = file.name.split('.').pop() || 'bin';
+  const uniqueName = `${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
+  const fileName = folder
+    ? `${userId}/${folder}/${uniqueName}`
+    : `${userId}/${uniqueName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(bucket)
+    .upload(fileName, file, options?.uploadOptions);
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const storagePath = `/${bucket}/${fileName}`;
+  let signedUrl: string | undefined;
+
+  if (options?.signedUrlExpiresIn) {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(fileName, options.signedUrlExpiresIn);
+
+    if (error || !data?.signedUrl) {
+      throw error || new Error('Failed to create signed URL');
+    }
+
+    signedUrl = data.signedUrl;
+  }
+
+  return { fileName, storagePath, signedUrl };
 }
 
 /**

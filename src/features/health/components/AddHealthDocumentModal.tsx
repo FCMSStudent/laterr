@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { Button } from "@/ui";
@@ -12,9 +12,10 @@ import { Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { HEALTH_TABLES, DOCUMENT_TYPES } from "@/features/health/constants";
+import { HEALTH_TABLES, DOCUMENT_TYPES, HEALTH_DOCUMENTS_STORAGE_BUCKET, HEALTH_DOCUMENTS_STORAGE_FOLDER } from "@/features/health/constants";
 import type { DocumentType } from "@/features/health/types";
 import { format } from "date-fns";
+import { uploadFileToStorageWithSignedUrl } from "@/shared/lib/supabase-utils";
 
 const ALLOWED_FILE_TYPES = [
   'application/pdf',
@@ -144,22 +145,17 @@ export const AddHealthDocumentModal = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Upload file to health-documents bucket
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const { fileName, signedUrl } = await uploadFileToStorageWithSignedUrl({
+        bucket: HEALTH_DOCUMENTS_STORAGE_BUCKET,
+        folder: HEALTH_DOCUMENTS_STORAGE_FOLDER,
+        userId: user.id,
+        file,
+        options: {
+          signedUrlExpiresIn: 60 * 60 * 24 * 365,
+        },
+      });
 
-      const { error: uploadError } = await supabase.storage
-        .from('health-documents')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get signed URL
-      const { data: urlData } = await supabase.storage
-        .from('health-documents')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
-
-      const fileUrl = urlData?.signedUrl || fileName;
+      const fileUrl = signedUrl ?? fileName;
 
       // Generate summary using AI
       setStatusStep('analyzing');
