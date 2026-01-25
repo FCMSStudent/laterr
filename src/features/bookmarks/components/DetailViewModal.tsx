@@ -30,6 +30,9 @@ import { useDebounce } from "@/shared/hooks/use-debounce";
 // Constants
 const USER_NOTES_MAX_LENGTH = 10000;
 const AUTO_SAVE_DELAY = 500;
+const areTagsEqual = (left: string[], right: string[]) => (
+  left.length === right.length && left.every((tag, index) => tag === right[index])
+);
 
 interface DetailViewModalProps {
   open: boolean;
@@ -95,10 +98,16 @@ export const DetailViewModal = ({
   // Autosave notes
   useEffect(() => {
     if (!item || !open) return;
-    if (debouncedNotes !== (item.user_notes || "")) {
+    const itemNotes = item.user_notes || "";
+    const itemTags = item.tags || [];
+    const notesMatchCurrent = debouncedNotes === userNotes;
+    const notesChanged = debouncedNotes !== itemNotes;
+    const tagsChanged = !areTagsEqual(tags, itemTags);
+
+    if (notesMatchCurrent && (notesChanged || tagsChanged)) {
       handleSave(debouncedNotes, tags, true);
     }
-  }, [debouncedNotes]);
+  }, [debouncedNotes, open, item, tags, userNotes, handleSave]);
 
   // Fetch related items (same tag, excluding current)
   useEffect(() => {
