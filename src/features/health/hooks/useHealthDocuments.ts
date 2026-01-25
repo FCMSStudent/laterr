@@ -4,6 +4,7 @@ import { HEALTH_TABLES } from '@/features/health/constants';
 import { isValidEmbedding } from '@/features/bookmarks/constants';
 import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from '@/shared/lib/storage-constants';
 import type { HealthDocument, HealthDocumentFormData } from '../types';
+import { uploadFileToStorageWithSignedUrl } from '@/shared/lib/supabase-utils';
 
 interface UseHealthDocumentsState {
   loading: boolean;
@@ -83,7 +84,7 @@ export const useHealthDocuments = () => {
         .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
-      const fileUrl = urlData?.signedUrl || fileName;
+      const fileUrl = signedUrl ?? fileName;
 
       // Generate summary and embedding
       let summary: string | null = null;

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { Button } from "@/ui";
@@ -16,6 +16,7 @@ import { HEALTH_TABLES, DOCUMENT_TYPES } from "@/features/health/constants";
 import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from "@/shared/lib/storage-constants";
 import type { DocumentType } from "@/features/health/types";
 import { format } from "date-fns";
+import { uploadFileToStorageWithSignedUrl } from "@/shared/lib/supabase-utils";
 
 const ALLOWED_FILE_TYPES = [
   'application/pdf',
@@ -160,7 +161,7 @@ export const AddHealthDocumentModal = ({
         .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
 
-      const fileUrl = urlData?.signedUrl || fileName;
+      const fileUrl = signedUrl ?? fileName;
 
       // Generate summary using AI
       setStatusStep('analyzing');
