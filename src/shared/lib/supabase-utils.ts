@@ -13,6 +13,24 @@ import {
 } from "@/features/bookmarks/constants";
 import type { Item } from "@/features/bookmarks/types";
 
+export type UploadValidationOptions = {
+  allowedMimeTypes?: readonly string[];
+  maxFileSizeBytes?: number;
+};
+
+export function validateFileForUpload(
+  file: File,
+  options?: UploadValidationOptions
+): void {
+  if (options?.allowedMimeTypes && !options.allowedMimeTypes.includes(file.type)) {
+    throw new Error("Invalid file type");
+  }
+
+  if (options?.maxFileSizeBytes && file.size > options.maxFileSizeBytes) {
+    throw new Error("File too large");
+  }
+}
+
 /**
  * Generates a signed URL from a storage path
  * @param storagePath - The full storage path (e.g., "/item-images/path/to/file.jpg")
@@ -86,8 +104,10 @@ export async function generateSignedUrlsForItems(items: Item[]): Promise<Item[]>
  */
 export async function uploadFileToStorage(
   file: File,
-  userId: string
+  userId: string,
+  options?: UploadValidationOptions
 ): Promise<{ fileName: string; storagePath: string }> {
+  validateFileForUpload(file, options);
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
   

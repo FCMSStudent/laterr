@@ -265,6 +265,20 @@ export function getItemErrorMessage(error: unknown, context: 'url' | 'note' | 'f
 }
 
 /**
+ * Helper function to normalize upload error messages
+ */
+export function getUploadErrorMessage(error: unknown): { title: string; message: string } {
+  if (error instanceof Error) {
+    const normalized = getItemErrorMessage(error, 'file');
+    if (normalized !== ITEM_ERRORS.ADD_FAILED) {
+      return normalized;
+    }
+  }
+
+  return ITEM_ERRORS.FILE_UPLOAD_FAILED;
+}
+
+/**
  * Helper function to get update operation error message
  */
 export function getUpdateErrorMessage(error: unknown): { title: string; message: string } {
