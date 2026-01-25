@@ -146,6 +146,38 @@ export const ITEM_ERRORS = {
 } as const;
 
 /**
+ * Helper for generate-embedding error messages based on status/code mapping.
+ */
+export function getGenerateEmbeddingErrorMessage(
+  status?: number,
+  code?: string
+): string | null {
+  const normalizedCode = code?.toLowerCase();
+
+  if (
+    status === 429 ||
+    normalizedCode === '429' ||
+    normalizedCode === 'rate_limit' ||
+    normalizedCode === 'rate_limit_exceeded'
+  ) {
+    return ITEM_ERRORS.AI_RATE_LIMIT.message;
+  }
+
+  if (
+    status === 402 ||
+    normalizedCode === '402' ||
+    normalizedCode === 'credits' ||
+    normalizedCode === 'credits_exhausted' ||
+    normalizedCode === 'insufficient_quota' ||
+    normalizedCode === 'quota_exceeded'
+  ) {
+    return ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message;
+  }
+
+  return null;
+}
+
+/**
  * Update operation error messages
  */
 export const UPDATE_ERRORS = {
