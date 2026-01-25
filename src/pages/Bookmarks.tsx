@@ -7,19 +7,29 @@ import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkelet
 import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/ui";
-import { Sparkles, Plus, Loader2 } from "lucide-react";
+import { Sparkles, Plus, Loader2, Archive, Trash2 } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useProgressiveDisclosure } from "@/shared/hooks/useProgressiveDisclosure";
 import { FilterBar, MobileFilterButton, MobileSortButton, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
+import { StatusTabs, type StatusFilter } from "@/features/bookmarks/components/StatusTabs";
 import { BulkActionsBar } from "@/features/bookmarks/components/BulkActionsBar";
 import { useInfiniteScroll } from "@/features/bookmarks/hooks/useInfiniteScroll";
 import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
-import type { Item, User, ItemType } from "@/features/bookmarks/types";
+import type { Item, User, ItemType, ItemStatus } from "@/features/bookmarks/types";
 import { generateSignedUrlsForItems } from "@/shared/lib/supabase-utils";
 import { NetworkError, toTypedError } from "@/shared/types/errors";
 import { getNetworkErrorMessage } from "@/shared/lib/error-messages";
+import {
+  archiveItem,
+  trashItem,
+  restoreItem,
+  permanentlyDeleteItem,
+  bulkArchiveItems,
+  bulkTrashItems,
+  bulkRestoreItems,
+} from "@/features/bookmarks/utils/status-utils";
 
 // Lazy load modal components for better code splitting
 const AddItemModal = lazy(() => import("@/features/bookmarks/components/AddItemModal").then(({
@@ -78,6 +88,9 @@ const Index = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
+  // Status filter state (active, archived, trashed)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
+
   // Filter bar collapsed state
   const {
     expanded: filtersExpanded,
@@ -126,12 +139,20 @@ const Index = () => {
       } else {
         setLoadingMore(true);
       }
+
+      // Build and execute query with optional status filter
+      // Use any to avoid TypeScript deep instantiation issues with Supabase query builder
+      let query: any = supabase.from(SUPABASE_ITEMS_TABLE).select('*');
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
       const {
         data,
         error
-      } = await supabase.from(SUPABASE_ITEMS_TABLE).select('*').order('created_at', {
+      } = await query.order('created_at', {
         ascending: false
       }).range(pageNum * PAGE_SIZE, (pageNum + 1) * PAGE_SIZE - 1);
+
       if (error) throw error;
       const rawItems = (data ?? []) as any[];
       const normalizedItems: Item[] = rawItems.map(item => ({
@@ -141,7 +162,10 @@ const Index = () => {
         summary: item.summary ?? null,
         user_notes: item.user_notes ?? null,
         content: item.content ?? null,
-        embedding: item.embedding ? JSON.parse(item.embedding) : null
+        embedding: item.embedding ? JSON.parse(item.embedding) : null,
+        status: item.status ?? 'active',
+        archived_at: item.archived_at ?? null,
+        trashed_at: item.trashed_at ?? null,
       }));
       const itemsWithSignedUrls = await generateSignedUrlsForItems(normalizedItems);
       setHasMore(rawItems.length === PAGE_SIZE);
@@ -164,7 +188,7 @@ const Index = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [toast]);
+  }, [toast, statusFilter]);
 
   // Load more when page changes
   useEffect(() => {
@@ -228,6 +252,99 @@ const Index = () => {
         variant: "destructive"
       });
     }
+  }, [selectedItems, toast, fetchItems]);
+
+  // Archive single item (mark as read/watched)
+  const handleArchiveItem = useCallback(async (itemId: string) => {
+    const { error } = await archiveItem(itemId);
+    if (error) {
+      toast({ title: "Error", description: "Failed to archive item", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Archived", description: "Item marked as done" });
+    setPage(0);
+    fetchItems(0, false);
+  }, [toast, fetchItems]);
+
+  // Move single item to trash
+  const handleTrashItem = useCallback(async (itemId: string) => {
+    const { error } = await trashItem(itemId);
+    if (error) {
+      toast({ title: "Error", description: "Failed to move item to trash", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Moved to Trash", description: "Item will be deleted after 30 days" });
+    setPage(0);
+    fetchItems(0, false);
+  }, [toast, fetchItems]);
+
+  // Restore single item from archive or trash
+  const handleRestoreItem = useCallback(async (itemId: string) => {
+    const { error } = await restoreItem(itemId);
+    if (error) {
+      toast({ title: "Error", description: "Failed to restore item", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Restored", description: "Item has been restored" });
+    setPage(0);
+    fetchItems(0, false);
+  }, [toast, fetchItems]);
+
+  // Permanently delete single item (from trash)
+  const handlePermanentDelete = useCallback(async (itemId: string) => {
+    const { error } = await permanentlyDeleteItem(itemId);
+    if (error) {
+      toast({ title: "Error", description: "Failed to delete item", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Deleted", description: "Item permanently deleted" });
+    setPage(0);
+    fetchItems(0, false);
+  }, [toast, fetchItems]);
+
+  // Bulk archive
+  const handleBulkArchive = useCallback(async () => {
+    const ids = Array.from(selectedItems);
+    const { error } = await bulkArchiveItems(ids);
+    if (error) {
+      toast({ title: "Error", description: "Failed to archive items", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Archived", description: `${ids.length} items marked as done` });
+    setIsSelectionMode(false);
+    setSelectedItems(new Set());
+    setPage(0);
+    fetchItems(0, false);
+  }, [selectedItems, toast, fetchItems]);
+
+  // Bulk trash
+  const handleBulkTrash = useCallback(async () => {
+    const ids = Array.from(selectedItems);
+    const { error } = await bulkTrashItems(ids);
+    if (error) {
+      toast({ title: "Error", description: "Failed to move items to trash", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Moved to Trash", description: `${ids.length} items will be deleted after 30 days` });
+    setIsSelectionMode(false);
+    setSelectedItems(new Set());
+    setPage(0);
+    fetchItems(0, false);
+  }, [selectedItems, toast, fetchItems]);
+
+  // Bulk restore
+  const handleBulkRestore = useCallback(async () => {
+    const ids = Array.from(selectedItems);
+    const { error } = await bulkRestoreItems(ids);
+    if (error) {
+      toast({ title: "Error", description: "Failed to restore items", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Restored", description: `${ids.length} items have been restored` });
+    setIsSelectionMode(false);
+    setSelectedItems(new Set());
+    setPage(0);
+    fetchItems(0, false);
   }, [selectedItems, toast, fetchItems]);
   const handleEditItem = useCallback((itemId: string) => {
     const item = items.find(i => i.id === itemId);
@@ -375,6 +492,22 @@ const Index = () => {
     setPage(0);
     fetchItems(0, false);
   }, [fetchItems]);
+
+  // Handle status tab change
+  const handleStatusChange = useCallback((status: StatusFilter) => {
+    setStatusFilter(status);
+    setPage(0);
+    setIsSelectionMode(false);
+    setSelectedItems(new Set());
+  }, []);
+
+  // Refetch when status filter changes
+  useEffect(() => {
+    if (user) {
+      setPage(0);
+      fetchItems(0, false);
+    }
+  }, [statusFilter, user, fetchItems]);
   if (!user) {
     return null;
   }
@@ -388,8 +521,13 @@ const Index = () => {
         <NavigationHeader title="Bookmarks" onAddClick={() => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search" filterButton={<MobileFilterButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} sortButton={<MobileSortButton selectedSort={sortOption} onSortChange={setSortOption} />} />
       </div>
 
-
-
+      {/* Status Tabs: Active / Archive / Trash */}
+      <div className="mb-6 flex justify-center">
+        <StatusTabs
+          selectedStatus={statusFilter}
+          onStatusChange={handleStatusChange}
+        />
+      </div>
 
       <main id="main-content">
         <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
@@ -400,26 +538,66 @@ const Index = () => {
         {loading ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pb-12 [column-fill:_balance]">
           {Array.from({
             length: 8
-           }).map((_, index) => (
-             <div key={index} className="break-inside-avoid mb-5 md:mb-6">
-               <ItemCardSkeleton />
-             </div>
-           ))}
+          }).map((_, index) => (
+            <div key={index} className="break-inside-avoid mb-5 md:mb-6">
+              <ItemCardSkeleton />
+            </div>
+          ))}
         </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
-          <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
-          <p className="text-muted-foreground text-base max-w-md mx-auto">
-            Start building your knowledge by adding your first item
-          </p>
-          <Button onClick={() => setShowAddModal(true)} size="lg">
-            <Plus className="w-5 h-5 mr-2" />
-            Add your first bookmark
-          </Button>
+          {statusFilter === 'active' ? (
+            <>
+              <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Your space is empty</h2>
+              <p className="text-muted-foreground text-base max-w-md mx-auto">
+                Start building your knowledge by adding your first item
+              </p>
+              <Button onClick={() => setShowAddModal(true)} size="lg">
+                <Plus className="w-5 h-5 mr-2" />
+                Add your first bookmark
+              </Button>
+            </>
+          ) : statusFilter === 'archived' ? (
+            <>
+              <Archive className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Archive is empty</h2>
+              <p className="text-muted-foreground text-base max-w-md mx-auto">
+                Items you mark as read or watched will appear here
+              </p>
+            </>
+          ) : (
+            <>
+              <Trash2 className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Trash is empty</h2>
+              <p className="text-muted-foreground text-base max-w-md mx-auto">
+                Items you delete will be moved here for 30 days before permanent deletion
+              </p>
+            </>
+          )}
         </div> : <section aria-label="Items collection">
           {viewMode === 'grid' ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pb-12 [column-fill:_balance]">
             {filteredItems.map(item => (
               <div key={item.id} className="break-inside-avoid mb-5 md:mb-6">
-                <BookmarkCard id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} onDelete={handleDeleteItem} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />
+                <BookmarkCard
+                  id={item.id}
+                  type={item.type}
+                  title={item.title}
+                  summary={item.summary}
+                  previewImageUrl={item.preview_image_url}
+                  content={item.content}
+                  tags={item.tags}
+                  createdAt={item.created_at}
+                  status={item.status}
+                  onEdit={handleEditItem}
+                  onClick={() => handleItemClick(item)}
+                  onTagClick={setSelectedTag}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedItems.has(item.id)}
+                  onSelectionChange={handleSelectionChange}
+                  onArchive={statusFilter === 'active' ? handleArchiveItem : undefined}
+                  onTrash={statusFilter === 'active' ? handleTrashItem : undefined}
+                  onRestore={(statusFilter === 'archived' || statusFilter === 'trashed') ? handleRestoreItem : undefined}
+                  onDelete={statusFilter === 'trashed' ? handlePermanentDelete : undefined}
+                />
               </div>
             ))}
           </div> : <div className="space-y-2 pb-12">
@@ -440,10 +618,21 @@ const Index = () => {
 
 
     {/* Bulk Actions Bar */}
-    <BulkActionsBar selectedCount={selectedItems.size} totalCount={filteredItems.length} onSelectAll={handleSelectAll} onDeselectAll={handleDeselectAll} onDelete={handleBulkDelete} onCancel={() => {
-      setIsSelectionMode(false);
-      setSelectedItems(new Set());
-    }} />
+    <BulkActionsBar
+      selectedCount={selectedItems.size}
+      totalCount={filteredItems.length}
+      currentStatus={statusFilter as ItemStatus}
+      onSelectAll={handleSelectAll}
+      onDeselectAll={handleDeselectAll}
+      onArchive={statusFilter === 'active' ? handleBulkArchive : undefined}
+      onTrash={statusFilter === 'active' ? handleBulkTrash : undefined}
+      onRestore={(statusFilter === 'archived' || statusFilter === 'trashed') ? handleBulkRestore : undefined}
+      onDelete={statusFilter === 'trashed' ? handleBulkDelete : undefined}
+      onCancel={() => {
+        setIsSelectionMode(false);
+        setSelectedItems(new Set());
+      }}
+    />
 
     <Suspense fallback={null}>
       <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={handleRefresh} />

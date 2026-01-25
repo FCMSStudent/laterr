@@ -1,9 +1,10 @@
 import { Badge } from "@/ui";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight } from "lucide-react";
-import type { ItemType } from "@/features/bookmarks/types";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight, CheckCircle, RotateCcw, Archive } from "lucide-react";
+import type { ItemType, ItemStatus } from "@/features/bookmarks/types";
+import { getArchiveActionLabel } from "@/features/bookmarks/utils/status-utils";
 import { AspectRatio } from "@/ui";
 import { Checkbox } from "@/ui";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/ui";
 import { Button } from "@/ui";
 import { Skeleton } from "@/ui";
 import { useMemo, useState, useRef } from "react";
@@ -20,6 +21,7 @@ interface BookmarkCardProps {
   tags: string[];
   createdAt?: string;
   summary?: string | null;
+  status?: ItemStatus;
   onClick: () => void;
   onTagClick: (tag: string) => void;
   isSelectionMode?: boolean;
@@ -27,6 +29,9 @@ interface BookmarkCardProps {
   onSelectionChange?: (id: string, selected: boolean) => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
+  onArchive?: (id: string) => void;
+  onTrash?: (id: string) => void;
+  onRestore?: (id: string) => void;
 }
 
 // Get content type badge info
@@ -90,13 +95,17 @@ export const BookmarkCard = ({
   tags,
   createdAt,
   summary,
+  status = 'active',
   onClick,
   onTagClick,
   isSelectionMode = false,
   isSelected = false,
   onSelectionChange,
   onDelete,
-  onEdit
+  onEdit,
+  onArchive,
+  onTrash,
+  onRestore
 }: BookmarkCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -112,6 +121,7 @@ export const BookmarkCard = ({
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
   const dateText = formatDate(createdAt);
+  const archiveLabel = getArchiveActionLabel(type);
 
   const mediaRatio = useMemo(() => {
     // Content-type driven sizing (works best with masonry columns)
@@ -213,15 +223,43 @@ export const BookmarkCard = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>}
-              {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>}
+            <DropdownMenuContent align="end" className="w-48">
+              {/* Active items: show archive and edit */}
+              {status === 'active' && onArchive && (
+                <DropdownMenuItem onClick={e => handleMenuAction(e, () => onArchive(id))}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {archiveLabel}
+                </DropdownMenuItem>
+              )}
+              {status === 'active' && onEdit && (
+                <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {/* Archived/Trashed items: show restore */}
+              {(status === 'archived' || status === 'trashed') && onRestore && (
+                <DropdownMenuItem onClick={e => handleMenuAction(e, () => onRestore(id))}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Restore
+                </DropdownMenuItem>
+              )}
+              {/* Separator before destructive actions */}
+              {(status === 'active' && (onArchive || onEdit)) && onTrash && <DropdownMenuSeparator />}
+              {/* Active items: move to trash */}
+              {status === 'active' && onTrash && (
+                <DropdownMenuItem onClick={e => handleMenuAction(e, () => onTrash(id))} className="text-destructive focus:text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Move to Trash
+                </DropdownMenuItem>
+              )}
+              {/* Trashed items: permanent delete */}
+              {status === 'trashed' && onDelete && (
+                <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Forever
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -279,15 +317,43 @@ export const BookmarkCard = ({
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>}
-            {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>}
+          <DropdownMenuContent align="end" className="w-48">
+            {/* Active items: show archive and edit */}
+            {status === 'active' && onArchive && (
+              <DropdownMenuItem onClick={e => handleMenuAction(e, () => onArchive(id))}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                {archiveLabel}
+              </DropdownMenuItem>
+            )}
+            {status === 'active' && onEdit && (
+              <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+            )}
+            {/* Archived/Trashed items: show restore */}
+            {(status === 'archived' || status === 'trashed') && onRestore && (
+              <DropdownMenuItem onClick={e => handleMenuAction(e, () => onRestore(id))}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Restore
+              </DropdownMenuItem>
+            )}
+            {/* Separator before destructive actions */}
+            {(status === 'active' && (onArchive || onEdit)) && onTrash && <DropdownMenuSeparator />}
+            {/* Active items: move to trash */}
+            {status === 'active' && onTrash && (
+              <DropdownMenuItem onClick={e => handleMenuAction(e, () => onTrash(id))} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Move to Trash
+              </DropdownMenuItem>
+            )}
+            {/* Trashed items: permanent delete */}
+            {status === 'trashed' && onDelete && (
+              <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Forever
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -1,6 +1,11 @@
 export const DEFAULT_ITEM_TAG = "read later" as const;
 export const DEFAULT_ITEM_TAGS: string[] = [DEFAULT_ITEM_TAG];
 
+// Archive & Trash retention settings
+export const RETENTION_DAYS = 30 as const;
+export const DEFAULT_ITEM_STATUS = "active" as const;
+export const ITEM_STATUSES = ["active", "archived", "trashed"] as const;
+
 export const CATEGORY_OPTIONS = [
   { value: "watch later", label: "⏰ Watch Later" },
   { value: "read later", label: "📖 Read Later" },
