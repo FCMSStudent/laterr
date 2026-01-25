@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/ui
 import { MessageCircle, Send, Loader2, Bot, User, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/shared/lib/utils';
+import { getEdgeFunctionErrorDetails, getEdgeFunctionErrorMessage } from '@/shared/lib/edge-function-errors';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -66,12 +67,39 @@ export function HealthChatPanel() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Request failed: ${response.status}`);
+        const details = await getEdgeFunctionErrorDetails({ response });
+        const mappedError = getEdgeFunctionErrorMessage(details);
+        console.error('Edge function health-chat failed', {
+          status: details.status,
+          code: details.code,
+          requestId: details.requestId,
+          context: 'HealthChatPanel.health-chat',
+        });
+        setMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: mappedError.assistantReply,
+          },
+        ]);
+        return;
       }
 
       if (!response.body) {
-        throw new Error('No response body');
+        console.error('Health chat response missing body', {
+          status: response.status,
+          code: undefined,
+          requestId: response.headers.get('x-request-id') ?? response.headers.get('x-supabase-request-id') ?? undefined,
+          context: 'HealthChatPanel.health-chat',
+        });
+        setMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: 'Sorry, I couldn’t reach the assistant. Please try again.',
+          },
+        ]);
+        return;
       }
 
       const reader = response.body.getReader();
@@ -118,13 +146,19 @@ export function HealthChatPanel() {
         }
       }
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error('Chat error:', {
+        status: undefined,
+        code: undefined,
+        requestId: undefined,
+        context: 'HealthChatPanel.health-chat',
+        error,
+      });
       setMessages(prev => [
         ...prev,
-        { 
-          role: 'assistant', 
-          content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.` 
-        }
+        {
+          role: 'assistant',
+          content: 'Sorry, I couldn’t reach the assistant. Please try again.',
+        },
       ]);
     } finally {
       setIsLoading(false);

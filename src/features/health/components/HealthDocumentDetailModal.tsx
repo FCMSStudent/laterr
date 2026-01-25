@@ -17,6 +17,7 @@ import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
 import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { ExtractedHealthDataDisplay } from "@/features/health/components/ExtractedHealthDataDisplay";
 import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from "@/shared/lib/storage-constants";
+import { getEdgeFunctionErrorDetails, getEdgeFunctionErrorMessage } from "@/shared/lib/edge-function-errors";
 
 interface HealthDocumentDetailModalProps {
   open: boolean;
@@ -87,7 +88,18 @@ export const HealthDocumentDetailModal = ({
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        const details = await getEdgeFunctionErrorDetails({ error });
+        const mappedError = getEdgeFunctionErrorMessage(details);
+        console.error('Edge function analyze-file failed', {
+          status: details.status,
+          code: details.code,
+          requestId: details.requestId,
+          context: 'HealthDocumentDetailModal.analyze-file',
+        });
+        toast.error(mappedError.title, { description: mappedError.message });
+        return;
+      }
 
       // Update document with new summary
       const { error: updateError } = await supabase
@@ -137,8 +149,16 @@ export const HealthDocumentDetailModal = ({
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Request failed: ${response.status}`);
+        const details = await getEdgeFunctionErrorDetails({ response });
+        const mappedError = getEdgeFunctionErrorMessage(details);
+        console.error('Edge function extract-health-data failed', {
+          status: details.status,
+          code: details.code,
+          requestId: details.requestId,
+          context: 'HealthDocumentDetailModal.extract-health-data',
+        });
+        toast.error(mappedError.title, { description: mappedError.message });
+        return;
       }
 
       const { extracted_data } = await response.json();
@@ -156,7 +176,9 @@ export const HealthDocumentDetailModal = ({
       setActiveTab("extracted");
     } catch (error) {
       console.error('Error extracting health data:', error);
-      toast.error(`Failed to extract data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error('Something went wrong', {
+        description: 'Unable to extract health data. Please try again.',
+      });
     } finally {
       setExtracting(false);
     }

@@ -18,6 +18,7 @@ import type { DocumentType } from "@/features/health/types";
 import { format } from "date-fns";
 import { uploadFileToStorageWithSignedUrl, validateFileForUpload, type UploadValidationOptions } from "@/shared/lib/supabase-utils";
 import { getUploadErrorMessage } from "@/shared/lib/error-messages";
+import { getEdgeFunctionErrorDetails, getEdgeFunctionErrorMessage } from "@/shared/lib/edge-function-errors";
 
 const HEALTH_DOCUMENT_VALIDATION_OPTIONS: UploadValidationOptions = {
   allowedMimeTypes: [
@@ -200,6 +201,17 @@ export const AddHealthDocumentModal = ({
         if (!summaryError && summaryData?.summary) {
           summary = summaryData.summary;
         }
+        if (summaryError) {
+          const details = await getEdgeFunctionErrorDetails({ error: summaryError });
+          const mappedError = getEdgeFunctionErrorMessage(details);
+          console.error('Edge function analyze-file failed', {
+            status: details.status,
+            code: details.code,
+            requestId: details.requestId,
+            context: 'AddHealthDocumentModal.analyze-file',
+          });
+          toast.error(mappedError.title, { description: mappedError.message });
+        }
 
         // Generate embedding
         setStatusStep('generating embeddings');
@@ -214,6 +226,17 @@ export const AddHealthDocumentModal = ({
 
         if (!embeddingError && embeddingData?.embedding) {
           embedding = embeddingData.embedding;
+        }
+        if (embeddingError) {
+          const details = await getEdgeFunctionErrorDetails({ error: embeddingError });
+          const mappedError = getEdgeFunctionErrorMessage(details);
+          console.error('Edge function generate-embedding failed', {
+            status: details.status,
+            code: details.code,
+            requestId: details.requestId,
+            context: 'AddHealthDocumentModal.generate-embedding',
+          });
+          toast.error(mappedError.title, { description: mappedError.message });
         }
       } catch (aiError) {
         console.warn('AI analysis failed, continuing without:', aiError);
