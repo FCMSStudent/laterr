@@ -36,6 +36,35 @@ const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
 const DEBUG_LOGS = Deno.env.get("DEBUG_LOGS") === "true";
 
+type ApiErrorDetails = Record<string, unknown> | string | undefined;
+
+class ApiError extends Error {
+  status: number;
+  code: string;
+  details?: ApiErrorDetails;
+
+  constructor(status: number, code: string, message: string, details?: ApiErrorDetails) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+const isApiError = (error: unknown): error is ApiError => error instanceof ApiError;
+
+const createAiProviderError = (status: number, statusText: string) => {
+  const isProviderFailure = status >= 500;
+  const errorStatus = isProviderFailure ? 502 : 500;
+  const code = isProviderFailure ? "ai_error" : "internal_error";
+  return new ApiError(
+    errorStatus,
+    code,
+    "AI provider error.",
+    { status, statusText }
+  );
+};
+
 /**
  * Helper function to make AI API calls with retry logic for rate limits (429 errors)
  * @param url - API endpoint URL
@@ -377,16 +406,16 @@ Use the analyze_file function to provide structured output.`;
 
   if (aiResponse.status === 429) {
     console.error('❌ Rate limit exceeded after retries');
-    throw new Error("Rate limit exceeded. Please try again later.");
+    throw new ApiError(429, "rate_limited", "Rate limit exceeded. Please try again later.");
   }
   if (aiResponse.status === 402) {
     console.error('❌ AI credits exhausted');
-    throw new Error("AI credits exhausted. Please add credits to continue.");
+    throw new ApiError(402, "credits_exhausted", "AI credits exhausted. Please add credits to continue.");
   }
 
   if (!aiResponse.ok) {
     console.error('❌ Multimodal AI error:', aiResponse.status);
-    throw new Error(`Multimodal AI analysis failed: ${aiResponse.statusText}`);
+    throw createAiProviderError(aiResponse.status, aiResponse.statusText);
   }
 
   const data = await aiResponse.json();
@@ -937,14 +966,14 @@ Use the analyze_file function to provide structured output.`
         });
 
         if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
+          throw new ApiError(429, "rate_limited", "Rate limit exceeded. Please try again later.");
         }
         if (response.status === 402) {
-          throw new Error("AI credits exhausted. Please add credits to continue.");
+          throw new ApiError(402, "credits_exhausted", "AI credits exhausted. Please add credits to continue.");
         }
         if (!response.ok) {
           console.error('❌ AI gateway error:', response.status);
-          throw new Error(`AI analysis failed: ${response.statusText}`);
+          throw createAiProviderError(response.status, response.statusText);
         }
 
         const data = await response.json();
@@ -971,7 +1000,7 @@ Use the analyze_file function to provide structured output.`
         console.error('❌ Image analysis error:', error);
         description = 'Image file';
         tags = ['image'];
-        if (error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits'))) {
+        if (isApiError(error) && (error.code === "rate_limited" || error.code === "credits_exhausted")) {
           throw error; // Propagate rate limit/credit errors to client
         }
       }
@@ -1022,7 +1051,7 @@ Use the analyze_file function to provide structured output.`
             console.error('❌ PDF Analysis Path: Multimodal fallback failed, using metadata-based fallback');
             console.error('❌ Multimodal error:', multimodalError instanceof Error ? multimodalError.message : String(multimodalError));
             
-            if (multimodalError instanceof Error && (multimodalError.message.includes('Rate limit') || multimodalError.message.includes('credits'))) {
+            if (isApiError(multimodalError) && (multimodalError.code === "rate_limited" || multimodalError.code === "credits_exhausted")) {
               throw multimodalError;
             }
             
@@ -1125,11 +1154,11 @@ Use the analyze_file function to provide structured output.`;
 
         if (aiResponse.status === 429) {
           console.error('❌ Rate limit exceeded after retries during PDF analysis');
-          throw new Error("Rate limit exceeded. Please try again later.");
+          throw new ApiError(429, "rate_limited", "Rate limit exceeded. Please try again later.");
         }
         if (aiResponse.status === 402) {
           console.error('❌ AI credits exhausted during PDF analysis');
-          throw new Error("AI credits exhausted. Please add credits to continue.");
+          throw new ApiError(402, "credits_exhausted", "AI credits exhausted. Please add credits to continue.");
         }
 
         if (aiResponse.ok) {
@@ -1171,8 +1200,7 @@ Use the analyze_file function to provide structured output.`;
             status: aiResponse.status,
             statusText: aiResponse.statusText
           });
-          tags = ['pdf', 'document'];
-          description = `PDF document with ${pageCount} pages`;
+          throw createAiProviderError(aiResponse.status, aiResponse.statusText);
         }
 
         // Fallback: ensure we have a non-empty summary for PDFs
@@ -1256,7 +1284,7 @@ Use the analyze_file function to provide structured output.`;
         console.error('❌ PDF processing error:', error);
         description = 'PDF document';
         tags = ['pdf', 'document'];
-        if (error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits'))) {
+        if (isApiError(error) && (error.code === "rate_limited" || error.code === "credits_exhausted")) {
           throw error;
         }
       }
@@ -1320,8 +1348,11 @@ Use the analyze_file function to provide structured output.`;
           }),
         });
 
-        if (aiResponse.status === 429 || aiResponse.status === 402) {
-          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded after retries. Please try again later." : "AI credits exhausted. Please add credits to continue.");
+        if (aiResponse.status === 429) {
+          throw new ApiError(429, "rate_limited", "Rate limit exceeded after retries. Please try again later.");
+        }
+        if (aiResponse.status === 402) {
+          throw new ApiError(402, "credits_exhausted", "AI credits exhausted. Please add credits to continue.");
         }
 
         if (aiResponse.ok) {
@@ -1347,13 +1378,13 @@ Use the analyze_file function to provide structured output.`;
           console.log('✅ DOCX analysis:', { titleLength: title.length, tagCount: tags.length, category, textLength: extractedText.length });
         } else {
           console.error('❌ AI analysis failed');
-          tags = ['word', 'document'];
+          throw createAiProviderError(aiResponse.status, aiResponse.statusText);
         }
       } catch (error) {
         console.error('❌ DOCX processing error:', error);
         description = 'Word document';
         tags = ['word', 'document'];
-        if (error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits'))) {
+        if (isApiError(error) && (error.code === "rate_limited" || error.code === "credits_exhausted")) {
           throw error;
         }
       }
@@ -1407,8 +1438,11 @@ Use the analyze_file function to provide structured output.`;
           }),
         });
 
-        if (aiResponse.status === 429 || aiResponse.status === 402) {
-          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded after retries. Please try again later." : "AI credits exhausted. Please add credits to continue.");
+        if (aiResponse.status === 429) {
+          throw new ApiError(429, "rate_limited", "Rate limit exceeded after retries. Please try again later.");
+        }
+        if (aiResponse.status === 402) {
+          throw new ApiError(402, "credits_exhausted", "AI credits exhausted. Please add credits to continue.");
         }
 
         if (aiResponse.ok) {
@@ -1434,17 +1468,14 @@ Use the analyze_file function to provide structured output.`;
           console.log('✅ Spreadsheet analysis:', { titleLength: title.length, tagCount: tags.length, category, rowCount, columnCount });
         } else {
           console.error('❌ AI analysis failed');
-          description = `Spreadsheet with ${rowCount} rows and ${columnCount} columns`;
-          tags = ['spreadsheet', 'data', fileType === 'text/csv' ? 'csv' : 'excel'];
-          category = 'business';
-          extractedText = dataSample;
+          throw createAiProviderError(aiResponse.status, aiResponse.statusText);
         }
       } catch (error) {
         console.error('❌ Spreadsheet processing error:', error);
         description = 'Spreadsheet containing data tables';
         tags = ['spreadsheet', 'data'];
         category = 'business';
-        if (error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits'))) {
+        if (isApiError(error) && (error.code === "rate_limited" || error.code === "credits_exhausted")) {
           throw error;
         }
       }
@@ -1497,8 +1528,11 @@ Use the analyze_file function to provide structured output.`;
           }),
         });
 
-        if (aiResponse.status === 429 || aiResponse.status === 402) {
-          throw new Error(aiResponse.status === 429 ? "Rate limit exceeded after retries. Please try again later." : "AI credits exhausted. Please add credits to continue.");
+        if (aiResponse.status === 429) {
+          throw new ApiError(429, "rate_limited", "Rate limit exceeded after retries. Please try again later.");
+        }
+        if (aiResponse.status === 402) {
+          throw new ApiError(402, "credits_exhausted", "AI credits exhausted. Please add credits to continue.");
         }
 
         if (aiResponse.ok) {
@@ -1524,17 +1558,14 @@ Use the analyze_file function to provide structured output.`;
           console.log('✅ Presentation analysis:', { titleLength: title.length, tagCount: tags.length, category, slideCount });
         } else {
           console.error('❌ AI analysis failed');
-          description = `Presentation with ${slideCount} slides`;
-          tags = ['presentation', 'slides', 'powerpoint'];
-          category = 'business';
-          extractedText = contentSample;
+          throw createAiProviderError(aiResponse.status, aiResponse.statusText);
         }
       } catch (error) {
         console.error('❌ Presentation processing error:', error);
         description = 'Presentation slides';
         tags = ['presentation', 'slides'];
         category = 'business';
-        if (error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits'))) {
+        if (isApiError(error) && (error.code === "rate_limited" || error.code === "credits_exhausted")) {
           throw error;
         }
       }
@@ -1576,6 +1607,13 @@ Use the analyze_file function.`;
             }),
           });
 
+          if (aiResponse.status === 429) {
+            throw new ApiError(429, "rate_limited", "Rate limit exceeded after retries. Please try again later.");
+          }
+          if (aiResponse.status === 402) {
+            throw new ApiError(402, "credits_exhausted", "AI credits exhausted. Please add credits to continue.");
+          }
+
           if (aiResponse.ok) {
             const data = await aiResponse.json();
             const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
@@ -1596,11 +1634,16 @@ Use the analyze_file function.`;
             summary = parsed.summary || '';
             keyPoints = parsed.keyPoints || [];
             console.log('✅ Text file analysis:', { titleLength: title.length, tagCount: tags.length, category });
+          } else {
+            throw createAiProviderError(aiResponse.status, aiResponse.statusText);
           }
         }
       } catch (error) {
         console.error('❌ Text file error:', error);
         tags = ['text', 'document'];
+        if (isApiError(error) && (error.code === "rate_limited" || error.code === "credits_exhausted")) {
+          throw error;
+        }
       }
       
     } else if (fileType.startsWith('video/')) {
@@ -1686,11 +1729,21 @@ Use the analyze_file function.`;
       }
     );
   } catch (error) {
-    statusCode = error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits')) ? 429 : 500;
-    activeLogger.error('analyze-file.error', { statusCode, message: error instanceof Error ? error.message : 'An unexpected error occurred' });
+    const apiError = isApiError(error) ? error : new ApiError(500, "internal_error", "An unexpected error occurred");
+    statusCode = apiError.status;
+    activeLogger.error('analyze-file.error', {
+      statusCode,
+      code: apiError.code,
+      message: apiError.message,
+      details: apiError.details
+    });
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred' 
+        error: {
+          code: apiError.code,
+          message: apiError.message,
+          details: apiError.details
+        }
       }),
       {
         status: statusCode,
