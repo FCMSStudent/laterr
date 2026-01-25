@@ -71,6 +71,9 @@ export const DetailViewModal = ({
 
   const isMobile = useIsMobile();
   const debouncedNotes = useDebounce(userNotes, AUTO_SAVE_DELAY);
+  
+  // Extract item id to avoid optional chaining in dependency arrays (not allowed by esbuild)
+  const itemId = item?.id;
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
@@ -103,7 +106,10 @@ export const DetailViewModal = ({
     }
   }, [item]);
 
-  // Autosave notes
+  // Autosave notes - placeholder, actual save will be triggered by handleSave defined below
+  // We use a ref to avoid circular dependency issues
+  const handleSaveRef = useRef<((notes: string, tags: string[], silent?: boolean) => Promise<void>) | null>(null);
+  
   useEffect(() => {
     if (!item || !open) return;
     const itemNotes = item.user_notes || "";
@@ -112,20 +118,10 @@ export const DetailViewModal = ({
     const notesChanged = debouncedNotes !== itemNotes;
     const tagsChanged = !areTagsEqual(tags, itemTags);
 
-    if (notesMatchCurrent && (notesChanged || tagsChanged)) {
-      handleSave(debouncedNotes, tags, true);
+    if (notesMatchCurrent && (notesChanged || tagsChanged) && handleSaveRef.current) {
+      handleSaveRef.current(debouncedNotes, tags, true);
     }
-  }, [debouncedNotes, open, item, tags, userNotes, handleSave]);
-    if (!item || !open) {
-      autosaveItemIdRef.current = null;
-      return;
-    }
-    autosaveItemIdRef.current = item.id;
-    if (debouncedNotes !== (item.user_notes || "")) {
-      if (autosaveItemIdRef.current !== item.id) return;
-      handleSave(debouncedNotes, tags, true);
-    }
-  }, [debouncedNotes, item?.id, open, tags, handleSave]);
+  }, [debouncedNotes, open, item, tags, userNotes]);
 
   // Fetch related items (same tag, excluding current)
   useEffect(() => {
@@ -169,7 +165,7 @@ export const DetailViewModal = ({
     };
 
     fetchRelated();
-  }, [open, item?.id]); // Depend on item.id to refetch when item changes. Removed 'tags' to avoid loop, technically related items could change if tags change, but for now let's keep it stable on item open.
+  }, [open, itemId]); // Use extracted itemId instead of item?.id to avoid esbuild error
 
   useEffect(() => {
     const generateSignedUrlForItem = async () => {
@@ -228,6 +224,11 @@ export const DetailViewModal = ({
       if (!silent) setSaving(false);
     }
   }, [item, onUpdate]);
+
+  // Keep ref in sync with handleSave for autosave useEffect
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
 
   // Tag Handlers
   const normalizeTag = (tag: string) => tag.trim();
