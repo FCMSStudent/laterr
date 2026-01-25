@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, DEFAULT_ITEM_TAGS, ALLOWED_FILE_MIME_TYPES, FILE_INPUT_ACCEPT, FILE_SIZE_LIMIT_BYTES, FILE_SIZE_LIMIT_MB, NOTE_MAX_LENGTH, NOTE_SUMMARY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH, URL_MAX_LENGTH, SUPABASE_FUNCTION_ANALYZE_FILE, SUPABASE_FUNCTION_ANALYZE_URL, SUPABASE_ITEMS_TABLE, FILE_ANALYSIS_SIGNED_URL_EXPIRATION, isValidEmbedding } from "@/features/bookmarks/constants";
-import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage, validateFileForUpload } from "@/shared/lib/supabase-utils";
+import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage, validateFileForUpload, type UploadValidationOptions } from "@/shared/lib/supabase-utils";
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/shared/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/shared/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage, getUploadErrorMessage } from "@/shared/lib/error-messages";
@@ -295,11 +295,14 @@ export const AddItemModal = ({
       } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Validate file before upload
+      validateFileForUpload(file, FILE_VALIDATION_OPTIONS);
+      
       // Upload to storage with user-specific path
       const {
         fileName,
         storagePath
-      } = await uploadFileToStorage(file, user.id, FILE_VALIDATION_OPTIONS);
+      } = await uploadFileToStorage(file, user.id);
 
       // Generate thumbnail for preview
       setStatusStep('generating thumbnail');
