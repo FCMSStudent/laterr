@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,8 +8,18 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+  const startTime = Date.now();
+  const requestPath = new URL(req.url).pathname;
+  let statusCode = 200;
+  const logger = createLogger({ requestId, startTime });
+
+  logger.info('request.start', { method: req.method, path: requestPath });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs });
+    return new Response(null, { headers: { ...corsHeaders, 'x-request-id': requestId } });
   }
 
   try {
@@ -18,7 +29,7 @@ serve(async (req) => {
       throw new Error('Tag name and prompt are required');
     }
 
-    console.log(`Generating icon for tag: ${tagName}`);
+    logger.info('generate-tag-icon.requested', { tagName });
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -45,7 +56,7 @@ serve(async (req) => {
     });
 
     const aiData = await aiResponse.json();
-    console.log('AI image generation response received');
+    logger.debug('generate-tag-icon.response-received');
     
     // Extract the generated image
     const imageData = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
@@ -59,17 +70,21 @@ serve(async (req) => {
         iconUrl: imageData,
         tagName
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
     );
 
   } catch (error) {
-    console.error('Error in generate-tag-icon:', error);
+    statusCode = 500;
+    logger.error('generate-tag-icon.error', { statusCode, message: error instanceof Error ? error.message : 'Unknown error' });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } 
       }
     );
+  } finally {
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs, path: requestPath });
   }
 });

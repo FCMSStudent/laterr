@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,8 +8,18 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+  const startTime = Date.now();
+  const logger = createLogger({ requestId, startTime });
+
+  const requestPath = new URL(req.url).pathname;
+  let statusCode = 200;
+  logger.info('request.start', { method: req.method, path: requestPath });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs });
+    return new Response(null, { headers: { ...corsHeaders, 'x-request-id': requestId } });
   }
 
   try {
@@ -18,7 +29,7 @@ serve(async (req) => {
       throw new Error('Image URL is required');
     }
 
-    console.log('Analyzing image with AI...');
+    logger.info('analyze-image.requested');
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -51,7 +62,6 @@ serve(async (req) => {
     });
 
     const aiData = await aiResponse.json();
-    console.log('AI response:', aiData);
     
     let result;
     try {
@@ -67,23 +77,28 @@ serve(async (req) => {
       };
     }
 
-    return new Response(
+    const response = new Response(
       JSON.stringify({
         title: result.title,
         description: result.description,
         tag: result.tag || 'read later'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
     );
+    return response;
 
   } catch (error) {
-    console.error('Error in analyze-image:', error);
+    statusCode = 500;
+    logger.error('analyze-image.error', { statusCode, message: error instanceof Error ? error.message : 'Unknown error' });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } 
       }
     );
+  } finally {
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs, path: requestPath });
   }
 });

@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { cleanMetadataFields, validateAndParseAiJson } from "../_shared/metadata-utils.ts";
 import { parseHTML } from "https://esm.sh/linkedom@0.18.5";
 import { Readability } from "https://esm.sh/@mozilla/readability@0.5.0";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,8 +11,18 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+  const startTime = Date.now();
+  const requestPath = new URL(req.url).pathname;
+  let statusCode = 200;
+  const logger = createLogger({ requestId, startTime });
+
+  logger.info('request.start', { method: req.method, path: requestPath });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs });
+    return new Response(null, { headers: { ...corsHeaders, 'x-request-id': requestId } });
   }
 
   try {
@@ -357,17 +368,21 @@ serve(async (req) => {
         platform: platform || undefined,
         contentType: result.contentType || 'article'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
     );
 
   } catch (error) {
-    console.error('Error in analyze-url:', error);
+    statusCode = 500;
+    logger.error('analyze-url.error', { statusCode, message: error instanceof Error ? error.message : 'Unknown error' });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } 
       }
     );
+  } finally {
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs, path: requestPath });
   }
 });

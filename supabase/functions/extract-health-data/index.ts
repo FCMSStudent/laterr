@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,17 +39,28 @@ interface ExtractedHealthData {
 }
 
 serve(async (req) => {
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+  const startTime = Date.now();
+  const requestPath = new URL(req.url).pathname;
+  let statusCode = 200;
+  const logger = createLogger({ requestId, startTime });
+
+  logger.info('request.start', { method: req.method, path: requestPath });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs });
+    return new Response(null, { headers: { ...corsHeaders, 'x-request-id': requestId } });
   }
 
   try {
     const { content, document_type, file_type } = await req.json();
 
     if (!content) {
+      statusCode = 400;
       return new Response(
         JSON.stringify({ error: 'Content is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
       );
     }
 
@@ -176,19 +188,20 @@ Be precise with numbers and units. If a value is outside the reference range, ma
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+      console.error('AI Gateway error:', response.status);
       
       if (response.status === 429) {
+        statusCode = 429;
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
         );
       }
       if (response.status === 402) {
+        statusCode = 402;
         return new Response(
           JSON.stringify({ error: 'AI credits exhausted. Please add funds to continue.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
         );
       }
       
@@ -238,14 +251,18 @@ Be precise with numbers and units. If a value is outside the reference range, ma
 
     return new Response(
       JSON.stringify({ extracted_data: extractedData }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
     );
 
   } catch (error) {
-    console.error('Error in extract-health-data:', error);
+    statusCode = 500;
+    logger.error('extract-health-data.error', { statusCode, message: error instanceof Error ? error.message : 'Unknown error' });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
     );
+  } finally {
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs, path: requestPath });
   }
 });
