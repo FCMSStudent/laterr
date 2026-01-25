@@ -40,7 +40,7 @@ const AppContent = () => {
     <Suspense fallback={<LoadingFallback />}>
       <div>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/app" element={<Bookmarks />} />
           <Route path="/bookmarks" element={<Bookmarks />} />
