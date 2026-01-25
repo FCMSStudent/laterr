@@ -118,14 +118,14 @@ export function validateAndParseAiJson(
     const titleMatch = text.match(/(?:title|Title)[:\s]*["']?([^"'\n]+)["']?/i);
     if (titleMatch && titleMatch[1]?.trim()) {
       extracted.title = titleMatch[1].trim();
-      console.log('📄 Extracted title from text:', extracted.title);
+      console.log('📄 Extracted title from text:', { titleLength: extracted.title.length });
     }
     
     // Try to extract summary from text patterns
     const summaryMatch = text.match(/(?:summary|Summary)[:\s]*["']?([^"'\n]+(?:\n[^"'\n]+)?)["']?/i);
     if (summaryMatch && summaryMatch[1]?.trim()) {
       extracted.summary = summaryMatch[1].trim();
-      console.log('📄 Extracted summary from text');
+      console.log('📄 Extracted summary from text:', { summaryLength: extracted.summary.length });
     }
     
     // Try to extract description
@@ -145,7 +145,7 @@ export function validateAndParseAiJson(
     if (tagsMatch && tagsMatch[1]?.trim()) {
       const tagStr = tagsMatch[1].replace(/["'\[\]]/g, '');
       extracted.tags = tagStr.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
-      console.log('📄 Extracted tags from text:', extracted.tags);
+      console.log('📄 Extracted tags from text:', { tagCount: extracted.tags.length });
     }
     
     // Merge extracted with fallback
