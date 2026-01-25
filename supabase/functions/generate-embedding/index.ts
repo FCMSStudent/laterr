@@ -28,7 +28,12 @@ serve(async (req) => {
   try {
     const { title, summary, tags, extractedText } = await req.json();
 
-    logger.info('generate-embedding.requested', { title, tags, summaryLength: summary?.length, textLength: extractedText?.length });
+    console.log('🔮 Generating embedding for:', {
+      titleLength: title?.length ?? 0,
+      tagCount: Array.isArray(tags) ? tags.length : 0,
+      summaryLength: summary?.length ?? 0,
+      textLength: extractedText?.length ?? 0
+    });
 
     // Construct multimodal text representation
     // Priority: tags (highest weight) > title > summary > extracted text (sample)
@@ -71,7 +76,7 @@ serve(async (req) => {
       );
     }
 
-    logger.debug('generate-embedding.combined-text', { preview: combinedText.substring(0, 200) });
+    console.log('📝 Combined text metrics for embedding:', { combinedTextLength: combinedText.length, partCount: parts.length });
 
     // Generate embedding using OpenAI's embedding model directly
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
