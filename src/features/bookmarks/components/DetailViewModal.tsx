@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui";
 import { Button } from "@/ui";
-import { LoadingButton } from "@/ui";
 import { LoadingSpinner } from "@/ui";
 
 import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
@@ -11,17 +10,16 @@ import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
-import { ItemCard } from "@/features/bookmarks/components/ItemCard";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Share2, Circle, Globe, CheckCircle2, Clock, X, Edit2 } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Share2, Globe, CheckCircle2, Clock, X, Edit2 } from "lucide-react";
 import { Badge } from "@/ui";
 import { Input, Textarea } from "@/ui";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
+import { DEFAULT_ITEM_TAG, SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
 import { generateSignedUrl, generateSignedUrlsForItems } from "@/shared/lib/supabase-utils";
-import { NetworkError, toTypedError } from "@/shared/types/errors";
+import { toTypedError } from "@/shared/types/errors";
 import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/shared/lib/error-messages";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import type { Item } from "@/features/bookmarks/types";
