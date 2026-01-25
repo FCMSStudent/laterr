@@ -8,19 +8,18 @@ const Landing = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   useEffect(() => {
     // Check if user is already authenticated
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
-      if (session) {
-        setIsAuthenticated(true);
-      }
-    });
-  }, []);
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (session) {
+          setIsAuthenticated(true);
+          navigate("/dashboard", { replace: true });
+        }
+      });
+  }, [navigate]);
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      navigate("/app");
+      navigate("/dashboard");
     } else {
       navigate("/auth");
     }
