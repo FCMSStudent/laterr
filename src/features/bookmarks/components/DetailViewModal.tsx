@@ -360,7 +360,7 @@ export const DetailViewModal = ({
 
   // --- UNIFIED LAYOUT ---
   // Fixed sizing with 60/40 split for content/sidebar
-  const modalSizeClasses = "w-[min(95vw,1100px)] h-[min(85vh,720px)] overflow-hidden";
+  const modalSizeClasses = "w-[min(95vw,1100px)] h-[min(85vh,720px)] max-w-none sm:max-w-none max-h-none sm:max-h-none overflow-hidden";
   const gridLayout = "grid-cols-1 lg:grid-cols-[1.4fr_1fr]";
 
   // 3. Preview Container Styling
