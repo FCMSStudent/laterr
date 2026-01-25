@@ -1,8 +1,9 @@
 import { CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/features/subscriptions/utils/currency-utils';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import type { Subscription } from '@/features/subscriptions/types';
 import { cn } from '@/shared/lib/utils';
+import { parseSubscriptionDate } from '@/features/subscriptions/utils/date-utils';
 
 interface SubscriptionListRowProps {
   subscription: Subscription;
@@ -21,9 +22,10 @@ export const SubscriptionListRow = ({
   const { name, amount, currency, next_billing_date, status } = subscription;
 
   // Calculate days until renewal
-  const daysUntil = differenceInDays(parseISO(next_billing_date), new Date());
-  const isDueSoon = daysUntil >= 0 && daysUntil <= 7;
-  const showCountdown = daysUntil >= 0 && daysUntil <= 14;
+  const nextBillingDate = parseSubscriptionDate(next_billing_date);
+  const daysUntil = nextBillingDate ? differenceInDays(nextBillingDate, new Date()) : null;
+  const isDueSoon = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
+  const showCountdown = daysUntil !== null && daysUntil >= 0 && daysUntil <= 14;
 
   // Status dot color
   const getStatusDotColor = () => {
@@ -59,13 +61,17 @@ export const SubscriptionListRow = ({
         </div>
         {showCountdown ? (
           <div className="text-xs text-muted-foreground truncate mt-0.5">
-            {isDueSoon ? `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}` : format(parseISO(next_billing_date), 'MMM d, yyyy')}
-          </div>
-        ) : (
-          <div className="text-xs text-muted-foreground truncate mt-0.5">
-            {format(parseISO(next_billing_date), 'MMM d, yyyy')}
-          </div>
-        )}
+          {isDueSoon && daysUntil !== null
+            ? `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`
+            : nextBillingDate
+            ? format(nextBillingDate, 'MMM d, yyyy')
+            : 'Date unavailable'}
+        </div>
+      ) : (
+        <div className="text-xs text-muted-foreground truncate mt-0.5">
+          {nextBillingDate ? format(nextBillingDate, 'MMM d, yyyy') : 'Date unavailable'}
+        </div>
+      )}
       </div>
 
       {/* Price */}

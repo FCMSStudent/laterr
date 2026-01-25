@@ -16,7 +16,8 @@ import { SUBSCRIPTION_TABLES } from "@/features/subscriptions/constants";
 import { formatCurrency, calculateMonthlyCost, calculateAnnualCost } from "@/features/subscriptions/utils/currency-utils";
 import type { Subscription, SubscriptionStatus, SubscriptionBillingCycle } from "@/features/subscriptions/types";
 import { toTypedError } from "@/shared/types/errors";
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInDays } from "date-fns";
+import { parseSubscriptionDate } from "@/features/subscriptions/utils/date-utils";
 
 // Lazy load modal components
 const AddSubscriptionModal = lazy(() => import("@/features/subscriptions/components/AddSubscriptionModal").then(({ AddSubscriptionModal }) => ({ default: AddSubscriptionModal })));
@@ -47,7 +48,11 @@ const Subscriptions = () => {
   const totalMonthly = activeSubscriptions.reduce((sum, s) => sum + calculateMonthlyCost(s.amount, s.billing_cycle as SubscriptionBillingCycle), 0);
   const totalYearly = activeSubscriptions.reduce((sum, s) => sum + calculateAnnualCost(s.amount, s.billing_cycle as SubscriptionBillingCycle), 0);
   const upcomingRenewals = activeSubscriptions.filter(s => {
-    const daysUntil = differenceInDays(parseISO(s.next_billing_date), new Date());
+    const nextBillingDate = parseSubscriptionDate(s.next_billing_date);
+    if (!nextBillingDate) {
+      return false;
+    }
+    const daysUntil = differenceInDays(nextBillingDate, new Date());
     return daysUntil >= 0 && daysUntil <= 7;
   }).length;
 
@@ -160,7 +165,11 @@ const Subscriptions = () => {
     } else if (statusFilter === 'due_soon') {
       filtered = filtered.filter(sub => {
         if (sub.status !== 'active') return false;
-        const daysUntil = differenceInDays(parseISO(sub.next_billing_date), new Date());
+        const nextBillingDate = parseSubscriptionDate(sub.next_billing_date);
+        if (!nextBillingDate) {
+          return false;
+        }
+        const daysUntil = differenceInDays(nextBillingDate, new Date());
         return daysUntil >= 0 && daysUntil <= 7;
       });
     } else if (statusFilter !== 'all') {

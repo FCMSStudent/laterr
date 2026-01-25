@@ -24,6 +24,7 @@ import { SUBSCRIPTION_TABLES, CATEGORY_COLORS } from "@/features/subscriptions/c
 import { formatCurrency, calculateMonthlyCost, calculateAnnualCost, formatBillingCycle } from "@/features/subscriptions/utils/currency-utils";
 import type { Subscription, SubscriptionBillingCycle, SubscriptionTransaction, SubscriptionStatus } from "@/features/subscriptions/types";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { parseSubscriptionDate } from "@/features/subscriptions/utils/date-utils";
 
 interface SubscriptionDetailModalProps {
   open: boolean;
@@ -138,7 +139,8 @@ export const SubscriptionDetailModal = ({
 
   const monthlyAmount = calculateMonthlyCost(subscription.amount, subscription.billing_cycle as SubscriptionBillingCycle);
   const yearlyAmount = calculateAnnualCost(subscription.amount, subscription.billing_cycle as SubscriptionBillingCycle);
-  const daysUntilRenewal = differenceInDays(parseISO(subscription.next_billing_date), new Date());
+  const nextBillingDate = parseSubscriptionDate(subscription.next_billing_date);
+  const daysUntilRenewal = nextBillingDate ? differenceInDays(nextBillingDate, new Date()) : null;
   const categoryColor = CATEGORY_COLORS[subscription.category] || CATEGORY_COLORS.Other;
 
   const getStatusColor = (status: SubscriptionStatus) => {
@@ -233,9 +235,9 @@ export const SubscriptionDetailModal = ({
             {/* Next Billing */}
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>Next billing: {format(parseISO(subscription.next_billing_date), 'PPP')}</span>
+              <span>Next billing: {nextBillingDate ? format(nextBillingDate, 'PPP') : 'Date unavailable'}</span>
             </div>
-            {daysUntilRenewal >= 0 && (
+            {daysUntilRenewal !== null && daysUntilRenewal >= 0 && (
               <Badge variant="outline" className={daysUntilRenewal <= 7 ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' : ''}>
                 {daysUntilRenewal === 0 ? 'Due today' : `Renews in ${daysUntilRenewal} days`}
               </Badge>

@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui";
 import { Calendar } from "@/ui";
 import { CalendarIcon, X, Ban } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/shared/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SUBSCRIPTION_TABLES, DEFAULT_CATEGORIES, CURRENCY_OPTIONS, BILLING_CYCLES } from "@/features/subscriptions/constants";
 import type { Subscription, SubscriptionBillingCycle } from "@/features/subscriptions/types";
+import { parseSubscriptionDate } from "@/features/subscriptions/utils/date-utils";
 
 interface EditSubscriptionModalProps {
   open: boolean;
@@ -37,7 +38,9 @@ export const EditSubscriptionModal = ({
   const [amount, setAmount] = useState(subscription.amount.toString());
   const [currency, setCurrency] = useState(subscription.currency);
   const [billingCycle, setBillingCycle] = useState<SubscriptionBillingCycle>(subscription.billing_cycle as SubscriptionBillingCycle);
-  const [nextBillingDate, setNextBillingDate] = useState<Date | undefined>(parseISO(subscription.next_billing_date));
+  const [nextBillingDate, setNextBillingDate] = useState<Date | undefined>(
+    parseSubscriptionDate(subscription.next_billing_date)
+  );
   const [paymentMethod, setPaymentMethod] = useState(subscription.payment_method || "");
   const [autoRenew, setAutoRenew] = useState(subscription.auto_renew);
   const [websiteUrl, setWebsiteUrl] = useState(subscription.website_url || "");
@@ -56,7 +59,7 @@ export const EditSubscriptionModal = ({
       setAmount(subscription.amount.toString());
       setCurrency(subscription.currency);
       setBillingCycle(subscription.billing_cycle as SubscriptionBillingCycle);
-      setNextBillingDate(parseISO(subscription.next_billing_date));
+      setNextBillingDate(parseSubscriptionDate(subscription.next_billing_date));
       setPaymentMethod(subscription.payment_method || "");
       setAutoRenew(subscription.auto_renew);
       setWebsiteUrl(subscription.website_url || "");
