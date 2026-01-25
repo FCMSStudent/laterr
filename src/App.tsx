@@ -18,6 +18,11 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Health = lazy(() => import("./pages/Health"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ViewerLoadingTest = lazy(() =>
+  import("./pages/ViewerLoadingTest").then((module) => ({
+    default: module.ViewerLoadingTestPage
+  }))
+);
 
 const queryClient = new QueryClient();
 
@@ -49,6 +54,9 @@ const AppContent = () => {
           <Route path="/settings" element={<Settings />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/landing" element={<Landing />} />
+          {process.env.NODE_ENV === "development" && (
+            <Route path="/viewer-loading-test" element={<ViewerLoadingTest />} />
+          )}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
