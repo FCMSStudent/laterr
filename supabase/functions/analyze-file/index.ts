@@ -21,6 +21,7 @@ const corsHeaders = {
 // Retry configuration
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
+const DEBUG_LOGS = Deno.env.get("DEBUG_LOGS") === "true";
 
 /**
  * Helper function to make AI API calls with retry logic for rate limits (429 errors)
@@ -115,8 +116,13 @@ function normalizeTags(tags: string[]): string[] {
  * This handles cases where Gemini returns JSON in content instead of tool_calls
  */
 function extractAiMetadata(data: any, fallback: Record<string, unknown>): { raw: string | undefined, source: string } {
-  // Log full response for debugging
-  console.log('📥 Full AI response:', JSON.stringify(data, null, 2));
+  if (DEBUG_LOGS) {
+    const choiceCount = Array.isArray(data?.choices) ? data.choices.length : 0;
+    console.log('📥 AI response diagnostics:', {
+      choiceCount,
+      hasMessage: Boolean(data?.choices?.[0]?.message),
+    });
+  }
   
   // Try tool_calls first (preferred structured output)
   const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
@@ -129,7 +135,9 @@ function extractAiMetadata(data: any, fallback: Record<string, unknown>): { raw:
   const content = data.choices?.[0]?.message?.content;
   if (content && typeof content === 'string') {
     console.log('🔄 No tool_calls found, checking content field...');
-    console.log('📄 Content field value:', content.substring(0, 500));
+    if (DEBUG_LOGS) {
+      console.log('📄 Content field length:', content.length);
+    }
     
     // Try to extract JSON from content
     const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -496,7 +504,7 @@ async function extractDocxText(fileUrl: string): Promise<{ text: string; metadat
         Subject: subjectMatch?.[1] || '',
         Keywords: keywordsMatch?.[1]?.split(',').map((keyword) => keyword.trim()).filter(Boolean) || [],
       };
-      console.log('📝 DOCX metadata:', metadata);
+      console.log('📝 DOCX metadata fields:', Object.keys(metadata));
     }
     
     // Cap at 50k chars
@@ -812,7 +820,7 @@ serve(async (req) => {
   try {
     const { fileUrl, fileType, fileName } = await req.json();
 
-    console.log('🔍 Analyzing file:', { fileName, fileType, fileUrl: fileUrl.substring(0, 100) + '...' });
+    console.log('🔍 Analyzing file:', { fileType, fileNameLength: fileName?.length ?? 0, hasFileUrl: Boolean(fileUrl) });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -834,7 +842,7 @@ serve(async (req) => {
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (user) {
           userId = user.id;
-          console.log('✅ User authenticated:', userId);
+          console.log('✅ User authenticated');
         }
       } catch (authError) {
         console.warn('⚠️ Failed to authenticate user:', authError);
@@ -937,7 +945,7 @@ Use the analyze_file function to provide structured output.`
         category = parsed.category || 'other';
         summary = parsed.summary || '';
         keyPoints = parsed.keyPoints || [];
-        console.log('✅ Image analysis:', { title, tags, category, extractedTextLength: extractedText.length });
+        console.log('✅ Image analysis:', { titleLength: title.length, tagCount: tags.length, category, extractedTextLength: extractedText.length });
       } catch (error) {
         console.error('❌ Image analysis error:', error);
         description = 'Image file';
@@ -983,8 +991,8 @@ Use the analyze_file function to provide structured output.`
             
             console.log('✅ PDF Analysis Path: AI multimodal analysis succeeded');
             console.log('✅ PDF multimodal analysis complete:', { 
-              title, 
-              tags, 
+              titleLength: title.length,
+              tagCount: tags.length,
               category,
               hasSummary: !!summary,
               keyPointsCount: keyPoints.length 
@@ -1002,10 +1010,10 @@ Use the analyze_file function to provide structured output.`
             const metaTitle = metadata.Title || metadata.title;
             if (metaTitle && typeof metaTitle === 'string' && metaTitle.length > MIN_TITLE_LENGTH && metaTitle.length < MAX_TITLE_LENGTH) {
               title = cleanTitle(metaTitle);
-              console.log('📄 Using PDF metadata title:', title);
+              console.log('📄 Using PDF metadata title');
             } else {
               title = fileName.replace(/\.[^/.]+$/, '');
-              console.log('📄 Using filename as title:', title);
+              console.log('📄 Using filename as title');
             }
             
             description = `PDF document with ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}`;
@@ -1026,7 +1034,7 @@ Use the analyze_file function to provide structured output.`
         const embeddedTitle = metadata.Title || metadata.title;
         if (embeddedTitle && typeof embeddedTitle === 'string' && embeddedTitle.length > MIN_TITLE_LENGTH && embeddedTitle.length < MAX_TITLE_LENGTH && !embeddedTitle.match(/^[a-f0-9-]{20,}$/i)) {
           title = cleanTitle(embeddedTitle);
-          console.log('📄 Using embedded PDF title:', title);
+          console.log('📄 Using embedded PDF title');
         }
         
         // For long documents, use segmented summarization
@@ -1127,12 +1135,13 @@ Use the analyze_file function to provide structured output.`;
           
           console.log('✅ PDF Analysis Path: AI text-based analysis succeeded');
           console.log('✅ PDF text-based analysis complete:', { 
-            title: title.substring(0, 50), 
-            tags, 
+            titleLength: title.length,
+            tagCount: tags.length,
             category, 
             pageCount, 
             textLength: extractedText.length,
             hasSummary: !!summary && summary.length > 0,
+            summaryLength: summary.length,
             keyPointsCount: keyPoints.length
           });
         } else {
@@ -1174,7 +1183,7 @@ Use the analyze_file function to provide structured output.`;
               const sumText = sumData.choices?.[0]?.message?.content?.trim();
               if (sumText && sumText.length > 0) {
                 summary = sumText;
-                console.log('✅ Fallback summary generated successfully:', summary.substring(0, 100));
+                console.log('✅ Fallback summary generated successfully:', { summaryLength: summary.length });
               } else {
                 console.warn('⚠️ Fallback summary response was empty');
               }
@@ -1246,7 +1255,7 @@ Use the analyze_file function to provide structured output.`;
         // Prefer embedded title if meaningful
         if (metadata.Title && typeof metadata.Title === 'string' && metadata.Title.length > 3 && metadata.Title.length < 200) {
           title = cleanTitle(metadata.Title);
-          console.log('📝 Using embedded DOCX title:', title);
+          console.log('📝 Using embedded DOCX title');
         }
         
         // For long documents, use enhanced sampling
@@ -1318,7 +1327,7 @@ Use the analyze_file function to provide structured output.`;
           summary = parsed.summary || '';
           keyPoints = parsed.keyPoints || [];
           
-          console.log('✅ DOCX analysis:', { title, tags, category, textLength: extractedText.length });
+          console.log('✅ DOCX analysis:', { titleLength: title.length, tagCount: tags.length, category, textLength: extractedText.length });
         } else {
           console.error('❌ AI analysis failed');
           tags = ['word', 'document'];
@@ -1405,7 +1414,7 @@ Use the analyze_file function to provide structured output.`;
           keyPoints = parsed.keyPoints || [];
           extractedText = dataSample;
           
-          console.log('✅ Spreadsheet analysis:', { title, tags, category, rowCount, columnCount });
+          console.log('✅ Spreadsheet analysis:', { titleLength: title.length, tagCount: tags.length, category, rowCount, columnCount });
         } else {
           console.error('❌ AI analysis failed');
           description = `Spreadsheet with ${rowCount} rows and ${columnCount} columns`;
@@ -1495,7 +1504,7 @@ Use the analyze_file function to provide structured output.`;
           keyPoints = parsed.keyPoints || [];
           extractedText = contentSample;
           
-          console.log('✅ Presentation analysis:', { title, tags, category, slideCount });
+          console.log('✅ Presentation analysis:', { titleLength: title.length, tagCount: tags.length, category, slideCount });
         } else {
           console.error('❌ AI analysis failed');
           description = `Presentation with ${slideCount} slides`;
@@ -1569,7 +1578,7 @@ Use the analyze_file function.`;
             category = parsed.category || 'other';
             summary = parsed.summary || '';
             keyPoints = parsed.keyPoints || [];
-            console.log('✅ Text file analysis:', { title, tags, category });
+            console.log('✅ Text file analysis:', { titleLength: title.length, tagCount: tags.length, category });
           }
         }
       } catch (error) {
@@ -1594,7 +1603,7 @@ Use the analyze_file function.`;
         category = 'other';
         summary = `Video file: ${fileName}`;
         
-        console.log('✅ Video file processed:', { title, tags });
+        console.log('✅ Video file processed:', { titleLength: title.length, tagCount: tags.length });
       } catch (error) {
         console.error('❌ Video processing error:', error);
         description = 'Video file';
@@ -1634,11 +1643,12 @@ Use the analyze_file function.`;
     });
 
     console.log('✅ Analysis complete:', { 
-      title: finalMetadata.title, 
+      titleLength: finalMetadata.title?.length || 0, 
       category: finalMetadata.category,
-      tags: finalMetadata.tags, 
+      tagCount: finalMetadata.tags?.length || 0, 
       extractedTextLength: finalMetadata.extractedText?.length || 0,
       hasSummary: !!finalMetadata.summary,
+      summaryLength: finalMetadata.summary?.length || 0,
       keyPointsCount: finalMetadata.keyPoints?.length || 0,
       hasPreviewImage: !!previewImageUrl
     });
