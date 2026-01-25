@@ -18,6 +18,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const isDebugLoggingEnabled = () => {
+  const logLevel = Deno.env.get('LOG_LEVEL')?.toLowerCase();
+  return Deno.env.get('DEBUG') === 'true' || logLevel === 'debug' || logLevel === 'trace';
+};
+
+const summarizeAiResponse = (data: any, status: number) => ({
+  model: data?.model ?? data?.model_id ?? 'unknown',
+  status,
+  responseSize: JSON.stringify(data ?? {}).length,
+  hasToolCalls: Boolean(data?.choices?.[0]?.message?.tool_calls?.length),
+});
+
 // Retry configuration
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
@@ -115,8 +127,10 @@ function normalizeTags(tags: string[]): string[] {
  * This handles cases where Gemini returns JSON in content instead of tool_calls
  */
 function extractAiMetadata(data: any, fallback: Record<string, unknown>): { raw: string | undefined, source: string } {
-  // Log full response for debugging
-  console.log('📥 Full AI response:', JSON.stringify(data, null, 2));
+  console.log('📥 AI response summary:', summarizeAiResponse(data, 200));
+  if (isDebugLoggingEnabled()) {
+    console.log('📥 Full AI response:', JSON.stringify(data, null, 2));
+  }
   
   // Try tool_calls first (preferred structured output)
   const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
@@ -129,7 +143,9 @@ function extractAiMetadata(data: any, fallback: Record<string, unknown>): { raw:
   const content = data.choices?.[0]?.message?.content;
   if (content && typeof content === 'string') {
     console.log('🔄 No tool_calls found, checking content field...');
-    console.log('📄 Content field value:', content.substring(0, 500));
+    if (isDebugLoggingEnabled()) {
+      console.log('📄 Content field value:', content.substring(0, 500));
+    }
     
     // Try to extract JSON from content
     const jsonMatch = content.match(/\{[\s\S]*\}/);

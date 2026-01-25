@@ -9,6 +9,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const isDebugLoggingEnabled = () => {
+  const logLevel = Deno.env.get('LOG_LEVEL')?.toLowerCase();
+  return Deno.env.get('DEBUG') === 'true' || logLevel === 'debug' || logLevel === 'trace';
+};
+
+const summarizeAiResponse = (data: any, status: number) => ({
+  model: data?.model ?? data?.model_id ?? 'unknown',
+  status,
+  responseSize: JSON.stringify(data ?? {}).length,
+  hasToolCalls: Boolean(data?.choices?.[0]?.message?.tool_calls?.length),
+});
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -318,7 +330,10 @@ serve(async (req) => {
     });
 
     const aiData = await aiResponse.json();
-    console.log('AI response:', aiData);
+    console.log('AI response summary:', summarizeAiResponse(aiData, aiResponse.status));
+    if (isDebugLoggingEnabled()) {
+      console.log('AI response payload:', aiData);
+    }
     
     let rawResult;
     try {
