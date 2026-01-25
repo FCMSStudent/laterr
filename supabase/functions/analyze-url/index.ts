@@ -5,6 +5,19 @@ import { parseHTML } from "https://esm.sh/linkedom@0.18.5";
 import { Readability } from "https://esm.sh/@mozilla/readability@0.5.0";
 import { createLogger } from "../_shared/logger.ts";
 
+class HttpError extends Error {
+  status: number;
+  code: string;
+  details?: unknown;
+
+  constructor(status: number, code: string, message: string, details?: unknown) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -41,18 +54,18 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('Missing authorization header');
+      throw new HttpError(401, 'auth_missing', 'Missing authorization header');
     }
 
     const { url } = await req.json();
     
     if (!url || typeof url !== 'string') {
-      throw new Error('Valid URL is required');
+      throw new HttpError(400, 'invalid_input', 'Valid URL is required');
     }
 
     // Validate URL length
     if (url.length > 2048) {
-      throw new Error('URL too long (max 2048 characters)');
+      throw new HttpError(400, 'invalid_input', 'URL too long (max 2048 characters)');
     }
 
     // Validate URL format and block dangerous URLs
@@ -60,12 +73,12 @@ serve(async (req) => {
     try {
       parsedUrl = new URL(url);
     } catch {
-      throw new Error('Invalid URL format');
+      throw new HttpError(400, 'invalid_input', 'Invalid URL format');
     }
 
     // Only allow http and https protocols
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      throw new Error('Only HTTP and HTTPS protocols are allowed');
+      throw new HttpError(403, 'url_blocked', 'Only HTTP and HTTPS protocols are allowed');
     }
 
     // Block private IP ranges and localhost
@@ -79,7 +92,7 @@ serve(async (req) => {
     ];
     
     if (blockedHosts.includes(hostname)) {
-      throw new Error('Access to this host is not allowed');
+      throw new HttpError(403, 'url_blocked', 'Access to this host is not allowed');
     }
 
     // Block private IP ranges
@@ -88,7 +101,7 @@ serve(async (req) => {
       hostname.startsWith('192.168.') ||
       /^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname)
     ) {
-      throw new Error('Access to private IP ranges is not allowed');
+      throw new HttpError(403, 'url_blocked', 'Access to private IP ranges is not allowed');
     }
 
     // Helper function to detect video platform
@@ -340,6 +353,14 @@ serve(async (req) => {
       }),
     });
 
+    if (aiResponse.status === 429) {
+      throw new HttpError(429, 'rate_limited', 'AI provider rate limited', { providerStatus: aiResponse.status });
+    }
+
+    if (aiResponse.status === 402) {
+      throw new HttpError(402, 'credits_exhausted', 'AI provider credits exhausted', { providerStatus: aiResponse.status });
+    }
+
     const aiData = await aiResponse.json();
     console.log('AI response summary:', summarizeAiResponse(aiData, aiResponse.status));
     if (isDebugLoggingEnabled()) {
@@ -387,12 +408,26 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    statusCode = 500;
-    logger.error('analyze-url.error', { statusCode, message: error instanceof Error ? error.message : 'Unknown error' });
+    const httpError = error instanceof HttpError ? error : null;
+    statusCode = httpError?.status ?? 500;
+    const errorMessage = httpError?.message ?? (error instanceof Error ? error.message : 'Unknown error');
+    const errorCode = httpError?.code ?? 'internal_error';
+    logger.error('analyze-url.error', {
+      statusCode,
+      message: errorMessage,
+      code: errorCode,
+      details: httpError?.details,
+    });
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({
+        error: {
+          code: errorCode,
+          message: errorMessage,
+          ...(httpError?.details ? { details: httpError.details } : {}),
+        },
+      }),
       { 
-        status: 500,
+        status: statusCode,
         headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } 
       }
     );
