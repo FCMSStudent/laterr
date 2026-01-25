@@ -103,15 +103,14 @@ export const AddHealthDocumentModal = ({
   };
 
   const validateAndSetFile = (selectedFile: File) => {
-    if (!ALLOWED_FILE_TYPES.includes(selectedFile.type)) {
-      toast.error("Invalid file type", { description: "Please upload a PDF, DOCX, or image file" });
+    try {
+      validateFileForUpload(selectedFile, HEALTH_DOCUMENT_VALIDATION_OPTIONS);
+      setFile(selectedFile);
+    } catch (error) {
+      const uploadError = getUploadErrorMessage(error);
+      toast.error(uploadError.title, { description: uploadError.message });
       return;
     }
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      toast.error("File too large", { description: "Maximum file size is 20MB" });
-      return;
-    }
-    setFile(selectedFile);
     // Auto-fill title from filename if empty
     if (!title) {
       setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
@@ -136,6 +135,14 @@ export const AddHealthDocumentModal = ({
     }
     if (!file) {
       toast.error("Please upload a file");
+      return;
+    }
+
+    try {
+      validateFileForUpload(file, HEALTH_DOCUMENT_VALIDATION_OPTIONS);
+    } catch (error) {
+      const uploadError = getUploadErrorMessage(error);
+      toast.error(uploadError.title, { description: uploadError.message });
       return;
     }
 
@@ -223,7 +230,10 @@ export const AddHealthDocumentModal = ({
       onDocumentAdded();
     } catch (error) {
       console.error('Error adding document:', error);
-      toast.error("Failed to upload document");
+      const uploadError = getUploadErrorMessage(error);
+      toast.error(uploadError.title, {
+        description: uploadError.message,
+      });
     } finally {
       setLoading(false);
       setStatusStep(null);
@@ -325,7 +335,7 @@ export const AddHealthDocumentModal = ({
                     Drop file here or <span className="text-primary underline">browse</span>
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    PDF, DOCX, JPEG, PNG (max 20MB)
+                    PDF, DOCX, JPEG, PNG, WebP (max 20MB)
                   </p>
                   <input
                     type="file"

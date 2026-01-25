@@ -144,8 +144,10 @@ export async function uploadFileToStorageWithSignedUrl({
  */
 export async function uploadFileToStorage(
   file: File,
-  userId: string
+  userId: string,
+  options?: UploadValidationOptions
 ): Promise<{ fileName: string; storagePath: string }> {
+  validateFileForUpload(file, options);
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
   

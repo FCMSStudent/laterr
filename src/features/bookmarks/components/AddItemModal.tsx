@@ -12,11 +12,15 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, DEFAULT_ITEM_TAGS, ALLOWED_FILE_MIME_TYPES, FILE_INPUT_ACCEPT, FILE_SIZE_LIMIT_BYTES, FILE_SIZE_LIMIT_MB, NOTE_MAX_LENGTH, NOTE_SUMMARY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH, URL_MAX_LENGTH, SUPABASE_FUNCTION_ANALYZE_FILE, SUPABASE_FUNCTION_ANALYZE_URL, SUPABASE_ITEMS_TABLE, FILE_ANALYSIS_SIGNED_URL_EXPIRATION, isValidEmbedding } from "@/features/bookmarks/constants";
-import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage } from "@/shared/lib/supabase-utils";
+import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage, validateFileForUpload } from "@/shared/lib/supabase-utils";
 import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/shared/lib/error-utils";
 import { NetworkError, ValidationError, toTypedError } from "@/shared/types/errors";
-import { ITEM_ERRORS, getItemErrorMessage } from "@/shared/lib/error-messages";
+import { ITEM_ERRORS, getItemErrorMessage, getUploadErrorMessage } from "@/shared/lib/error-messages";
 import { generateThumbnail } from "@/features/bookmarks/utils/thumbnail-generator";
+const FILE_VALIDATION_OPTIONS = {
+  allowedMimeTypes: ALLOWED_FILE_MIME_TYPES,
+  maxFileSizeBytes: FILE_SIZE_LIMIT_BYTES,
+} as const;
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
 interface AddItemModalProps {
@@ -39,6 +43,23 @@ export const AddItemModal = ({
   const [statusStep, setStatusStep] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
+
+  const handleSelectedFile = useCallback((selectedFile: File | null) => {
+    if (!selectedFile) {
+      setFile(null);
+      return;
+    }
+
+    try {
+      validateFileForUpload(selectedFile, FILE_VALIDATION_OPTIONS);
+      setFile(selectedFile);
+    } catch (error) {
+      const uploadError = getUploadErrorMessage(error);
+      toast.error(uploadError.title, {
+        description: uploadError.message
+      });
+    }
+  }, []);
 
   const resetFormState = useCallback(() => {
     setActiveTab("url");
@@ -255,19 +276,12 @@ export const AddItemModal = ({
       return;
     }
 
-    // Validate file type - now accepting images, PDFs, and Word documents
-    const validTypes = ALLOWED_FILE_MIME_TYPES;
-    if (!(validTypes as readonly string[]).includes(file.type)) {
-      toast.error(ITEM_ERRORS.FILE_INVALID_TYPE.title, {
-        description: ITEM_ERRORS.FILE_INVALID_TYPE.message
-      });
-      return;
-    }
-
-    // Validate file size (20MB max for documents)
-    if (file.size > FILE_SIZE_LIMIT_BYTES) {
-      toast.error(ITEM_ERRORS.FILE_TOO_LARGE.title, {
-        description: ITEM_ERRORS.FILE_TOO_LARGE.message
+    try {
+      validateFileForUpload(file, FILE_VALIDATION_OPTIONS);
+    } catch (error) {
+      const uploadError = getUploadErrorMessage(error);
+      toast.error(uploadError.title, {
+        description: uploadError.message
       });
       return;
     }
@@ -285,7 +299,7 @@ export const AddItemModal = ({
       const {
         fileName,
         storagePath
-      } = await uploadFileToStorage(file, user.id);
+      } = await uploadFileToStorage(file, user.id, FILE_VALIDATION_OPTIONS);
 
       // Generate thumbnail for preview
       setStatusStep('generating thumbnail');
@@ -395,9 +409,9 @@ export const AddItemModal = ({
           description: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message
         });
       } else {
-        const errorMessage = getItemErrorMessage(typedError, 'file');
-        toast.error(errorMessage.title, {
-          description: errorMessage.message
+        const uploadError = getUploadErrorMessage(typedError);
+        toast.error(uploadError.title, {
+          description: uploadError.message
         });
       }
     } finally {
@@ -432,7 +446,7 @@ export const AddItemModal = ({
     setIsDragging(false);
     const droppedFile = e.dataTransfer.files?.[0];
     if (droppedFile) {
-      setFile(droppedFile);
+      handleSelectedFile(droppedFile);
     }
   };
 
@@ -540,7 +554,7 @@ export const AddItemModal = ({
                   <div className="px-6 py-3 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium min-h-[48px] flex items-center justify-center">
                     Browse files
                   </div>
-                  <input id="file-input" type="file" accept={FILE_INPUT_ACCEPT} onChange={e => setFile(e.target.files?.[0] || null)} className="sr-only" aria-required="true" aria-describedby="file-helper-text" />
+                  <input id="file-input" type="file" accept={FILE_INPUT_ACCEPT} onChange={e => handleSelectedFile(e.target.files?.[0] || null)} className="sr-only" aria-required="true" aria-describedby="file-helper-text" />
                 </label>
               </>}
           </div>
