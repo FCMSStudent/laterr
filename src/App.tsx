@@ -13,9 +13,11 @@ import { Agentation } from "agentation";
 const Landing = lazy(() => import("./pages/Landing"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Bookmarks = lazy(() => import("./pages/Bookmarks"));
-const Subscriptions = lazy(() => import("./pages/Subscriptions"));
+// Hidden for now - Subscriptions module
+// const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const Auth = lazy(() => import("./pages/Auth"));
-const Health = lazy(() => import("./pages/Health"));
+// Hidden for now - Health module
+// const Health = lazy(() => import("./pages/Health"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -44,8 +46,12 @@ const AppContent = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/app" element={<Bookmarks />} />
           <Route path="/bookmarks" element={<Bookmarks />} />
+          {/* Hidden for now - Subscriptions module
           <Route path="/subscriptions" element={<Subscriptions />} />
+          */}
+          {/* Hidden for now - Health module
           <Route path="/health" element={<Health />} />
+          */}
           <Route path="/settings" element={<Settings />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/landing" element={<Landing />} />
@@ -87,7 +93,7 @@ const App = () => {
               // @ts-ignore - Agentation might not have types in early versions or if install failed
               <Agentation
                 onAnnotationAdd={handleAnnotation}
-                // config={{ copyToClipboard: false }} // Placeholder for config if available
+              // config={{ copyToClipboard: false }} // Placeholder for config if available
               />
             )}
           </BrowserRouter>
