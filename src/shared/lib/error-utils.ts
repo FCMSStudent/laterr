@@ -94,3 +94,90 @@ export function checkCommonConfigErrors(error: unknown): {
   
   return null;
 }
+
+export type ToastErrorInput = {
+  status?: number | null;
+  code?: string | null;
+  message?: string | null;
+  requestId?: string | null;
+};
+
+export type ToastMessage = {
+  title: string;
+  description: string;
+};
+
+const DEFAULT_TOAST_MESSAGE: ToastMessage = {
+  title: 'Unexpected error',
+  description: 'Please try again soon.',
+};
+
+const TOAST_MESSAGES_BY_STATUS: Record<number, ToastMessage> = {
+  400: {
+    title: 'Invalid request',
+    description: 'Please check your input and try again.',
+  },
+  401: {
+    title: 'Sign in required',
+    description: 'Please sign in to continue.',
+  },
+  402: {
+    title: 'AI credits exhausted',
+    description: 'You’ve run out of AI credits. Please upgrade or try later.',
+  },
+  403: {
+    title: 'Access denied',
+    description: 'You don’t have permission to do that.',
+  },
+  429: {
+    title: 'Too many requests',
+    description: 'Please wait a moment and try again.',
+  },
+  500: {
+    title: 'Something went wrong',
+    description: 'Please try again soon.',
+  },
+};
+
+/**
+ * Returns a safe, user-facing toast message for an error status.
+ * Raw error details should only be used in logs, not in toasts.
+ */
+export function getToastMessageFromErrorDetails({
+  status,
+}: ToastErrorInput): ToastMessage {
+  if (!status) {
+    return DEFAULT_TOAST_MESSAGE;
+  }
+
+  return TOAST_MESSAGES_BY_STATUS[status] ?? DEFAULT_TOAST_MESSAGE;
+}
+
+type SupabaseFunctionsHttpError = {
+  status?: number;
+  context?: {
+    json?: {
+      error?: ToastErrorInput;
+    };
+  };
+};
+
+/**
+ * Parses Supabase FunctionsHttpError details for a safe toast message.
+ * Uses structured JSON in error.context?.json?.error and the HTTP status.
+ */
+export function getToastMessageFromSupabaseError(error: unknown): ToastMessage {
+  if (!error || typeof error !== 'object') {
+    return DEFAULT_TOAST_MESSAGE;
+  }
+
+  const supabaseError = error as SupabaseFunctionsHttpError;
+  const contextError = supabaseError.context?.json?.error;
+
+  return getToastMessageFromErrorDetails({
+    status: contextError?.status ?? supabaseError.status,
+    code: contextError?.code,
+    message: contextError?.message,
+    requestId: contextError?.requestId,
+  });
+}
