@@ -13,9 +13,9 @@ import { z } from "zod";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, DEFAULT_ITEM_TAGS, ALLOWED_FILE_MIME_TYPES, FILE_INPUT_ACCEPT, FILE_SIZE_LIMIT_BYTES, FILE_SIZE_LIMIT_MB, NOTE_MAX_LENGTH, NOTE_SUMMARY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH, URL_MAX_LENGTH, SUPABASE_FUNCTION_ANALYZE_FILE, SUPABASE_FUNCTION_ANALYZE_URL, SUPABASE_ITEMS_TABLE, FILE_ANALYSIS_SIGNED_URL_EXPIRATION, isValidEmbedding } from "@/features/bookmarks/constants";
 import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage, validateFileForUpload, type UploadValidationOptions } from "@/shared/lib/supabase-utils";
-import { formatError, handleSupabaseError, checkCommonConfigErrors } from "@/shared/lib/error-utils";
-import { NetworkError, ValidationError, toTypedError } from "@/shared/types/errors";
-import { ITEM_ERRORS, getItemErrorMessage, getUploadErrorMessage } from "@/shared/lib/error-messages";
+import { checkCommonConfigErrors } from "@/shared/lib/error-utils";
+import { NetworkError, toTypedError } from "@/shared/types/errors";
+import { ITEM_ERRORS, getItemErrorMessage, getSupabaseFunctionErrorMessage, getUploadErrorMessage } from "@/shared/lib/error-messages";
 import { generateThumbnail } from "@/features/bookmarks/utils/thumbnail-generator";
 const FILE_VALIDATION_OPTIONS = {
   allowedMimeTypes: ALLOWED_FILE_MIME_TYPES,
@@ -23,6 +23,44 @@ const FILE_VALIDATION_OPTIONS = {
 } as const;
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
+
+type SupabaseFunctionErrorDetails = {
+  status?: number;
+  code?: string;
+  message?: string;
+  requestId?: string;
+};
+
+const getSupabaseFunctionErrorDetails = (error: unknown): SupabaseFunctionErrorDetails => {
+  if (!error || typeof error !== 'object') {
+    return {};
+  }
+
+  const context = (error as { context?: { status?: number; body?: unknown } }).context;
+  const status = context?.status;
+  const body = context?.body;
+  const bodyObject = body && typeof body === 'object' ? (body as Record<string, unknown>) : undefined;
+  const code = typeof bodyObject?.code === 'string' ? bodyObject.code : undefined;
+  const message =
+    typeof bodyObject?.message === 'string'
+      ? bodyObject.message
+      : typeof bodyObject?.error === 'string'
+      ? bodyObject.error
+      : undefined;
+  const requestId =
+    typeof bodyObject?.requestId === 'string'
+      ? bodyObject.requestId
+      : typeof bodyObject?.request_id === 'string'
+      ? bodyObject.request_id
+      : undefined;
+
+  return {
+    status,
+    code,
+    message,
+    requestId,
+  };
+};
 interface AddItemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -96,7 +134,30 @@ export const AddItemModal = ({
           url: urlResult.data
         }
       });
-      if (error) throw error;
+      if (error) {
+        const {
+          status,
+          code,
+          message,
+          requestId
+        } = getSupabaseFunctionErrorDetails(error);
+        console.error('Supabase function invoke failed:', {
+          action: SUPABASE_FUNCTION_ANALYZE_URL,
+          status,
+          code,
+          requestId,
+          message
+        });
+        const functionError = getSupabaseFunctionErrorMessage({
+          action: 'analyze-url',
+          status,
+          code
+        });
+        toast.error(functionError.title, {
+          description: functionError.message
+        });
+        return;
+      }
 
       // Set suggested category from AI
       if (data.tag) {
@@ -118,7 +179,29 @@ export const AddItemModal = ({
             extractedText: data.description || ''
           }
         });
-        if (!embeddingError && embeddingData?.embedding) {
+        if (embeddingError) {
+          const {
+            status,
+            code,
+            message,
+            requestId
+          } = getSupabaseFunctionErrorDetails(embeddingError);
+          console.error('Supabase function invoke failed:', {
+            action: 'generate-embedding',
+            status,
+            code,
+            requestId,
+            message
+          });
+          const functionError = getSupabaseFunctionErrorMessage({
+            action: 'generate-embedding',
+            status,
+            code
+          });
+          toast.error(functionError.title, {
+            description: functionError.message
+          });
+        } else if (embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
           if (isValidEmbedding(embeddingData.embedding)) {
             embedding = embeddingData.embedding;
@@ -212,7 +295,29 @@ export const AddItemModal = ({
             extractedText: noteResult.data.substring(0, 1000)
           }
         });
-        if (!embeddingError && embeddingData?.embedding) {
+        if (embeddingError) {
+          const {
+            status,
+            code,
+            message,
+            requestId
+          } = getSupabaseFunctionErrorDetails(embeddingError);
+          console.error('Supabase function invoke failed:', {
+            action: 'generate-embedding',
+            status,
+            code,
+            requestId,
+            message
+          });
+          const functionError = getSupabaseFunctionErrorMessage({
+            action: 'generate-embedding',
+            status,
+            code
+          });
+          toast.error(functionError.title, {
+            description: functionError.message
+          });
+        } else if (embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
           if (isValidEmbedding(embeddingData.embedding)) {
             embedding = embeddingData.embedding;
@@ -329,7 +434,30 @@ export const AddItemModal = ({
           fileName: file.name
         }
       });
-      if (error) throw error;
+      if (error) {
+        const {
+          status,
+          code,
+          message,
+          requestId
+        } = getSupabaseFunctionErrorDetails(error);
+        console.error('Supabase function invoke failed:', {
+          action: SUPABASE_FUNCTION_ANALYZE_FILE,
+          status,
+          code,
+          requestId,
+          message
+        });
+        const functionError = getSupabaseFunctionErrorMessage({
+          action: 'analyze-file',
+          status,
+          code
+        });
+        toast.error(functionError.title, {
+          description: functionError.message
+        });
+        return;
+      }
       setStatusStep('summarizing');
 
       // Determine item type and default tag based on file type
@@ -361,7 +489,29 @@ export const AddItemModal = ({
             extractedText: data.extractedText || ''
           }
         });
-        if (!embeddingError && embeddingData?.embedding) {
+        if (embeddingError) {
+          const {
+            status,
+            code,
+            message,
+            requestId
+          } = getSupabaseFunctionErrorDetails(embeddingError);
+          console.error('Supabase function invoke failed:', {
+            action: 'generate-embedding',
+            status,
+            code,
+            requestId,
+            message
+          });
+          const functionError = getSupabaseFunctionErrorMessage({
+            action: 'generate-embedding',
+            status,
+            code
+          });
+          toast.error(functionError.title, {
+            description: functionError.message
+          });
+        } else if (embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
           if (isValidEmbedding(embeddingData.embedding)) {
             embedding = embeddingData.embedding;
@@ -396,27 +546,10 @@ export const AddItemModal = ({
     } catch (error: unknown) {
       const typedError = toTypedError(error);
       console.error('Error adding file:', typedError);
-      const {
-        message,
-        isRateLimitError,
-        isCreditsError
-      } = handleSupabaseError(typedError, "Failed to add file. Please try again.");
-
-      // Use specific error messages for rate limiting and credits issues for better UX
-      if (isRateLimitError) {
-        toast.error(ITEM_ERRORS.AI_RATE_LIMIT.title, {
-          description: ITEM_ERRORS.AI_RATE_LIMIT.message
-        });
-      } else if (isCreditsError) {
-        toast.error(ITEM_ERRORS.AI_CREDITS_EXHAUSTED.title, {
-          description: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message
-        });
-      } else {
-        const uploadError = getUploadErrorMessage(typedError);
-        toast.error(uploadError.title, {
-          description: uploadError.message
-        });
-      }
+      const uploadError = getUploadErrorMessage(typedError);
+      toast.error(uploadError.title, {
+        description: uploadError.message
+      });
     } finally {
       setLoading(false);
       setStatusStep(null);

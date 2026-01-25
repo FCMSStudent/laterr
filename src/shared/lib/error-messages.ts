@@ -135,6 +135,10 @@ export const ITEM_ERRORS = {
     title: 'AI Credits Exhausted',
     message: 'You\'ve run out of AI analysis credits. Please upgrade your account or try again later.',
   },
+  EMBEDDING_FAILED: {
+    title: 'Search Enhancement Unavailable',
+    message: 'We couldn\'t generate search enhancements. Your item will still be saved.',
+  },
   ADD_FAILED: {
     title: 'Failed to Add Item',
     message: 'Unable to add this item to your collection. Please try again.',
@@ -294,4 +298,68 @@ export function getUpdateErrorMessage(error: unknown): { title: string; message:
   }
   
   return UPDATE_ERRORS.UPDATE_FAILED;
+}
+
+type SupabaseFunctionAction = 'analyze-url' | 'analyze-file' | 'generate-embedding';
+
+export function getSupabaseFunctionErrorMessage({
+  action,
+  status,
+  code,
+}: {
+  action: SupabaseFunctionAction;
+  status?: number;
+  code?: string | null;
+}): { title: string; message: string } {
+  const normalizedCode = code?.toLowerCase();
+
+  if (status === 401 || status === 403) {
+    return {
+      title: 'Authentication Required',
+      message: 'Please sign in to continue.',
+    };
+  }
+
+  if (status === 404) {
+    return {
+      title: 'Service Unavailable',
+      message: 'The analysis service is currently unavailable. Please try again later.',
+    };
+  }
+
+  if (status === 408 || status === 504) {
+    return NETWORK_ERRORS.CONNECTION_TIMEOUT;
+  }
+
+  if (status === 429 || normalizedCode?.includes('rate')) {
+    return ITEM_ERRORS.AI_RATE_LIMIT;
+  }
+
+  if (status === 402 || normalizedCode?.includes('credit') || normalizedCode?.includes('quota')) {
+    return ITEM_ERRORS.AI_CREDITS_EXHAUSTED;
+  }
+
+  if (status === 413) {
+    return action === 'analyze-file' ? ITEM_ERRORS.FILE_TOO_LARGE : ITEM_ERRORS.ADD_FAILED;
+  }
+
+  if (action === 'analyze-url') {
+    if (normalizedCode?.includes('invalid_url') || normalizedCode?.includes('malformed')) {
+      return ITEM_ERRORS.URL_INVALID;
+    }
+    return ITEM_ERRORS.URL_ANALYSIS_FAILED;
+  }
+
+  if (action === 'analyze-file') {
+    if (normalizedCode?.includes('invalid_file') || normalizedCode?.includes('unsupported')) {
+      return ITEM_ERRORS.FILE_INVALID_TYPE;
+    }
+    return ITEM_ERRORS.FILE_ANALYSIS_FAILED;
+  }
+
+  if (action === 'generate-embedding') {
+    return ITEM_ERRORS.EMBEDDING_FAILED;
+  }
+
+  return ITEM_ERRORS.ADD_FAILED;
 }
