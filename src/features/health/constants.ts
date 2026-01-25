@@ -9,6 +9,9 @@ export const HEALTH_TABLES = {
   MEDICATIONS: 'medication_schedule',
 } as const;
 
+export const HEALTH_DOCUMENTS_STORAGE_BUCKET = 'health-documents' as const;
+export const HEALTH_DOCUMENTS_STORAGE_FOLDER = '' as const;
+
 // Measurement types with their default units
 export const MEASUREMENT_TYPES: Record<MeasurementType, { label: string; unit: string; icon: string }> = {
   weight: { label: 'Weight', unit: 'kg', icon: 'Scale' },

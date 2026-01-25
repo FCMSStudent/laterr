@@ -16,6 +16,7 @@ import { DOCUMENT_TYPES, HEALTH_TABLES } from "@/features/health/constants";
 import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
 import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { ExtractedHealthDataDisplay } from "@/features/health/components/ExtractedHealthDataDisplay";
+import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from "@/shared/lib/storage-constants";
 
 interface HealthDocumentDetailModalProps {
   open: boolean;
@@ -55,7 +56,7 @@ export const HealthDocumentDetailModal = ({
         : document.file_url;
 
       const { data, error } = await supabase.storage
-        .from('health-documents')
+        .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .download(path);
 
       if (error) throw error;

@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { HEALTH_TABLES } from '@/features/health/constants';
-import { EMBEDDING_DIMENSION, isValidEmbedding } from '@/features/bookmarks/constants';
+import { isValidEmbedding } from '@/features/bookmarks/constants';
+import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from '@/shared/lib/storage-constants';
 import type { HealthDocument, HealthDocumentFormData } from '../types';
+import { uploadFileToStorageWithSignedUrl } from '@/shared/lib/supabase-utils';
 
 interface UseHealthDocumentsState {
   loading: boolean;
@@ -72,17 +74,17 @@ export const useHealthDocuments = () => {
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('health-documents')
+        .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .upload(fileName, formData.file);
 
       if (uploadError) throw uploadError;
 
       // Get signed URL
       const { data: urlData } = await supabase.storage
-        .from('health-documents')
+        .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
-      const fileUrl = urlData?.signedUrl || fileName;
+      const fileUrl = signedUrl ?? fileName;
 
       // Generate summary and embedding
       let summary: string | null = null;

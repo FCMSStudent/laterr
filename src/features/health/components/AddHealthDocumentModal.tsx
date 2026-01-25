@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { Button } from "@/ui";
@@ -13,21 +13,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { HEALTH_TABLES, DOCUMENT_TYPES } from "@/features/health/constants";
+import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from "@/shared/lib/storage-constants";
 import type { DocumentType } from "@/features/health/types";
 import { format } from "date-fns";
-import { getUploadErrorMessage } from "@/shared/lib/error-messages";
-import { validateFileForUpload } from "@/shared/lib/supabase-utils";
+import { uploadFileToStorageWithSignedUrl } from "@/shared/lib/supabase-utils";
 
-const HEALTH_DOCUMENT_VALIDATION_OPTIONS = {
-  allowedMimeTypes: [
-    'application/pdf',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-  ],
-  maxFileSizeBytes: 20 * 1024 * 1024,
-} as const;
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 interface AddHealthDocumentModalProps {
   open: boolean;
@@ -159,17 +158,17 @@ export const AddHealthDocumentModal = ({
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('health-documents')
+        .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       // Get signed URL
       const { data: urlData } = await supabase.storage
-        .from('health-documents')
+        .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
 
-      const fileUrl = urlData?.signedUrl || fileName;
+      const fileUrl = signedUrl ?? fileName;
 
       // Generate summary using AI
       setStatusStep('analyzing');
