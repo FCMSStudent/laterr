@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,8 +11,18 @@ const corsHeaders = {
  * Uses OpenAI's text-embedding-3-small model for efficient semantic representation
  */
 serve(async (req) => {
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+  const startTime = Date.now();
+  const requestPath = new URL(req.url).pathname;
+  let statusCode = 200;
+  const logger = createLogger({ requestId, startTime });
+
+  logger.info('request.start', { method: req.method, path: requestPath });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs });
+    return new Response(null, { headers: { ...corsHeaders, 'x-request-id': requestId } });
   }
 
   try {
@@ -59,7 +70,7 @@ serve(async (req) => {
           message: 'No content available for embedding' 
         }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
           status: 200 
         }
       );
@@ -93,8 +104,7 @@ serve(async (req) => {
       throw new Error("AI credits exhausted. Please add credits to continue.");
     }
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Embedding API error:', response.status, errorText);
+      console.error('❌ Embedding API error:', response.status);
       throw new Error(`Embedding generation failed: ${response.statusText}`);
     }
 
@@ -113,7 +123,7 @@ serve(async (req) => {
       throw new Error(`Invalid embedding dimension: ${embedding.length} (expected ${EXPECTED_DIMENSION})`);
     }
 
-    console.log('✅ Embedding generated successfully, dimension:', embedding.length);
+    logger.info('generate-embedding.success', { dimension: embedding.length });
 
     return new Response(
       JSON.stringify({ 
@@ -121,17 +131,16 @@ serve(async (req) => {
         dimension: embedding.length 
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
         status: 200 
       }
     );
 
   } catch (error) {
-    console.error('❌ Error generating embedding:', error);
-    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const statusCode = errorMessage.includes('Rate limit') ? 429 :
-                       errorMessage.includes('credits') ? 402 : 500;
+    statusCode = errorMessage.includes('Rate limit') ? 429 :
+                 errorMessage.includes('credits') ? 402 : 500;
+    logger.error('generate-embedding.error', { statusCode, message: errorMessage });
 
     return new Response(
       JSON.stringify({ 
@@ -139,9 +148,12 @@ serve(async (req) => {
         embedding: null 
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
         status: statusCode
       }
     );
+  } finally {
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs, path: requestPath });
   }
 });

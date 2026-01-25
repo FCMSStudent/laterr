@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,17 +9,29 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+  const startTime = Date.now();
+  const requestPath = new URL(req.url).pathname;
+  let statusCode = 200;
+  const logger = createLogger({ requestId, startTime });
+  let activeLogger = logger;
+
+  logger.info('request.start', { method: req.method, path: requestPath });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs });
+    return new Response(null, { headers: { ...corsHeaders, 'x-request-id': requestId } });
   }
 
   try {
     // Validate authentication - extract user from JWT
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
+      statusCode = 401;
       return new Response(
         JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
       );
     }
 
@@ -36,27 +49,31 @@ serve(async (req) => {
     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
     
     if (claimsError || !claimsData?.claims) {
+      statusCode = 401;
       return new Response(
         JSON.stringify({ error: 'Invalid authentication token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
       );
     }
 
     // Extract authenticated user_id from JWT claims (not from client input!)
     const user_id = claimsData.claims.sub as string;
     if (!user_id) {
+      statusCode = 401;
       return new Response(
         JSON.stringify({ error: 'User ID not found in token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
       );
     }
+    activeLogger = createLogger({ requestId, startTime, userId: user_id });
 
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
+      statusCode = 400;
       return new Response(
         JSON.stringify({ error: 'Messages array is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
       );
     }
 
@@ -175,19 +192,20 @@ Be conversational, empathetic, and helpful. If asked about something not in the 
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+      console.error('AI Gateway error:', response.status);
       
       if (response.status === 429) {
+        statusCode = 429;
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
         );
       }
       if (response.status === 402) {
+        statusCode = 402;
         return new Response(
           JSON.stringify({ error: 'AI credits exhausted. Please add funds to continue.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
         );
       }
       
@@ -196,14 +214,18 @@ Be conversational, empathetic, and helpful. If asked about something not in the 
 
     // Stream the response back
     return new Response(response.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream', 'x-request-id': requestId },
     });
 
   } catch (error) {
-    console.error('Error in health-chat:', error);
+    statusCode = 500;
+    activeLogger.error('health-chat.error', { statusCode, message: error instanceof Error ? error.message : 'Unknown error' });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
     );
+  } finally {
+    const durationMs = Date.now() - startTime;
+    activeLogger.info('request.complete', { statusCode, durationMs, path: requestPath });
   }
 });

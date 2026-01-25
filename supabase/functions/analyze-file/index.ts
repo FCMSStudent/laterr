@@ -3,6 +3,7 @@ import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.6.82/legacy/build/pdf.mjs
 import JSZip from "https://esm.sh/jszip@3.10.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
 import { cleanMetadataFields, validateAndParseAiJson, cleanTitle } from "../_shared/metadata-utils.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 
 const pdfjs = pdfjsLib as unknown as {
@@ -384,9 +385,8 @@ Use the analyze_file function to provide structured output.`;
   }
 
   if (!aiResponse.ok) {
-    const errorText = await aiResponse.text();
-    console.error('❌ Multimodal AI error:', aiResponse.status, errorText);
-    throw new Error(`Multimodal AI analysis failed: ${aiResponse.statusText} - ${errorText}`);
+    console.error('❌ Multimodal AI error:', aiResponse.status);
+    throw new Error(`Multimodal AI analysis failed: ${aiResponse.statusText}`);
   }
 
   const data = await aiResponse.json();
@@ -822,8 +822,19 @@ async function extractPresentationContent(fileUrl: string): Promise<{
 }
 
 serve(async (req) => {
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+  const startTime = Date.now();
+  const requestPath = new URL(req.url).pathname;
+  let statusCode = 200;
+  const logger = createLogger({ requestId, startTime });
+  let activeLogger = logger;
+
+  logger.info('request.start', { method: req.method, path: requestPath });
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const durationMs = Date.now() - startTime;
+    logger.info('request.complete', { statusCode, durationMs });
+    return new Response(null, { headers: { ...corsHeaders, 'x-request-id': requestId } });
   }
 
   try {
@@ -857,6 +868,8 @@ serve(async (req) => {
         console.warn('⚠️ Failed to authenticate user:', authError);
       }
     }
+    const userLogger = createLogger({ requestId, startTime, userId: userId ?? undefined });
+    activeLogger = userLogger;
 
     let title = cleanTitle(fileName || 'Untitled File');
     let description = '';
@@ -930,8 +943,7 @@ Use the analyze_file function to provide structured output.`
           throw new Error("AI credits exhausted. Please add credits to continue.");
         }
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ AI gateway error:', response.status, errorText);
+          console.error('❌ AI gateway error:', response.status);
           throw new Error(`AI analysis failed: ${response.statusText}`);
         }
 
@@ -1154,12 +1166,10 @@ Use the analyze_file function to provide structured output.`;
             keyPointsCount: keyPoints.length
           });
         } else {
-          const errorText = await aiResponse.text();
           console.error('❌ PDF Analysis Path: AI analysis failed, using basic fallback');
           console.error('❌ AI analysis request failed:', {
             status: aiResponse.status,
-            statusText: aiResponse.statusText,
-            error: errorText
+            statusText: aiResponse.statusText
           });
           tags = ['pdf', 'document'];
           description = `PDF document with ${pageCount} pages`;
@@ -1197,10 +1207,8 @@ Use the analyze_file function to provide structured output.`;
                 console.warn('⚠️ Fallback summary response was empty');
               }
             } else {
-              const errorText = await sumResp.text();
               console.warn('⚠️ Fallback summary failed:', {
-                status: sumResp.status,
-                error: errorText
+                status: sumResp.status
               });
             }
           } catch (e) {
@@ -1674,19 +1682,23 @@ Use the analyze_file function.`;
         previewImageUrl,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
       }
     );
   } catch (error) {
-    console.error('❌ Error in analyze-file function:', error);
+    statusCode = error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits')) ? 429 : 500;
+    activeLogger.error('analyze-file.error', { statusCode, message: error instanceof Error ? error.message : 'An unexpected error occurred' });
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'An unexpected error occurred' 
       }),
       {
-        status: error instanceof Error && (error.message.includes('Rate limit') || error.message.includes('credits')) ? 429 : 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: statusCode,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
       }
     );
+  } finally {
+    const durationMs = Date.now() - startTime;
+    activeLogger.info('request.complete', { statusCode, durationMs, path: requestPath });
   }
 });
