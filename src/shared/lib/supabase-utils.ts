@@ -4,13 +4,12 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { PREVIEW_SIGNED_URL_EXPIRATION } from "@/features/bookmarks/constants";
 import {
   SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
   SUPABASE_STORAGE_BUCKET_THUMBNAILS,
   SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX,
-  SUPABASE_STORAGE_THUMBNAILS_PATH_PREFIX,
-  PREVIEW_SIGNED_URL_EXPIRATION,
-} from "@/features/bookmarks/constants";
+} from "@/shared/lib/storage-constants";
 import type { Item } from "@/features/bookmarks/types";
 
 interface StorageUploadOptions {

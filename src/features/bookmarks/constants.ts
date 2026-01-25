@@ -57,10 +57,12 @@ export const NOTE_TITLE_MAX_LENGTH = 100;
 export const NOTE_SUMMARY_MAX_LENGTH = 200;
 
 export const SUPABASE_ITEMS_TABLE = "items" as const;
-export const SUPABASE_STORAGE_BUCKET_ITEM_IMAGES = "item-images" as const;
-export const SUPABASE_STORAGE_BUCKET_THUMBNAILS = "thumbnails" as const;
-export const SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX = `/${SUPABASE_STORAGE_BUCKET_ITEM_IMAGES}/` as const;
-export const SUPABASE_STORAGE_THUMBNAILS_PATH_PREFIX = `/${SUPABASE_STORAGE_BUCKET_THUMBNAILS}/` as const;
+export {
+  SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
+  SUPABASE_STORAGE_BUCKET_THUMBNAILS,
+  SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX,
+  SUPABASE_STORAGE_THUMBNAILS_PATH_PREFIX,
+} from "@/shared/lib/storage-constants";
 export const SUPABASE_FUNCTION_ANALYZE_URL = "analyze-url" as const;
 export const SUPABASE_FUNCTION_ANALYZE_FILE = "analyze-file" as const;
 export const SUPABASE_FUNCTION_GENERATE_EMBEDDING = "generate-embedding" as const;

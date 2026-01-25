@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { HEALTH_TABLES, HEALTH_DOCUMENTS_STORAGE_BUCKET, HEALTH_DOCUMENTS_STORAGE_FOLDER } from '@/features/health/constants';
+import { HEALTH_TABLES } from '@/features/health/constants';
 import { isValidEmbedding } from '@/features/bookmarks/constants';
+import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from '@/shared/lib/storage-constants';
 import type { HealthDocument, HealthDocumentFormData } from '../types';
 import { uploadFileToStorageWithSignedUrl } from '@/shared/lib/supabase-utils';
 
@@ -68,15 +69,20 @@ export const useHealthDocuments = () => {
   ): Promise<HealthDocument | null> => {
     setState({ loading: true, error: null });
     try {
-      const { fileName, signedUrl } = await uploadFileToStorageWithSignedUrl({
-        bucket: HEALTH_DOCUMENTS_STORAGE_BUCKET,
-        folder: HEALTH_DOCUMENTS_STORAGE_FOLDER,
-        userId,
-        file: formData.file,
-        options: {
-          signedUrlExpiresIn: 60 * 60 * 24 * 365,
-        },
-      });
+      // Upload file
+      const fileExt = formData.file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
+        .upload(fileName, formData.file);
+
+      if (uploadError) throw uploadError;
+
+      // Get signed URL
+      const { data: urlData } = await supabase.storage
+        .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
       const fileUrl = signedUrl ?? fileName;
 
