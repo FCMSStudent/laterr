@@ -2,10 +2,11 @@ import { Badge } from "@/ui";
 import { MoreVertical, Trash2, Edit, ExternalLink } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
 import { Button } from "@/ui";
-import { formatDistanceToNow, differenceInDays, parseISO } from "date-fns";
+import { differenceInDays } from "date-fns";
 import { formatCurrency, calculateMonthlyCost, formatBillingCycle } from "@/features/subscriptions/utils/currency-utils";
 import { CATEGORY_COLORS } from "@/features/subscriptions/constants";
 import type { Subscription, SubscriptionBillingCycle, SubscriptionStatus } from "@/features/subscriptions/types";
+import { parseSubscriptionDate } from "@/features/subscriptions/utils/date-utils";
 
 interface SubscriptionCardProps {
   subscription: Subscription;
@@ -37,7 +38,8 @@ export const SubscriptionCard = ({
   } = subscription;
 
   const monthlyAmount = calculateMonthlyCost(amount, billing_cycle as SubscriptionBillingCycle);
-  const daysUntilRenewal = differenceInDays(parseISO(next_billing_date), new Date());
+  const nextBillingDate = parseSubscriptionDate(next_billing_date);
+  const daysUntilRenewal = nextBillingDate ? differenceInDays(nextBillingDate, new Date()) : null;
   const categoryColor = CATEGORY_COLORS[category] || CATEGORY_COLORS.Other;
 
   const getStatusColor = (status: SubscriptionStatus) => {
@@ -163,9 +165,9 @@ export const SubscriptionCard = ({
         {/* Next Billing */}
         <div className="flex items-center justify-between gap-2 pt-2">
           <span className="text-xs text-muted-foreground">
-            Next: {new Date(next_billing_date).toLocaleDateString()}
+            Next: {nextBillingDate ? nextBillingDate.toLocaleDateString() : "Date unavailable"}
           </span>
-          {status === 'active' && daysUntilRenewal >= 0 && daysUntilRenewal <= 7 && (
+          {status === 'active' && daysUntilRenewal !== null && daysUntilRenewal >= 0 && daysUntilRenewal <= 7 && (
             <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20 text-xs">
               Renews in {daysUntilRenewal} {daysUntilRenewal === 1 ? 'day' : 'days'}
             </Badge>
