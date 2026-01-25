@@ -72,16 +72,22 @@ export default function PageName() {
 Pages are mapped to routes in the router configuration:
 
 ```tsx
-// Example routing setup
-const router = createBrowserRouter([
-  { path: '/', element: <Landing /> },
-  { path: '/auth', element: <Auth /> },
-  { path: '/bookmarks', element: <Bookmarks /> },
-  { path: '/health', element: <Health /> },
-  { path: '/subscriptions', element: <Subscriptions /> },
-  { path: '/settings', element: <Settings /> },
-  { path: '*', element: <NotFound /> },
-]);
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+<BrowserRouter>
+  <Routes>
+    <Route path="/" element={<Dashboard />} />
+    <Route path="/dashboard" element={<Dashboard />} />
+    <Route path="/app" element={<Bookmarks />} />
+    <Route path="/auth" element={<Auth />} />
+    <Route path="/bookmarks" element={<Bookmarks />} />
+    <Route path="/health" element={<Health />} />
+    <Route path="/landing" element={<Landing />} />
+    <Route path="/subscriptions" element={<Subscriptions />} />
+    <Route path="/settings" element={<Settings />} />
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+</BrowserRouter>
 ```
 
 ## Page Examples
