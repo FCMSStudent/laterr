@@ -6,6 +6,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { EMBEDDING_DIMENSION, isValidEmbedding } from '@/features/bookmarks/constants';
+import { getGenerateEmbeddingErrorMessage } from '@/shared/lib/error-messages';
 
 interface EmbeddingState {
   loading: boolean;
@@ -56,9 +57,25 @@ export const useEmbeddings = () => {
       setState({ loading: false, error: null });
       return data.embedding;
     } catch (err) {
+      const status = typeof (err as { status?: number }).status === 'number'
+        ? (err as { status?: number }).status
+        : typeof (err as { context?: { status?: number } }).context?.status === 'number'
+          ? (err as { context?: { status?: number } }).context?.status
+          : undefined;
+      const code = typeof (err as { code?: string }).code === 'string'
+        ? (err as { code?: string }).code
+        : undefined;
+      const userMessage = getGenerateEmbeddingErrorMessage(status, code)
+        ?? 'Unable to generate embeddings right now.';
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate embedding';
-      setState({ loading: false, error: errorMessage });
-      console.error('Error generating embedding:', err);
+
+      setState({ loading: false, error: userMessage });
+      console.error('Error generating embedding:', {
+        status,
+        code,
+        message: errorMessage,
+        error: err,
+      });
       return null;
     }
   }, []);
