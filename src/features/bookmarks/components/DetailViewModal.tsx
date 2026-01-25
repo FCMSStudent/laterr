@@ -72,6 +72,7 @@ export const DetailViewModal = ({
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
   const editTagInputRef = useRef<HTMLInputElement>(null);
+  const autosaveItemIdRef = useRef<Item["id"] | null>(null);
 
   // Focus tag input when adding
   useEffect(() => {
@@ -101,11 +102,16 @@ export const DetailViewModal = ({
 
   // Autosave notes
   useEffect(() => {
-    if (!item || !open) return;
+    if (!item || !open) {
+      autosaveItemIdRef.current = null;
+      return;
+    }
+    autosaveItemIdRef.current = item.id;
     if (debouncedNotes !== (item.user_notes || "")) {
+      if (autosaveItemIdRef.current !== item.id) return;
       handleSave(debouncedNotes, tags, true);
     }
-  }, [debouncedNotes]);
+  }, [debouncedNotes, item?.id, open, tags, handleSave]);
 
   // Fetch related items (same tag, excluding current)
   useEffect(() => {
