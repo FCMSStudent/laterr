@@ -370,7 +370,7 @@ export const DetailViewModal = ({
       return `${base} aspect-video bg-black flex items-center justify-center overflow-hidden`;
     }
     if (isDocumentContent) {
-      return `${base} h-[60vh] lg:h-full bg-muted/30 border border-border/40`;
+      return `${base} flex-1 min-h-0 bg-muted/30 border border-border/40`;
     }
     if (isNoteContent) {
       return `${base} min-h-[300px] bg-card border border-border/40 p-6`;
@@ -522,7 +522,7 @@ export const DetailViewModal = ({
   const DesktopDetailContent = () => (
     <div className={`grid h-full gap-6 ${gridLayout}`}>
       {/* LEFT COLUMN: Preview */}
-      <div className="flex flex-col min-h-0 hide-scrollbar overflow-y-auto">
+      <div className="flex flex-col min-h-0 overflow-hidden">
         {/* Main Preview */}
         <div className={getPreviewContainerStyles()}>
           {renderPreview()}
