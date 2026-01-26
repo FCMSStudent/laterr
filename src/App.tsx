@@ -8,6 +8,7 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import { Agentation } from "agentation";
+import { PageLoading } from "@/shared/components/PageLoading";
 
 // Lazy load route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -26,15 +27,7 @@ const ViewerLoadingTest = lazy(() =>
 
 const queryClient = new QueryClient();
 
-// Loading fallback component
-const LoadingFallback = () => (
-  <div className="flex min-h-screen items-center justify-center">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-      <p className="text-muted-foreground">Loading...</p>
-    </div>
-  </div>
-);
+
 
 const AppContent = () => {
   const isMobile = useIsMobile();
@@ -42,7 +35,7 @@ const AppContent = () => {
   const isAuthPage = location.pathname.startsWith("/auth");
 
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <Suspense fallback={<PageLoading />}>
       <div>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -95,7 +88,7 @@ const App = () => {
               // @ts-ignore - Agentation might not have types in early versions or if install failed
               <Agentation
                 onAnnotationAdd={handleAnnotation}
-                // config={{ copyToClipboard: false }} // Placeholder for config if available
+              // config={{ copyToClipboard: false }} // Placeholder for config if available
               />
             )}
           </BrowserRouter>

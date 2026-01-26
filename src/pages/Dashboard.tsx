@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Bookmark, CreditCard, Activity } from "lucide-react";
 import { ModuleNavigationCard } from "@/shared/components/ModuleNavigationCard";
+
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
+import { PageLoading } from "@/shared/components/PageLoading";
 
 type User = { id: string; email?: string };
 
@@ -33,7 +35,7 @@ const Dashboard = () => {
   }, [navigate]);
 
   if (!user) {
-    return null;
+    return <PageLoading />;
   }
 
   return (
