@@ -507,7 +507,7 @@ export const DetailViewModal = ({
               handleSave(userNotes, tags, true);
             }
           }}
-          placeholder="Add your notes..."
+          placeholder="Add your notes here..."
           className="bg-muted/30 min-h-[120px]"
         />
       </div>
@@ -737,7 +737,7 @@ export const DetailViewModal = ({
             <div className="relative flex-1">
               <Textarea
                 ref={notesRef}
-                placeholder="Type here to add a note..."
+                placeholder="Add your notes here..."
                 value={userNotes}
                 onChange={(e) => setUserNotes(e.target.value)}
                 onBlur={() => {
@@ -748,10 +748,12 @@ export const DetailViewModal = ({
                 }}
                 className="w-full h-full min-h-[120px] resize-none border-0 bg-transparent p-0 focus-visible:ring-0 text-sm leading-relaxed placeholder:text-muted-foreground/40 -ml-1 pl-1"
               />
-              {/* Optional: autosave indicator */}
-              <div className="absolute bottom-0 right-0 text-[10px] text-muted-foreground/50 transition-opacity duration-500">
-                {saving ? "Saving..." : "Autosaved"}
-              </div>
+              {/* Autosave indicator - only show when saving or changes detected */}
+              {(saving || userNotes !== (item?.user_notes || "")) && (
+                <div className="absolute bottom-0 right-0 text-[10px] text-muted-foreground/50 transition-opacity duration-500">
+                  {saving ? "Saving..." : "Autosaved"}
+                </div>
+              )}
             </div>
           </div>
         </div>
