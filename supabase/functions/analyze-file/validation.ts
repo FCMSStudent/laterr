@@ -74,7 +74,7 @@ export function validateRequestBody(body: unknown): ValidatedRequest {
     }
 
     if (validationErrors.length > 0) {
-        throw new ApiError(400, 'invalid_input', 'Invalid input parameters.', validationErrors);
+        throw new ApiError(400, 'invalid_input', 'Invalid input parameters.', { errors: validationErrors });
     }
 
     return {

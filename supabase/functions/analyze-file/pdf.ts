@@ -50,7 +50,7 @@ export async function extractPdfText(fileUrl: string): Promise<PdfExtractionResu
         let metadata: FileMetadata = {};
         try {
             const pdfMetadata = await pdf.getMetadata();
-            metadata = pdfMetadata.info || {};
+            metadata = (pdfMetadata.info || {}) as FileMetadata;
             console.log('📄 PDF metadata:', Object.keys(metadata));
         } catch (e) {
             console.log('⚠️ Could not extract PDF metadata');
