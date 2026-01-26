@@ -28,9 +28,12 @@ import { useDebounce } from "@/shared/hooks/use-debounce";
 // Constants
 const USER_NOTES_MAX_LENGTH = 10000;
 const AUTO_SAVE_DELAY = 500;
-const areTagsEqual = (left: string[], right: string[]) => (
-  left.length === right.length && left.every((tag, index) => tag === right[index])
-);
+const normalizeTag = (t: string) => t.trim().toLowerCase();
+const areTagsEqual = (a: string[], b: string[]) => {
+  const A = [...a].map(normalizeTag).sort();
+  const B = [...b].map(normalizeTag).sort();
+  return A.length === B.length && A.every((v, i) => v === B[i]);
+};
 
 const safeParseUrl = (value: string | null | undefined) => {
   if (!value) return null;
@@ -78,7 +81,7 @@ export const DetailViewModal = ({
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
   const editTagInputRef = useRef<HTMLInputElement>(null);
-  const autosaveItemIdRef = useRef<Item["id"] | null>(null);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   // Focus tag input when adding
   useEffect(() => {
@@ -114,14 +117,13 @@ export const DetailViewModal = ({
     if (!item || !open) return;
     const itemNotes = item.user_notes || "";
     const itemTags = item.tags || [];
-    const notesMatchCurrent = debouncedNotes === userNotes;
     const notesChanged = debouncedNotes !== itemNotes;
     const tagsChanged = !areTagsEqual(tags, itemTags);
 
-    if (notesMatchCurrent && (notesChanged || tagsChanged) && handleSaveRef.current) {
+    if ((notesChanged || tagsChanged) && handleSaveRef.current) {
       handleSaveRef.current(debouncedNotes, tags, true);
     }
-  }, [debouncedNotes, open, item, tags, userNotes]);
+  }, [debouncedNotes, tags, open, item]);
 
   // Fetch related items (same tag, excluding current)
   useEffect(() => {
@@ -151,7 +153,7 @@ export const DetailViewModal = ({
           summary: row.summary ?? null,
           user_notes: row.user_notes ?? null,
           content: row.content ?? null,
-          embedding: row.embedding ? JSON.parse(row.embedding) : null,
+          embedding: typeof row.embedding === "string" ? JSON.parse(row.embedding) : row.embedding ?? null,
         }));
 
         const withSigned = await generateSignedUrlsForItems(normalized);
@@ -165,7 +167,7 @@ export const DetailViewModal = ({
     };
 
     fetchRelated();
-  }, [open, itemId]); // Use extracted itemId instead of item?.id to avoid esbuild error
+  }, [open, itemId, tags]);
 
   useEffect(() => {
     const generateSignedUrlForItem = async () => {
@@ -205,24 +207,29 @@ export const DetailViewModal = ({
       return;
     }
 
-    if (!silent) setSaving(true);
-    try {
-      const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
-        user_notes: notesToSave,
-        tags: tagsToSave
-      }).eq("id", item.id);
+    // Queue saves to prevent race conditions
+    saveQueueRef.current = saveQueueRef.current.then(async () => {
+      if (!silent) setSaving(true);
+      try {
+        const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
+          user_notes: notesToSave,
+          tags: tagsToSave
+        }).eq("id", item.id);
 
-      if (error) throw error;
-      if (!silent) toast.success("Changes saved!");
-      onUpdate();
-    } catch (error: unknown) {
-      const errorMessage = getUpdateErrorMessage(error);
-      const typedError = toTypedError(error);
-      console.error("Error saving:", typedError);
-      if (!silent) toast.error(errorMessage.title, { description: errorMessage.message });
-    } finally {
-      if (!silent) setSaving(false);
-    }
+        if (error) throw error;
+        if (!silent) toast.success("Changes saved!");
+        onUpdate();
+      } catch (error: unknown) {
+        const errorMessage = getUpdateErrorMessage(error);
+        const typedError = toTypedError(error);
+        console.error("Error saving:", typedError);
+        if (!silent) toast.error(errorMessage.title, { description: errorMessage.message });
+      } finally {
+        if (!silent) setSaving(false);
+      }
+    });
+
+    return saveQueueRef.current;
   }, [item, onUpdate]);
 
   // Keep ref in sync with handleSave for autosave useEffect
@@ -231,11 +238,11 @@ export const DetailViewModal = ({
   }, [handleSave]);
 
   // Tag Handlers
-  const normalizeTag = (tag: string) => tag.trim();
-  const normalizeTagKey = (tag: string) => normalizeTag(tag).toLowerCase();
+  const normalizeTagInput = (tag: string) => tag.trim();
+  const normalizeTagKey = (tag: string) => normalizeTagInput(tag).toLowerCase();
 
   const handleAddTag = () => {
-    const trimmed = normalizeTag(newTagInput);
+    const trimmed = normalizeTagInput(newTagInput);
     if (!trimmed) {
       setNewTagInput("");
       setIsAddingTag(false);
@@ -273,7 +280,7 @@ export const DetailViewModal = ({
 
   const handleCommitEditTag = () => {
     if (editingTagIndex === null) return;
-    const trimmed = normalizeTag(editingTagValue);
+    const trimmed = normalizeTagInput(editingTagValue);
     if (!trimmed) {
       handleCancelEditTag();
       return;
@@ -570,7 +577,7 @@ export const DetailViewModal = ({
                 className="flex-1 h-8"
               >
                 <a
-                  href={item.content}
+                  href={item.type === 'url' ? item.content : (signedUrl ?? item.content)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1.5"
@@ -584,8 +591,9 @@ export const DetailViewModal = ({
               variant="outline"
               size="sm"
               onClick={() => {
-                if (item.content) {
-                  navigator.clipboard.writeText(item.content);
+                const urlToCopy = item.type === 'url' ? item.content : (signedUrl ?? item.content);
+                if (urlToCopy) {
+                  navigator.clipboard.writeText(urlToCopy);
                   toast.success("Link copied!");
                 }
               }}
@@ -598,13 +606,14 @@ export const DetailViewModal = ({
               variant="outline"
               size="sm"
               onClick={() => {
-                if (navigator.share && item.content) {
+                const urlToShare = item.type === 'url' ? item.content : (signedUrl ?? item.content);
+                if (navigator.share && urlToShare) {
                   navigator.share({
                     title: item.title,
-                    url: item.content
+                    url: urlToShare
                   }).catch(() => { });
-                } else if (item.content) {
-                  navigator.clipboard.writeText(item.content);
+                } else if (urlToShare) {
+                  navigator.clipboard.writeText(urlToShare);
                   toast.success("Link copied to share!");
                 }
               }}
@@ -688,7 +697,7 @@ export const DetailViewModal = ({
                         value={editingTagValue}
                         onChange={(e) => setEditingTagValue(e.target.value)}
                         onKeyDown={handleKeyDownEditTag}
-                        onBlur={handleCancelEditTag}
+                        onBlur={handleCommitEditTag}
                         className="h-full border-0 p-0 text-xs w-24 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
                         placeholder="Edit tag..."
                       />
@@ -769,8 +778,9 @@ export const DetailViewModal = ({
           </button>
           <button
             onClick={() => {
-              if (item.content) {
-                navigator.clipboard.writeText(item.content);
+              const urlToShare = item.type === 'url' ? item.content : (signedUrl ?? item.content);
+              if (urlToShare) {
+                navigator.clipboard.writeText(urlToShare);
                 toast.success("Copied to clipboard");
               }
             }}
