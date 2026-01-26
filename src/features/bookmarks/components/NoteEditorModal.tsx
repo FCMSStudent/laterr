@@ -94,56 +94,58 @@ export const NoteEditorModal = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, handleSave]);
   const editorContent = <div className="flex flex-col h-full gap-4">
-      <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title..." className="text-lg font-semibold border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 px-[16px] py-[16px]" maxLength={200} />
+    <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title..." className="text-lg font-semibold border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 px-[16px] py-[16px]" maxLength={200} />
 
-      <RichNotesEditor value={content} onChange={setContent} placeholder="Type / for commands..." className="flex-1" />
+    <RichNotesEditor value={content} onChange={setContent} placeholder="Type / for commands..." className="flex-1" />
 
-      <div className="flex gap-2 pt-3 border-t border-border/50">
-        <LoadingButton onClick={handleSave} loading={saving} className="flex-1" aria-label="Save note">
-          <Save className="h-4 w-4 mr-2" />
-          Save
-        </LoadingButton>
-        <Button onClick={() => setShowDeleteAlert(true)} disabled={deleting} variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" aria-label="Delete note">
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>;
+    <div className="flex gap-2 pt-3 border-t border-border/50">
+      <LoadingButton onClick={handleSave} loading={saving} className="flex-1" aria-label="Save note">
+        <Save className="h-4 w-4 mr-2" />
+        Save
+      </LoadingButton>
+      <Button onClick={() => setShowDeleteAlert(true)} disabled={deleting} variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" aria-label="Delete note">
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  </div>;
   return <>
-      {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent className="max-h-[95vh] pb-safe">
-            <DrawerHeader className="sr-only">
-              <DrawerTitle>Edit Note</DrawerTitle>
-              <DrawerDescription>Edit your note content</DrawerDescription>
-            </DrawerHeader>
-            <div className="flex-1 overflow-y-auto px-4 pb-4">
-              {editorContent}
-            </div>
-          </DrawerContent>
-        </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="w-[600px] max-w-[90vw] h-[600px] max-h-[80vh] overflow-hidden border-0 glass-card p-6">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Edit Note</DialogTitle>
-              <DialogDescription>Edit your note content</DialogDescription>
-            </DialogHeader>
-            {editorContent}
-          </DialogContent>
-        </Dialog>}
+    {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[95vh] pb-safe flex flex-col">
+        <DrawerHeader className="sr-only">
+          <DrawerTitle>Edit Note</DrawerTitle>
+          <DrawerDescription>Edit your note content</DrawerDescription>
+        </DrawerHeader>
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+          {editorContent}
+        </div>
+      </DrawerContent>
+    </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[600px] max-w-[90vw] h-[600px] max-h-[80vh] border-0 glass-card flex flex-col p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Edit Note</DialogTitle>
+          <DialogDescription>Edit your note content</DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
+          {editorContent}
+        </div>
+      </DialogContent>
+    </Dialog>}
 
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent className="glass-card border-0">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this note?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete "{item.title}". This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="glass-input min-h-[44px]">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>;
+    <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+      <AlertDialogContent className="glass-card border-0">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this note?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently delete "{item.title}". This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="glass-input min-h-[44px]">Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]">
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>;
 };

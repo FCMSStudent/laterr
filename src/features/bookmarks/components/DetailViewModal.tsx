@@ -71,7 +71,7 @@ export const DetailViewModal = ({
 
   const isMobile = useIsMobile();
   const debouncedNotes = useDebounce(userNotes, AUTO_SAVE_DELAY);
-  
+
   // Extract item id to avoid optional chaining in dependency arrays (not allowed by esbuild)
   const itemId = item?.id;
 
@@ -109,7 +109,7 @@ export const DetailViewModal = ({
   // Autosave notes - placeholder, actual save will be triggered by handleSave defined below
   // We use a ref to avoid circular dependency issues
   const handleSaveRef = useRef<((notes: string, tags: string[], silent?: boolean) => Promise<void>) | null>(null);
-  
+
   useEffect(() => {
     if (!item || !open) return;
     const itemNotes = item.user_notes || "";
@@ -366,23 +366,23 @@ export const DetailViewModal = ({
 
   // 3. Preview Container Styling
   const getPreviewContainerStyles = () => {
-    const base = "w-full rounded-2xl overflow-hidden relative";
+    const base = "w-full h-full rounded-2xl overflow-hidden relative";
     if (isVideoContent) {
-      return `${base} aspect-video bg-black flex items-center justify-center overflow-hidden`;
+      return `${base} bg-black flex items-center justify-center`;
     }
     if (isDocumentContent) {
-      return `${base} flex-1 min-h-0 bg-muted/30 border border-border/40`;
+      return `${base} bg-muted/30 border border-border/40`;
     }
     if (isNoteContent) {
-      return `${base} min-h-[300px] bg-card border border-border/40 p-6`;
+      return `${base} bg-card border border-border/40 p-6`;
     }
     if (isImageContent) {
-      return `${base} min-h-[400px] bg-muted/30 border border-border/40 flex items-center justify-center`;
+      return `${base} bg-muted/30 border border-border/40 flex items-center justify-center`;
     }
     if (isUrlContent) {
-      return `${base} min-h-[360px] bg-muted/20 border border-border/40`;
+      return `${base} bg-muted/20 border border-border/40`;
     }
-    return `${base} min-h-[400px] bg-muted/20 border border-border/40 flex items-center justify-center`;
+    return `${base} bg-muted/20 border border-border/40 flex items-center justify-center`;
   };
 
   const renderPreview = () => {
@@ -523,7 +523,7 @@ export const DetailViewModal = ({
   const DesktopDetailContent = () => (
     <div className={`grid h-full gap-6 ${gridLayout}`}>
       {/* LEFT COLUMN: Preview */}
-      <div className="flex flex-col min-h-0 overflow-hidden">
+      <div className="flex flex-col h-full overflow-hidden">
         {/* Main Preview */}
         <div className={getPreviewContainerStyles()}>
           {renderPreview()}
@@ -560,18 +560,87 @@ export const DetailViewModal = ({
             </div>
           </div>
 
+          {/* PRIMARY ACTIONS */}
+          <div className="flex gap-2 pt-1">
+            {item.content && (
+              <Button
+                variant="default"
+                size="sm"
+                asChild
+                className="flex-1 h-8"
+              >
+                <a
+                  href={item.content}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium">Open</span>
+                </a>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (item.content) {
+                  navigator.clipboard.writeText(item.content);
+                  toast.success("Link copied!");
+                }
+              }}
+              className="flex-1 h-8"
+            >
+              <Link2 className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs font-medium">Copy</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (navigator.share && item.content) {
+                  navigator.share({
+                    title: item.title,
+                    url: item.content
+                  }).catch(() => { });
+                } else if (item.content) {
+                  navigator.clipboard.writeText(item.content);
+                  toast.success("Link copied to share!");
+                }
+              }}
+              className="h-8 px-3"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
           {/* SUMMARY CARD */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className={`text-[10px] font-bold tracking-widest uppercase ${isVideoContent ? 'text-orange-500' : 'text-blue-500'}`}>
-                {isVideoContent ? 'TLDW' : 'TLDR'}
+              <span className="text-[10px] font-bold tracking-widest uppercase text-primary/80">
+                {isVideoContent ? 'VIDEO SUMMARY' : 'SUMMARY'}
               </span>
             </div>
-            <div className="p-4 rounded-xl border border-border/60 bg-background/50 text-sm leading-relaxed text-muted-foreground shadow-sm break-words max-w-full whitespace-normal">
+            <div className="p-4 rounded-xl border border-border/60 bg-background/50 text-sm leading-relaxed shadow-sm">
               {item.summary ? (
-                item.summary
+                <div className="text-muted-foreground break-words max-w-full whitespace-normal">
+                  {item.summary}
+                </div>
               ) : (
-                <span className="text-muted-foreground/60 italic">No summary yet</span>
+                <div className="flex flex-col items-center justify-center py-4 gap-3">
+                  <FileText className="h-8 w-8 text-muted-foreground/30" />
+                  <p className="text-muted-foreground/60 text-xs">Summary not available</p>
+                  <div className="flex gap-2">
+                    {item.content && item.type === 'url' && (
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
+                        <a href={item.content} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-3 w-3 mr-1.5" />
+                          View source
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -579,7 +648,7 @@ export const DetailViewModal = ({
           {/* TAGS SECTION */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Mind Tags</span>
+              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Tags</span>
               {/* Small icon if needed */}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -628,29 +697,31 @@ export const DetailViewModal = ({
                     <Badge
                       variant="secondary"
                       onDoubleClick={() => handleStartEditTag(index)}
-                      className="h-7 px-3 rounded-full text-xs font-medium bg-muted/50 hover:bg-muted border border-transparent hover:border-border/50 transition-all cursor-default flex items-center gap-1"
+                      className="h-7 px-3 rounded-full text-xs font-medium bg-muted/50 hover:bg-muted border border-border/30 hover:border-border/60 transition-all cursor-default flex items-center gap-1.5 relative group"
                     >
-                      {tag}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartEditTag(index);
-                        }}
-                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-background/80 hover:text-foreground opacity-0 group-hover:opacity-100 transition-all"
-                        title="Edit tag"
-                      >
-                        <Edit2 className="w-2.5 h-2.5" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveTag(tag);
-                        }}
-                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-background/80 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all -mr-1"
-                        title="Remove tag"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
+                      <span className="select-none">{tag}</span>
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEditTag(index);
+                          }}
+                          className="w-4 h-4 rounded flex items-center justify-center hover:bg-background/80 hover:text-foreground"
+                          title="Edit tag (or double-click)"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveTag(tag);
+                          }}
+                          className="w-4 h-4 rounded flex items-center justify-center hover:bg-background/80 hover:text-destructive"
+                          title="Remove tag"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
                     </Badge>
                   )}
                 </div>
@@ -661,7 +732,7 @@ export const DetailViewModal = ({
           {/* NOTES SECTION */}
           <div className="space-y-3 flex-1 flex flex-col min-h-[150px]">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Mind Notes</span>
+              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Notes</span>
             </div>
             <div className="relative flex-1">
               <Textarea
