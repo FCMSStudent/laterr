@@ -10,7 +10,7 @@ import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Share2, Globe, CheckCircle2, Clock, X, Edit2 } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Globe, Clock, X, Edit2 } from "lucide-react";
 import { Badge } from "@/ui";
 import { Input, Textarea } from "@/ui";
 import { formatDistanceToNow } from "date-fns";
@@ -528,39 +528,35 @@ export const DetailViewModal = ({
   );
 
   const DesktopDetailContent = () => (
-    <div className={`grid h-full gap-6 ${gridLayout}`}>
+    <div className={`grid h-full gap-0 ${gridLayout}`}>
       {/* LEFT COLUMN: Preview */}
-      <div className="flex flex-col h-full overflow-hidden">
-        {/* Main Preview */}
+      <div className="flex flex-col h-full overflow-hidden pr-6">
         <div className={getPreviewContainerStyles()}>
           {renderPreview()}
         </div>
       </div>
 
       {/* RIGHT COLUMN: Sidebar */}
-      <div className="flex flex-col h-full min-h-0 bg-muted/30 border border-t-0 border-r-0 border-b-0 border-l border-border/50 my-0 pl-6 overflow-hidden">
-        <div className="flex-1 overflow-y-auto pt-6 pb-6 pr-2 space-y-8 scrollbar-thin">
+      <div className="flex flex-col h-full min-h-0 border-l border-border/40 pl-6 overflow-hidden">
+        <div className="flex-1 overflow-y-auto py-1 pr-2 space-y-6 scrollbar-thin">
 
           {/* HEADER */}
-          <div className="space-y-3">
-            <h2 className="text-2xl font-bold leading-snug tracking-tight text-foreground">{item.title}</h2>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
-                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-              </span>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold leading-snug tracking-tight text-foreground">{item.title}</h2>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
               {item.type === 'url' && item.content && (
                 <>
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                   <a
                     href={item.content}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[200px]"
+                    className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[180px]"
                   >
-                    <Globe className="w-3.5 h-3.5" />
+                    <Globe className="w-3 h-3" />
                     {(safeParseUrl(item.content)?.hostname ?? item.content)}
-                    <ExternalLink className="w-3 h-3 opacity-50" />
                   </a>
                 </>
               )}
@@ -568,20 +564,10 @@ export const DetailViewModal = ({
           </div>
 
           {/* PRIMARY ACTIONS */}
-          <div className="flex gap-2 pt-1">
+          <div className="flex gap-2">
             {item.content && (
-              <Button
-                variant="default"
-                size="sm"
-                asChild
-                className="flex-1 h-8"
-              >
-                <a
-                  href={item.type === 'url' ? item.content : (signedUrl ?? item.content)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5"
-                >
+              <Button variant="default" size="sm" asChild className="h-8 flex-1">
+                <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5">
                   <ExternalLink className="h-3.5 w-3.5" />
                   <span className="text-xs font-medium">Open</span>
                 </a>
@@ -591,79 +577,32 @@ export const DetailViewModal = ({
               variant="outline"
               size="sm"
               onClick={() => {
-                const urlToCopy = item.type === 'url' ? item.content : (signedUrl ?? item.content);
-                if (urlToCopy) {
-                  navigator.clipboard.writeText(urlToCopy);
+                if (item.content) {
+                  navigator.clipboard.writeText(item.content);
                   toast.success("Link copied!");
                 }
               }}
-              className="flex-1 h-8"
+              className="h-8 flex-1"
             >
               <Link2 className="h-3.5 w-3.5 mr-1.5" />
               <span className="text-xs font-medium">Copy</span>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const urlToShare = item.type === 'url' ? item.content : (signedUrl ?? item.content);
-                if (navigator.share && urlToShare) {
-                  navigator.share({
-                    title: item.title,
-                    url: urlToShare
-                  }).catch(() => { });
-                } else if (urlToShare) {
-                  navigator.clipboard.writeText(urlToShare);
-                  toast.success("Link copied to share!");
-                }
-              }}
-              className="h-8 px-3"
-            >
-              <Share2 className="h-3.5 w-3.5" />
-            </Button>
           </div>
 
-          {/* SUMMARY CARD */}
+          {/* SUMMARY */}
+          {item.summary && (
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Summary</span>
+              <p className="text-sm text-muted-foreground leading-relaxed">{item.summary}</p>
+            </div>
+          )}
+
+          {/* TAGS */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-primary/80">
-                {isVideoContent ? 'VIDEO SUMMARY' : 'SUMMARY'}
-              </span>
-            </div>
-            <div className="p-4 rounded-xl border border-border/60 bg-background/50 text-sm leading-relaxed shadow-sm">
-              {item.summary ? (
-                <div className="text-muted-foreground break-words max-w-full whitespace-normal">
-                  {item.summary}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-4 gap-3">
-                  <FileText className="h-8 w-8 text-muted-foreground/30" />
-                  <p className="text-muted-foreground/60 text-xs">Summary not available</p>
-                  <div className="flex gap-2">
-                    {item.content && item.type === 'url' && (
-                      <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
-                        <a href={item.content} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-3 w-3 mr-1.5" />
-                          View source
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* TAGS SECTION */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Tags</span>
-              {/* Small icon if needed */}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {/* Add Tag Button */}
+            <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Tags</span>
+            <div className="flex flex-wrap gap-1.5">
               {isAddingTag ? (
-                <div className="flex items-center h-7 bg-background border border-primary rounded-full px-2 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center h-6 bg-background border border-primary rounded-full px-2">
                   <Input
                     ref={tagInputRef}
                     value={newTagInput}
@@ -673,64 +612,45 @@ export const DetailViewModal = ({
                       if (newTagInput.trim()) handleAddTag();
                       else setIsAddingTag(false);
                     }}
-                    className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
-                    placeholder="Tag name..."
+                    className="h-full border-0 p-0 text-xs w-16 focus-visible:ring-0 bg-transparent"
+                    placeholder="Tag..."
                   />
                 </div>
               ) : (
                 <button
                   onClick={() => setIsAddingTag(true)}
-                  className="h-7 px-3 flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold rounded-full transition-colors"
+                  className="h-6 px-2.5 flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-full transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3 h-3" />
                   Add tag
                 </button>
               )}
-
-              {/* Tag List */}
               {tags.map((tag, index) => (
-                <div key={`${tag}-${index}`} className="group relative">
+                <div key={`${tag}-${index}`} className="group">
                   {editingTagIndex === index ? (
-                    <div className="flex items-center h-7 bg-background border border-primary rounded-full px-2 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center h-6 bg-background border border-primary rounded-full px-2">
                       <Input
                         ref={editTagInputRef}
                         value={editingTagValue}
                         onChange={(e) => setEditingTagValue(e.target.value)}
                         onKeyDown={handleKeyDownEditTag}
-                        onBlur={handleCommitEditTag}
-                        className="h-full border-0 p-0 text-xs w-24 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
-                        placeholder="Edit tag..."
+                        onBlur={handleCancelEditTag}
+                        className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent"
                       />
                     </div>
                   ) : (
                     <Badge
                       variant="secondary"
                       onDoubleClick={() => handleStartEditTag(index)}
-                      className="h-7 px-3 rounded-full text-xs font-medium bg-muted/50 hover:bg-muted border border-border/30 hover:border-border/60 transition-all cursor-default flex items-center gap-1.5 relative group"
+                      className="h-6 px-2.5 rounded-full text-xs font-medium bg-muted/60 hover:bg-muted cursor-default flex items-center gap-1"
                     >
-                      <span className="select-none">{tag}</span>
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStartEditTag(index);
-                          }}
-                          className="w-4 h-4 rounded flex items-center justify-center hover:bg-background/80 hover:text-foreground"
-                          title="Edit tag (or double-click)"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveTag(tag);
-                          }}
-                          className="w-4 h-4 rounded flex items-center justify-center hover:bg-background/80 hover:text-destructive"
-                          title="Remove tag"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
+                      {tag}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
+                        className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
                     </Badge>
                   )}
                 </div>
@@ -738,15 +658,13 @@ export const DetailViewModal = ({
             </div>
           </div>
 
-          {/* NOTES SECTION */}
-          <div className="space-y-3 flex-1 flex flex-col min-h-[150px]">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Notes</span>
-            </div>
+          {/* NOTES */}
+          <div className="space-y-2 flex-1 flex flex-col">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Notes</span>
             <div className="relative flex-1">
               <Textarea
                 ref={notesRef}
-                placeholder="Add your notes here..."
+                placeholder="Add your notes..."
                 value={userNotes}
                 onChange={(e) => setUserNotes(e.target.value)}
                 onBlur={() => {
@@ -755,47 +673,26 @@ export const DetailViewModal = ({
                     handleSave(userNotes, tags, true);
                   }
                 }}
-                className="w-full h-full min-h-[120px] resize-none border-0 bg-transparent p-0 focus-visible:ring-0 text-sm leading-relaxed placeholder:text-muted-foreground/40 -ml-1 pl-1"
+                className="w-full min-h-[100px] resize-none border border-border/40 rounded-lg bg-muted/20 p-3 focus-visible:ring-1 text-sm leading-relaxed placeholder:text-muted-foreground/40"
               />
-              {/* Autosave indicator - only show when saving or changes detected */}
-              {(saving || userNotes !== (item?.user_notes || "")) && (
-                <div className="absolute bottom-0 right-0 text-[10px] text-muted-foreground/50 transition-opacity duration-500">
-                  {saving ? "Saving..." : "Autosaved"}
-                </div>
-              )}
+              <span className="absolute bottom-2 right-3 text-[10px] text-muted-foreground/40">
+                {saving ? "Saving..." : "Autosaved"}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* BOTTOM ACTIONS */}
-        <div className="pt-4 mt-auto flex items-center justify-center gap-6 border-t border-border/40">
-          <button
-            onClick={() => handleSave(userNotes, tags)}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            title="Save Manually"
-          >
-            <CheckCircle2 className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => {
-              const urlToShare = item.type === 'url' ? item.content : (signedUrl ?? item.content);
-              if (urlToShare) {
-                navigator.clipboard.writeText(urlToShare);
-                toast.success("Copied to clipboard");
-              }
-            }}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            title="Share / Copy Link"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
-          <button
+        {/* FOOTER ACTIONS */}
+        <div className="py-4 flex items-center justify-end gap-2 border-t border-border/40">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowDeleteAlert(true)}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-            title="Delete Item"
+            className="h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
-            <Trash2 className="w-5 h-5" />
-          </button>
+            <Trash2 className="w-4 h-4 mr-1.5" />
+            Delete
+          </Button>
         </div>
       </div>
     </div>
