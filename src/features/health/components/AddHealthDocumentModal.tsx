@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { Button } from "@/ui";
@@ -64,6 +64,27 @@ export const AddHealthDocumentModal = ({
   const [tags, setTags] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    if (!open && loading) {
+      toast.warning("Please wait for the operation to complete");
+      return;
+    }
+
+    if (!open) {
+      resetForm();
+      setStatusStep(null);
+    }
+    onOpenChange(open);
+  }, [loading, onOpenChange]);
 
   const resetForm = () => {
     setDocumentType("");
@@ -255,19 +276,23 @@ export const AddHealthDocumentModal = ({
 
       if (insertError) throw insertError;
 
+      if (!isMounted.current) return;
       toast.success("Document uploaded! 📄");
       resetForm();
       onOpenChange(false);
       onDocumentAdded();
     } catch (error) {
+      if (!isMounted.current) return;
       console.error('Error adding document:', error);
       const uploadError = getUploadErrorMessage(error);
       toast.error(uploadError.title, {
         description: uploadError.message,
       });
     } finally {
-      setLoading(false);
-      setStatusStep(null);
+      if (isMounted.current) {
+        setLoading(false);
+        setStatusStep(null);
+      }
     }
   };
 
@@ -452,8 +477,12 @@ export const AddHealthDocumentModal = ({
   );
 
   return isMobile ? (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] pb-safe">
+    <Drawer open={open} onOpenChange={handleOpenChange}>
+      <DrawerContent
+        className="max-h-[90vh] pb-safe"
+        onPointerDownOutside={(e) => loading && e.preventDefault()}
+        onEscapeKeyDown={(e) => loading && e.preventDefault()}
+      >
         <DrawerHeader>
           <DrawerTitle className="text-xl font-semibold text-foreground">
             Add Health Document
@@ -468,8 +497,12 @@ export const AddHealthDocumentModal = ({
       </DrawerContent>
     </Drawer>
   ) : (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg !bg-background border-border shadow-xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-lg !bg-background border-border shadow-xl max-h-[90vh] overflow-y-auto"
+        onPointerDownOutside={(e) => loading && e.preventDefault()}
+        onEscapeKeyDown={(e) => loading && e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground">
             Add Health Document

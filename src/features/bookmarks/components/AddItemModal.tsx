@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
 import { Button } from "@/ui";
@@ -45,6 +45,27 @@ export const AddItemModal = ({
   const [statusStep, setStatusStep] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    if (!newOpen && loading) {
+      toast.warning("Please wait for the operation to complete");
+      return;
+    }
+
+    if (!newOpen) {
+      setStatusStep(null);
+    }
+    onOpenChange(newOpen);
+  }, [loading, onOpenChange]);
 
   const handleSelectedFile = useCallback((selectedFile: File | null) => {
     if (!selectedFile) {
@@ -166,11 +187,14 @@ export const AddItemModal = ({
         user_id: user.id
       });
       if (insertError) throw insertError;
+
+      if (!isMounted.current) return;
       toast.success("URL added to your space! 🌱");
       resetFormState();
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
+      if (!isMounted.current) return;
       const typedError = toTypedError(error);
       console.error('Error adding URL:', typedError);
 
@@ -194,8 +218,10 @@ export const AddItemModal = ({
         description: errorMessage.message
       });
     } finally {
-      setLoading(false);
-      setStatusStep(null);
+      if (isMounted.current) {
+        setLoading(false);
+        setStatusStep(null);
+      }
     }
   };
   const handleNoteSubmit = async () => {
@@ -269,11 +295,14 @@ export const AddItemModal = ({
         user_id: user.id
       });
       if (error) throw error;
+
+      if (!isMounted.current) return;
       toast.success("Note planted in your space! 📝");
       resetFormState();
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
+      if (!isMounted.current) return;
       const typedError = toTypedError(error);
       console.error('Error adding note:', typedError);
 
@@ -297,8 +326,10 @@ export const AddItemModal = ({
         description: errorMessage.message
       });
     } finally {
-      setLoading(false);
-      setStatusStep(null);
+      if (isMounted.current) {
+        setLoading(false);
+        setStatusStep(null);
+      }
     }
   };
   const handleFileSubmit = async () => {
@@ -442,12 +473,15 @@ export const AddItemModal = ({
         user_id: user.id
       });
       if (insertError) throw insertError;
+
+      if (!isMounted.current) return;
       const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : file.type === 'application/pdf' ? 'PDF' : file.type.startsWith('video/') ? 'Video' : 'Document';
       toast.success(`${fileTypeLabel} added to your space! 📁`);
       resetFormState();
       onOpenChange(false);
       onItemAdded();
     } catch (error: unknown) {
+      if (!isMounted.current) return;
       const typedError = toTypedError(error);
       console.error('Error adding file:', typedError);
       const uploadError = getUploadErrorMessage(typedError);
@@ -455,17 +489,13 @@ export const AddItemModal = ({
         description: uploadError.message
       });
     } finally {
-      setLoading(false);
-      setStatusStep(null);
+      if (isMounted.current) {
+        setLoading(false);
+        setStatusStep(null);
+      }
     }
   };
-  const handleModalClose = useCallback((open: boolean) => {
-    if (!open && !loading) {
-      // Reset form state when closing if not currently loading
-      resetFormState();
-    }
-    onOpenChange(open);
-  }, [loading, resetFormState, onOpenChange]);
+
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -629,8 +659,12 @@ export const AddItemModal = ({
   );
 
   return isMobile ? (
-    <Drawer open={open} onOpenChange={handleModalClose}>
-      <DrawerContent className="max-h-[90vh] pb-safe">
+    <Drawer open={open} onOpenChange={handleOpenChange}>
+      <DrawerContent
+        className="max-h-[90vh] pb-safe"
+        onPointerDownOutside={(e) => loading && e.preventDefault()}
+        onEscapeKeyDown={(e) => loading && e.preventDefault()}
+      >
         <DrawerHeader>
           <DrawerTitle className="text-xl font-semibold text-foreground">
             Add New Item
@@ -643,8 +677,12 @@ export const AddItemModal = ({
       </DrawerContent>
     </Drawer>
   ) : (
-    <Dialog open={open} onOpenChange={handleModalClose}>
-      <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-md !bg-background border-border shadow-xl"
+        onPointerDownOutside={(e) => loading && e.preventDefault()}
+        onEscapeKeyDown={(e) => loading && e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground">
             Add New Item
