@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/ui
 import { MessageCircle, Send, Loader2, Bot, User, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/shared/lib/utils';
-import { getEdgeFunctionErrorDetails, getEdgeFunctionErrorMessage } from '@/shared/lib/edge-function-errors';
+import { getEdgeFunctionErrorDetails, type EdgeFunctionErrorDetails } from '@/shared/lib/error-utils';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -67,19 +67,23 @@ export function HealthChatPanel() {
       );
 
       if (!response.ok) {
-        const details = await getEdgeFunctionErrorDetails({ response });
-        const mappedError = getEdgeFunctionErrorMessage(details);
+        const details = await getEdgeFunctionErrorDetails({ context: response });
         console.error('Edge function health-chat failed', {
           status: details.status,
           code: details.code,
           requestId: details.requestId,
           context: 'HealthChatPanel.health-chat',
         });
+
+        let reply = 'Sorry, I couldn’t reach the assistant. Please try again.';
+        if (details.status === 429) reply = 'Sorry, I’m getting too many requests right now. Please try again shortly.';
+        if (details.status === 401 || details.status === 403) reply = 'Sorry, I couldn’t reach the assistant. Please sign in and try again.';
+
         setMessages(prev => [
           ...prev,
           {
             role: 'assistant',
-            content: mappedError.assistantReply,
+            content: reply,
           },
         ]);
         return;
@@ -132,7 +136,7 @@ export function HealthChatPanel() {
               setMessages(prev => {
                 const last = prev[prev.length - 1];
                 if (last?.role === 'assistant') {
-                  return prev.map((m, i) => 
+                  return prev.map((m, i) =>
                     i === prev.length - 1 ? { ...m, content: assistantContent } : m
                   );
                 }

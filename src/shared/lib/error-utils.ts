@@ -1,3 +1,5 @@
+import { AUTH_ERRORS, ITEM_ERRORS, NETWORK_ERRORS } from './error-messages';
+
 /**
  * Error handling utilities for consistent error formatting across the application
  */
@@ -45,8 +47,8 @@ export function handleSupabaseError(
  * @param error - The error object to check
  * @returns Object with error type and user-friendly message, or null if not a common error
  */
-export function checkCommonConfigErrors(error: unknown): { 
-  title: string; 
+export function checkCommonConfigErrors(error: unknown): {
+  title: string;
   description: string;
   logDetails?: string;
 } | null {
@@ -55,7 +57,7 @@ export function checkCommonConfigErrors(error: unknown): {
   }
 
   const errorMsg = error.message.toLowerCase();
-  
+
   // Check for authentication issues
   if (errorMsg.includes('not authenticated') || errorMsg.includes('auth')) {
     return {
@@ -63,7 +65,7 @@ export function checkCommonConfigErrors(error: unknown): {
       description: 'Please sign in to add items to your collection.'
     };
   }
-  
+
   // Check for missing API configuration
   if (errorMsg.includes('missing authorization') || errorMsg.includes('api key')) {
     return {
@@ -75,7 +77,7 @@ export function checkCommonConfigErrors(error: unknown): {
         '  3. LOVABLE_API_KEY is configured in Supabase Edge Functions'
     };
   }
-  
+
   // Check for database permission issues
   if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
     return {
@@ -83,7 +85,7 @@ export function checkCommonConfigErrors(error: unknown): {
       description: 'You do not have permission to add items. Please check your authentication status.'
     };
   }
-  
+
   // Check for function invocation errors
   if (errorMsg.includes('function') && errorMsg.includes('not found')) {
     return {
@@ -91,7 +93,7 @@ export function checkCommonConfigErrors(error: unknown): {
       description: 'The required service is unavailable. Please contact support.'
     };
   }
-  
+
   return null;
 }
 
@@ -153,31 +155,215 @@ export function getToastMessageFromErrorDetails({
   return TOAST_MESSAGES_BY_STATUS[status] ?? DEFAULT_TOAST_MESSAGE;
 }
 
-type SupabaseFunctionsHttpError = {
+export type EdgeFunctionErrorDetails = {
   status?: number;
-  context?: {
-    json?: {
-      error?: ToastErrorInput;
-    };
-  };
+  code?: string;
+  message?: string;
+  requestId?: string;
 };
 
+const REQUEST_ID_HEADERS = ['x-request-id', 'x-supabase-request-id'];
+
+function getRequestId(response?: Response | null): string | undefined {
+  if (!response || !('headers' in response)) return undefined;
+  for (const header of REQUEST_ID_HEADERS) {
+    const value = response.headers.get(header);
+    if (value) return value;
+  }
+  return undefined;
+}
+
 /**
- * Parses Supabase FunctionsHttpError details for a safe toast message.
- * Uses structured JSON in error.context?.json?.error and the HTTP status.
+ * Robustly extracts error details from various Supabase Edge Function error shapes.
+ * Handles Response objects (async json parsing), standard Error objects, and plain objects.
  */
-export function getToastMessageFromSupabaseError(error: unknown): ToastMessage {
-  if (!error || typeof error !== 'object') {
-    return DEFAULT_TOAST_MESSAGE;
+export async function getEdgeFunctionErrorDetails(
+  error: unknown,
+  fallbackStatus?: number
+): Promise<EdgeFunctionErrorDetails> {
+  let status: number | undefined = fallbackStatus;
+  let code: string | undefined;
+  let message: string | undefined;
+  let requestId: string | undefined;
+
+  if (typeof error === 'object' && error !== null) {
+    const err = error as any;
+
+    // Handle Supabase FunctionsHttpError shape (often has a 'context' property)
+    const context = err.context;
+
+    if (context) {
+      // 1. Try treating context as a Response object
+      if (typeof context.clone === 'function' && typeof context.json === 'function') {
+        try {
+          // We clone the response to avoid consuming the body if it's needed elsewhere
+          // although properly we should probably consume it here.
+          const clone = context.clone();
+          const data = await clone.json();
+
+          if (data?.error) {
+            code = data.error.code;
+            message = data.error.message;
+            requestId = data.error.requestId || data.error.request_id;
+          } else {
+            // Sometimes error is the body itself or flattened
+            code = data?.code;
+            message = data?.message || data?.error;
+            requestId = data?.requestId || data?.request_id;
+          }
+
+          status = context.status;
+          requestId = requestId || getRequestId(context);
+        } catch (e) {
+          // JSON parsing failed, maybe it's not JSON
+        }
+      }
+      // 2. Try treating context as a plain object (pre-parsed or different shape)
+      else if (typeof context === 'object') {
+        status = context.status ?? status;
+
+        // Check for nested body/json properties which AddItemModal handled
+        const body = context.body || context.json;
+        if (body) {
+          const errBody = body.error || body; // sometimes error is nested
+          code = errBody?.code ?? code;
+          message = errBody?.message ?? errBody?.error ?? message;
+          requestId = errBody?.requestId ?? errBody?.request_id ?? requestId;
+        }
+      }
+    }
+    // Handle direct Response object passed as error (HealthChatPanel case)
+    else if (typeof (err as any).json === 'function') {
+      try {
+        const clone = (err as Response).clone();
+        const data = await clone.json();
+        if (data?.error) {
+          code = data.error.code;
+          message = data.error.message;
+        } else {
+          code = data?.code;
+          message = data?.message || data?.error;
+        }
+        status = err.status;
+        requestId = getRequestId(err);
+      } catch (e) { }
+    }
+
+    // 3. Fallback to top-level properties if not found yet
+    if (status === undefined) status = err.status;
+    if (!code) code = err.code || err.error_code;
+    if (!message) message = err.message || err.error_description;
+    if (!requestId) requestId = err.requestId || err.request_id;
   }
 
-  const supabaseError = error as SupabaseFunctionsHttpError;
-  const contextError = supabaseError.context?.json?.error;
-
-  return getToastMessageFromErrorDetails({
-    status: contextError?.status ?? supabaseError.status,
-    code: contextError?.code,
-    message: contextError?.message,
-    requestId: contextError?.requestId,
-  });
+  return { status, code, message, requestId };
 }
+
+/**
+ * Maps edge function error details to a user-friendly ToastMessage.
+ * Centralizes all error mapping logic.
+ */
+export function getToastForEdgeFunctionError(
+  details: EdgeFunctionErrorDetails,
+  defaultMessage: ToastMessage = DEFAULT_TOAST_MESSAGE
+): ToastMessage {
+  const { status } = details;
+  const code = details.code?.toLowerCase();
+
+  // 1. Authentication & Permissions
+  if (status === 401 || code === 'unauthorized' || code === 'jwt_expired') {
+    return {
+      title: 'Authentication Required',
+      description: 'Please sign in again to continue.'
+    };
+  }
+
+  if (status === 403 || code === 'forbidden') {
+    return {
+      title: 'Access Denied',
+      description: 'You do not have permission to perform this action.'
+    };
+  }
+
+  // 2. Rate Limiting & Quotas (AI specific)
+  if (status === 429 || code === 'rate_limit' || code === 'too_many_requests') {
+    return ITEM_ERRORS.AI_RATE_LIMIT ? {
+      title: ITEM_ERRORS.AI_RATE_LIMIT.title,
+      description: ITEM_ERRORS.AI_RATE_LIMIT.message
+    } : {
+      title: 'Too Many Requests',
+      description: 'Please wait a moment and try again.'
+    };
+  }
+
+  if (status === 402 || code === 'credits_exhausted' || code === 'payment_required' || code === 'insufficient_quota') {
+    return ITEM_ERRORS.AI_CREDITS_EXHAUSTED ? {
+      title: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.title,
+      description: ITEM_ERRORS.AI_CREDITS_EXHAUSTED.message
+    } : {
+      title: 'AI Credits Exhausted',
+      description: 'You have run out of credits. Please upgrade to continue.'
+    };
+  }
+
+  // 3. Request Issues
+  if (status === 400 || code === 'bad_request' || code === 'invalid_input') {
+    return {
+      title: 'Invalid Request',
+      description: 'We couldn’t process that request. Please try again.'
+    };
+  }
+
+  if (status === 413 || code === 'payload_too_large') {
+    return ITEM_ERRORS.FILE_TOO_LARGE ? {
+      title: ITEM_ERRORS.FILE_TOO_LARGE.title,
+      description: ITEM_ERRORS.FILE_TOO_LARGE.message
+    } : {
+      title: 'File Too Large',
+      description: 'The file is too large to process.'
+    };
+  }
+
+  // 4. Server/Timeout Issues
+  if (status === 408 || status === 504 || code === 'timeout') {
+    return NETWORK_ERRORS.CONNECTION_TIMEOUT ? {
+      title: NETWORK_ERRORS.CONNECTION_TIMEOUT.title,
+      description: NETWORK_ERRORS.CONNECTION_TIMEOUT.message
+    } : {
+      title: 'Request Timeout',
+      description: 'The operation took too long. Please try again.'
+    };
+  }
+
+  if (status && status >= 500) {
+    return {
+      title: 'Service Unavailable',
+      description: 'Our services are experiencing issues. Please try again later.'
+    };
+  }
+
+  // 5. Context Specific (using code)
+  if (code?.includes('invalid_url')) {
+    return ITEM_ERRORS.URL_INVALID ? {
+      title: ITEM_ERRORS.URL_INVALID.title,
+      description: ITEM_ERRORS.URL_INVALID.message
+    } : defaultMessage;
+  }
+
+  if (code?.includes('file_type') || code?.includes('unsupported_media')) {
+    return ITEM_ERRORS.FILE_INVALID_TYPE ? {
+      title: ITEM_ERRORS.FILE_INVALID_TYPE.title,
+      description: ITEM_ERRORS.FILE_INVALID_TYPE.message
+    } : defaultMessage;
+  }
+
+  return defaultMessage;
+}
+
+// Deprecated functions (kept for compatibility during migration if needed, but we are refactoring all usages)
+// We will simply remove them or alias them if strictly compatible.
+// getToastMessageFromErrorDetails and getToastMessageFromSupabaseError were doing similar things but less robustly.
+// For clean refactor, I will remove the specific exports if they are not used elsewhere.
+// But better to leave them as aliases for now or just replace them.
+// Given strict instructions to avoid breakage, I'll remove them as I am updating all call sites.
+

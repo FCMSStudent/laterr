@@ -4,9 +4,9 @@ import { Button } from "@/ui";
 import { Badge } from "@/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
 import { ScrollArea } from "@/ui";
-import { 
-  Trash2, Download, RefreshCw, Calendar, Building, FileText, 
-  ExternalLink, Sparkles, Beaker, Loader2 
+import {
+  Trash2, Download, RefreshCw, Calendar, Building, FileText,
+  ExternalLink, Sparkles, Beaker, Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,7 @@ import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
 import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { ExtractedHealthDataDisplay } from "@/features/health/components/ExtractedHealthDataDisplay";
 import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from "@/shared/lib/storage-constants";
-import { getEdgeFunctionErrorDetails, getEdgeFunctionErrorMessage } from "@/shared/lib/edge-function-errors";
+import { getEdgeFunctionErrorDetails, getToastForEdgeFunctionError } from "@/shared/lib/error-utils";
 
 interface HealthDocumentDetailModalProps {
   open: boolean;
@@ -52,7 +52,7 @@ export const HealthDocumentDetailModal = ({
   const handleDownload = async () => {
     try {
       // Extract path from signed URL or use file_url directly
-      const path = document.file_url.includes('?') 
+      const path = document.file_url.includes('?')
         ? document.file_url.split('?')[0].split('/').slice(-2).join('/')
         : document.file_url;
 
@@ -89,15 +89,13 @@ export const HealthDocumentDetailModal = ({
       });
 
       if (error) {
-        const details = await getEdgeFunctionErrorDetails({ error });
-        const mappedError = getEdgeFunctionErrorMessage(details);
+        const details = await getEdgeFunctionErrorDetails(error);
+        const toastMessage = getToastForEdgeFunctionError(details);
         console.error('Edge function analyze-file failed', {
-          status: details.status,
-          code: details.code,
-          requestId: details.requestId,
+          ...details,
           context: 'HealthDocumentDetailModal.analyze-file',
         });
-        toast.error(mappedError.title, { description: mappedError.message });
+        toast.error(toastMessage.title, { description: toastMessage.description });
         return;
       }
 
@@ -127,7 +125,7 @@ export const HealthDocumentDetailModal = ({
       if (sessionError || !sessionData.session) {
         throw new Error('Authentication required');
       }
-      
+
       // First get the document content - for now we'll use the summary as content
       // In a real implementation, you'd fetch and parse the actual file
       const contentToAnalyze = document.summary || `Health document: ${document.title}. Type: ${document.document_type}.`;
@@ -149,15 +147,13 @@ export const HealthDocumentDetailModal = ({
       );
 
       if (!response.ok) {
-        const details = await getEdgeFunctionErrorDetails({ response });
-        const mappedError = getEdgeFunctionErrorMessage(details);
+        const details = await getEdgeFunctionErrorDetails({ context: response });
+        const toastMessage = getToastForEdgeFunctionError(details);
         console.error('Edge function extract-health-data failed', {
-          status: details.status,
-          code: details.code,
-          requestId: details.requestId,
+          ...details,
           context: 'HealthDocumentDetailModal.extract-health-data',
         });
-        toast.error(mappedError.title, { description: mappedError.message });
+        toast.error(toastMessage.title, { description: toastMessage.description });
         return;
       }
 
@@ -190,8 +186,8 @@ export const HealthDocumentDetailModal = ({
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className="mb-2"
                 style={{ backgroundColor: `${typeInfo?.color}20`, color: typeInfo?.color }}
               >
@@ -218,8 +214,8 @@ export const HealthDocumentDetailModal = ({
                 <DOCXPreview url={document.file_url} />
               )}
               {isImage && (
-                <img 
-                  src={document.file_url} 
+                <img
+                  src={document.file_url}
                   alt={document.title}
                   className="w-full max-h-[500px] object-contain"
                 />
@@ -316,8 +312,8 @@ export const HealthDocumentDetailModal = ({
                   </Button>
                 </div>
                 <ScrollArea className="max-h-[300px]">
-                  <ExtractedHealthDataDisplay 
-                    data={(document.extracted_data as any) || {}} 
+                  <ExtractedHealthDataDisplay
+                    data={(document.extracted_data as any) || {}}
                   />
                 </ScrollArea>
               </TabsContent>

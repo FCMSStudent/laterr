@@ -13,7 +13,7 @@ import { z } from "zod";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { CATEGORY_OPTIONS, DEFAULT_ITEM_TAG, DEFAULT_ITEM_TAGS, ALLOWED_FILE_MIME_TYPES, FILE_INPUT_ACCEPT, FILE_SIZE_LIMIT_BYTES, FILE_SIZE_LIMIT_MB, NOTE_MAX_LENGTH, NOTE_SUMMARY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH, URL_MAX_LENGTH, SUPABASE_FUNCTION_ANALYZE_FILE, SUPABASE_FUNCTION_ANALYZE_URL, SUPABASE_ITEMS_TABLE, FILE_ANALYSIS_SIGNED_URL_EXPIRATION, isValidEmbedding } from "@/features/bookmarks/constants";
 import { uploadFileToStorage, createSignedUrlForFile, uploadThumbnailToStorage, validateFileForUpload, type UploadValidationOptions } from "@/shared/lib/supabase-utils";
-import { checkCommonConfigErrors } from "@/shared/lib/error-utils";
+import { checkCommonConfigErrors, getEdgeFunctionErrorDetails, getToastForEdgeFunctionError } from "@/shared/lib/error-utils";
 import { NetworkError, toTypedError } from "@/shared/types/errors";
 import { ITEM_ERRORS, getItemErrorMessage, getSupabaseFunctionErrorMessage, getUploadErrorMessage } from "@/shared/lib/error-messages";
 import { generateThumbnail } from "@/features/bookmarks/utils/thumbnail-generator";
@@ -24,43 +24,7 @@ const FILE_VALIDATION_OPTIONS = {
 const urlSchema = z.string().url('Invalid URL').max(URL_MAX_LENGTH, 'URL too long');
 const noteSchema = z.string().min(1, 'Note cannot be empty').max(NOTE_MAX_LENGTH, 'Note too long');
 
-type SupabaseFunctionErrorDetails = {
-  status?: number;
-  code?: string;
-  message?: string;
-  requestId?: string;
-};
 
-const getSupabaseFunctionErrorDetails = (error: unknown): SupabaseFunctionErrorDetails => {
-  if (!error || typeof error !== 'object') {
-    return {};
-  }
-
-  const context = (error as { context?: { status?: number; body?: unknown } }).context;
-  const status = context?.status;
-  const body = context?.body;
-  const bodyObject = body && typeof body === 'object' ? (body as Record<string, unknown>) : undefined;
-  const code = typeof bodyObject?.code === 'string' ? bodyObject.code : undefined;
-  const message =
-    typeof bodyObject?.message === 'string'
-      ? bodyObject.message
-      : typeof bodyObject?.error === 'string'
-      ? bodyObject.error
-      : undefined;
-  const requestId =
-    typeof bodyObject?.requestId === 'string'
-      ? bodyObject.requestId
-      : typeof bodyObject?.request_id === 'string'
-      ? bodyObject.request_id
-      : undefined;
-
-  return {
-    status,
-    code,
-    message,
-    requestId,
-  };
-};
 interface AddItemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -135,26 +99,14 @@ export const AddItemModal = ({
         }
       });
       if (error) {
-        const {
-          status,
-          code,
-          message,
-          requestId
-        } = getSupabaseFunctionErrorDetails(error);
+        const details = await getEdgeFunctionErrorDetails(error);
         console.error('Supabase function invoke failed:', {
           action: SUPABASE_FUNCTION_ANALYZE_URL,
-          status,
-          code,
-          requestId,
-          message
+          ...details
         });
-        const functionError = getSupabaseFunctionErrorMessage({
-          action: 'analyze-url',
-          status,
-          code
-        });
-        toast.error(functionError.title, {
-          description: functionError.message
+        const toastMessage = getToastForEdgeFunctionError(details);
+        toast.error(toastMessage.title, {
+          description: toastMessage.description
         });
         return;
       }
@@ -180,26 +132,14 @@ export const AddItemModal = ({
           }
         });
         if (embeddingError) {
-          const {
-            status,
-            code,
-            message,
-            requestId
-          } = getSupabaseFunctionErrorDetails(embeddingError);
+          const details = await getEdgeFunctionErrorDetails(embeddingError);
           console.error('Supabase function invoke failed:', {
             action: 'generate-embedding',
-            status,
-            code,
-            requestId,
-            message
+            ...details
           });
-          const functionError = getSupabaseFunctionErrorMessage({
-            action: 'generate-embedding',
-            status,
-            code
-          });
-          toast.error(functionError.title, {
-            description: functionError.message
+          const toastMessage = getToastForEdgeFunctionError(details);
+          toast.error(toastMessage.title, {
+            description: toastMessage.description
           });
         } else if (embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
@@ -296,26 +236,14 @@ export const AddItemModal = ({
           }
         });
         if (embeddingError) {
-          const {
-            status,
-            code,
-            message,
-            requestId
-          } = getSupabaseFunctionErrorDetails(embeddingError);
+          const details = await getEdgeFunctionErrorDetails(embeddingError);
           console.error('Supabase function invoke failed:', {
             action: 'generate-embedding',
-            status,
-            code,
-            requestId,
-            message
+            ...details
           });
-          const functionError = getSupabaseFunctionErrorMessage({
-            action: 'generate-embedding',
-            status,
-            code
-          });
-          toast.error(functionError.title, {
-            description: functionError.message
+          const toastMessage = getToastForEdgeFunctionError(details);
+          toast.error(toastMessage.title, {
+            description: toastMessage.description
           });
         } else if (embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
@@ -402,7 +330,7 @@ export const AddItemModal = ({
 
       // Validate file before upload
       validateFileForUpload(file, FILE_VALIDATION_OPTIONS);
-      
+
       // Upload to storage with user-specific path
       const {
         fileName,
@@ -435,26 +363,14 @@ export const AddItemModal = ({
         }
       });
       if (error) {
-        const {
-          status,
-          code,
-          message,
-          requestId
-        } = getSupabaseFunctionErrorDetails(error);
+        const details = await getEdgeFunctionErrorDetails(error);
         console.error('Supabase function invoke failed:', {
           action: SUPABASE_FUNCTION_ANALYZE_FILE,
-          status,
-          code,
-          requestId,
-          message
+          ...details
         });
-        const functionError = getSupabaseFunctionErrorMessage({
-          action: 'analyze-file',
-          status,
-          code
-        });
-        toast.error(functionError.title, {
-          description: functionError.message
+        const toastMessage = getToastForEdgeFunctionError(details);
+        toast.error(toastMessage.title, {
+          description: toastMessage.description
         });
         return;
       }
@@ -490,26 +406,14 @@ export const AddItemModal = ({
           }
         });
         if (embeddingError) {
-          const {
-            status,
-            code,
-            message,
-            requestId
-          } = getSupabaseFunctionErrorDetails(embeddingError);
+          const details = await getEdgeFunctionErrorDetails(embeddingError);
           console.error('Supabase function invoke failed:', {
             action: 'generate-embedding',
-            status,
-            code,
-            requestId,
-            message
+            ...details
           });
-          const functionError = getSupabaseFunctionErrorMessage({
-            action: 'generate-embedding',
-            status,
-            code
-          });
-          toast.error(functionError.title, {
-            description: functionError.message
+          const toastMessage = getToastForEdgeFunctionError(details);
+          toast.error(toastMessage.title, {
+            description: toastMessage.description
           });
         } else if (embeddingData?.embedding) {
           // Validate embedding is an array with correct dimension
@@ -605,27 +509,27 @@ export const AddItemModal = ({
       </TabsList>
 
       <TabsContent value="url" className="space-y-4 mt-6">
-        <EnhancedInput 
-          id="url-input" 
-          type="url" 
-          placeholder="Paste a URL..." 
-          value={url} 
-          onChange={e => setUrl(e.target.value)} 
-          maxLength={URL_MAX_LENGTH} 
-          className="glass-input border-0 h-12 md:h-11 text-[15px] min-h-[44px]" 
-          showClearButton={true} 
-          onClear={() => setUrl('')} 
-          autoComplete="url" 
+        <EnhancedInput
+          id="url-input"
+          type="url"
+          placeholder="Paste a URL..."
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          maxLength={URL_MAX_LENGTH}
+          className="glass-input border-0 h-12 md:h-11 text-[15px] min-h-[44px]"
+          showClearButton={true}
+          onClear={() => setUrl('')}
+          autoComplete="url"
           aria-label="URL to add"
-          inputMode="url" 
+          inputMode="url"
         />
-        <LoadingButton 
-          onClick={handleUrlSubmit} 
-          loading={loading} 
-          disabled={!url} 
-          loadingText="Adding..." 
-          size="lg" 
-          className="w-full min-h-[48px]" 
+        <LoadingButton
+          onClick={handleUrlSubmit}
+          loading={loading}
+          disabled={!url}
+          loadingText="Adding..."
+          size="lg"
+          className="w-full min-h-[48px]"
           aria-label="Add URL to collection"
         >
           Add URL
@@ -633,24 +537,24 @@ export const AddItemModal = ({
       </TabsContent>
 
       <TabsContent value="note" className="space-y-4 mt-6">
-        <EnhancedTextarea 
-          id="note-textarea" 
-          placeholder="Write your thoughts..." 
-          value={note} 
-          onChange={e => setNote(e.target.value)} 
-          maxLength={NOTE_MAX_LENGTH} 
-          className="glass-input min-h-[150px] md:min-h-[150px] border-0 text-[15px] resize-none" 
-          showCharacterCount={true} 
-          helperText="Write your thoughts and ideas" 
-          aria-label="Note content" 
+        <EnhancedTextarea
+          id="note-textarea"
+          placeholder="Write your thoughts..."
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          maxLength={NOTE_MAX_LENGTH}
+          className="glass-input min-h-[150px] md:min-h-[150px] border-0 text-[15px] resize-none"
+          showCharacterCount={true}
+          helperText="Write your thoughts and ideas"
+          aria-label="Note content"
         />
-        <LoadingButton 
-          onClick={handleNoteSubmit} 
-          loading={loading} 
-          disabled={!note} 
-          loadingText="Saving..." 
-          size="lg" 
-          className="w-full min-h-[48px]" 
+        <LoadingButton
+          onClick={handleNoteSubmit}
+          loading={loading}
+          disabled={!note}
+          loadingText="Saving..."
+          size="lg"
+          className="w-full min-h-[48px]"
           aria-label="Save note to collection"
         >
           Save Note
@@ -669,56 +573,56 @@ export const AddItemModal = ({
             `}>
               <File className={`h-8 w-8 transition-colors duration-200 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
             </div>
-            
+
             {file ? <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">{file.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
+              <p className="text-sm font-medium text-foreground">{file.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setFile(null)} className="text-xs min-h-[44px]">
+                Remove file
+              </Button>
+            </div> : <>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">
+                  {isDragging ? 'Drop your file here' : 'Drag & drop your file here'}
                 </p>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setFile(null)} className="text-xs min-h-[44px]">
-                  Remove file
-                </Button>
-              </div> : <>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">
-                    {isDragging ? 'Drop your file here' : 'Drag & drop your file here'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">or</p>
+                <p className="text-xs text-muted-foreground">or</p>
+              </div>
+
+              <label htmlFor="file-input" className="cursor-pointer">
+                <div className="px-6 py-3 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium min-h-[48px] flex items-center justify-center">
+                  Browse files
                 </div>
-                
-                <label htmlFor="file-input" className="cursor-pointer">
-                  <div className="px-6 py-3 md:px-4 md:py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium min-h-[48px] flex items-center justify-center">
-                    Browse files
-                  </div>
-                  <input id="file-input" type="file" accept={FILE_INPUT_ACCEPT} onChange={e => handleSelectedFile(e.target.files?.[0] || null)} className="sr-only" aria-required="true" aria-describedby="file-helper-text" />
-                </label>
-              </>}
+                <input id="file-input" type="file" accept={FILE_INPUT_ACCEPT} onChange={e => handleSelectedFile(e.target.files?.[0] || null)} className="sr-only" aria-required="true" aria-describedby="file-helper-text" />
+              </label>
+            </>}
           </div>
         </div>
-        
+
         <p id="file-helper-text" className="text-xs text-muted-foreground text-center">
           Supports: Images, PDFs, Word, Excel, PowerPoint, CSV, TXT (max {FILE_SIZE_LIMIT_MB}MB)
         </p>
         <div className="space-y-2">
-          <LoadingButton 
-            onClick={handleFileSubmit} 
-            loading={loading} 
-            disabled={!file} 
-            loadingText="Uploading..." 
-            size="lg" 
-            className="w-full min-h-[48px]" 
+          <LoadingButton
+            onClick={handleFileSubmit}
+            loading={loading}
+            disabled={!file}
+            loadingText="Uploading..."
+            size="lg"
+            className="w-full min-h-[48px]"
             aria-label="Upload file to collection"
           >
             Upload File
           </LoadingButton>
           {loading && <p className="text-xs text-muted-foreground text-center" role="status" aria-live="polite">
-              {statusStep === 'uploading' && 'Uploading file…'}
-              {statusStep === 'extracting' && 'Extracting text…'}
-              {statusStep === 'summarizing' && 'Summarizing content…'}
-              {statusStep === 'generating embeddings' && 'Generating embeddings…'}
-              {statusStep === 'saving' && 'Saving to your space…'}
-              {!statusStep && 'Processing…'}
-            </p>}
+            {statusStep === 'uploading' && 'Uploading file…'}
+            {statusStep === 'extracting' && 'Extracting text…'}
+            {statusStep === 'summarizing' && 'Summarizing content…'}
+            {statusStep === 'generating embeddings' && 'Generating embeddings…'}
+            {statusStep === 'saving' && 'Saving to your space…'}
+            {!statusStep && 'Processing…'}
+          </p>}
         </div>
       </TabsContent>
     </Tabs>

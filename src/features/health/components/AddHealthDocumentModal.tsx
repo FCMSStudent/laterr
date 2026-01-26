@@ -18,7 +18,7 @@ import type { DocumentType } from "@/features/health/types";
 import { format } from "date-fns";
 import { uploadFileToStorageWithSignedUrl, validateFileForUpload, type UploadValidationOptions } from "@/shared/lib/supabase-utils";
 import { getUploadErrorMessage } from "@/shared/lib/error-messages";
-import { getEdgeFunctionErrorDetails, getEdgeFunctionErrorMessage } from "@/shared/lib/edge-function-errors";
+import { getEdgeFunctionErrorDetails, getToastForEdgeFunctionError } from "@/shared/lib/error-utils";
 
 const HEALTH_DOCUMENT_VALIDATION_OPTIONS: UploadValidationOptions = {
   allowedMimeTypes: [
@@ -202,15 +202,13 @@ export const AddHealthDocumentModal = ({
           summary = summaryData.summary;
         }
         if (summaryError) {
-          const details = await getEdgeFunctionErrorDetails({ error: summaryError });
-          const mappedError = getEdgeFunctionErrorMessage(details);
+          const details = await getEdgeFunctionErrorDetails(summaryError);
+          const toastMessage = getToastForEdgeFunctionError(details);
           console.error('Edge function analyze-file failed', {
-            status: details.status,
-            code: details.code,
-            requestId: details.requestId,
+            ...details,
             context: 'AddHealthDocumentModal.analyze-file',
           });
-          toast.error(mappedError.title, { description: mappedError.message });
+          toast.error(toastMessage.title, { description: toastMessage.description });
         }
 
         // Generate embedding
@@ -228,15 +226,13 @@ export const AddHealthDocumentModal = ({
           embedding = embeddingData.embedding;
         }
         if (embeddingError) {
-          const details = await getEdgeFunctionErrorDetails({ error: embeddingError });
-          const mappedError = getEdgeFunctionErrorMessage(details);
+          const details = await getEdgeFunctionErrorDetails(embeddingError);
+          const toastMessage = getToastForEdgeFunctionError(details);
           console.error('Edge function generate-embedding failed', {
-            status: details.status,
-            code: details.code,
-            requestId: details.requestId,
+            ...details,
             context: 'AddHealthDocumentModal.generate-embedding',
           });
-          toast.error(mappedError.title, { description: mappedError.message });
+          toast.error(toastMessage.title, { description: toastMessage.description });
         }
       } catch (aiError) {
         console.warn('AI analysis failed, continuing without:', aiError);
@@ -294,167 +290,166 @@ export const AddHealthDocumentModal = ({
         </Select>
       </div>
 
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              placeholder="Document title..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
+      {/* Title */}
+      <div className="space-y-2">
+        <Label htmlFor="title">Title *</Label>
+        <Input
+          id="title"
+          placeholder="Document title..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
 
-          {/* Provider */}
-          <div className="space-y-2">
-            <Label htmlFor="provider">Provider / Facility</Label>
-            <Input
-              id="provider"
-              placeholder="Hospital, clinic, or doctor name..."
-              value={provider}
-              onChange={(e) => setProvider(e.target.value)}
-            />
-          </div>
+      {/* Provider */}
+      <div className="space-y-2">
+        <Label htmlFor="provider">Provider / Facility</Label>
+        <Input
+          id="provider"
+          placeholder="Hospital, clinic, or doctor name..."
+          value={provider}
+          onChange={(e) => setProvider(e.target.value)}
+        />
+      </div>
 
-          {/* Visit Date */}
-          <div className="space-y-2">
-            <Label htmlFor="visitDate">Document Date *</Label>
-            <Input
-              id="visitDate"
-              type="date"
-              value={visitDate}
-              onChange={(e) => setVisitDate(e.target.value)}
-            />
-          </div>
+      {/* Visit Date */}
+      <div className="space-y-2">
+        <Label htmlFor="visitDate">Document Date *</Label>
+        <Input
+          id="visitDate"
+          type="date"
+          value={visitDate}
+          onChange={(e) => setVisitDate(e.target.value)}
+        />
+      </div>
 
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label>File *</Label>
-            <div
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
-                isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
-              }`}
-            >
-              {file ? (
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    {file.type.startsWith('image/') ? (
-                      <ImageIcon className="w-8 h-8 text-primary" />
-                    ) : (
-                      <FileText className="w-8 h-8 text-primary" />
-                    )}
-                    <div className="text-left">
-                      <p className="font-medium text-sm line-clamp-1">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setFile(null)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+      {/* File Upload */}
+      <div className="space-y-2">
+        <Label>File *</Label>
+        <div
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
+            }`}
+        >
+          {file ? (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {file.type.startsWith('image/') ? (
+                  <ImageIcon className="w-8 h-8 text-primary" />
+                ) : (
+                  <FileText className="w-8 h-8 text-primary" />
+                )}
+                <div className="text-left">
+                  <p className="font-medium text-sm line-clamp-1">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
-              ) : (
-                <label className="cursor-pointer">
-                  <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Drop file here or <span className="text-primary underline">browse</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    PDF, DOCX, JPEG, PNG, WebP (max 20MB)
-                  </p>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.docx,.jpg,.jpeg,.png,.webp"
-                    onChange={handleFileChange}
-                  />
-                </label>
-              )}
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
-            <div className="flex gap-2">
-              <Input
-                id="tags"
-                placeholder="Add tag..."
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-              />
-              <Button type="button" variant="secondary" onClick={handleAddTag}>
-                Add
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setFile(null)}
+              >
+                <X className="w-4 h-4" />
               </Button>
             </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="gap-1">
-                    #{tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any additional notes..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="resize-none"
-              rows={3}
-            />
-          </div>
-
-          {/* Status indicator */}
-          {statusStep && (
-            <div className="text-sm text-muted-foreground text-center py-2">
-              {statusStep === 'uploading' && 'Uploading file...'}
-              {statusStep === 'analyzing' && 'Analyzing document...'}
-              {statusStep === 'generating embeddings' && 'Generating embeddings...'}
-              {statusStep === 'saving' && 'Saving...'}
-            </div>
+          ) : (
+            <label className="cursor-pointer">
+              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Drop file here or <span className="text-primary underline">browse</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                PDF, DOCX, JPEG, PNG, WebP (max 20MB)
+              </p>
+              <input
+                type="file"
+                className="hidden"
+                accept=".pdf,.docx,.jpg,.jpeg,.png,.webp"
+                onChange={handleFileChange}
+              />
+            </label>
           )}
-
-          {/* Submit */}
-          <LoadingButton
-            onClick={handleSubmit}
-            loading={loading}
-            disabled={!documentType || !title || !file}
-            className="w-full"
-          >
-            Upload Document
-          </LoadingButton>
         </div>
-      );
+      </div>
+
+      {/* Tags */}
+      <div className="space-y-2">
+        <Label htmlFor="tags">Tags</Label>
+        <div className="flex gap-2">
+          <Input
+            id="tags"
+            placeholder="Add tag..."
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddTag();
+              }
+            }}
+          />
+          <Button type="button" variant="secondary" onClick={handleAddTag}>
+            Add
+          </Button>
+        </div>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="gap-1">
+                #{tag}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="ml-1 hover:text-destructive"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Notes */}
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          placeholder="Any additional notes..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="resize-none"
+          rows={3}
+        />
+      </div>
+
+      {/* Status indicator */}
+      {statusStep && (
+        <div className="text-sm text-muted-foreground text-center py-2">
+          {statusStep === 'uploading' && 'Uploading file...'}
+          {statusStep === 'analyzing' && 'Analyzing document...'}
+          {statusStep === 'generating embeddings' && 'Generating embeddings...'}
+          {statusStep === 'saving' && 'Saving...'}
+        </div>
+      )}
+
+      {/* Submit */}
+      <LoadingButton
+        onClick={handleSubmit}
+        loading={loading}
+        disabled={!documentType || !title || !file}
+        className="w-full"
+      >
+        Upload Document
+      </LoadingButton>
+    </div>
+  );
 
   return isMobile ? (
     <Drawer open={open} onOpenChange={onOpenChange}>
