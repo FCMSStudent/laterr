@@ -20,6 +20,9 @@ import type { HealthMeasurement, HealthDocument, MeasurementType } from "@/featu
 import type { User } from "@/features/bookmarks/types";
 import { extractNumericValue, calculateTrend } from "@/features/health/utils/health-utils";
 import { format, parseISO, isToday, isYesterday, startOfDay } from "date-fns";
+import { useHealthDocuments } from "@/features/health/hooks/useHealthDocuments";
+import { Alert, AlertDescription, AlertTitle } from "@/ui";
+import { AlertCircle } from "lucide-react";
 
 // Lazy load modal components
 const AddMeasurementModal = lazy(() => import("@/features/health/components/AddMeasurementModal").then(({ AddMeasurementModal }) => ({ default: AddMeasurementModal })));
@@ -41,7 +44,9 @@ const Health = () => {
   const [filteredDocuments, setFilteredDocuments] = useState<HealthDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const { fetchDocuments: fetchDocsHook, deleteDocument: deleteDocHook } = useHealthDocuments();
   const navigate = useNavigate();
   const { toast } = useToast();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -92,8 +97,8 @@ const Health = () => {
       setStats(prev => ({
         ...prev,
         latestWeight: latestWeight ? extractNumericValue(latestWeight.value) : null,
-        latestBP: latestBP?.value && 'systolic' in latestBP.value 
-          ? { systolic: latestBP.value.systolic as number, diastolic: latestBP.value.diastolic as number } 
+        latestBP: latestBP?.value && 'systolic' in latestBP.value
+          ? { systolic: latestBP.value.systolic as number, diastolic: latestBP.value.diastolic as number }
           : null,
         latestGlucose: latestGlucose ? extractNumericValue(latestGlucose.value) : null,
       }));
@@ -104,20 +109,17 @@ const Health = () => {
   }, [toast]);
 
   const fetchDocuments = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments((data ?? []) as HealthDocument[]);
-      setFilteredDocuments((data ?? []) as HealthDocument[]);
-    } catch (error) {
+    const { data, error } = await fetchDocsHook();
+    if (error) {
       console.error('Error fetching documents:', error);
-      toast({ title: "Error", description: "Failed to load documents", variant: "destructive" });
+      setDocumentsError(error.message);
+      // No toast for initial load failure
+    } else {
+      setDocumentsError(null);
+      setDocuments(data || []);
+      setFilteredDocuments(data || []);
     }
-  }, [toast]);
+  }, [fetchDocsHook]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -149,7 +151,7 @@ const Health = () => {
       return;
     }
     const query = debouncedSearchQuery.toLowerCase();
-    setFilteredMeasurements(measurements.filter(m => 
+    setFilteredMeasurements(measurements.filter(m =>
       m.measurement_type.toLowerCase().includes(query) ||
       m.notes?.toLowerCase().includes(query) ||
       m.tags?.some(t => t.toLowerCase().includes(query))
@@ -162,7 +164,7 @@ const Health = () => {
       return;
     }
     const query = debouncedSearchQuery.toLowerCase();
-    setFilteredDocuments(documents.filter(d => 
+    setFilteredDocuments(documents.filter(d =>
       d.title.toLowerCase().includes(query) ||
       d.document_type.toLowerCase().includes(query) ||
       d.provider_name?.toLowerCase().includes(query) ||
@@ -184,16 +186,15 @@ const Health = () => {
   }, [toast, fetchMeasurements]);
 
   const handleDeleteDocument = useCallback(async (id: string) => {
-    try {
-      const { error } = await supabase.from(HEALTH_TABLES.DOCUMENTS).delete().eq('id', id);
-      if (error) throw error;
+    const { data, error } = await deleteDocHook(id);
+    if (error) {
+      console.error('Error deleting document:', error);
+      toast({ title: "Error", description: "Failed to delete document", variant: "destructive" });
+    } else {
       toast({ title: "Success", description: "Document deleted" });
       fetchDocuments();
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      toast({ title: "Error", description: "Failed to delete", variant: "destructive" });
     }
-  }, [toast, fetchDocuments]);
+  }, [deleteDocHook, toast, fetchDocuments]);
 
   const getMeasurementTrend = (type: MeasurementType) => {
     const typeMeasurements = measurements.filter(m => m.measurement_type === type);
@@ -207,7 +208,7 @@ const Health = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-6">
-          <NavigationHeader 
+          <NavigationHeader
             title="Health"
             onAddClick={() => activeTab === "measurements" ? setShowAddMeasurementModal(true) : setShowAddDocumentModal(true)}
             addLabel={activeTab === "measurements" ? "Log" : "Add"}
@@ -271,7 +272,15 @@ const Health = () => {
 
           {/* Documents Tab */}
           <TabsContent value="documents">
-            {loading ? (
+            {documentsError ? (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>
+                  Failed to load documents: {documentsError}. Please try refreshing the page.
+                </AlertDescription>
+              </Alert>
+            ) : loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
                 {Array.from({ length: 8 }).map((_, i) => <ItemCardSkeleton key={i} />)}
               </div>

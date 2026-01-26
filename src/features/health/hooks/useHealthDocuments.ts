@@ -6,10 +6,19 @@ import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from '@/shared/lib/storage-c
 import type { HealthDocument, HealthDocumentFormData } from '../types';
 import { uploadFileToStorageWithSignedUrl } from '@/shared/lib/supabase-utils';
 
+
+export interface StructuredError {
+  message: string;
+  code?: string;
+  details?: any;
+}
+
 interface UseHealthDocumentsState {
   loading: boolean;
-  error: string | null;
+  error: StructuredError | null;
 }
+
+type HookResult<T> = Promise<{ data: T | null; error: StructuredError | null }>;
 
 export const useHealthDocuments = () => {
   const [state, setState] = useState<UseHealthDocumentsState>({
@@ -17,11 +26,21 @@ export const useHealthDocuments = () => {
     error: null,
   });
 
+  const handleError = (err: unknown): StructuredError => {
+    if (err instanceof Error) {
+      return { message: err.message };
+    }
+    if (typeof err === 'object' && err !== null && 'message' in err) {
+      return { message: (err as any).message, code: (err as any).code };
+    }
+    return { message: 'An unexpected error occurred' };
+  };
+
   /**
    * Fetch all health documents for current user
    */
-  const fetchDocuments = useCallback(async (): Promise<HealthDocument[]> => {
-    setState({ loading: true, error: null });
+  const fetchDocuments = useCallback(async (): HookResult<HealthDocument[]> => {
+    setState(s => ({ ...s, loading: true, error: null }));
     try {
       const { data, error } = await supabase
         .from(HEALTH_TABLES.DOCUMENTS)
@@ -29,20 +48,20 @@ export const useHealthDocuments = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setState({ loading: false, error: null });
-      return (data ?? []) as HealthDocument[];
+      setState(s => ({ ...s, loading: false }));
+      return { data: (data ?? []) as HealthDocument[], error: null };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch documents';
-      setState({ loading: false, error: errorMessage });
-      return [];
+      const error = handleError(err);
+      setState(s => ({ ...s, loading: false, error }));
+      return { data: null, error };
     }
   }, []);
 
   /**
    * Fetch a single health document by ID
    */
-  const fetchDocument = useCallback(async (id: string): Promise<HealthDocument | null> => {
-    setState({ loading: true, error: null });
+  const fetchDocument = useCallback(async (id: string): HookResult<HealthDocument> => {
+    setState(s => ({ ...s, loading: true, error: null }));
     try {
       const { data, error } = await supabase
         .from(HEALTH_TABLES.DOCUMENTS)
@@ -51,23 +70,20 @@ export const useHealthDocuments = () => {
         .single();
 
       if (error) throw error;
-      setState({ loading: false, error: null });
-      return data as HealthDocument;
+      setState(s => ({ ...s, loading: false }));
+      return { data: data as HealthDocument, error: null };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch document';
-      setState({ loading: false, error: errorMessage });
-      return null;
+      const error = handleError(err);
+      setState(s => ({ ...s, loading: false, error }));
+      return { data: null, error };
     }
   }, []);
 
-  /**
-   * Create a new health document with file upload
-   */
   const createDocument = useCallback(async (
     formData: HealthDocumentFormData,
     userId: string
-  ): Promise<HealthDocument | null> => {
-    setState({ loading: true, error: null });
+  ): HookResult<HealthDocument> => {
+    setState(s => ({ ...s, loading: true, error: null }));
     try {
       // Upload file
       const fileExt = formData.file.name.split('.').pop();
@@ -138,23 +154,20 @@ export const useHealthDocuments = () => {
         .single();
 
       if (error) throw error;
-      setState({ loading: false, error: null });
-      return data as HealthDocument;
+      setState(s => ({ ...s, loading: false }));
+      return { data: data as HealthDocument, error: null };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create document';
-      setState({ loading: false, error: errorMessage });
-      return null;
+      const error = handleError(err);
+      setState(s => ({ ...s, loading: false, error }));
+      return { data: null, error };
     }
   }, []);
 
-  /**
-   * Update a health document
-   */
   const updateDocument = useCallback(async (
     id: string,
     updates: { title?: string; summary?: string; tags?: string[]; provider_name?: string; visit_date?: string }
-  ): Promise<boolean> => {
-    setState({ loading: true, error: null });
+  ): HookResult<boolean> => {
+    setState(s => ({ ...s, loading: true, error: null }));
     try {
       const { error } = await supabase
         .from(HEALTH_TABLES.DOCUMENTS)
@@ -162,20 +175,17 @@ export const useHealthDocuments = () => {
         .eq('id', id);
 
       if (error) throw error;
-      setState({ loading: false, error: null });
-      return true;
+      setState(s => ({ ...s, loading: false }));
+      return { data: true, error: null };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update document';
-      setState({ loading: false, error: errorMessage });
-      return false;
+      const error = handleError(err);
+      setState(s => ({ ...s, loading: false, error }));
+      return { data: null, error };
     }
   }, []);
 
-  /**
-   * Delete a health document
-   */
-  const deleteDocument = useCallback(async (id: string): Promise<boolean> => {
-    setState({ loading: true, error: null });
+  const deleteDocument = useCallback(async (id: string): HookResult<boolean> => {
+    setState(s => ({ ...s, loading: true, error: null }));
     try {
       const { error } = await supabase
         .from(HEALTH_TABLES.DOCUMENTS)
@@ -183,20 +193,17 @@ export const useHealthDocuments = () => {
         .eq('id', id);
 
       if (error) throw error;
-      setState({ loading: false, error: null });
-      return true;
+      setState(s => ({ ...s, loading: false }));
+      return { data: true, error: null };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete document';
-      setState({ loading: false, error: errorMessage });
-      return false;
+      const error = handleError(err);
+      setState(s => ({ ...s, loading: false, error }));
+      return { data: null, error };
     }
   }, []);
 
-  /**
-   * Search documents using semantic search
-   */
-  const searchDocuments = useCallback(async (query: string): Promise<HealthDocument[]> => {
-    setState({ loading: true, error: null });
+  const searchDocuments = useCallback(async (query: string): HookResult<HealthDocument[]> => {
+    setState(s => ({ ...s, loading: true, error: null }));
     try {
       // Generate embedding for query
       const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -217,8 +224,8 @@ export const useHealthDocuments = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setState({ loading: false, error: null });
-        return (data ?? []) as HealthDocument[];
+        setState(s => ({ ...s, loading: false }));
+        return { data: (data ?? []) as HealthDocument[], error: null };
       }
 
       // Use semantic search
@@ -233,8 +240,8 @@ export const useHealthDocuments = () => {
       // Fetch full documents
       const ids = (data ?? []).map((d: { id: string }) => d.id);
       if (ids.length === 0) {
-        setState({ loading: false, error: null });
-        return [];
+        setState(s => ({ ...s, loading: false }));
+        return { data: [], error: null };
       }
 
       const { data: documents, error: docsError } = await supabase
@@ -243,12 +250,12 @@ export const useHealthDocuments = () => {
         .in('id', ids);
 
       if (docsError) throw docsError;
-      setState({ loading: false, error: null });
-      return (documents ?? []) as HealthDocument[];
+      setState(s => ({ ...s, loading: false }));
+      return { data: (documents ?? []) as HealthDocument[], error: null };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Search failed';
-      setState({ loading: false, error: errorMessage });
-      return [];
+      const error = handleError(err);
+      setState(s => ({ ...s, loading: false, error }));
+      return { data: null, error };
     }
   }, []);
 
