@@ -570,7 +570,7 @@ All colors MUST be HSL.
     overflow: hidden;
   }
 
-  /* Summary section: fixed height (120px) with fade-out gradient */
+  /* Summary section: fixed height (120px), no visible gradient */
   .card-detail-summary {
     height: 120px;
     min-height: 120px;
@@ -578,21 +578,6 @@ All colors MUST be HSL.
     position: relative;
     overflow: hidden;
     flex-shrink: 0;
-  }
-
-  .card-detail-summary::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 32px;
-    background: linear-gradient(to bottom, transparent, hsl(var(--background)));
-    pointer-events: none;
-  }
-
-  .dark .card-detail-summary::after {
-    background: linear-gradient(to bottom, transparent, hsl(var(--background)));
   }
 
   /* Notes section: fixed height textarea (112px) */
