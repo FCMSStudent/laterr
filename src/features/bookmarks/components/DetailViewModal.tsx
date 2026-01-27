@@ -468,18 +468,6 @@ export const DetailViewModal = ({
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground">Preview unavailable</div>
           )}
-
-          {signedUrl && (
-            <a
-              href={signedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 text-xs font-medium bg-background/90 backdrop-blur-sm px-3 py-2 rounded-full shadow-sm hover:bg-background transition-colors border border-border/50"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Open Original
-            </a>
-          )}
         </div>
       );
     }
@@ -574,7 +562,7 @@ export const DetailViewModal = ({
         onCopyLink={() => {
           if (item.content) {
             navigator.clipboard.writeText(item.content);
-            toast.success("Link copied!");
+            toast.success("Link copied to clipboard");
           }
         }}
         onDelete={() => setShowDeleteAlert(true)}

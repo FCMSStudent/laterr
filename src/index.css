@@ -42,7 +42,7 @@ All colors MUST be HSL.
     --secondary-foreground: 266 4% 20.8%;
 
     --muted: 248 0.7% 96.8%;
-    --muted-foreground: 257 4.6% 55.4%;
+    --muted-foreground: 257 4.6% 45%;
 
     /* Sophisticated accent */
     --accent: 210 40% 98.0392%;
@@ -122,7 +122,7 @@ All colors MUST be HSL.
     --secondary-foreground: 248 0.3% 98.4%;
 
     --muted: 260 4.1% 27.9%;
-    --muted-foreground: 257 4% 70.4%;
+    --muted-foreground: 257 4% 75%;
 
     /* Keep blue tint in accent for consistency */
     --accent: 210 40% 25%;
@@ -630,7 +630,7 @@ All colors MUST be HSL.
    * Source of truth: video card right-side layout
    * ======================================== */
 
-  /* Right panel container: fixed height, no scroll, non-shrinking */
+  /* Right panel container: improved contrast, non-scrollable */
   .card-detail-right-panel {
     display: flex;
     flex-direction: column;
@@ -638,9 +638,28 @@ All colors MUST be HSL.
     max-height: 100%;
     overflow: hidden;
     flex-shrink: 0;
+
+    /* Improved contrast - more solid background */
+    background: hsl(var(--background) / 0.98);
   }
 
-  /* Summary section: fixed height (120px), no visible gradient */
+  .dark .card-detail-right-panel {
+    background: hsl(var(--background) / 0.95);
+  }
+
+  /* Sticky header: remains visible, provides visual hierarchy */
+  .card-detail-header {
+    padding-bottom: 12px;
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+    flex-shrink: 0;
+  }
+
+  /* Actions section */
+  .card-detail-actions {
+    flex-shrink: 0;
+  }
+
+  /* Summary section: fixed height with word limit */
   .card-detail-summary {
     height: 120px;
     min-height: 120px;
@@ -650,7 +669,24 @@ All colors MUST be HSL.
     flex-shrink: 0;
   }
 
-  /* Notes section: fixed height textarea (112px) */
+  .card-detail-summary p {
+    line-height: 2;
+    color: hsl(var(--foreground) / 0.85);
+  }
+
+  /* Summary fade gradient */
+  .card-detail-summary::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, hsl(var(--background)));
+    pointer-events: none;
+  }
+
+  /* Notes section: fixed height textarea with solid background */
   .card-detail-notes {
     height: 112px;
     min-height: 112px;
@@ -664,33 +700,32 @@ All colors MUST be HSL.
     min-height: 100% !important;
     max-height: 100% !important;
     resize: none !important;
+    background: hsl(var(--background)) !important;
+    border: 2px solid hsl(var(--border) / 0.4) !important;
+    transition: border-color 0.2s ease;
+  }
+
+  .card-detail-notes textarea:focus {
+    border-color: hsl(var(--primary) / 0.8) !important;
   }
 
   /* Tags section: single row with overflow hidden */
   .card-detail-tags {
     display: flex;
-    gap: 5px;
+    gap: 6px;
     overflow: hidden;
-    height: 22px;
-    max-height: 22px;
+    height: 26px;
+    max-height: 26px;
     align-items: center;
     flex-shrink: 0;
   }
 
-  /* Header section */
-  .card-detail-header {
-    flex-shrink: 0;
-  }
-
-  /* Actions section */
-  .card-detail-actions {
-    flex-shrink: 0;
-  }
-
-  /* Footer section with delete */
+  /* Footer section with delete - separated from content */
   .card-detail-footer {
     flex-shrink: 0;
     margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid hsl(var(--border) / 0.3);
   }
 
   /* ========================================

@@ -159,18 +159,27 @@ export const CardDetailRightPanel = ({
         </div>
       </div>
 
-      {/* ========== PRIMARY ACTIONS: Open + Copy ========== */}
+      {/* ========== PRIMARY ACTIONS: View/Visit + Copy Link ========== */}
       <div className="card-detail-actions flex gap-2 pb-3">
         {item.content && (
-          <Button variant="default" size="sm" asChild className="h-8 flex-1">
+          <Button
+            variant="default"
+            size="sm"
+            asChild
+            className="h-10 flex-1 min-h-[40px]"
+            aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}
+          >
             <a
               href={item.content}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-1.5"
+              title={item.type === 'url' ? 'Visit page' : 'Open original file'}
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Open</span>
+              <span className="text-xs font-medium">
+                {item.type === 'url' ? 'Visit page' : 'Open file'}
+              </span>
             </a>
           </Button>
         )}
@@ -178,21 +187,25 @@ export const CardDetailRightPanel = ({
           variant="outline"
           size="sm"
           onClick={onCopyLink}
-          className="h-8 flex-1"
+          className="h-10 flex-1 min-h-[40px]"
+          aria-label="Copy link to clipboard"
+          title="Copy link"
         >
           <Link2 className="h-3.5 w-3.5 mr-1" />
-          <span className="text-xs font-medium">Copy</span>
+          <span className="text-xs font-medium">Copy link</span>
         </Button>
       </div>
 
-      {/* ========== SUMMARY: Fixed height ========== */}
+      {/* ========== SUMMARY: Word-limited ========== */}
       <div className="pb-3">
         <span className="text-[9px] font-semibold tracking-wider uppercase text-muted-foreground/70 block mb-1.5">
           Summary
         </span>
         <div className="card-detail-summary">
           <p className="text-[13px] text-muted-foreground leading-relaxed">
-            {item.summary || "No summary available."}
+            {item.summary
+              ? item.summary.split(' ').slice(0, 60).join(' ') + (item.summary.split(' ').length > 60 ? '...' : '')
+              : "No summary available."}
           </p>
         </div>
       </div>
@@ -205,7 +218,7 @@ export const CardDetailRightPanel = ({
         <div className="card-detail-tags">
           {/* Add tag button/input */}
           {isAddingTag ? (
-            <div className="flex items-center h-5 bg-background border border-primary rounded-full px-2 flex-shrink-0">
+            <div className="flex items-center h-6 bg-background border-2 border-primary rounded-full px-2.5 flex-shrink-0">
               <Input
                 ref={tagInputRef}
                 value={newTagInput}
@@ -215,39 +228,41 @@ export const CardDetailRightPanel = ({
                   if (newTagInput.trim()) onAddTagCommit();
                   else onAddTagCancel();
                 }}
-                className="h-full border-0 p-0 text-[11px] w-14 focus-visible:ring-0 bg-transparent"
+                className="h-full border-0 p-0 text-[11px] w-16 focus-visible:ring-0 bg-transparent"
                 placeholder="Tag..."
               />
             </div>
           ) : (
             <button
               onClick={onAddTagStart}
-              className="h-5 px-2 flex items-center gap-0.5 bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-medium rounded-full transition-colors flex-shrink-0"
+              className="h-6 px-3 flex items-center gap-1 bg-primary text-primary-foreground text-[11px] font-medium rounded-full hover:bg-primary/90 transition-colors flex-shrink-0"
+              title="Add new tag"
+              aria-label="Add new tag"
             >
-              <Plus className="w-2.5 h-2.5" />
+              <Plus className="w-3 h-3" />
               Add tag
             </button>
           )}
-          
+
           {/* Visible tags */}
           {visibleTags.map((tag, index) => (
             <div key={`${tag}-${index}`} className="group flex-shrink-0">
               {editingTagIndex === index ? (
-                <div className="flex items-center h-5 bg-background border border-primary rounded-full px-2">
+                <div className="flex items-center h-6 bg-background border-2 border-primary rounded-full px-2.5">
                   <Input
                     ref={editTagInputRef}
                     value={editingTagValue}
                     onChange={(e) => onEditTagChange(e.target.value)}
                     onKeyDown={handleKeyDownEditTag}
                     onBlur={onEditTagCancel}
-                    className="h-full border-0 p-0 text-[11px] w-16 focus-visible:ring-0 bg-transparent"
+                    className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent"
                   />
                 </div>
               ) : (
                 <Badge
                   variant="secondary"
                   onDoubleClick={() => onEditTagStart(index)}
-                  className="h-5 px-2 rounded-full text-[11px] font-medium bg-muted/50 hover:bg-muted cursor-default flex items-center gap-0.5"
+                  className="h-6 px-3 rounded-full text-[11px] font-medium bg-muted/60 hover:bg-muted cursor-default flex items-center gap-1.5"
                 >
                   {tag}
                   <button
@@ -255,15 +270,16 @@ export const CardDetailRightPanel = ({
                       e.stopPropagation();
                       onRemoveTag(tag);
                     }}
-                    className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                    className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                    aria-label={`Remove ${tag} tag`}
                   >
-                    <X className="w-2.5 h-2.5" />
+                    <X className="w-3 h-3" />
                   </button>
                 </Badge>
               )}
             </div>
           ))}
-          
+
           {/* Overflow indicator */}
           {overflowCount > 0 && (
             <Badge
@@ -288,11 +304,14 @@ export const CardDetailRightPanel = ({
             value={userNotes}
             onChange={(e) => onNotesChange(e.target.value)}
             onBlur={onNotesSave}
-            className="w-full h-full border border-border/30 rounded-md bg-muted/10 p-2.5 focus-visible:ring-1 text-[13px] leading-relaxed placeholder:text-muted-foreground/30"
+            className="w-full h-full border border-border/30 rounded-md bg-background p-3 focus-visible:ring-2 focus-visible:ring-primary/60 text-[13px] leading-relaxed placeholder:text-muted-foreground/40"
+            aria-label="Notes"
           />
-          <span className="absolute bottom-1.5 right-2.5 text-[9px] text-muted-foreground/30">
-            {saving ? "Saving..." : "Autosaved"}
-          </span>
+          {saving && (
+            <span className="absolute bottom-2 right-3 text-[10px] text-muted-foreground/50">
+              Saving...
+            </span>
+          )}
         </div>
       </div>
 
