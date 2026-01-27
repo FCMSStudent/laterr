@@ -133,23 +133,23 @@ export const CardDetailRightPanel = ({
   };
 
   return (
-    <div className="card-detail-right-panel border-l border-border/40 pl-6">
+    <div className="card-detail-right-panel border-l border-border/30 pl-5">
       {/* ========== HEADER: Title + Metadata ========== */}
-      <div className="card-detail-header space-y-1.5 pb-4">
-        <h2 className="text-xl font-semibold leading-snug tracking-tight text-foreground line-clamp-2">
+      <div className="card-detail-header space-y-1 pb-3">
+        <h2 className="text-lg font-semibold leading-snug tracking-tight text-foreground line-clamp-2">
           {item.title}
         </h2>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <Clock className="w-3 h-3 flex-shrink-0" />
           <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
           {item.type === "url" && item.content && (
             <>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/40" />
               <a
                 href={item.content}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[160px]"
+                className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[140px]"
               >
                 <Globe className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{safeParseUrl(item.content)?.hostname ?? item.content}</span>
@@ -160,17 +160,17 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== PRIMARY ACTIONS: Open + Copy ========== */}
-      <div className="card-detail-actions flex gap-2 pb-4">
+      <div className="card-detail-actions flex gap-2 pb-3">
         {item.content && (
-          <Button variant="default" size="sm" asChild className="h-9 flex-1">
+          <Button variant="default" size="sm" asChild className="h-8 flex-1">
             <a
               href={item.content}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-1.5"
             >
-              <ExternalLink className="h-4 w-4" />
-              <span className="text-sm font-medium">Open</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Open</span>
             </a>
           </Button>
         )}
@@ -178,34 +178,34 @@ export const CardDetailRightPanel = ({
           variant="outline"
           size="sm"
           onClick={onCopyLink}
-          className="h-9 flex-1"
+          className="h-8 flex-1"
         >
-          <Link2 className="h-4 w-4 mr-1.5" />
-          <span className="text-sm font-medium">Copy</span>
+          <Link2 className="h-3.5 w-3.5 mr-1" />
+          <span className="text-xs font-medium">Copy</span>
         </Button>
       </div>
 
-      {/* ========== SUMMARY: Fixed height with fade-out gradient ========== */}
-      <div className="pb-4">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground block mb-2">
+      {/* ========== SUMMARY: Fixed height ========== */}
+      <div className="pb-3">
+        <span className="text-[9px] font-semibold tracking-wider uppercase text-muted-foreground/70 block mb-1.5">
           Summary
         </span>
         <div className="card-detail-summary">
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-[13px] text-muted-foreground leading-relaxed">
             {item.summary || "No summary available."}
           </p>
         </div>
       </div>
 
       {/* ========== TAGS: Single row with +N overflow ========== */}
-      <div className="pb-4">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground block mb-2">
+      <div className="pb-3">
+        <span className="text-[9px] font-semibold tracking-wider uppercase text-muted-foreground/70 block mb-1.5">
           Tags
         </span>
         <div className="card-detail-tags">
           {/* Add tag button/input */}
           {isAddingTag ? (
-            <div className="flex items-center h-6 bg-background border border-primary rounded-full px-2 flex-shrink-0">
+            <div className="flex items-center h-5 bg-background border border-primary rounded-full px-2 flex-shrink-0">
               <Input
                 ref={tagInputRef}
                 value={newTagInput}
@@ -215,16 +215,16 @@ export const CardDetailRightPanel = ({
                   if (newTagInput.trim()) onAddTagCommit();
                   else onAddTagCancel();
                 }}
-                className="h-full border-0 p-0 text-xs w-16 focus-visible:ring-0 bg-transparent"
+                className="h-full border-0 p-0 text-[11px] w-14 focus-visible:ring-0 bg-transparent"
                 placeholder="Tag..."
               />
             </div>
           ) : (
             <button
               onClick={onAddTagStart}
-              className="h-6 px-2.5 flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-full transition-colors flex-shrink-0"
+              className="h-5 px-2 flex items-center gap-0.5 bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-medium rounded-full transition-colors flex-shrink-0"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-2.5 h-2.5" />
               Add tag
             </button>
           )}
@@ -233,21 +233,21 @@ export const CardDetailRightPanel = ({
           {visibleTags.map((tag, index) => (
             <div key={`${tag}-${index}`} className="group flex-shrink-0">
               {editingTagIndex === index ? (
-                <div className="flex items-center h-6 bg-background border border-primary rounded-full px-2">
+                <div className="flex items-center h-5 bg-background border border-primary rounded-full px-2">
                   <Input
                     ref={editTagInputRef}
                     value={editingTagValue}
                     onChange={(e) => onEditTagChange(e.target.value)}
                     onKeyDown={handleKeyDownEditTag}
                     onBlur={onEditTagCancel}
-                    className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent"
+                    className="h-full border-0 p-0 text-[11px] w-16 focus-visible:ring-0 bg-transparent"
                   />
                 </div>
               ) : (
                 <Badge
                   variant="secondary"
                   onDoubleClick={() => onEditTagStart(index)}
-                  className="h-6 px-2.5 rounded-full text-xs font-medium bg-muted/60 hover:bg-muted cursor-default flex items-center gap-1"
+                  className="h-5 px-2 rounded-full text-[11px] font-medium bg-muted/50 hover:bg-muted cursor-default flex items-center gap-0.5"
                 >
                   {tag}
                   <button
@@ -255,9 +255,9 @@ export const CardDetailRightPanel = ({
                       e.stopPropagation();
                       onRemoveTag(tag);
                     }}
-                    className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                    className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-2.5 h-2.5" />
                   </button>
                 </Badge>
               )}
@@ -268,7 +268,7 @@ export const CardDetailRightPanel = ({
           {overflowCount > 0 && (
             <Badge
               variant="secondary"
-              className="h-6 px-2.5 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground flex-shrink-0"
+              className="h-5 px-2 rounded-full text-[11px] font-medium bg-muted/30 text-muted-foreground flex-shrink-0"
             >
               +{overflowCount}
             </Badge>
@@ -277,8 +277,8 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== NOTES: Fixed height textarea ========== */}
-      <div className="pb-4">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground block mb-2">
+      <div className="pb-3">
+        <span className="text-[9px] font-semibold tracking-wider uppercase text-muted-foreground/70 block mb-1.5">
           Notes
         </span>
         <div className="card-detail-notes">
@@ -288,23 +288,23 @@ export const CardDetailRightPanel = ({
             value={userNotes}
             onChange={(e) => onNotesChange(e.target.value)}
             onBlur={onNotesSave}
-            className="w-full h-full border border-border/40 rounded-lg bg-muted/20 p-3 focus-visible:ring-1 text-sm leading-relaxed placeholder:text-muted-foreground/40"
+            className="w-full h-full border border-border/30 rounded-md bg-muted/10 p-2.5 focus-visible:ring-1 text-[13px] leading-relaxed placeholder:text-muted-foreground/30"
           />
-          <span className="absolute bottom-2 right-3 text-[10px] text-muted-foreground/40">
+          <span className="absolute bottom-1.5 right-2.5 text-[9px] text-muted-foreground/30">
             {saving ? "Saving..." : "Autosaved"}
           </span>
         </div>
       </div>
 
       {/* ========== FOOTER: Delete action - pinned bottom ========== */}
-      <div className="card-detail-footer pt-3 flex items-center justify-end border-t border-border/40">
+      <div className="card-detail-footer pt-2 flex items-center justify-end border-t border-border/20">
         <Button
           variant="ghost"
           size="sm"
           onClick={onDelete}
-          className="h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          className="h-7 px-2 text-[11px] text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5"
         >
-          <Trash2 className="w-4 h-4 mr-1.5" />
+          <Trash2 className="w-3.5 h-3.5 mr-1" />
           Delete
         </Button>
       </div>
