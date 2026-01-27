@@ -599,10 +599,10 @@ All colors MUST be HSL.
   /* Tags section: single row with overflow hidden */
   .card-detail-tags {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     overflow: hidden;
-    height: 28px;
-    max-height: 28px;
+    height: 22px;
+    max-height: 22px;
     align-items: center;
     flex-shrink: 0;
   }
