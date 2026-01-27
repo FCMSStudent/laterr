@@ -447,13 +447,13 @@ export const DetailViewModal = ({
 
     if (item.content && item.type !== 'url' && item.type !== 'note' && item.type !== 'image') {
       return (
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col min-h-0">
           {loadingSignedUrl ? (
             <div className="h-full flex items-center justify-center">
               <LoadingSpinner size="sm" text="Loading file preview..." />
             </div>
           ) : signedUrl ? (
-            <>
+            <div className="flex-1 min-h-0">
               {item.content?.toLowerCase().endsWith(".pdf") ? (
                 <PDFPreview url={signedUrl} className="h-full" />
               ) : item.content?.toLowerCase().endsWith(".docx") ? (
@@ -464,7 +464,7 @@ export const DetailViewModal = ({
                   <p>Preview available in full view</p>
                 </div>
               )}
-            </>
+            </div>
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground">Preview unavailable</div>
           )}
@@ -535,10 +535,10 @@ export const DetailViewModal = ({
   );
 
   const DesktopDetailContent = () => (
-    <div className={`grid h-full gap-0 ${gridLayout}`}>
-      {/* LEFT COLUMN: Preview */}
-      <div className="flex flex-col h-full overflow-hidden pr-6">
-        <div className={getPreviewContainerStyles()}>
+    <div className={`detail-modal-grid gap-0 ${gridLayout}`}>
+      {/* LEFT COLUMN: Preview - scroll behavior controlled by content type */}
+      <div className="detail-preview-column pr-6">
+        <div className={`${getPreviewContainerStyles()} flex-1 min-h-0`}>
           {renderPreview()}
         </div>
       </div>

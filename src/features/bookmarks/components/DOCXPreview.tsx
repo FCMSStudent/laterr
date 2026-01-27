@@ -81,7 +81,7 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
   return (
     <div className={`flex flex-col ${className}`}>
       {/* Document Viewer */}
-      <div className="flex-1 bg-background/95 rounded-xl p-6 min-h-[300px]">
+      <div className="flex-1 overflow-auto bg-background/95 rounded-xl p-6 min-h-[300px]">
         {loading && (
           <div className="flex items-center justify-center h-full">
             <div className="w-full max-w-2xl space-y-4">

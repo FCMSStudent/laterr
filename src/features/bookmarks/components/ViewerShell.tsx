@@ -35,7 +35,8 @@ export const ViewerShell = ({ controls, children, className = '', scrollable = f
 
       {/* Content area */}
       <div
-        className={`flex-1 min-h-0 ${scrollClass} bg-muted/30 ${contentRoundedClass} flex items-center justify-center`}
+        className={`flex-1 min-h-0 ${scrollClass} bg-muted/30 ${contentRoundedClass} ${scrollable ? '' : 'flex items-center justify-center'
+          }`}
         style={{ minHeight: VIEWER_MIN_HEIGHT }}
       >
         {children}

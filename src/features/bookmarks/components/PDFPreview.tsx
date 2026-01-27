@@ -166,7 +166,7 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
   );
 
   return (
-    <ViewerShell controls={controls} className={className}>
+    <ViewerShell controls={controls} className={className} scrollable={true}>
       {loading && (
         <div className="w-full h-full flex items-center justify-center p-8">
           <div className="w-full max-w-2xl space-y-4">
@@ -195,7 +195,7 @@ export const PDFPreview = ({ url, className = '' }: PDFPreviewProps) => {
             </svg>
           </div>
           <p className="text-sm text-destructive font-medium">{error}</p>
-          <Button 
+          <Button
             onClick={handleRetry}
             variant="outline"
             size="sm"

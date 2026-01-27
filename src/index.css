@@ -601,18 +601,43 @@ All colors MUST be HSL.
   }
 
   /* ========================================
+   * Modal Content Grid Utilities
+   * Fixed height constraints for proper scroll containment
+   * ======================================== */
+
+  /* Modal content grid: constrains height to prevent expansion */
+  .detail-modal-grid {
+    display: grid;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Preview column: flex container with constrained height */
+  .detail-preview-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ========================================
    * Card Detail Right Panel Utilities
    * Unified fixed-height sections for all card types
    * Source of truth: video card right-side layout
    * ======================================== */
 
-  /* Right panel container: fixed height, no scroll */
+  /* Right panel container: fixed height, no scroll, non-shrinking */
   .card-detail-right-panel {
     display: flex;
     flex-direction: column;
     height: 100%;
     max-height: 100%;
     overflow: hidden;
+    flex-shrink: 0;
   }
 
   /* Summary section: fixed height (120px), no visible gradient */
@@ -688,6 +713,9 @@ All colors MUST be HSL.
   .detail-preview-scrollable {
     overflow-y: auto;
     overflow-x: hidden;
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
   }
 
   /* Fixed preview: video/image/link types - content contained */
