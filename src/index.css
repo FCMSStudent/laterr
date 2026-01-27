@@ -554,4 +554,48 @@ All colors MUST be HSL.
       padding-right: env(safe-area-inset-right);
     }
   }
+
+  /* ========================================
+   * Card Detail Right Panel Utilities
+   * Unified fixed-height sections for all card types
+   * ======================================== */
+
+  /* Summary section: fixed height with fade-out gradient */
+  .card-detail-summary {
+    height: 100px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-detail-summary::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: linear-gradient(to bottom, transparent, hsl(var(--background)));
+    pointer-events: none;
+  }
+
+  .dark .card-detail-summary::after {
+    background: linear-gradient(to bottom, transparent, hsl(var(--background)));
+  }
+
+  /* Notes section: fixed height textarea */
+  .card-detail-notes textarea {
+    height: 96px !important;
+    min-height: 96px !important;
+    max-height: 96px !important;
+    resize: none !important;
+  }
+
+  /* Tags section: single row with overflow hidden */
+  .card-detail-tags {
+    display: flex;
+    gap: 6px;
+    overflow: hidden;
+    max-height: 32px;
+    align-items: center;
+  }
 }

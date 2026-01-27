@@ -10,6 +10,7 @@ import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
+import { CardDetailRightPanel } from "@/features/bookmarks/components/CardDetailRightPanel";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Globe, Clock, X, Edit2 } from "lucide-react";
 import { Badge } from "@/ui";
 import { Input, Textarea } from "@/ui";
@@ -536,165 +537,45 @@ export const DetailViewModal = ({
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Sidebar */}
-      <div className="flex flex-col h-full max-h-full min-h-0 border-l border-border/40 pl-6 overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto py-1 pr-2 space-y-6 scrollbar-thin">
-
-          {/* HEADER */}
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold leading-snug tracking-tight text-foreground">{item.title}</h2>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="w-3 h-3" />
-              <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
-              {item.type === 'url' && item.content && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                  <a
-                    href={item.content}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[180px]"
-                  >
-                    <Globe className="w-3 h-3" />
-                    {(safeParseUrl(item.content)?.hostname ?? item.content)}
-                  </a>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* PRIMARY ACTIONS */}
-          <div className="flex gap-2">
-            {item.content && (
-              <Button variant="default" size="sm" asChild className="h-8 flex-1">
-                <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium">Open</span>
-                </a>
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (item.content) {
-                  navigator.clipboard.writeText(item.content);
-                  toast.success("Link copied!");
-                }
-              }}
-              className="h-8 flex-1"
-            >
-              <Link2 className="h-3.5 w-3.5 mr-1.5" />
-              <span className="text-xs font-medium">Copy</span>
-            </Button>
-          </div>
-
-          {/* SUMMARY */}
-          {item.summary && (
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Summary</span>
-              <p className="text-sm text-muted-foreground leading-relaxed">{item.summary}</p>
-            </div>
-          )}
-
-          {/* TAGS */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Tags</span>
-            <div className="flex flex-wrap gap-1.5">
-              {isAddingTag ? (
-                <div className="flex items-center h-6 bg-background border border-primary rounded-full px-2">
-                  <Input
-                    ref={tagInputRef}
-                    value={newTagInput}
-                    onChange={(e) => setNewTagInput(e.target.value)}
-                    onKeyDown={handleKeyDownTag}
-                    onBlur={() => {
-                      if (newTagInput.trim()) handleAddTag();
-                      else setIsAddingTag(false);
-                    }}
-                    className="h-full border-0 p-0 text-xs w-16 focus-visible:ring-0 bg-transparent"
-                    placeholder="Tag..."
-                  />
-                </div>
-              ) : (
-                <button
-                  onClick={() => setIsAddingTag(true)}
-                  className="h-6 px-2.5 flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-full transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                  Add tag
-                </button>
-              )}
-              {tags.map((tag, index) => (
-                <div key={`${tag}-${index}`} className="group">
-                  {editingTagIndex === index ? (
-                    <div className="flex items-center h-6 bg-background border border-primary rounded-full px-2">
-                      <Input
-                        ref={editTagInputRef}
-                        value={editingTagValue}
-                        onChange={(e) => setEditingTagValue(e.target.value)}
-                        onKeyDown={handleKeyDownEditTag}
-                        onBlur={handleCancelEditTag}
-                        className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent"
-                      />
-                    </div>
-                  ) : (
-                    <Badge
-                      variant="secondary"
-                      onDoubleClick={() => handleStartEditTag(index)}
-                      className="h-6 px-2.5 rounded-full text-xs font-medium bg-muted/60 hover:bg-muted cursor-default flex items-center gap-1"
-                    >
-                      {tag}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
-                        className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* NOTES */}
-          <div className="space-y-2 flex-1 flex flex-col">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Notes</span>
-            <div className="relative flex-1">
-              <Textarea
-                ref={notesRef}
-                placeholder="Add your notes..."
-                value={userNotes}
-                onChange={(e) => setUserNotes(e.target.value)}
-                onBlur={() => {
-                  const originalNotes = item?.user_notes ?? "";
-                  if (userNotes !== originalNotes) {
-                    handleSave(userNotes, tags, true);
-                  }
-                }}
-                className="w-full min-h-[100px] resize-none border border-border/40 rounded-lg bg-muted/20 p-3 focus-visible:ring-1 text-sm leading-relaxed placeholder:text-muted-foreground/40"
-              />
-              <span className="absolute bottom-2 right-3 text-[10px] text-muted-foreground/40">
-                {saving ? "Saving..." : "Autosaved"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* FOOTER ACTIONS */}
-        <div className="py-4 flex items-center justify-end gap-2 border-t border-border/40">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDeleteAlert(true)}
-            className="h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="w-4 h-4 mr-1.5" />
-            Delete
-          </Button>
-        </div>
-      </div>
+      {/* RIGHT COLUMN: Sidebar - Unified CardDetailRightPanel */}
+      <CardDetailRightPanel
+        item={item}
+        userNotes={userNotes}
+        onNotesChange={setUserNotes}
+        onNotesSave={() => {
+          const originalNotes = item?.user_notes ?? "";
+          if (userNotes !== originalNotes) {
+            handleSave(userNotes, tags, true);
+          }
+        }}
+        tags={tags}
+        isAddingTag={isAddingTag}
+        newTagInput={newTagInput}
+        editingTagIndex={editingTagIndex}
+        editingTagValue={editingTagValue}
+        onAddTagStart={() => setIsAddingTag(true)}
+        onAddTagChange={setNewTagInput}
+        onAddTagCommit={handleAddTag}
+        onAddTagCancel={() => {
+          setIsAddingTag(false);
+          setNewTagInput("");
+        }}
+        onEditTagStart={handleStartEditTag}
+        onEditTagChange={setEditingTagValue}
+        onEditTagCommit={handleCommitEditTag}
+        onEditTagCancel={handleCancelEditTag}
+        onRemoveTag={handleRemoveTag}
+        onCopyLink={() => {
+          if (item.content) {
+            navigator.clipboard.writeText(item.content);
+            toast.success("Link copied!");
+          }
+        }}
+        onDelete={() => setShowDeleteAlert(true)}
+        saving={saving}
+        tagInputRef={tagInputRef}
+        editTagInputRef={editTagInputRef}
+      />
     </div>
   );
 
