@@ -225,7 +225,8 @@ All colors MUST be HSL.
     }
 
     /* Performance optimization for mobile and low-end devices */
-    @media (max-width: 768px), (hover: none) {
+    @media (max-width: 768px),
+    (hover: none) {
       .glass-card {
         backdrop-filter: blur(16px) saturate(160%);
         -webkit-backdrop-filter: blur(16px) saturate(160%);
@@ -268,7 +269,7 @@ All colors MUST be HSL.
   /* Hover state with subtle glow effect */
   .glass-card:hover {
     border-color: rgba(0, 122, 255, 0.2);
-    box-shadow: 
+    box-shadow:
       0 8px 32px 0 rgba(0, 0, 0, 0.1),
       0 2px 8px 0 rgba(0, 122, 255, 0.1),
       inset 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -276,7 +277,7 @@ All colors MUST be HSL.
 
   .dark .glass-card:hover {
     border-color: rgba(100, 181, 246, 0.3);
-    box-shadow: 
+    box-shadow:
       0 8px 32px 0 rgba(0, 0, 0, 0.4),
       0 2px 8px 0 rgba(100, 181, 246, 0.2),
       inset 0 0 0 1px rgba(255, 255, 255, 0.15);
@@ -297,7 +298,8 @@ All colors MUST be HSL.
     }
 
     /* Reduced blur for low-end devices */
-    @media (max-width: 768px), (hover: none) {
+    @media (max-width: 768px),
+    (hover: none) {
       .glass-input {
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
@@ -341,11 +343,14 @@ All colors MUST be HSL.
   }
 
   @keyframes float {
-    0%, 100% { 
-      transform: translateY(0px) scale(1); 
+
+    0%,
+    100% {
+      transform: translateY(0px) scale(1);
     }
-    50% { 
-      transform: translateY(-10px) scale(1.015); 
+
+    50% {
+      transform: translateY(-10px) scale(1.015);
     }
   }
 
@@ -375,6 +380,7 @@ All colors MUST be HSL.
 
   /* High contrast focus for keyboard navigation */
   @media (prefers-contrast: high) {
+
     *:focus-visible,
     button:focus-visible,
     a:focus-visible,
@@ -387,7 +393,12 @@ All colors MUST be HSL.
   }
 
   /* Premium text styles with responsive typography */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     letter-spacing: -0.02em;
     font-weight: 600;
     line-height: 1.15;
@@ -395,13 +406,28 @@ All colors MUST be HSL.
 
   /* Responsive typography - scale down headings on mobile */
   @media (max-width: 640px) {
-    h1 { font-size: 2rem; }        /* 32px on mobile (from 48px+) */
-    h2 { font-size: 1.75rem; }     /* 28px on mobile (from 36px+) */
-    h3 { font-size: 1.5rem; }      /* 24px on mobile (from 30px+) */
+    h1 {
+      font-size: 2rem;
+    }
+
+    /* 32px on mobile (from 48px+) */
+    h2 {
+      font-size: 1.75rem;
+    }
+
+    /* 28px on mobile (from 36px+) */
+    h3 {
+      font-size: 1.5rem;
+    }
+
+    /* 24px on mobile (from 30px+) */
   }
 
   /* Body text optimal line height */
-  p, li, td, th {
+  p,
+  li,
+  td,
+  th {
     line-height: 1.6;
   }
 
@@ -446,12 +472,15 @@ All colors MUST be HSL.
 
   /* Hide scrollbar but keep scrolling */
   .scrollbar-hide {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   .scrollbar-hide::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
+    /* Chrome, Safari, Opera */
   }
 
   /* Selection styling */
@@ -497,20 +526,30 @@ All colors MUST be HSL.
 
   /* Minimum touch target size for mobile (Apple/Android guidelines) */
   @media (max-width: 767px) {
-    button, a[role="button"], [role="button"] {
+
+    button,
+    a[role="button"],
+    [role="button"] {
       min-height: 44px;
       min-width: 44px;
     }
   }
 
   /* Add touch-action to prevent double-tap zoom */
-  button, a, input, textarea, select {
+  button,
+  a,
+  input,
+  textarea,
+  select {
     touch-action: manipulation;
   }
 
   /* Active states with scale transform for mobile feedback */
   @media (max-width: 767px) {
-    button:active, a:active, [role="button"]:active {
+
+    button:active,
+    a:active,
+    [role="button"]:active {
       transform: scale(0.95);
       transition: transform 0.1s ease;
     }
@@ -522,6 +561,7 @@ All colors MUST be HSL.
   }
 
   @media (hover: none) {
+
     /* Remove hover effects on touch devices */
     .glass-card:hover {
       border-color: var(--glass-border);
@@ -530,10 +570,12 @@ All colors MUST be HSL.
   }
 
   /* Reduce animation durations on mobile and for users who prefer reduced motion */
-  @media (max-width: 767px), (prefers-reduced-motion: reduce) {
+  @media (max-width: 767px),
+  (prefers-reduced-motion: reduce) {
     .premium-transition {
       transition: all 0.2s ease;
     }
+
     .smooth-transition {
       transition: all 0.15s ease;
     }
@@ -544,12 +586,15 @@ All colors MUST be HSL.
     .pb-safe {
       padding-bottom: env(safe-area-inset-bottom);
     }
+
     .pt-safe {
       padding-top: env(safe-area-inset-top);
     }
+
     .pl-safe {
       padding-left: env(safe-area-inset-left);
     }
+
     .pr-safe {
       padding-right: env(safe-area-inset-right);
     }
@@ -621,5 +666,59 @@ All colors MUST be HSL.
   .card-detail-footer {
     flex-shrink: 0;
     margin-top: auto;
+  }
+
+  /* ========================================
+   * Detail Preview Container Utilities
+   * Unified scroll behavior for all card types
+   * Single-scroll rule: only one area scrolls
+   * ======================================== */
+
+  /* Base preview container: full height, no scroll by default */
+  .detail-preview-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 1rem;
+  }
+
+  /* Scrollable preview: PDF/document types */
+  .detail-preview-scrollable {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Fixed preview: video/image/link types - content contained */
+  .detail-preview-fixed {
+    overflow: hidden;
+  }
+
+  /* Preview content wrapper for consistent sizing */
+  .detail-preview-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Letterbox for video/image content that needs containment */
+  .detail-preview-letterbox {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsl(var(--muted) / 0.3);
+  }
+
+  .detail-preview-letterbox img,
+  .detail-preview-letterbox video,
+  .detail-preview-letterbox iframe {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
 }

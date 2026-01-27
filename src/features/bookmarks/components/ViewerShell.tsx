@@ -7,6 +7,8 @@ interface ViewerShellProps {
   controls?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Whether the content area should be scrollable. Default: false (parent owns scroll) */
+  scrollable?: boolean;
 }
 
 /**
@@ -15,11 +17,13 @@ interface ViewerShellProps {
  * - Optional controls bar at the top with consistent styling
  * - Content area with consistent padding and background
  * - Consistent border radius and visual treatment
+ * - Configurable scroll behavior (default: no scroll, parent owns scroll)
  */
-export const ViewerShell = ({ controls, children, className = '' }: ViewerShellProps) => {
+export const ViewerShell = ({ controls, children, className = '', scrollable = false }: ViewerShellProps) => {
   const hasControls = Boolean(controls);
   const contentRoundedClass = hasControls ? 'rounded-b-xl' : 'rounded-xl';
-  
+  const scrollClass = scrollable ? 'overflow-y-auto' : 'overflow-hidden';
+
   return (
     <div className={`flex flex-col ${className}`}>
       {/* Controls bar - only rendered if controls are provided */}
@@ -28,10 +32,10 @@ export const ViewerShell = ({ controls, children, className = '' }: ViewerShellP
           {controls}
         </div>
       )}
-      
+
       {/* Content area */}
-      <div 
-        className={`flex-1 min-h-0 overflow-y-auto bg-muted/30 ${contentRoundedClass} flex items-center justify-center`}
+      <div
+        className={`flex-1 min-h-0 ${scrollClass} bg-muted/30 ${contentRoundedClass} flex items-center justify-center`}
         style={{ minHeight: VIEWER_MIN_HEIGHT }}
       >
         {children}

@@ -372,25 +372,31 @@ export const DetailViewModal = ({
   const modalSizeClasses = "w-[min(95vw,1100px)] max-w-[1100px] h-[min(85vh,720px)] overflow-hidden";
   const gridLayout = "grid-cols-1 lg:grid-cols-[1.4fr_1fr]";
 
-  // 3. Preview Container Styling
+  // 3. Preview Container Styling - Unified with scroll ownership
   const getPreviewContainerStyles = () => {
-    const base = "w-full h-full rounded-2xl overflow-hidden relative";
-    if (isVideoContent) {
-      return `${base} bg-black flex items-center justify-center`;
-    }
+    // Base: unified container class + common styling
+    const base = "detail-preview-container relative";
+
+    // Scroll ownership by content type
     if (isDocumentContent) {
-      return `${base} bg-muted/30 border border-border/40`;
+      // PDF/Document cards: preview container is scrollable
+      return `${base} detail-preview-scrollable bg-muted/30 border border-border/40`;
+    }
+
+    // All other types: fixed/contained (no scroll)
+    if (isVideoContent) {
+      return `${base} detail-preview-fixed bg-black`;
     }
     if (isNoteContent) {
-      return `${base} bg-card border border-border/40 p-6`;
+      return `${base} detail-preview-fixed bg-card border border-border/40 p-6`;
     }
     if (isImageContent) {
-      return `${base} bg-muted/30 border border-border/40 flex items-center justify-center`;
+      return `${base} detail-preview-fixed detail-preview-letterbox bg-muted/30 border border-border/40`;
     }
     if (isUrlContent) {
-      return `${base} bg-muted/20 border border-border/40`;
+      return `${base} detail-preview-fixed bg-muted/20 border border-border/40`;
     }
-    return `${base} bg-muted/20 border border-border/40 flex items-center justify-center`;
+    return `${base} detail-preview-fixed bg-muted/20 border border-border/40`;
   };
 
   const renderPreview = () => {
@@ -449,9 +455,9 @@ export const DetailViewModal = ({
           ) : signedUrl ? (
             <>
               {item.content?.toLowerCase().endsWith(".pdf") ? (
-                <PDFPreview url={signedUrl} className="h-full overflow-y-auto" />
+                <PDFPreview url={signedUrl} className="h-full" />
               ) : item.content?.toLowerCase().endsWith(".docx") ? (
-                <DOCXPreview url={signedUrl} className="h-full overflow-y-auto" />
+                <DOCXPreview url={signedUrl} className="h-full" />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
                   <FileText className="h-16 w-16 mb-4 opacity-50" />

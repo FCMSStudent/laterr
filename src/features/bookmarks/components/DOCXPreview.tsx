@@ -36,26 +36,26 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
     const loadDocx = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Fetch the DOCX file
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Failed to load document');
         }
-        
+
         const arrayBuffer = await response.arrayBuffer();
-        
+
         // Convert DOCX to HTML using mammoth
         const result = await mammoth.convertToHtml({ arrayBuffer });
-        
+
         // Sanitize the HTML to prevent XSS attacks
         const sanitizedHtml = DOMPurify.sanitize(result.value, {
           ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'table', 'tr', 'td', 'th', 'tbody', 'thead'],
           ALLOWED_ATTR: ['href', 'src', 'alt', 'title']
         });
         setHtmlContent(sanitizedHtml);
-        
+
         // Log any messages from mammoth (warnings, etc.)
         if (result.messages.length > 0) {
           console.log('Mammoth conversion messages:', result.messages);
@@ -81,7 +81,7 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
   return (
     <div className={`flex flex-col ${className}`}>
       {/* Document Viewer */}
-      <div className="flex-1 overflow-auto bg-background/95 rounded-xl p-6 min-h-[300px]">
+      <div className="flex-1 bg-background/95 rounded-xl p-6 min-h-[300px]">
         {loading && (
           <div className="flex items-center justify-center h-full">
             <div className="w-full max-w-2xl space-y-4">
@@ -113,7 +113,7 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
                 </svg>
               </div>
               <p className="text-sm text-destructive font-medium">{error}</p>
-              <Button 
+              <Button
                 onClick={handleRetry}
                 variant="outline"
                 size="sm"
@@ -127,7 +127,7 @@ export const DOCXPreview = ({ url, className = '' }: DOCXPreviewProps) => {
         )}
 
         {!loading && !error && htmlContent && (
-          <div 
+          <div
             className="prose prose-sm dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: htmlContent }}
           />
