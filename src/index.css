@@ -558,13 +558,26 @@ All colors MUST be HSL.
   /* ========================================
    * Card Detail Right Panel Utilities
    * Unified fixed-height sections for all card types
+   * Source of truth: video card right-side layout
    * ======================================== */
 
-  /* Summary section: fixed height with fade-out gradient */
+  /* Right panel container: fixed height, no scroll */
+  .card-detail-right-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  /* Summary section: fixed height (120px) with fade-out gradient */
   .card-detail-summary {
-    height: 100px;
+    height: 120px;
+    min-height: 120px;
+    max-height: 120px;
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
   }
 
   .card-detail-summary::after {
@@ -573,7 +586,7 @@ All colors MUST be HSL.
     bottom: 0;
     left: 0;
     right: 0;
-    height: 28px;
+    height: 32px;
     background: linear-gradient(to bottom, transparent, hsl(var(--background)));
     pointer-events: none;
   }
@@ -582,11 +595,19 @@ All colors MUST be HSL.
     background: linear-gradient(to bottom, transparent, hsl(var(--background)));
   }
 
-  /* Notes section: fixed height textarea */
+  /* Notes section: fixed height textarea (112px) */
+  .card-detail-notes {
+    height: 112px;
+    min-height: 112px;
+    max-height: 112px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
   .card-detail-notes textarea {
-    height: 96px !important;
-    min-height: 96px !important;
-    max-height: 96px !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
     resize: none !important;
   }
 
@@ -595,7 +616,25 @@ All colors MUST be HSL.
     display: flex;
     gap: 6px;
     overflow: hidden;
-    max-height: 32px;
+    height: 28px;
+    max-height: 28px;
     align-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Header section */
+  .card-detail-header {
+    flex-shrink: 0;
+  }
+
+  /* Actions section */
+  .card-detail-actions {
+    flex-shrink: 0;
+  }
+
+  /* Footer section with delete */
+  .card-detail-footer {
+    flex-shrink: 0;
+    margin-top: auto;
   }
 }
