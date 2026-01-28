@@ -233,30 +233,30 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== TAGS: Grouped container with inline "+ Add tag" ========== */}
-      <div className="flex-shrink-0 py-4">
-        <h3 className="text-xs font-semibold text-foreground/90 block mb-2.5">
+      <div className="flex-shrink-0 py-3">
+        <h3 className="text-[11px] font-semibold text-foreground/80 block mb-2">
           Tags
         </h3>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {/* Visible tags */}
           {visibleTags.map((tag, index) => (
             <div key={`${tag}-${index}`} className="group flex-shrink-0">
               {editingTagIndex === index ? (
-                <div className="flex items-center h-6 bg-background border border-primary rounded-md px-2.5">
+                <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2">
                   <Input
                     ref={editTagInputRef}
                     value={editingTagValue}
                     onChange={(e) => onEditTagChange(e.target.value)}
                     onKeyDown={handleKeyDownEditTag}
                     onBlur={onEditTagCancel}
-                    className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent"
+                    className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60"
                   />
                 </div>
               ) : (
                 <Badge
                   variant="secondary"
                   onDoubleClick={() => onEditTagStart(index)}
-                  className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/50 hover:bg-secondary cursor-default flex items-center gap-1.5 border-0"
+                  className="h-5 px-2 rounded text-[11px] font-normal bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary/40 cursor-default flex items-center gap-1 border-0"
                 >
                   {tag}
                   <button
@@ -278,7 +278,7 @@ export const CardDetailRightPanel = ({
           {overflowCount > 0 && (
             <Badge
               variant="secondary"
-              className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/30 text-muted-foreground border-0 flex-shrink-0"
+              className="h-5 px-2 rounded text-[11px] font-normal bg-secondary/20 text-muted-foreground/70 border-0 flex-shrink-0"
             >
               +{overflowCount}
             </Badge>
@@ -286,7 +286,7 @@ export const CardDetailRightPanel = ({
 
           {/* Add tag button/input - styled like a tag */}
           {isAddingTag ? (
-            <div className="flex items-center h-6 bg-background border border-primary rounded-md px-2.5 flex-shrink-0">
+            <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2 flex-shrink-0">
               <Input
                 ref={tagInputRef}
                 value={newTagInput}
@@ -296,14 +296,14 @@ export const CardDetailRightPanel = ({
                   if (newTagInput.trim()) onAddTagCommit();
                   else onAddTagCancel();
                 }}
-                className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent"
+                className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60"
                 placeholder="Tag name"
               />
             </div>
           ) : (
             <button
               onClick={onAddTagStart}
-              className="h-6 px-2.5 flex items-center gap-1 bg-secondary/30 hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs font-normal rounded-md transition-colors flex-shrink-0 border-0"
+              className="h-5 px-2 flex items-center gap-1 bg-secondary/20 hover:bg-secondary/40 text-muted-foreground/70 hover:text-foreground text-[11px] font-normal rounded transition-colors flex-shrink-0 border-0"
               title="Add new tag"
               aria-label="Add new tag"
             >
