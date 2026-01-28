@@ -42,7 +42,7 @@ export const VideoPreview = ({ url, title, className = '' }: VideoPreviewProps) 
 
   return (
     <ViewerShell className={className}>
-      <div className="relative w-full">
+      <div className="relative w-full aspect-video bg-black overflow-hidden">
         <AspectRatio ratio={16 / 9}>
           {isPlaying && embedUrl ? (
             <iframe
@@ -50,7 +50,7 @@ export const VideoPreview = ({ url, title, className = '' }: VideoPreviewProps) 
               title={title || 'Video player'}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              className="w-full h-full rounded-lg"
+              className="w-full h-full object-cover rounded-lg"
             />
           ) : (
             <div className="relative w-full h-full group cursor-pointer rounded-lg overflow-hidden" onClick={handlePlayClick}>
