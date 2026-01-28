@@ -626,11 +626,11 @@ All colors MUST be HSL.
 
   /* ========================================
    * Card Detail Right Panel Utilities
-   * Unified fixed-height sections for all card types
-   * Source of truth: video card right-side layout
+   * Inspector-style fixed panel with clear sections
+   * Redesigned for improved visual hierarchy
    * ======================================== */
 
-  /* Right panel container: improved contrast, non-scrollable */
+  /* Right panel container: non-scrollable, structured */
   .card-detail-right-panel {
     display: flex;
     flex-direction: column;
@@ -647,85 +647,22 @@ All colors MUST be HSL.
     background: hsl(var(--background) / 0.95);
   }
 
-  /* Sticky header: remains visible, provides visual hierarchy */
-  .card-detail-header {
-    padding-bottom: 12px;
-    border-bottom: 1px solid hsl(var(--border) / 0.5);
-    flex-shrink: 0;
+  /* Inspector scrollbar for summary when expanded */
+  .card-detail-right-panel ::-webkit-scrollbar {
+    width: 6px;
   }
 
-  /* Actions section */
-  .card-detail-actions {
-    flex-shrink: 0;
+  .card-detail-right-panel ::-webkit-scrollbar-track {
+    background: transparent;
   }
 
-  /* Summary section: fixed height with word limit */
-  .card-detail-summary {
-    height: 120px;
-    min-height: 120px;
-    max-height: 120px;
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
+  .card-detail-right-panel ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 3px;
   }
 
-  .card-detail-summary p {
-    line-height: 2;
-    color: hsl(var(--foreground) / 0.85);
-  }
-
-  /* Summary fade gradient */
-  .card-detail-summary::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    background: linear-gradient(to bottom, transparent, hsl(var(--background)));
-    pointer-events: none;
-  }
-
-  /* Notes section: fixed height textarea with solid background */
-  .card-detail-notes {
-    height: 112px;
-    min-height: 112px;
-    max-height: 112px;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .card-detail-notes textarea {
-    height: 100% !important;
-    min-height: 100% !important;
-    max-height: 100% !important;
-    resize: none !important;
-    background: hsl(var(--background)) !important;
-    border: 2px solid hsl(var(--border) / 0.4) !important;
-    transition: border-color 0.2s ease;
-  }
-
-  .card-detail-notes textarea:focus {
-    border-color: hsl(var(--primary) / 0.8) !important;
-  }
-
-  /* Tags section: single row with overflow hidden */
-  .card-detail-tags {
-    display: flex;
-    gap: 6px;
-    overflow: hidden;
-    height: 26px;
-    max-height: 26px;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  /* Footer section with delete - separated from content */
-  .card-detail-footer {
-    flex-shrink: 0;
-    margin-top: auto;
-    padding-top: 12px;
-    border-top: 1px solid hsl(var(--border) / 0.3);
+  .card-detail-right-panel ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
   }
 
   /* ========================================
