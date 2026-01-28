@@ -232,9 +232,32 @@ export const CardDetailRightPanel = ({
         </div>
       </div>
 
+      {/* ========== NOTES: Lightweight workspace with clear affordance ========== */}
+      <div className="flex-shrink-0 py-4 flex flex-col rounded-lg bg-card/70 border border-border/40 px-3 shadow-sm">
+        <h3 className="text-xs font-semibold text-foreground block mt-3 mb-2.5">
+          Notes
+        </h3>
+        <div className="relative mb-3">
+          <Textarea
+            ref={notesRef}
+            placeholder="Notes are saved automatically..."
+            value={userNotes}
+            onChange={(e) => onNotesChange(e.target.value)}
+            onBlur={onNotesSave}
+            className="w-full h-[112px] min-h-[112px] max-h-[112px] border-0 rounded-md bg-background/70 p-3 focus-visible:ring-1 focus-visible:ring-border focus-visible:bg-background text-sm leading-relaxed placeholder:text-muted-foreground/50 resize-none transition-all"
+            aria-label="Notes"
+          />
+          {saving && (
+            <span className="absolute bottom-3 right-3 text-xs font-medium text-muted-foreground/60">
+              Saving...
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* ========== TAGS: Grouped container with inline "+ Add tag" ========== */}
       <div className="flex-shrink-0 py-4">
-        <h3 className="text-xs font-semibold text-foreground/90 block mb-2.5">
+        <h3 className="text-xs font-semibold text-muted-foreground/80 block mb-2.5">
           Tags
         </h3>
         <div className="flex flex-wrap gap-1.5">
@@ -256,7 +279,7 @@ export const CardDetailRightPanel = ({
                 <Badge
                   variant="secondary"
                   onDoubleClick={() => onEditTagStart(index)}
-                  className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/50 hover:bg-secondary cursor-default flex items-center gap-1.5 border-0"
+                  className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/40 hover:bg-secondary/60 cursor-default flex items-center gap-1.5 border-0"
                 >
                   {tag}
                   <button
@@ -278,7 +301,7 @@ export const CardDetailRightPanel = ({
           {overflowCount > 0 && (
             <Badge
               variant="secondary"
-              className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/30 text-muted-foreground border-0 flex-shrink-0"
+              className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/25 text-muted-foreground border-0 flex-shrink-0"
             >
               +{overflowCount}
             </Badge>
@@ -303,36 +326,13 @@ export const CardDetailRightPanel = ({
           ) : (
             <button
               onClick={onAddTagStart}
-              className="h-6 px-2.5 flex items-center gap-1 bg-secondary/30 hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs font-normal rounded-md transition-colors flex-shrink-0 border-0"
+              className="h-6 px-2.5 flex items-center gap-1 bg-secondary/25 hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs font-normal rounded-md transition-colors flex-shrink-0 border-0"
               title="Add new tag"
               aria-label="Add new tag"
             >
               <Plus className="w-3 h-3" />
               Add
             </button>
-          )}
-        </div>
-      </div>
-
-      {/* ========== NOTES: Lightweight workspace with clear affordance ========== */}
-      <div className="flex-shrink-0 py-4 flex flex-col">
-        <h3 className="text-xs font-semibold text-foreground/90 block mb-2.5">
-          Notes
-        </h3>
-        <div className="relative">
-          <Textarea
-            ref={notesRef}
-            placeholder="Notes are saved automatically..."
-            value={userNotes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            onBlur={onNotesSave}
-            className="w-full h-[112px] min-h-[112px] max-h-[112px] border-0 rounded-md bg-muted/20 p-3 focus-visible:ring-1 focus-visible:ring-border focus-visible:bg-background/50 text-sm leading-relaxed placeholder:text-muted-foreground/50 resize-none transition-all"
-            aria-label="Notes"
-          />
-          {saving && (
-            <span className="absolute bottom-3 right-3 text-xs font-medium text-muted-foreground/60">
-              Saving...
-            </span>
           )}
         </div>
       </div>
