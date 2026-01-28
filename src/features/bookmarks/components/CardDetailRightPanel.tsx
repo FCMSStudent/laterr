@@ -13,9 +13,9 @@ import type { Item } from "@/features/bookmarks/types";
  * CANONICAL LAYOUT (source of truth: video card):
  * - Header: Title (2-line clamp) + metadata row
  * - Primary Actions: Open + Copy (same size, spacing, order)
- * - Summary: Fixed 120px height with fade-out gradient
- * - Tags: Single row, +N overflow, no wrapping
- * - Notes: Fixed 112px textarea, no resize, autosave indicator
+ * - Summary: Max 3 lines, truncated, hidden if empty
+ * - Notes: Fixed 112px textarea, no resize, autosave indicator (PRIMARY)
+ * - Tags: Single row, +N overflow, no wrapping (SECONDARY)
  * - Delete: Pinned bottom-right, low visual weight
  * 
  * BEHAVIOR: Panel is fixed-height and NON-SCROLLABLE.
@@ -68,9 +68,9 @@ const safeParseUrl = (value: string | null | undefined) => {
  * FIXED LAYOUT - matches video card exactly:
  * 1. Header: Title (2-line clamp) + metadata
  * 2. Actions: Open + Copy buttons (same size/spacing)
- * 3. Summary: Fixed 120px height with fade-out gradient
- * 4. Tags: Single row with +N overflow
- * 5. Notes: Fixed 112px textarea with autosave indicator
+ * 3. Summary: Max 3 lines, truncated, hidden if empty
+ * 4. Notes: Fixed 112px textarea with autosave indicator (PRIMARY)
+ * 5. Tags: Single row with +N overflow (SECONDARY)
  * 6. Delete: Pinned bottom-right
  * 
  * ALL sections use flex-shrink-0 to prevent layout shifts.
@@ -135,7 +135,7 @@ export const CardDetailRightPanel = ({
   const summaryText = item.summary?.trim();
 
   return (
-    <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/20 shadow-sm">
+    <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/15">
       {/* ========== TITLE: Prominent, single-line with tooltip ========== */}
       <div className="flex-shrink-0 py-4 border-b border-border/10">
         <h2
@@ -205,31 +205,31 @@ export const CardDetailRightPanel = ({
         </div>
       </div>
 
-      {/* ========== SUMMARY: Clamp to 3 lines ========== */}
+      {/* ========== SUMMARY: Clamp to 3 lines, hide if empty ========== */}
       {summaryText && (
         <div className="flex-shrink-0 py-4">
-          <h3 className="text-xs font-semibold text-foreground/90 mb-2">
+          <h3 className="text-xs font-medium text-muted-foreground/70 mb-2">
             Summary
           </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+          <p className="text-sm text-muted-foreground/80 leading-relaxed line-clamp-3">
             {summaryText}
           </p>
         </div>
       )}
 
-      {/* ========== NOTES: Lightweight workspace with clear affordance ========== */}
-      <div className="flex-shrink-0 py-4 flex flex-col rounded-lg bg-card/70 border border-border/40 px-3 shadow-sm">
-        <h3 className="text-xs font-semibold text-foreground block mt-3 mb-2.5">
+      {/* ========== NOTES: PRIMARY workspace - visually strong, fixed height ========== */}
+      <div className="flex-shrink-0 py-4 flex flex-col rounded-lg bg-card/80 border border-border/40 px-4">
+        <h3 className="text-xs font-semibold text-foreground/90 block mb-3">
           Notes
         </h3>
-        <div className="relative mb-3">
+        <div className="relative">
           <Textarea
             ref={notesRef}
             placeholder="Notes are saved automatically..."
             value={userNotes}
             onChange={(e) => onNotesChange(e.target.value)}
             onBlur={onNotesSave}
-            className="w-full h-[112px] min-h-[112px] max-h-[112px] border-0 rounded-md bg-background/70 p-3 focus-visible:ring-1 focus-visible:ring-border focus-visible:bg-background text-sm leading-relaxed placeholder:text-muted-foreground/50 resize-none transition-all"
+            className="w-full h-[112px] min-h-[112px] max-h-[112px] border-0 rounded-md bg-background/80 p-3 focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:bg-background text-sm leading-relaxed placeholder:text-muted-foreground/40 resize-none transition-all"
             aria-label="Notes"
           />
           {saving && (
@@ -240,9 +240,9 @@ export const CardDetailRightPanel = ({
         </div>
       </div>
 
-      {/* ========== TAGS: Grouped container with inline "+ Add tag" ========== */}
+      {/* ========== TAGS: SECONDARY metadata - compact and light ========== */}
       <div className="flex-shrink-0 py-4">
-        <h3 className="text-xs font-semibold text-muted-foreground/80 block mb-2.5">
+        <h3 className="text-xs font-medium text-muted-foreground/60 block mb-2">
           Tags
         </h3>
         <div className="flex flex-wrap gap-1">
