@@ -98,21 +98,26 @@ export const CardDetailRightPanel = ({
   onDelete,
   saving,
   tagInputRef,
-  editTagInputRef,
+  editTagInputRef
 }: CardDetailRightPanelProps) => {
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
   // Calculate visible tags and overflow count
-  const { visibleTags, overflowCount } = useMemo(() => {
+  const {
+    visibleTags,
+    overflowCount
+  } = useMemo(() => {
     if (tags.length <= MAX_VISIBLE_TAGS) {
-      return { visibleTags: tags, overflowCount: 0 };
+      return {
+        visibleTags: tags,
+        overflowCount: 0
+      };
     }
     return {
       visibleTags: tags.slice(0, MAX_VISIBLE_TAGS),
-      overflowCount: tags.length - MAX_VISIBLE_TAGS,
+      overflowCount: tags.length - MAX_VISIBLE_TAGS
     };
   }, [tags]);
-
   const handleKeyDownTag = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -121,7 +126,6 @@ export const CardDetailRightPanel = ({
       onAddTagCancel();
     }
   };
-
   const handleKeyDownEditTag = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -131,17 +135,11 @@ export const CardDetailRightPanel = ({
       onEditTagCancel();
     }
   };
-
   const summaryText = item.summary?.trim();
-
-  return (
-    <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/15">
+  return <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/15">
       {/* ========== TITLE: Prominent, single-line with tooltip ========== */}
       <div className="flex-shrink-0 py-4 border-b border-border/10">
-        <h2
-          className="text-base font-semibold leading-tight tracking-tight text-foreground line-clamp-2"
-          title={item.title}
-        >
+        <h2 className="text-base font-semibold leading-tight tracking-tight text-foreground line-clamp-2" title={item.title}>
           {item.title}
         </h2>
       </div>
@@ -149,34 +147,13 @@ export const CardDetailRightPanel = ({
       {/* ========== ACTION BAR: Compact, balanced visual weight ========== */}
       <div className="flex-shrink-0 py-4">
         <div className="flex gap-2">
-          {item.content && (
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="h-7 grow basis-0 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50"
-              aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}
-            >
-              <a
-                href={item.content}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5"
-                title={item.type === 'url' ? 'Visit page' : 'Open original file'}
-              >
+          {item.content && <Button variant="ghost" size="sm" asChild className="h-7 grow basis-0 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50" aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}>
+              <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5" title={item.type === 'url' ? 'Visit page' : 'Open original file'}>
                 <ExternalLink className="h-3 w-3" />
                 <span>{item.type === 'url' ? 'Visit' : 'Open'}</span>
               </a>
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCopyLink}
-            className="h-7 grow basis-0 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50"
-            aria-label="Copy link to clipboard"
-            title="Copy link"
-          >
+            </Button>}
+          <Button variant="ghost" size="sm" onClick={onCopyLink} className="h-7 grow basis-0 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50" aria-label="Copy link to clipboard" title="Copy link">
             <Link2 className="h-3 w-3 mr-1.5" />
             <span>Copy</span>
           </Button>
@@ -187,58 +164,31 @@ export const CardDetailRightPanel = ({
       <div className="flex-shrink-0 py-4">
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
           <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
-          {item.type === "url" && item.content && (
-            <>
+          <span>{formatDistanceToNow(new Date(item.created_at), {
+            addSuffix: true
+          })}</span>
+          {item.type === "url" && item.content && <>
               <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-              <a
-                href={item.content}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[120px]"
-              >
+              <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[120px]">
                 <Globe className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="truncate">{safeParseUrl(item.content)?.hostname ?? item.content}</span>
               </a>
-            </>
-          )}
+            </>}
         </div>
       </div>
 
       {/* ========== SUMMARY: Clamp to 3 lines, hide if empty ========== */}
-      {summaryText && (
-        <div className="flex-shrink-0 py-4">
+      {summaryText && <div className="flex-shrink-0 py-4">
           <h3 className="text-xs font-medium text-muted-foreground/70 mb-2">
             Summary
           </h3>
           <p className="text-sm text-muted-foreground/80 leading-relaxed line-clamp-3">
             {summaryText}
           </p>
-        </div>
-      )}
+        </div>}
 
       {/* ========== NOTES: PRIMARY workspace - visually strong, fixed height ========== */}
-      <div className="flex-shrink-0 py-4 flex flex-col rounded-lg bg-card border border-border/60 px-4 shadow-sm">
-        <h3 className="text-xs font-semibold text-foreground/90 block mb-3">
-          Notes
-        </h3>
-        <div className="relative">
-          <Textarea
-            ref={notesRef}
-            placeholder="Notes are saved automatically..."
-            value={userNotes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            onBlur={onNotesSave}
-            className="w-full h-[112px] min-h-[112px] max-h-[112px] border-0 rounded-md bg-background/80 p-3 focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:bg-background text-sm leading-relaxed placeholder:text-muted-foreground/40 resize-none transition-all"
-            aria-label="Notes"
-          />
-          {saving && (
-            <span className="absolute bottom-3 right-3 text-xs font-medium text-muted-foreground/60">
-              Saving...
-            </span>
-          )}
-        </div>
-      </div>
+      
 
       {/* ========== TAGS: SECONDARY metadata - compact and light ========== */}
       <div className="flex-shrink-0 py-4">
@@ -247,96 +197,46 @@ export const CardDetailRightPanel = ({
         </h3>
         <div className="flex flex-wrap gap-1">
           {/* Visible tags */}
-          {visibleTags.map((tag, index) => (
-            <div key={`${tag}-${index}`} className="group flex-shrink-0">
-              {editingTagIndex === index ? (
-                <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2">
-                  <Input
-                    ref={editTagInputRef}
-                    value={editingTagValue}
-                    onChange={(e) => onEditTagChange(e.target.value)}
-                    onKeyDown={handleKeyDownEditTag}
-                    onBlur={onEditTagCancel}
-                    className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60"
-                  />
-                </div>
-              ) : (
-                <Badge
-                  variant="secondary"
-                  onDoubleClick={() => onEditTagStart(index)}
-                  className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/40 hover:bg-secondary/60 cursor-default flex items-center gap-1.5 border-0"
-                >
+          {visibleTags.map((tag, index) => <div key={`${tag}-${index}`} className="group flex-shrink-0">
+              {editingTagIndex === index ? <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2">
+                  <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={onEditTagCancel} className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60" />
+                </div> : <Badge variant="secondary" onDoubleClick={() => onEditTagStart(index)} className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/40 hover:bg-secondary/60 cursor-default flex items-center gap-1.5 border-0">
                   {tag}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveTag(tag);
-                    }}
-                    className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
-                    aria-label={`Remove ${tag} tag`}
-                  >
+                  <button onClick={e => {
+              e.stopPropagation();
+              onRemoveTag(tag);
+            }} className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity" aria-label={`Remove ${tag} tag`}>
                     <X className="w-3 h-3" />
                   </button>
-                </Badge>
-              )}
-            </div>
-          ))}
+                </Badge>}
+            </div>)}
 
           {/* Overflow indicator */}
-          {overflowCount > 0 && (
-            <Badge
-              variant="secondary"
-              className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/25 text-muted-foreground border-0 flex-shrink-0"
-            >
+          {overflowCount > 0 && <Badge variant="secondary" className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/25 text-muted-foreground border-0 flex-shrink-0">
               +{overflowCount}
-            </Badge>
-          )}
+            </Badge>}
 
           {/* Add tag button/input - styled like a tag */}
-          {isAddingTag ? (
-            <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2 flex-shrink-0">
-              <Input
-                ref={tagInputRef}
-                value={newTagInput}
-                onChange={(e) => onAddTagChange(e.target.value)}
-                onKeyDown={handleKeyDownTag}
-                onBlur={() => {
-                  if (newTagInput.trim()) onAddTagCommit();
-                  else onAddTagCancel();
-                }}
-                className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60"
-                placeholder="Tag name"
-              />
-            </div>
-          ) : (
-            <button
-              onClick={onAddTagStart}
-              className="h-6 px-2.5 flex items-center gap-1 bg-secondary/25 hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs font-normal rounded-md transition-colors flex-shrink-0 border-0"
-              title="Add new tag"
-              aria-label="Add new tag"
-            >
+          {isAddingTag ? <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2 flex-shrink-0">
+              <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={() => {
+            if (newTagInput.trim()) onAddTagCommit();else onAddTagCancel();
+          }} className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60" placeholder="Tag name" />
+            </div> : <button onClick={onAddTagStart} className="h-6 px-2.5 flex items-center gap-1 bg-secondary/25 hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs font-normal rounded-md transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
               <Plus className="w-3 h-3" />
               Add
-            </button>
-          )}
+            </button>}
         </div>
       </div>
 
       {/* Spacer to push footer to bottom */}
-      <div className="flex-1 min-h-0" />
+      
 
       {/* ========== FOOTER: Delete action - low visual weight ========== */}
       <div className="flex-shrink-0 py-4 border-t border-border/10 flex items-center justify-end">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDelete}
-          className="h-8 px-3 text-xs font-normal text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5"
-        >
+        <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 px-3 text-xs font-normal text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5">
           <Trash2 className="w-3.5 h-3.5 mr-1.5" />
           Delete
         </Button>
       </div>
-    </div>
-  );
+    </div>;
 };
