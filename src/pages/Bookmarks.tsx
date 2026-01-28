@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
 import { ItemListRow } from "@/features/bookmarks/components/ItemListRow";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
+import { NoteEditorModal } from "@/features/bookmarks/components/NoteEditorModal";
 import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/ui";
@@ -36,11 +37,6 @@ const EditItemModal = lazy(() => import("@/features/bookmarks/components/EditIte
   EditItemModal
 }) => ({
   default: EditItemModal
-})));
-const NoteEditorModal = lazy(() => import("@/features/bookmarks/components/NoteEditorModal").then(({
-  NoteEditorModal
-}) => ({
-  default: NoteEditorModal
 })));
 const PAGE_SIZE = 20;
 
