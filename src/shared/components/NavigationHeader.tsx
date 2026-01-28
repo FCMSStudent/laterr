@@ -21,9 +21,8 @@ interface NavigationHeaderProps {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
-  // Filter props for mobile inline display
+  // Filter button for mobile inline display (combined filter & sort)
   filterButton?: ReactNode;
-  sortButton?: ReactNode;
 }
 export const NavigationHeader = ({
   title,
@@ -33,8 +32,7 @@ export const NavigationHeader = ({
   searchValue,
   onSearchChange,
   searchPlaceholder = "Search",
-  filterButton,
-  sortButton
+  filterButton
 }: NavigationHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -110,9 +108,8 @@ export const NavigationHeader = ({
       <Input type="search" value={searchValue || ""} onChange={e => onSearchChange?.(e.target.value)} placeholder={searchPlaceholder} className="h-10 pl-9 pr-3 rounded-full bg-secondary/50 border-0 text-sm" data-search-input />
     </div>}
 
-    {/* Filter and Sort buttons */}
+    {/* Filter & Sort button */}
     {filterButton}
-    {sortButton}
 
     {/* Module navigation tabs - desktop only */}
     {!hideNavigation && !isMobile && <nav aria-label="Module navigation" className="flex items-center">

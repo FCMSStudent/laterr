@@ -12,7 +12,7 @@ import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useProgressiveDisclosure } from "@/shared/hooks/useProgressiveDisclosure";
-import { FilterBar, MobileFilterButton, MobileSortButton, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
+import { FilterBar, MobileFilterSortButton, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
 import { BulkActionsBar } from "@/features/bookmarks/components/BulkActionsBar";
 import { useInfiniteScroll } from "@/features/bookmarks/hooks/useInfiniteScroll";
 import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
@@ -368,7 +368,7 @@ const Index = () => {
 
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div className="mb-4">
-        <NavigationHeader title="Bookmarks" onAddClick={() => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search" filterButton={<MobileFilterButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} sortButton={<MobileSortButton selectedSort={sortOption} onSortChange={setSortOption} />} />
+        <NavigationHeader title="Bookmarks" onAddClick={() => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search" filterButton={<MobileFilterSortButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} />
       </div>
 
 
