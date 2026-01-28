@@ -138,9 +138,9 @@ export const CardDetailRightPanel = ({
   const shouldShowToggle = summaryWordCount > 40;
 
   return (
-    <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full">
+    <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/20 shadow-sm">
       {/* ========== TITLE: Prominent, single-line with tooltip ========== */}
-      <div className="flex-shrink-0 pb-4 border-b border-border/10">
+      <div className="flex-shrink-0 py-4 border-b border-border/10">
         <h2
           className="text-base font-semibold leading-tight tracking-tight text-foreground line-clamp-1"
           title={item.title}
@@ -150,14 +150,14 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== ACTION BAR: Compact, balanced visual weight ========== */}
-      <div className="flex-shrink-0 pt-2 pb-4 border-b border-border/10">
+      <div className="flex-shrink-0 py-4">
         <div className="flex gap-2">
           {item.content && (
             <Button
               variant="ghost"
               size="sm"
               asChild
-              className="h-7 flex-1 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50"
+              className="h-7 grow basis-0 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50"
               aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}
             >
               <a
@@ -176,7 +176,7 @@ export const CardDetailRightPanel = ({
             variant="ghost"
             size="sm"
             onClick={onCopyLink}
-            className="h-7 flex-1 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50"
+            className="h-7 grow basis-0 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50"
             aria-label="Copy link to clipboard"
             title="Copy link"
           >
@@ -187,7 +187,7 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== METADATA: Subtle, low-contrast ========== */}
-      <div className="flex-shrink-0 pt-3 pb-5 border-b border-border/10">
+      <div className="flex-shrink-0 py-4">
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
           <Clock className="w-3.5 h-3.5 flex-shrink-0" />
           <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
@@ -209,7 +209,7 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== SUMMARY: Clamp with toggle + scrollable when expanded ========== */}
-      <div className="flex-shrink-0 pt-5 pb-5 border-b border-border/10">
+      <div className="flex-shrink-0 py-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-semibold text-foreground/90">
             Summary
@@ -225,7 +225,7 @@ export const CardDetailRightPanel = ({
             </button>
           )}
         </div>
-        <div className={`${isSummaryExpanded ? 'max-h-32 overflow-y-auto pr-2' : ''}`}>
+        <div className="h-[120px] overflow-hidden">
           <p className={`text-sm text-muted-foreground leading-relaxed ${!isSummaryExpanded ? 'line-clamp-3' : ''}`}>
             {item.summary || "No summary available."}
           </p>
@@ -233,7 +233,7 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== TAGS: Grouped container with inline "+ Add tag" ========== */}
-      <div className="flex-shrink-0 pt-5 pb-5 border-b border-border/10">
+      <div className="flex-shrink-0 py-4">
         <h3 className="text-xs font-semibold text-foreground/90 block mb-2.5">
           Tags
         </h3>
@@ -315,18 +315,18 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== NOTES: Lightweight workspace with clear affordance ========== */}
-      <div className="flex-1 pt-5 pb-5 flex flex-col min-h-0">
+      <div className="flex-shrink-0 py-4 flex flex-col">
         <h3 className="text-xs font-semibold text-foreground/90 block mb-2.5">
           Notes
         </h3>
-        <div className="relative flex-1 min-h-0">
+        <div className="relative">
           <Textarea
             ref={notesRef}
             placeholder="Notes are saved automatically..."
             value={userNotes}
             onChange={(e) => onNotesChange(e.target.value)}
             onBlur={onNotesSave}
-            className="w-full h-full min-h-[120px] border-0 rounded-md bg-muted/20 p-3 focus-visible:ring-1 focus-visible:ring-border focus-visible:bg-background/50 text-sm leading-relaxed placeholder:text-muted-foreground/50 resize-none transition-all"
+            className="w-full h-[112px] min-h-[112px] max-h-[112px] border-0 rounded-md bg-muted/20 p-3 focus-visible:ring-1 focus-visible:ring-border focus-visible:bg-background/50 text-sm leading-relaxed placeholder:text-muted-foreground/50 resize-none transition-all"
             aria-label="Notes"
           />
           {saving && (
@@ -338,7 +338,7 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* ========== FOOTER: Delete action - low visual weight ========== */}
-      <div className="flex-shrink-0 pt-4 border-t border-border/10 flex items-center justify-end">
+      <div className="flex-shrink-0 py-4 border-t border-border/10 flex items-center justify-end">
         <Button
           variant="ghost"
           size="sm"
