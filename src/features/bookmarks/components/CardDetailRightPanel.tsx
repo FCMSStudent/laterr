@@ -322,6 +322,9 @@ export const CardDetailRightPanel = ({
         </div>
       </div>
 
+      {/* Spacer to push footer to bottom */}
+      <div className="flex-1 min-h-0" />
+
       {/* ========== FOOTER: Delete action - low visual weight ========== */}
       <div className="flex-shrink-0 py-4 border-t border-border/10 flex items-center justify-end">
         <Button
