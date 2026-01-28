@@ -31,8 +31,8 @@ interface FilterBarProps {
   hideMobileControls?: boolean;
 }
 
-// Separate component for mobile filter button to be used in header
-export const MobileFilterButton = ({
+// Combined filter & sort button for header
+export const MobileFilterSortButton = ({
   selectedTag,
   selectedTypeFilter,
   selectedSort,
@@ -138,7 +138,8 @@ export const MobileFilterButton = ({
     </Drawer>;
 };
 
-// Separate component for mobile sort button
+// Legacy exports for backward compatibility
+export const MobileFilterButton = MobileFilterSortButton;
 export const MobileSortButton = ({
   selectedSort,
   onSortChange
@@ -146,32 +147,8 @@ export const MobileSortButton = ({
   selectedSort: SortOption;
   onSortChange: (sort: SortOption) => void;
 }) => {
-  return <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 active:scale-95 transition-transform">
-          <ArrowUpDown className="h-5 w-5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>Sort By</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
-          Newest First
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
-          Oldest First
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSortChange("title-asc")}>
-          Title (A-Z)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSortChange("title-desc")}>
-          Title (Z-A)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSortChange("type")}>
-          By Type
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>;
+  // This is now a no-op since sort is merged into MobileFilterSortButton
+  return null;
 };
 export const FilterBar = ({
   selectedTag,
