@@ -1,17 +1,16 @@
 import { Badge } from "@/ui";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, Calendar } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
 import { AspectRatio } from "@/ui";
 import { Checkbox } from "@/ui";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
 import { Button } from "@/ui";
 import { Skeleton } from "@/ui";
-import { useState, useRef } from "react";
+import { useMemo, useState, useRef } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/lib/utils";
 import { format } from "date-fns";
-
 interface BookmarkCardProps {
   id: string;
   type: ItemType;
@@ -30,35 +29,46 @@ interface BookmarkCardProps {
   onEdit?: (id: string) => void;
 }
 
-// Content type color mapping (matching Health module pattern)
-const BOOKMARK_COLORS: Record<ItemType, string> = {
-  url: 'border-l-primary',
-  video: 'border-l-red-500',
-  note: 'border-l-amber-500',
-  document: 'border-l-blue-500',
-  image: 'border-l-green-500',
-  file: 'border-l-purple-500',
-};
-
 // Get content type badge info
 const getContentBadge = (type: ItemType, content?: string | null) => {
   if (type === 'url' && content && isVideoUrl(content)) {
-    return { label: 'Video', icon: Play, color: 'border-l-red-500' };
+    return {
+      label: 'Video',
+      icon: Play
+    };
   }
   switch (type) {
     case 'url':
-      return { label: 'Article', icon: Link2, color: BOOKMARK_COLORS.url };
+      return {
+        label: 'Article',
+        icon: Link2
+      };
     case 'note':
-      return { label: 'Note', icon: FileText, color: BOOKMARK_COLORS.note };
+      return {
+        label: 'Note',
+        icon: FileText
+      };
     case 'document':
     case 'file':
-      return { label: 'Document', icon: FileType, color: BOOKMARK_COLORS.document };
+      return {
+        label: 'Document',
+        icon: FileType
+      };
     case 'image':
-      return { label: 'Image', icon: ImageIcon, color: BOOKMARK_COLORS.image };
+      return {
+        label: 'Image',
+        icon: ImageIcon
+      };
     case 'video':
-      return { label: 'Video', icon: Play, color: BOOKMARK_COLORS.video };
+      return {
+        label: 'Video',
+        icon: Play
+      };
     default:
-      return { label: 'Item', icon: FileText, color: 'border-l-muted' };
+      return {
+        label: 'Item',
+        icon: FileText
+      };
   }
 };
 
@@ -66,12 +76,11 @@ const getContentBadge = (type: ItemType, content?: string | null) => {
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
   try {
-    return format(new Date(dateString), 'MMM d, yyyy');
+    return format(new Date(dateString), 'yyyy/MM');
   } catch {
     return '';
   }
 };
-
 export const BookmarkCard = ({
   id,
   type,
@@ -99,20 +108,25 @@ export const BookmarkCard = ({
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const SWIPE_THRESHOLD = 80;
-  
   const contentBadge = getContentBadge(type, content);
-  const isVideo = type === 'video' || (type === 'url' && content && isVideoUrl(content));
+  const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
+  const isNoteType = type === 'note';
   const dateText = formatDate(createdAt);
-  const borderColor = isVideo ? 'border-l-red-500' : contentBadge.color;
-  const Icon = contentBadge.icon;
 
+  const mediaRatio = useMemo(() => {
+    // Content-type driven sizing (works best with masonry columns)
+    if (isVideo) return 16 / 9;
+    if (type === 'image') return 4 / 5;
+    if (type === 'document' || type === 'file') return 3 / 4;
+    if (type === 'url') return 4 / 5;
+    return 3 / 4;
+  }, [isVideo, type]);
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick();
     }
   };
-
   const handleMenuAction = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
@@ -135,7 +149,6 @@ export const BookmarkCard = ({
       }
     }
   };
-
   const handleTouchMove = (e: React.TouchEvent) => {
     if (longPressTimerRef.current) {
       const moveX = Math.abs(e.touches[0].clientX - touchStartX.current);
@@ -154,7 +167,6 @@ export const BookmarkCard = ({
       }
     }
   };
-
   const handleTouchEnd = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -166,7 +178,6 @@ export const BookmarkCard = ({
     setSwipeOffset(0);
     setIsSwiping(false);
   };
-
   const handleCardClick = () => {
     if (isSwiping) return;
     if (showMobileActions) {
@@ -176,186 +187,156 @@ export const BookmarkCard = ({
     onClick();
   };
 
-  return (
-    <div className="relative overflow-hidden rounded-2xl">
+  // Note type: white card with text overlay
+  if (isNoteType) {
+    return <div className="relative overflow-hidden rounded-[20px]">
       {/* Swipe delete action background */}
-      {isMobile && onDelete && (
-        <div
-          className={cn(
-            "absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-2xl transition-opacity duration-200",
-            swipeOffset > 0 ? "opacity-100" : "opacity-0"
-          )}
-          style={{ width: `${Math.max(swipeOffset, 0)}px` }}
-        >
-          <Trash2 className="h-5 w-5 text-destructive-foreground" />
-        </div>
-      )}
+      {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-[20px] transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
+        width: `${Math.max(swipeOffset, 0)}px`
+      }}>
+        <Trash2 className="h-5 w-5 text-destructive-foreground" />
+      </div>}
 
-      <div
-        role="article"
-        tabIndex={0}
-        aria-label={`${contentBadge.label}: ${title}`}
-        onClick={handleCardClick}
-        onKeyDown={handleKeyDown}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{ transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined }}
-        className={cn(
-          `glass-card rounded-2xl p-6 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden relative border-l-4`,
-          borderColor,
-          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
-          isSelected && "ring-2 ring-primary",
-          isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50"
-        )}
-      >
+      <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
+        transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
+      }} className={cn("bg-card border border-border/30 rounded-[20px] cursor-pointer group overflow-hidden relative", "hover:shadow-xl transition-all hover:scale-[1.02]", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
         {/* Selection checkbox */}
-        {isSelectionMode && (
-          <div
-            className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={(checked) => onSelectionChange?.(id, checked as boolean)}
-              aria-label={`Select ${title}`}
-              className="bg-background/90"
-            />
-          </div>
-        )}
+        {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
+          <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-background/90" />
+        </div>}
 
         {/* Actions menu */}
-        <div
-          className={cn(
-            "absolute top-4 right-4 z-10 premium-transition",
-            isSelectionMode && "hidden",
-            isMobile
-              ? showMobileActions ? "opacity-100" : "opacity-0 pointer-events-none"
-              : "opacity-0 group-hover:opacity-100"
-          )}
-        >
+        <div className={cn("absolute top-4 right-4 z-20 transition-opacity duration-200", isSelectionMode && "hidden", isMobile ? showMobileActions ? "opacity-100" : "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100")}>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 rounded-full bg-background/80 hover:bg-background"
-                aria-label="Card actions"
-              >
+            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-muted/80 hover:bg-muted shadow-sm" aria-label="Card actions">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
-              {onEdit && (
-                <DropdownMenuItem onClick={(e) => handleMenuAction(e, () => onEdit(id))}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-              )}
-              {onDelete && (
-                <DropdownMenuItem
-                  onClick={(e) => handleMenuAction(e, () => onDelete(id))}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              )}
+              {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>}
+              {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        {/* Preview thumbnail */}
-        <AspectRatio ratio={16 / 9} className="mb-4">
-          <div className="flex items-center justify-center w-full h-full rounded-xl bg-muted/30 overflow-hidden">
-            {previewImageUrl && !imageError ? (
-              <>
-                {!imageLoaded && (
-                  <Skeleton className="absolute inset-0 w-full h-full rounded-xl" />
-                )}
-                <img
-                  src={previewImageUrl}
-                  alt=""
-                  className={cn(
-                    "w-full h-full object-cover",
-                    imageLoaded ? "opacity-100" : "opacity-0"
-                  )}
-                  onLoad={() => setImageLoaded(true)}
-                  onError={() => setImageError(true)}
-                />
-                {/* Play button overlay for videos */}
-                {isVideo && imageLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-                      <Play className="h-5 w-5 text-white fill-white ml-0.5" />
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-muted-foreground/40 scale-150">
-                <Icon className="h-5 w-5" />
-              </div>
-            )}
+        <div className="p-5 flex flex-col justify-between min-h-[220px]">
+          {/* Note content preview */}
+          <div className="flex-1 overflow-hidden">
+            <p className="text-foreground/80 text-sm leading-relaxed line-clamp-10">
+              {summary || title}
+            </p>
           </div>
-        </AspectRatio>
 
-        <div className="space-y-3">
-          {/* Header with icon and type */}
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-primary/10 text-primary">
-              <Icon className="h-5 w-5" />
+          {/* Bottom section */}
+          <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/30">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-foreground text-base line-clamp-2 mb-1">
+                {title}
+              </h3>
+              <span className="text-muted-foreground text-xs">{dateText}</span>
             </div>
-            <span className="text-sm font-medium text-muted-foreground">
-              {contentBadge.label}
-            </span>
+            <button className="text-muted-foreground hover:text-foreground transition-colors ml-3 flex-shrink-0" onClick={e => {
+              e.stopPropagation();
+              onClick();
+            }} aria-label="Open note">
+              <ArrowUpRight className="h-5 w-5" />
+            </button>
           </div>
+        </div>
+      </div>
+    </div>;
+  }
 
+  // Image/URL variant - full-bleed image with text overlay
+  return <div className="relative rounded-[20px]">
+    {/* Swipe delete action background */}
+    {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-[20px] transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
+      width: `${Math.max(swipeOffset, 0)}px`
+    }}>
+      <Trash2 className="h-5 w-5 text-destructive-foreground" />
+    </div>}
+
+    <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
+      transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
+    }} className={cn("rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-shadow duration-200 ease-out", "hover:shadow-xl", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+      {/* Selection checkbox */}
+      {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
+        <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-white/80 backdrop-blur-sm border-white/50" />
+      </div>}
+
+      {/* Actions menu */}
+      <div className={cn("absolute top-4 right-4 z-20 transition-opacity duration-200", isSelectionMode && "hidden", isMobile ? showMobileActions ? "opacity-100" : "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100")}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-black/30 backdrop-blur-md hover:bg-black/50 text-white shadow-sm" aria-label="Card actions">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>}
+            {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <AspectRatio ratio={mediaRatio}>
+        {/* Full-bleed image */}
+        {previewImageUrl && !imageError ? <>
+          {!imageLoaded && <div className="absolute inset-0 z-10">
+            <Skeleton className="w-full h-full rounded-[20px]" />
+          </div>}
+          <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full object-cover", imageLoaded ? "opacity-100" : "opacity-0")} onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
+        </> :
+          // Fallback: gradient background with icon
+          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+            <contentBadge.icon className="h-16 w-16 text-muted-foreground/30" />
+          </div>}
+
+        {/* Strong dark gradient overlay from bottom */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+
+        {/* Content type badge - top left */}
+        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 text-white bg-primary/[0.83]")}>
+          <contentBadge.icon className="h-3 w-3" />
+          {contentBadge.label}
+        </Badge>
+
+        {/* Play button overlay for videos */}
+        {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+            <Play className="h-6 w-6 text-white fill-white ml-0.5" />
+          </div>
+        </div>}
+
+        {/* Text overlay - bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
           {/* Title */}
-          <h3 className="font-bold text-base line-clamp-2 leading-snug tracking-tight">
+          <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 mb-3">
             {title}
           </h3>
 
-          {/* Date */}
-          {dateText && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-3 h-3" />
-              <span>{dateText}</span>
-            </div>
-          )}
-
-          {/* Summary preview */}
-          {summary && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {summary}
-            </p>
-          )}
-
-          {/* Tags */}
-          {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
-              {tags.slice(0, 3).map((tag, i) => (
-                <Badge
-                  key={i}
-                  variant="secondary"
-                  className="text-xs cursor-pointer hover:bg-secondary/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTagClick(tag);
-                  }}
-                >
-                  #{tag}
-                </Badge>
-              ))}
-              {tags.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{tags.length - 3}
-                </Badge>
-              )}
-            </div>
-          )}
+          {/* Date and action */}
+          <div className="flex items-center justify-between">
+            <span className="text-white/70 text-sm">{dateText}</span>
+            <span className="text-white text-sm font-medium underline underline-offset-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              OPEN
+            </span>
+          </div>
         </div>
-      </div>
+      </AspectRatio>
     </div>
-  );
+  </div>;
 };
