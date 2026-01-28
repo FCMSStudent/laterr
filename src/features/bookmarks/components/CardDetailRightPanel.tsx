@@ -1,8 +1,8 @@
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo } from "react";
 import { Button } from "@/ui";
 import { Badge } from "@/ui";
 import { Input, Textarea } from "@/ui";
-import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2, ChevronDown } from "lucide-react";
+import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Item } from "@/features/bookmarks/types";
 
@@ -101,7 +101,6 @@ export const CardDetailRightPanel = ({
   editTagInputRef,
 }: CardDetailRightPanelProps) => {
   const notesRef = useRef<HTMLTextAreaElement>(null);
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
 
   // Calculate visible tags and overflow count
   const { visibleTags, overflowCount } = useMemo(() => {
@@ -133,9 +132,7 @@ export const CardDetailRightPanel = ({
     }
   };
 
-  // Check if summary needs truncation
-  const summaryWordCount = item.summary ? item.summary.split(' ').length : 0;
-  const shouldShowToggle = summaryWordCount > 40;
+  const summaryText = item.summary?.trim();
 
   return (
     <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/20 shadow-sm">
@@ -208,29 +205,17 @@ export const CardDetailRightPanel = ({
         </div>
       </div>
 
-      {/* ========== SUMMARY: Clamp with toggle + scrollable when expanded ========== */}
-      <div className="flex-shrink-0 py-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-semibold text-foreground/90">
+      {/* ========== SUMMARY: Clamp to 3 lines ========== */}
+      {summaryText && (
+        <div className="flex-shrink-0 py-4">
+          <h3 className="text-xs font-semibold text-foreground/90 mb-2">
             Summary
           </h3>
-          {shouldShowToggle && (
-            <button
-              onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
-              className="text-[11px] font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-              aria-label={isSummaryExpanded ? "Show less" : "Show more"}
-            >
-              {isSummaryExpanded ? "Less" : "More"}
-              <ChevronDown className={`w-3 h-3 transition-transform ${isSummaryExpanded ? 'rotate-180' : ''}`} />
-            </button>
-          )}
-        </div>
-        <div className="h-[120px] overflow-hidden">
-          <p className={`text-sm text-muted-foreground leading-relaxed ${!isSummaryExpanded ? 'line-clamp-3' : ''}`}>
-            {item.summary || "No summary available."}
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+            {summaryText}
           </p>
         </div>
-      </div>
+      )}
 
       {/* ========== TAGS: Grouped container with inline "+ Add tag" ========== */}
       <div className="flex-shrink-0 py-4">
