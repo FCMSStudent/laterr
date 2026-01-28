@@ -218,7 +218,7 @@ export const CardDetailRightPanel = ({
       )}
 
       {/* ========== NOTES: PRIMARY workspace - visually strong, fixed height ========== */}
-      <div className="flex-shrink-0 py-4 flex flex-col rounded-lg bg-card/80 border border-border/40 px-4">
+      <div className="flex-shrink-0 py-4 flex flex-col rounded-lg bg-card border border-border/60 px-4 shadow-sm">
         <h3 className="text-xs font-semibold text-foreground/90 block mb-3">
           Notes
         </h3>
