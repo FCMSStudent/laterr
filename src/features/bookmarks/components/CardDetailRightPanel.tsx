@@ -142,7 +142,7 @@ export const CardDetailRightPanel = ({
       {/* ========== TITLE: Prominent, single-line with tooltip ========== */}
       <div className="flex-shrink-0 py-4 border-b border-border/10">
         <h2
-          className="text-base font-semibold leading-tight tracking-tight text-foreground line-clamp-1"
+          className="text-base font-semibold leading-tight tracking-tight text-foreground line-clamp-2"
           title={item.title}
         >
           {item.title}
