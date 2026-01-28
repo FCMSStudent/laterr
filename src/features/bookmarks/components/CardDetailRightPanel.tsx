@@ -245,19 +245,19 @@ export const CardDetailRightPanel = ({
         <h3 className="text-xs font-semibold text-muted-foreground/80 block mb-2.5">
           Tags
         </h3>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {/* Visible tags */}
           {visibleTags.map((tag, index) => (
             <div key={`${tag}-${index}`} className="group flex-shrink-0">
               {editingTagIndex === index ? (
-                <div className="flex items-center h-6 bg-background border border-primary rounded-md px-2.5">
+                <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2">
                   <Input
                     ref={editTagInputRef}
                     value={editingTagValue}
                     onChange={(e) => onEditTagChange(e.target.value)}
                     onKeyDown={handleKeyDownEditTag}
                     onBlur={onEditTagCancel}
-                    className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent"
+                    className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60"
                   />
                 </div>
               ) : (
@@ -294,7 +294,7 @@ export const CardDetailRightPanel = ({
 
           {/* Add tag button/input - styled like a tag */}
           {isAddingTag ? (
-            <div className="flex items-center h-6 bg-background border border-primary rounded-md px-2.5 flex-shrink-0">
+            <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2 flex-shrink-0">
               <Input
                 ref={tagInputRef}
                 value={newTagInput}
@@ -304,7 +304,7 @@ export const CardDetailRightPanel = ({
                   if (newTagInput.trim()) onAddTagCommit();
                   else onAddTagCancel();
                 }}
-                className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent"
+                className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60"
                 placeholder="Tag name"
               />
             </div>
