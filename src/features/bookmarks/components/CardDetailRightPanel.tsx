@@ -1,8 +1,8 @@
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo } from "react";
 import { Button } from "@/ui";
 import { Badge } from "@/ui";
 import { Input, Textarea } from "@/ui";
-import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2, ChevronDown } from "lucide-react";
+import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Item } from "@/features/bookmarks/types";
 
@@ -101,7 +101,6 @@ export const CardDetailRightPanel = ({
   editTagInputRef,
 }: CardDetailRightPanelProps) => {
   const notesRef = useRef<HTMLTextAreaElement>(null);
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
 
   // Calculate visible tags and overflow count
   const { visibleTags, overflowCount } = useMemo(() => {
@@ -133,16 +132,14 @@ export const CardDetailRightPanel = ({
     }
   };
 
-  // Check if summary needs truncation
-  const summaryWordCount = item.summary ? item.summary.split(' ').length : 0;
-  const shouldShowToggle = summaryWordCount > 40;
+  const summaryText = item.summary?.trim();
 
   return (
     <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/20 shadow-sm">
       {/* ========== TITLE: Prominent, single-line with tooltip ========== */}
       <div className="flex-shrink-0 py-4 border-b border-border/10">
         <h2
-          className="text-base font-semibold leading-tight tracking-tight text-foreground line-clamp-1"
+          className="text-base font-semibold leading-tight tracking-tight text-foreground line-clamp-2"
           title={item.title}
         >
           {item.title}
@@ -208,33 +205,44 @@ export const CardDetailRightPanel = ({
         </div>
       </div>
 
-      {/* ========== SUMMARY: Clamp with toggle + scrollable when expanded ========== */}
-      <div className="flex-shrink-0 py-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-semibold text-foreground/90">
+      {/* ========== SUMMARY: Clamp to 3 lines ========== */}
+      {summaryText && (
+        <div className="flex-shrink-0 py-4">
+          <h3 className="text-xs font-semibold text-foreground/90 mb-2">
             Summary
           </h3>
-          {shouldShowToggle && (
-            <button
-              onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
-              className="text-[11px] font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-              aria-label={isSummaryExpanded ? "Show less" : "Show more"}
-            >
-              {isSummaryExpanded ? "Less" : "More"}
-              <ChevronDown className={`w-3 h-3 transition-transform ${isSummaryExpanded ? 'rotate-180' : ''}`} />
-            </button>
-          )}
-        </div>
-        <div className="h-[120px] overflow-hidden">
-          <p className={`text-sm text-muted-foreground leading-relaxed ${!isSummaryExpanded ? 'line-clamp-3' : ''}`}>
-            {item.summary || "No summary available."}
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+            {summaryText}
           </p>
+        </div>
+      )}
+
+      {/* ========== NOTES: Lightweight workspace with clear affordance ========== */}
+      <div className="flex-shrink-0 py-4 flex flex-col rounded-lg bg-card/70 border border-border/40 px-3 shadow-sm">
+        <h3 className="text-xs font-semibold text-foreground block mt-3 mb-2.5">
+          Notes
+        </h3>
+        <div className="relative mb-3">
+          <Textarea
+            ref={notesRef}
+            placeholder="Notes are saved automatically..."
+            value={userNotes}
+            onChange={(e) => onNotesChange(e.target.value)}
+            onBlur={onNotesSave}
+            className="w-full h-[112px] min-h-[112px] max-h-[112px] border-0 rounded-md bg-background/70 p-3 focus-visible:ring-1 focus-visible:ring-border focus-visible:bg-background text-sm leading-relaxed placeholder:text-muted-foreground/50 resize-none transition-all"
+            aria-label="Notes"
+          />
+          {saving && (
+            <span className="absolute bottom-3 right-3 text-xs font-medium text-muted-foreground/60">
+              Saving...
+            </span>
+          )}
         </div>
       </div>
 
       {/* ========== TAGS: Grouped container with inline "+ Add tag" ========== */}
-      <div className="flex-shrink-0 py-3">
-        <h3 className="text-[11px] font-semibold text-foreground/80 block mb-2">
+      <div className="flex-shrink-0 py-4">
+        <h3 className="text-xs font-semibold text-muted-foreground/80 block mb-2.5">
           Tags
         </h3>
         <div className="flex flex-wrap gap-1">
@@ -256,7 +264,7 @@ export const CardDetailRightPanel = ({
                 <Badge
                   variant="secondary"
                   onDoubleClick={() => onEditTagStart(index)}
-                  className="h-5 px-2 rounded text-[11px] font-normal bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary/40 cursor-default flex items-center gap-1 border-0"
+                  className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/40 hover:bg-secondary/60 cursor-default flex items-center gap-1.5 border-0"
                 >
                   {tag}
                   <button
@@ -278,7 +286,7 @@ export const CardDetailRightPanel = ({
           {overflowCount > 0 && (
             <Badge
               variant="secondary"
-              className="h-5 px-2 rounded text-[11px] font-normal bg-secondary/20 text-muted-foreground/70 border-0 flex-shrink-0"
+              className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/25 text-muted-foreground border-0 flex-shrink-0"
             >
               +{overflowCount}
             </Badge>
@@ -303,36 +311,13 @@ export const CardDetailRightPanel = ({
           ) : (
             <button
               onClick={onAddTagStart}
-              className="h-5 px-2 flex items-center gap-1 bg-secondary/20 hover:bg-secondary/40 text-muted-foreground/70 hover:text-foreground text-[11px] font-normal rounded transition-colors flex-shrink-0 border-0"
+              className="h-6 px-2.5 flex items-center gap-1 bg-secondary/25 hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs font-normal rounded-md transition-colors flex-shrink-0 border-0"
               title="Add new tag"
               aria-label="Add new tag"
             >
               <Plus className="w-3 h-3" />
               Add
             </button>
-          )}
-        </div>
-      </div>
-
-      {/* ========== NOTES: Lightweight workspace with clear affordance ========== */}
-      <div className="flex-shrink-0 py-4 flex flex-col">
-        <h3 className="text-xs font-semibold text-foreground/90 block mb-2.5">
-          Notes
-        </h3>
-        <div className="relative">
-          <Textarea
-            ref={notesRef}
-            placeholder="Notes are saved automatically..."
-            value={userNotes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            onBlur={onNotesSave}
-            className="w-full h-[112px] min-h-[112px] max-h-[112px] border-0 rounded-md bg-muted/20 p-3 focus-visible:ring-1 focus-visible:ring-border focus-visible:bg-background/50 text-sm leading-relaxed placeholder:text-muted-foreground/50 resize-none transition-all"
-            aria-label="Notes"
-          />
-          {saving && (
-            <span className="absolute bottom-3 right-3 text-xs font-medium text-muted-foreground/60">
-              Saving...
-            </span>
           )}
         </div>
       </div>

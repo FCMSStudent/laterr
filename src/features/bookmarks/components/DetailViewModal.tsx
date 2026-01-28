@@ -385,7 +385,7 @@ export const DetailViewModal = ({
 
     // All other types: fixed/contained (no scroll)
     if (isVideoContent) {
-      return `${base} detail-preview-fixed bg-black`;
+      return `${base} detail-preview-fixed aspect-video bg-black overflow-hidden`;
     }
     if (isNoteContent) {
       return `${base} detail-preview-fixed bg-card border border-border/40 p-6`;
@@ -486,7 +486,7 @@ export const DetailViewModal = ({
   const MobileDetailContent = () => (
     <div className="space-y-6 pb-20">
       {/* Simplified mobile view reuse logic but adapt styling */}
-      <div className="aspect-video w-full bg-muted rounded-xl overflow-hidden relative">
+      <div className={`aspect-video w-full rounded-xl overflow-hidden relative ${isVideoContent ? "bg-black" : "bg-muted"}`}>
         {renderPreview()}
       </div>
       <div className="space-y-4">
