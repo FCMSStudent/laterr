@@ -136,107 +136,124 @@ export const CardDetailRightPanel = ({
     }
   };
   const summaryText = item.summary?.trim();
-  return <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/10">
-      {/* ========== TITLE: Prominent, larger font ========== */}
-      <div className="flex-shrink-0 pt-5 pb-4">
-        <h2 className="text-lg font-bold leading-tight tracking-tight text-foreground line-clamp-2" title={item.title}>
-          {item.title}
-        </h2>
+  return <div className="card-detail-right-panel pl-6 pr-2 flex flex-col h-full bg-transparent">
+    {/* ========== TITLE: Prominent, larger font ========== */}
+    <div className="flex-shrink-0 pt-5 pb-4">
+      <h2 className="text-lg font-bold leading-tight tracking-tight text-foreground line-clamp-2" title={item.title}>
+        {item.title}
+      </h2>
+    </div>
+
+    {/* ========== ACTION BAR: Side-by-side buttons ========== */}
+    <div className="flex-shrink-0 pb-5">
+      <div className="flex gap-2">
+        {item.content && <Button variant="secondary" size="sm" asChild className="h-8 grow basis-0 text-xs font-medium bg-secondary/50 hover:bg-secondary/80" aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}>
+          <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5" title={item.type === 'url' ? 'Visit page' : 'Open original file'}>
+            <ExternalLink className="h-3.5 w-3.5" />
+            <span>{item.type === 'url' ? 'Visit' : 'Open'}</span>
+          </a>
+        </Button>}
+        <Button variant="secondary" size="sm" onClick={onCopyLink} className="h-8 grow basis-0 text-xs font-medium bg-secondary/50 hover:bg-secondary/80" aria-label="Copy link to clipboard" title="Copy link">
+          <Link2 className="h-3.5 w-3.5 mr-1.5" />
+          <span>Copy</span>
+        </Button>
       </div>
+    </div>
 
-      {/* ========== ACTION BAR: Side-by-side buttons ========== */}
-      <div className="flex-shrink-0 pb-5">
-        <div className="flex gap-2">
-          {item.content && <Button variant="secondary" size="sm" asChild className="h-8 grow basis-0 text-xs font-medium bg-secondary/50 hover:bg-secondary/80" aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}>
-              <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5" title={item.type === 'url' ? 'Visit page' : 'Open original file'}>
-                <ExternalLink className="h-3.5 w-3.5" />
-                <span>{item.type === 'url' ? 'Visit' : 'Open'}</span>
-              </a>
-            </Button>}
-          <Button variant="secondary" size="sm" onClick={onCopyLink} className="h-8 grow basis-0 text-xs font-medium bg-secondary/50 hover:bg-secondary/80" aria-label="Copy link to clipboard" title="Copy link">
-            <Link2 className="h-3.5 w-3.5 mr-1.5" />
-            <span>Copy</span>
-          </Button>
-        </div>
+    {/* ========== TL;DR: Pink accent label ========== */}
+    {summaryText && <div className="flex-shrink-0 pb-5">
+      <h3 className="text-xs font-semibold text-primary mb-2">
+        TL;DR
+      </h3>
+      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+        {summaryText}
+      </p>
+    </div>}
+
+    {/* ========== METADATA: Subtle, low-contrast ========== */}
+    <div className="flex-shrink-0 pb-5">
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
+        <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+        <span>{formatDistanceToNow(new Date(item.created_at), {
+          addSuffix: true
+        })}</span>
+        {item.type === "url" && item.content && <>
+          <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+          <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[120px]">
+            <Globe className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">{safeParseUrl(item.content)?.hostname ?? item.content}</span>
+          </a>
+        </>}
       </div>
+    </div>
 
-      {/* ========== METADATA: Subtle, low-contrast ========== */}
-      <div className="flex-shrink-0 pb-5">
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
-          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>{formatDistanceToNow(new Date(item.created_at), {
-            addSuffix: true
-          })}</span>
-          {item.type === "url" && item.content && <>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-              <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[120px]">
-                <Globe className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">{safeParseUrl(item.content)?.hostname ?? item.content}</span>
-              </a>
-            </>}
-        </div>
-      </div>
+    {/* ========== NOTES: PRIMARY workspace - visually strong, fixed height ========== */}
+    <div className="flex-shrink-0 pb-5">
+      <label htmlFor="user-notes" className="block text-xs font-semibold text-foreground mb-2">
+        Notes
+      </label>
+      <Textarea
+        id="user-notes"
+        ref={notesRef}
+        value={userNotes}
+        onChange={(e) => onNotesChange(e.target.value)}
+        onBlur={onNotesSave}
+        placeholder="Add your notes..."
+        className="min-h-[112px] max-h-[112px] resize-none bg-muted/30 border-border/30 text-sm leading-relaxed"
+      />
+      {saving && (
+        <p className="text-xs text-muted-foreground mt-1">Saving...</p>
+      )}
+    </div>
 
-      {/* ========== TL;DR: Pink accent label ========== */}
-      {summaryText && <div className="flex-shrink-0 pb-5">
-          <h3 className="text-xs font-semibold text-primary mb-2">
-            TL;DR
-          </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-            {summaryText}
-          </p>
-        </div>}
 
-      {/* ========== NOTES: PRIMARY workspace - visually strong, fixed height ========== */}
-      
-
-      {/* ========== TAGS: Pink accent label ========== */}
-      <div className="flex-shrink-0 pb-5">
-        <h3 className="text-xs font-semibold text-primary mb-2">
-          Tags
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {/* Visible tags */}
-          {visibleTags.map((tag, index) => <div key={`${tag}-${index}`} className="group flex-shrink-0">
-              {editingTagIndex === index ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3">
-                  <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={onEditTagCancel} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" />
-                </div> : <Badge variant="secondary" onDoubleClick={() => onEditTagStart(index)} className="h-6 px-3 rounded-full text-xs font-normal bg-secondary/60 hover:bg-secondary/80 cursor-default flex items-center gap-1.5 border-0">
-                  {tag}
-                  <button onClick={e => {
+    {/* ========== TAGS: Pink accent label ========== */}
+    <div className="flex-shrink-0 pb-5">
+      <h3 className="text-xs font-semibold text-primary mb-2">
+        Tags
+      </h3>
+      <div className="flex flex-wrap gap-1.5">
+        {/* Visible tags */}
+        {visibleTags.map((tag, index) => <div key={`${tag}-${index}`} className="group flex-shrink-0">
+          {editingTagIndex === index ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3">
+            <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={onEditTagCancel} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" />
+          </div> : <Badge variant="secondary" onDoubleClick={() => onEditTagStart(index)} className="h-6 px-3 rounded-full text-xs font-normal bg-secondary/60 hover:bg-secondary/80 cursor-default flex items-center gap-1.5 border-0">
+            {tag}
+            <button onClick={e => {
               e.stopPropagation();
               onRemoveTag(tag);
             }} className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity" aria-label={`Remove ${tag} tag`}>
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>}
-            </div>)}
+              <X className="w-3 h-3" />
+            </button>
+          </Badge>}
+        </div>)}
 
-          {/* Overflow indicator */}
-          {overflowCount > 0 && <Badge variant="secondary" className="h-6 px-3 rounded-full text-xs font-normal bg-secondary/40 text-muted-foreground border-0 flex-shrink-0">
-              +{overflowCount}
-            </Badge>}
+        {/* Overflow indicator */}
+        {overflowCount > 0 && <Badge variant="secondary" className="h-6 px-3 rounded-full text-xs font-normal bg-secondary/40 text-muted-foreground border-0 flex-shrink-0">
+          +{overflowCount}
+        </Badge>}
 
-          {/* Add tag button/input - styled like a pill */}
-          {isAddingTag ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3 flex-shrink-0">
-              <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={() => {
-            if (newTagInput.trim()) onAddTagCommit();else onAddTagCancel();
+        {/* Add tag button/input - styled like a pill */}
+        {isAddingTag ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3 flex-shrink-0">
+          <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={() => {
+            if (newTagInput.trim()) onAddTagCommit(); else onAddTagCancel();
           }} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" placeholder="Tag name" />
-            </div> : <button onClick={onAddTagStart} className="h-6 px-3 flex items-center gap-1 bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-normal rounded-full transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
-              <Plus className="w-3 h-3" />
-              Add
-            </button>}
-        </div>
+        </div> : <button onClick={onAddTagStart} className="h-6 px-3 flex items-center gap-1 bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-normal rounded-full transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
+          <Plus className="w-3 h-3" />
+          Add
+        </button>}
       </div>
+    </div>
 
-      {/* Spacer to push footer to bottom */}
-      <div className="flex-1" />
+    {/* Spacer to push footer to bottom */}
+    <div className="flex-1" />
 
-      {/* ========== FOOTER: Delete centered with pink styling ========== */}
-      <div className="flex-shrink-0 py-4 border-t border-border/10 flex items-center justify-center">
-        <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 px-4 text-xs font-medium text-primary hover:text-destructive hover:bg-destructive/5">
-          <Trash2 className="w-4 h-4 mr-2" />
-          Delete
-        </Button>
-      </div>
-    </div>;
+    {/* ========== FOOTER: Delete centered with pink styling ========== */}
+    <div className="flex-shrink-0 py-4 flex items-center justify-center">
+      <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 px-4 text-xs font-medium text-primary hover:text-destructive hover:bg-destructive/5">
+        <Trash2 className="w-4 h-4 mr-2" />
+        Delete
+      </Button>
+    </div>
+  </div>;
 };

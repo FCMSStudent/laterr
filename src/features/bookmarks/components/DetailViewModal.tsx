@@ -589,7 +589,7 @@ export const DetailViewModal = ({
         </Drawer>
       ) : (
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className={`${modalSizeClasses} p-8 border-0 shadow-2xl bg-background/80 backdrop-blur-md`}>
+          <DialogContent className={`${modalSizeClasses} p-8 border-0 shadow-2xl bg-muted/30 backdrop-blur-md`}>
             <DialogHeader className="sr-only">
               <DialogTitle>{item.title}</DialogTitle>
               <DialogDescription>Item details</DialogDescription>
