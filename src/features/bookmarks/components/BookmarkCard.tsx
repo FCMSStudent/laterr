@@ -28,6 +28,20 @@ interface BookmarkCardProps {
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
 }
+// Badge color mapping by content type
+const BADGE_COLORS: Record<string, string> = {
+  url: 'bg-primary',
+  product: 'bg-primary',
+  video: 'bg-teal-500',
+  document: 'bg-teal-500',
+  file: 'bg-teal-500',
+  image: 'bg-teal-500',
+};
+
+const getTypeBadgeColor = (type: ItemType, isVideo: boolean): string => {
+  if (isVideo) return BADGE_COLORS.video;
+  return BADGE_COLORS[type] || 'bg-teal-500';
+};
 
 // Get content type badge info
 const getContentBadge = (type: ItemType, content?: string | null) => {
@@ -40,7 +54,7 @@ const getContentBadge = (type: ItemType, content?: string | null) => {
   switch (type) {
     case 'url':
       return {
-        label: 'Article',
+        label: 'Product',
         icon: Link2
       };
     case 'note':
@@ -71,7 +85,6 @@ const getContentBadge = (type: ItemType, content?: string | null) => {
       };
   }
 };
-
 // Format date for display
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
@@ -199,7 +212,7 @@ export const BookmarkCard = ({
 
       <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
         transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
-      }} className={cn("bg-muted/10 border border-border/50 rounded-[20px] cursor-pointer group overflow-hidden relative", "hover:shadow-xl transition-all hover:scale-[1.02]", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+      }} className={cn("bg-card rounded-[20px] cursor-pointer group overflow-hidden relative", "hover:shadow-xl transition-all hover:scale-[1.02]", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
         {/* Selection checkbox */}
         {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
           <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-background/90" />
@@ -309,7 +322,7 @@ export const BookmarkCard = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
         {/* Content type badge - top left */}
-        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 text-white bg-primary/[0.83]")}>
+        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 text-white", getTypeBadgeColor(type, isVideo))}>
           <contentBadge.icon className="h-3 w-3" />
           {contentBadge.label}
         </Badge>
