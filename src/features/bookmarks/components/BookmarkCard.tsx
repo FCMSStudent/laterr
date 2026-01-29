@@ -202,9 +202,9 @@ export const BookmarkCard = ({
 
   // Note type: white card with text overlay
   if (isNoteType) {
-    return <div className="relative overflow-hidden rounded-[20px]">
+    return <div className="relative overflow-hidden rounded-xl">
       {/* Swipe delete action background */}
-      {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-[20px] transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
+      {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-xl transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
         width: `${Math.max(swipeOffset, 0)}px`
       }}>
         <Trash2 className="h-5 w-5 text-destructive-foreground" />
@@ -212,7 +212,7 @@ export const BookmarkCard = ({
 
       <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
         transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
-      }} className={cn("bg-card rounded-[20px] cursor-pointer group overflow-hidden relative", "hover:shadow-xl transition-all hover:scale-[1.02]", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+      }} className={cn("bg-muted/20 border border-border/20 shadow-sm rounded-xl cursor-pointer group overflow-hidden relative", "hover:shadow-md transition-shadow duration-200", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
         {/* Selection checkbox */}
         {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
           <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-background/90" />
@@ -268,9 +268,9 @@ export const BookmarkCard = ({
   }
 
   // Image/URL variant - full-bleed image with text overlay
-  return <div className="relative rounded-[20px]">
+  return <div className="relative rounded-xl">
     {/* Swipe delete action background */}
-    {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-[20px] transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
+    {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-xl transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
       width: `${Math.max(swipeOffset, 0)}px`
     }}>
       <Trash2 className="h-5 w-5 text-destructive-foreground" />
@@ -278,7 +278,7 @@ export const BookmarkCard = ({
 
     <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
       transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
-    }} className={cn("rounded-[20px] cursor-pointer group overflow-hidden relative", "transition-shadow duration-200 ease-out", "hover:shadow-xl", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+    }} className={cn("rounded-xl border border-border/20 shadow-sm cursor-pointer group overflow-hidden relative", "transition-shadow duration-200 ease-out", "hover:shadow-md", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
       {/* Selection checkbox */}
       {isSelectionMode && <div className="absolute top-4 right-4 z-20 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
         <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className="bg-white/80 backdrop-blur-sm border-white/50" />
@@ -309,7 +309,7 @@ export const BookmarkCard = ({
         {/* Full-bleed image */}
         {previewImageUrl && !imageError ? <>
           {!imageLoaded && <div className="absolute inset-0 z-10">
-            <Skeleton className="w-full h-full rounded-[20px]" />
+            <Skeleton className="w-full h-full rounded-xl" />
           </div>}
           <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full object-cover", imageLoaded ? "opacity-100" : "opacity-0")} onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
         </> :

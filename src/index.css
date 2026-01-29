@@ -24,7 +24,7 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Premium Apple-inspired neutral palette */
-    --background: 0 0% 100%;
+    --background: 0 0% 98%;
     --foreground: 217 19.1176% 26.6667%;
 
     --card: 0 0% 100%;
