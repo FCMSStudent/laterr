@@ -139,7 +139,7 @@ export const CardDetailRightPanel = ({
   return <div className="card-detail-right-panel pl-6 pr-2 flex flex-col h-full bg-transparent">
     {/* ========== TITLE: Prominent, larger font ========== */}
     <div className="flex-shrink-0 pt-5 pb-4">
-      <h2 className="text-lg font-bold leading-tight tracking-tight text-foreground line-clamp-2" title={item.title}>
+      <h2 className="text-lg font-bold leading-tight tracking-tight line-clamp-2 text-primary-foreground" title={item.title}>
         {item.title}
       </h2>
     </div>
@@ -162,21 +162,21 @@ export const CardDetailRightPanel = ({
 
     {/* ========== TL;DR: Pink accent label ========== */}
     {summaryText && <div className="flex-shrink-0 pb-5">
-      <h3 className="text-xs font-semibold text-primary mb-2">
+      <h3 className="text-xs font-semibold mb-2 text-primary-foreground">
         TL;DR
       </h3>
-      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+      <p className="text-sm leading-relaxed line-clamp-3 text-primary-foreground text-justify">
         {summaryText}
       </p>
     </div>}
 
     {/* ========== METADATA: Subtle, low-contrast ========== */}
     <div className="flex-shrink-0 pb-5">
-      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
+      <div className="flex items-center gap-1.5 text-[11px] text-secondary">
         <Clock className="w-3.5 h-3.5 flex-shrink-0" />
         <span>{formatDistanceToNow(new Date(item.created_at), {
-          addSuffix: true
-        })}</span>
+            addSuffix: true
+          })}</span>
         {item.type === "url" && item.content && <>
           <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
           <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[120px]">
@@ -189,27 +189,17 @@ export const CardDetailRightPanel = ({
 
     {/* ========== NOTES: PRIMARY workspace - visually strong, fixed height ========== */}
     <div className="flex-shrink-0 pb-5">
-      <label htmlFor="user-notes" className="block text-xs font-semibold text-foreground mb-2">
+      <label htmlFor="user-notes" className="block text-xs font-semibold mb-2 text-primary-foreground">
         Notes
       </label>
-      <Textarea
-        id="user-notes"
-        ref={notesRef}
-        value={userNotes}
-        onChange={(e) => onNotesChange(e.target.value)}
-        onBlur={onNotesSave}
-        placeholder="Add your notes..."
-        className="min-h-[112px] max-h-[112px] resize-none bg-muted/30 border-border/30 text-sm leading-relaxed"
-      />
-      {saving && (
-        <p className="text-xs text-muted-foreground mt-1">Saving...</p>
-      )}
+      <Textarea id="user-notes" ref={notesRef} value={userNotes} onChange={e => onNotesChange(e.target.value)} onBlur={onNotesSave} placeholder="Add your notes..." className="min-h-[112px] max-h-[112px] resize-none bg-muted/30 border-border/30 text-sm leading-relaxed" />
+      {saving && <p className="text-xs text-muted-foreground mt-1">Saving...</p>}
     </div>
 
 
     {/* ========== TAGS: Pink accent label ========== */}
     <div className="flex-shrink-0 pb-5">
-      <h3 className="text-xs font-semibold text-primary mb-2">
+      <h3 className="text-xs font-semibold mb-2 text-primary-foreground">
         Tags
       </h3>
       <div className="flex flex-wrap gap-1.5">
@@ -236,7 +226,7 @@ export const CardDetailRightPanel = ({
         {/* Add tag button/input - styled like a pill */}
         {isAddingTag ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3 flex-shrink-0">
           <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={() => {
-            if (newTagInput.trim()) onAddTagCommit(); else onAddTagCancel();
+            if (newTagInput.trim()) onAddTagCommit();else onAddTagCancel();
           }} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" placeholder="Tag name" />
         </div> : <button onClick={onAddTagStart} className="h-6 px-3 flex items-center gap-1 bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-normal rounded-full transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
           <Plus className="w-3 h-3" />
