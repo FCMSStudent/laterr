@@ -372,31 +372,31 @@ export const DetailViewModal = ({
   const modalSizeClasses = "w-[min(95vw,1100px)] max-w-[1100px] h-[min(85vh,720px)] overflow-hidden";
   const gridLayout = "grid-cols-1 lg:grid-cols-[1.4fr_1fr]";
 
-  // 3. Preview Container Styling - Unified with scroll ownership
+  // 3. Preview Container Styling - Unified with scroll ownership and rounded corners
   const getPreviewContainerStyles = () => {
-    // Base: unified container class + common styling
-    const base = "detail-preview-container relative";
+    // Base: unified container class + rounded corners + light gray background
+    const base = "detail-preview-container relative rounded-2xl overflow-hidden";
 
     // Scroll ownership by content type
     if (isDocumentContent) {
       // PDF/Document cards: preview container is scrollable
-      return `${base} detail-preview-scrollable bg-muted/30 border border-border/40`;
+      return `${base} detail-preview-scrollable bg-muted/20`;
     }
 
     // All other types: fixed/contained (no scroll)
     if (isVideoContent) {
-      return `${base} detail-preview-fixed aspect-video bg-black overflow-hidden`;
+      return `${base} detail-preview-fixed aspect-video bg-black`;
     }
     if (isNoteContent) {
-      return `${base} detail-preview-fixed bg-card border border-border/40 p-6`;
+      return `${base} detail-preview-fixed bg-muted/10 p-6`;
     }
     if (isImageContent) {
-      return `${base} detail-preview-fixed detail-preview-letterbox bg-muted/30 border border-border/40`;
+      return `${base} detail-preview-fixed detail-preview-letterbox bg-muted/20`;
     }
     if (isUrlContent) {
-      return `${base} detail-preview-fixed bg-muted/20 border border-border/40`;
+      return `${base} detail-preview-fixed bg-muted/15`;
     }
-    return `${base} detail-preview-fixed bg-muted/20 border border-border/40`;
+    return `${base} detail-preview-fixed bg-muted/15`;
   };
 
   const renderPreview = () => {

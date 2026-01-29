@@ -136,32 +136,32 @@ export const CardDetailRightPanel = ({
     }
   };
   const summaryText = item.summary?.trim();
-  return <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/15">
-      {/* ========== TITLE: Prominent, single-line with tooltip ========== */}
-      <div className="flex-shrink-0 py-4 border-b border-border/10">
-        <h2 className="text-base font-semibold leading-tight tracking-tight text-foreground line-clamp-2" title={item.title}>
+  return <div className="card-detail-right-panel border-l border-border/30 pl-6 pr-2 flex flex-col h-full bg-muted/10">
+      {/* ========== TITLE: Prominent, larger font ========== */}
+      <div className="flex-shrink-0 pt-5 pb-4">
+        <h2 className="text-lg font-bold leading-tight tracking-tight text-foreground line-clamp-2" title={item.title}>
           {item.title}
         </h2>
       </div>
 
-      {/* ========== ACTION BAR: Compact, balanced visual weight ========== */}
-      <div className="flex-shrink-0 py-4">
+      {/* ========== ACTION BAR: Side-by-side buttons ========== */}
+      <div className="flex-shrink-0 pb-5">
         <div className="flex gap-2">
-          {item.content && <Button variant="ghost" size="sm" asChild className="h-7 grow basis-0 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50" aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}>
+          {item.content && <Button variant="secondary" size="sm" asChild className="h-8 grow basis-0 text-xs font-medium bg-secondary/50 hover:bg-secondary/80" aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}>
               <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5" title={item.type === 'url' ? 'Visit page' : 'Open original file'}>
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3.5 w-3.5" />
                 <span>{item.type === 'url' ? 'Visit' : 'Open'}</span>
               </a>
             </Button>}
-          <Button variant="ghost" size="sm" onClick={onCopyLink} className="h-7 grow basis-0 text-xs font-normal text-foreground/70 hover:text-foreground hover:bg-accent/50" aria-label="Copy link to clipboard" title="Copy link">
-            <Link2 className="h-3 w-3 mr-1.5" />
+          <Button variant="secondary" size="sm" onClick={onCopyLink} className="h-8 grow basis-0 text-xs font-medium bg-secondary/50 hover:bg-secondary/80" aria-label="Copy link to clipboard" title="Copy link">
+            <Link2 className="h-3.5 w-3.5 mr-1.5" />
             <span>Copy</span>
           </Button>
         </div>
       </div>
 
       {/* ========== METADATA: Subtle, low-contrast ========== */}
-      <div className="flex-shrink-0 py-4">
+      <div className="flex-shrink-0 pb-5">
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
           <Clock className="w-3.5 h-3.5 flex-shrink-0" />
           <span>{formatDistanceToNow(new Date(item.created_at), {
@@ -177,12 +177,12 @@ export const CardDetailRightPanel = ({
         </div>
       </div>
 
-      {/* ========== SUMMARY: Clamp to 3 lines, hide if empty ========== */}
-      {summaryText && <div className="flex-shrink-0 py-4">
-          <h3 className="text-xs font-medium text-muted-foreground/70 mb-2">
-            Summary
+      {/* ========== TL;DR: Pink accent label ========== */}
+      {summaryText && <div className="flex-shrink-0 pb-5">
+          <h3 className="text-xs font-semibold text-primary mb-2">
+            TL;DR
           </h3>
-          <p className="text-sm text-muted-foreground/80 leading-relaxed line-clamp-3">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
             {summaryText}
           </p>
         </div>}
@@ -190,17 +190,17 @@ export const CardDetailRightPanel = ({
       {/* ========== NOTES: PRIMARY workspace - visually strong, fixed height ========== */}
       
 
-      {/* ========== TAGS: SECONDARY metadata - compact and light ========== */}
-      <div className="flex-shrink-0 py-4">
-        <h3 className="text-xs font-medium text-muted-foreground/60 block mb-2">
+      {/* ========== TAGS: Pink accent label ========== */}
+      <div className="flex-shrink-0 pb-5">
+        <h3 className="text-xs font-semibold text-primary mb-2">
           Tags
         </h3>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {/* Visible tags */}
           {visibleTags.map((tag, index) => <div key={`${tag}-${index}`} className="group flex-shrink-0">
-              {editingTagIndex === index ? <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2">
-                  <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={onEditTagCancel} className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60" />
-                </div> : <Badge variant="secondary" onDoubleClick={() => onEditTagStart(index)} className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/40 hover:bg-secondary/60 cursor-default flex items-center gap-1.5 border-0">
+              {editingTagIndex === index ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3">
+                  <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={onEditTagCancel} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" />
+                </div> : <Badge variant="secondary" onDoubleClick={() => onEditTagStart(index)} className="h-6 px-3 rounded-full text-xs font-normal bg-secondary/60 hover:bg-secondary/80 cursor-default flex items-center gap-1.5 border-0">
                   {tag}
                   <button onClick={e => {
               e.stopPropagation();
@@ -212,16 +212,16 @@ export const CardDetailRightPanel = ({
             </div>)}
 
           {/* Overflow indicator */}
-          {overflowCount > 0 && <Badge variant="secondary" className="h-6 px-2.5 rounded-md text-xs font-normal bg-secondary/25 text-muted-foreground border-0 flex-shrink-0">
+          {overflowCount > 0 && <Badge variant="secondary" className="h-6 px-3 rounded-full text-xs font-normal bg-secondary/40 text-muted-foreground border-0 flex-shrink-0">
               +{overflowCount}
             </Badge>}
 
-          {/* Add tag button/input - styled like a tag */}
-          {isAddingTag ? <div className="flex items-center h-5 bg-background border border-primary/70 rounded px-2 flex-shrink-0">
+          {/* Add tag button/input - styled like a pill */}
+          {isAddingTag ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3 flex-shrink-0">
               <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={() => {
             if (newTagInput.trim()) onAddTagCommit();else onAddTagCancel();
-          }} className="h-full border-0 p-0 text-[11px] w-20 focus-visible:ring-0 bg-transparent text-foreground/80 placeholder:text-muted-foreground/60" placeholder="Tag name" />
-            </div> : <button onClick={onAddTagStart} className="h-6 px-2.5 flex items-center gap-1 bg-secondary/25 hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs font-normal rounded-md transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
+          }} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" placeholder="Tag name" />
+            </div> : <button onClick={onAddTagStart} className="h-6 px-3 flex items-center gap-1 bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-normal rounded-full transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
               <Plus className="w-3 h-3" />
               Add
             </button>}
@@ -229,12 +229,12 @@ export const CardDetailRightPanel = ({
       </div>
 
       {/* Spacer to push footer to bottom */}
-      
+      <div className="flex-1" />
 
-      {/* ========== FOOTER: Delete action - low visual weight ========== */}
-      <div className="flex-shrink-0 py-4 border-t border-border/10 flex items-center justify-end">
-        <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 px-3 text-xs font-normal text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5">
-          <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+      {/* ========== FOOTER: Delete centered with pink styling ========== */}
+      <div className="flex-shrink-0 py-4 border-t border-border/10 flex items-center justify-center">
+        <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 px-4 text-xs font-medium text-primary hover:text-destructive hover:bg-destructive/5">
+          <Trash2 className="w-4 h-4 mr-2" />
           Delete
         </Button>
       </div>
