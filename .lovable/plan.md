@@ -1,45 +1,52 @@
 
-# Bookmarks Dashboard Redesign Plan
+# Detail View Modal Redesign Plan
 
 ## Overview
-Redesign the bookmarks grid to match the reference UI - a clean Pinterest-style masonry layout with two distinct card styles: minimal note cards and full-bleed media cards with type badges.
+Redesign the DetailViewModal to match the reference UI - a clean, modern modal with a large image preview on the left and a well-organized details panel on the right with pink-accented section labels.
+
+## Current State Analysis
+The existing `CardDetailRightPanel.tsx` has the right structure but uses:
+- Gray/muted section labels (Summary, Tags)
+- Different visual hierarchy 
+- Different button styling
+
+The reference shows:
+- Pink/primary colored section labels ("TL;DR", "Tags")
+- Cleaner spacing and visual hierarchy
+- Centered "Delete" button with icon
 
 ## Key Design Changes
 
-### 1. Card Variants
+### 1. Section Labels
+Change from gray muted labels to pink/primary accent:
+- "Summary" → "TL;DR" (with pink text)
+- "Tags" label in pink
 
-**Note Cards (type: 'note')**
-- Clean white/muted background
-- Text content preview fills the card
-- Title and date at bottom with subtle border separator
-- Arrow icon in bottom-right for navigation
-- No type badge (cleaner look for notes)
-- Minimal styling, no visible tags
+### 2. Visual Styling
+- Section labels: `text-primary` (pink) instead of `text-muted-foreground`
+- Larger, bolder title at top
+- More generous spacing between sections
+- Remove some visual clutter
 
-**Media Cards (URLs, Images, Documents, Videos)**
-- Full-bleed image/preview fills entire card
-- Strong dark gradient overlay from bottom (for text readability)
-- Colored type badge in top-left corner
-- White title text overlaid at bottom
-- Play button overlay for video content
-- No visible tags on cards (cleaner aesthetic)
+### 3. Action Buttons
+Keep "Visit" and "Copy" side-by-side but style to match reference:
+- Light background/ghost style with icons
+- Centered alignment in their row
 
-### 2. Type Badge Color System
-Create a content-type color mapping:
-- **Product/URL**: Pink (primary color - `bg-primary`)
-- **Document**: Teal (`bg-teal-500`)
-- **Video**: Teal (`bg-teal-500`)
-- **Image**: Teal (`bg-teal-500`)
+### 4. Tags Section
+- Pink "Tags" label
+- Tag pills with rounded style
+- "+ Add" button inline with tags
 
-### 3. Layout Adjustments
-- Keep the existing 4-column masonry layout
-- Maintain dynamic aspect ratios per content type
-- Ensure cards have consistent 20px border-radius
+### 5. Delete Button
+- Centered at bottom of panel
+- Pink/destructive text with trash icon
+- Clean, minimal styling
 
-### 4. Simplification
-- Remove visible tags from card face (can still filter by them)
-- Remove summary text from media cards
-- Focus on: image, type badge, title, date
+### 6. Preview Container (Left)
+- Ensure the image has proper rounded corners
+- Light gray background for the container
+- Proper aspect ratio handling
 
 ---
 
@@ -47,56 +54,60 @@ Create a content-type color mapping:
 
 ### Files to Modify
 
-**1. `src/features/bookmarks/components/BookmarkCard.tsx`**
-- Add badge color constants for different content types
-- Update note card variant:
-  - Remove border styling, use cleaner `bg-card` or `bg-muted/5`
-  - Ensure text preview is prominent
-  - Keep bottom section with title + arrow icon
-- Update media card variant:
-  - Strengthen gradient overlay for better text contrast
-  - Update badge colors based on content type
-  - Remove date from bottom (keep title only, or add subtle date)
-  - Hide tags completely from card display
-- Add `getTypeBadgeColor()` helper function
+**1. `src/features/bookmarks/components/CardDetailRightPanel.tsx`**
+Main changes:
+- Update section label classes from `text-muted-foreground/70` to `text-primary`
+- Change "Summary" text to "TL;DR"
+- Adjust spacing and padding for cleaner look
+- Update delete button styling to be centered with pink text
+- Keep the existing functionality (tags, notes, etc.)
 
-**2. `src/features/bookmarks/components/ItemCardSkeleton.tsx`**
-- Update skeleton to match new simpler card structure
-- Remove tag skeleton placeholders
+**2. `src/features/bookmarks/components/DetailViewModal.tsx`**
+Minor changes:
+- Adjust preview container styling for proper rounded corners
+- Ensure consistent background color on preview area
+- Review grid gap and padding
 
-### Code Changes Detail
+### Detailed Code Changes
+
+**CardDetailRightPanel.tsx**
 
 ```text
-BookmarkCard.tsx changes:
-1. Add BADGE_COLORS constant:
-   - url: 'bg-primary' (pink)
-   - document: 'bg-teal-500' 
-   - video: 'bg-teal-500'
-   - image: 'bg-teal-500'
+1. Section labels:
+   - Change `text-muted-foreground/70` → `text-primary font-semibold`
+   - Change "Summary" → "TL;DR"
 
-2. Note card updates:
-   - Background: bg-card (white/dark based on theme)
-   - Remove border or make very subtle
-   - Content: summary/title preview text
-   - Bottom: title + arrow icon
-   - Remove tags display
+2. Title section:
+   - Increase font size slightly
+   - Adjust padding/margin
 
-3. Media card updates:
-   - Stronger gradient: from-black/80 via-black/40
-   - Badge uses getTypeBadgeColor() 
-   - Remove tags section
-   - Keep: badge, title, optional date
+3. Tags label:
+   - Use `text-primary` for pink color
+   - Keep "Tags" label
+
+4. Delete button:
+   - Center in footer section
+   - Use `text-destructive` or `text-primary` styling
+   - Icon + "Delete" text
 ```
 
-### Skeleton Updates
-- Simpler structure matching new card design
-- Remove tag placeholder rows
+**DetailViewModal.tsx**
+
+```text
+1. Preview container:
+   - Add rounded-2xl or rounded-3xl
+   - Use bg-muted/20 or bg-secondary for light gray background
+   
+2. Grid layout:
+   - Keep existing 1.4fr_1fr split
+   - Review gap spacing
+```
 
 ---
 
 ## Visual Result
-- Cleaner, more focused card design
-- Strong visual hierarchy with type badges
-- Consistent Pinterest/Raindrop.io aesthetic
-- Better readability with stronger gradients
-- Reduced visual noise by hiding tags on cards
+- Cleaner, more modern detail view
+- Pink accent color for section labels creates visual hierarchy
+- Better readability with "TL;DR" instead of "Summary"
+- Consistent with the reference design aesthetic
+- Maintains all existing functionality (edit tags, notes, delete, etc.)
