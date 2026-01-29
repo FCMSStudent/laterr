@@ -165,7 +165,7 @@ export const CardDetailRightPanel = ({
       <h3 className="text-xs font-semibold mb-2 text-primary-foreground">
         TL;DR
       </h3>
-      <p className="text-sm leading-relaxed line-clamp-3 text-primary-foreground text-justify">
+      <p className="text-sm leading-relaxed line-clamp-3 text-primary-foreground text-left font-normal">
         {summaryText}
       </p>
     </div>}
