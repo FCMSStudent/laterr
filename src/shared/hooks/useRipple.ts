@@ -1,7 +1,7 @@
 import { useCallback, MouseEvent } from "react";
 
 // Animation duration in milliseconds - should match CSS animation
-const RIPPLE_DURATION = 600;
+const RIPPLE_DURATION = 450;
 
 /**
  * Hook to create Material-style ripple effect on elements
@@ -18,7 +18,7 @@ export const useRipple = () => {
     const rect = button.getBoundingClientRect();
     
     // Calculate ripple position
-    const size = Math.max(rect.width, rect.height);
+    const size = Math.max(rect.width, rect.height) * 2;
     const x = event.clientX - rect.left - size / 2;
     const y = event.clientY - rect.top - size / 2;
     
@@ -28,14 +28,14 @@ export const useRipple = () => {
       position: absolute;
       border-radius: 50%;
       background: currentColor;
-      opacity: 0.3;
+      opacity: 0.15;
       pointer-events: none;
       width: ${size}px;
       height: ${size}px;
       left: ${x}px;
       top: ${y}px;
-      animation: ripple-effect ${RIPPLE_DURATION}ms ease-out;
       transform: scale(0);
+      animation: ripple-effect ${RIPPLE_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
     `;
     
     // Ensure parent has required styles for positioning

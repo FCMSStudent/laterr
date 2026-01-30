@@ -98,15 +98,22 @@ export const DetailViewModal = ({
     }
   }, [editingTagIndex]);
 
-  // Reset state when item changes
+  // Reset state when item changes (different item selected)
+  // Use itemId to track when we switch to a DIFFERENT item
+  const prevItemIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
     if (item) {
-      setUserNotes(item.user_notes || "");
-      setTags(item.tags || []);
-      setIsAddingTag(false);
-      setNewTagInput("");
-      setEditingTagIndex(null);
-      setEditingTagValue("");
+      // Only reset state when switching to a different item, not on refetch
+      if (prevItemIdRef.current !== item.id) {
+        setUserNotes(item.user_notes || "");
+        setTags(item.tags || []);
+        setIsAddingTag(false);
+        setNewTagInput("");
+        setEditingTagIndex(null);
+        setEditingTagValue("");
+        prevItemIdRef.current = item.id;
+      }
     }
   }, [item]);
 
