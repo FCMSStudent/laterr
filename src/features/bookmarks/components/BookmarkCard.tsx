@@ -28,19 +28,19 @@ interface BookmarkCardProps {
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
 }
-// Badge color mapping by content type
+// Badge color mapping by content type - all use primary pink
 const BADGE_COLORS: Record<string, string> = {
   url: 'bg-primary',
   product: 'bg-primary',
-  video: 'bg-teal-500',
-  document: 'bg-teal-500',
-  file: 'bg-teal-500',
-  image: 'bg-teal-500',
+  video: 'bg-primary',
+  document: 'bg-primary',
+  file: 'bg-primary',
+  image: 'bg-primary',
 };
 
 const getTypeBadgeColor = (type: ItemType, isVideo: boolean): string => {
   if (isVideo) return BADGE_COLORS.video;
-  return BADGE_COLORS[type] || 'bg-teal-500';
+  return BADGE_COLORS[type] || 'bg-primary';
 };
 
 // Get content type badge info
