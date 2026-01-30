@@ -496,8 +496,12 @@ All colors MUST be HSL.
 
   /* Material-style ripple effect animation */
   @keyframes ripple-effect {
-    to {
-      transform: scale(4);
+    0% {
+      transform: scale(0);
+      opacity: 0.2;
+    }
+    100% {
+      transform: scale(2);
       opacity: 0;
     }
   }
