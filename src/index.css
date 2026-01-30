@@ -695,6 +695,13 @@ All colors MUST be HSL.
     overflow: hidden;
   }
 
+  .detail-preview-video {
+    height: auto;
+    max-height: none;
+    justify-content: flex-start;
+    align-items: stretch;
+  }
+
   /* Preview content wrapper for consistent sizing */
   .detail-preview-content {
     width: 100%;
