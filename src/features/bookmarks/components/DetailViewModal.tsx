@@ -385,7 +385,7 @@ export const DetailViewModal = ({
 
     // All other types: fixed/contained (no scroll)
     if (isVideoContent) {
-      return `${base} detail-preview-fixed aspect-video bg-black`;
+      return `${base} detail-preview-fixed detail-preview-video`;
     }
     if (isNoteContent) {
       return `${base} detail-preview-fixed bg-muted/10 p-6`;
@@ -412,7 +412,11 @@ export const DetailViewModal = ({
 
     if (item.type === 'url' && item.content) {
       if (isVideoUrl(item.content)) {
-        return <VideoPreview url={item.content} title={item.title} className="w-full h-full" />;
+        return (
+          <div className="aspect-video w-full p-0 m-0">
+            <VideoPreview url={item.content} title={item.title} className="w-full h-full" />
+          </div>
+        );
       }
       if (item.preview_image_url) {
         return (
@@ -526,7 +530,7 @@ export const DetailViewModal = ({
     <div className={`detail-modal-grid gap-0 ${gridLayout}`}>
       {/* LEFT COLUMN: Preview - scroll behavior controlled by content type */}
       <div className="detail-preview-column pr-6">
-        <div className={`${getPreviewContainerStyles()} flex-1 min-h-0`}>
+        <div className={`${getPreviewContainerStyles()} ${isVideoContent ? "" : "flex-1 min-h-0"}`}>
           {renderPreview()}
         </div>
       </div>
