@@ -696,10 +696,10 @@ All colors MUST be HSL.
   }
 
   .detail-preview-video {
-    height: auto;
-    max-height: none;
-    justify-content: flex-start;
-    align-items: stretch;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   /* Preview content wrapper for consistent sizing */

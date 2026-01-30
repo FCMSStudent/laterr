@@ -413,8 +413,8 @@ export const DetailViewModal = ({
     if (item.type === 'url' && item.content) {
       if (isVideoUrl(item.content)) {
         return (
-          <div className="aspect-video w-full p-0 m-0">
-            <VideoPreview url={item.content} title={item.title} className="w-full h-full" />
+          <div className="aspect-video w-full max-w-full">
+            <VideoPreview url={item.content} title={item.title} className="w-full h-full rounded-2xl overflow-hidden" />
           </div>
         );
       }
