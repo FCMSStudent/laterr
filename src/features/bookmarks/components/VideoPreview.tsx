@@ -40,7 +40,7 @@ export const VideoPreview = ({ url, title, className = '' }: VideoPreviewProps) 
   };
 
   return (
-    <ViewerShell className={className}>
+    <ViewerShell className={className} shrinkWrap>
       <div className="relative w-full aspect-video bg-black overflow-hidden rounded-lg">
         {isPlaying && embedUrl ? (
           <iframe

@@ -9,6 +9,8 @@ interface ViewerShellProps {
   className?: string;
   /** Whether the content area should be scrollable. Default: false (parent owns scroll) */
   scrollable?: boolean;
+  /** Disable default flex sizing and centering to allow content to shrink-wrap. */
+  shrinkWrap?: boolean;
 }
 
 /**
@@ -19,10 +21,18 @@ interface ViewerShellProps {
  * - Consistent border radius and visual treatment
  * - Configurable scroll behavior (default: no scroll, parent owns scroll)
  */
-export const ViewerShell = ({ controls, children, className = '', scrollable = false }: ViewerShellProps) => {
+export const ViewerShell = ({
+  controls,
+  children,
+  className = '',
+  scrollable = false,
+  shrinkWrap = false,
+}: ViewerShellProps) => {
   const hasControls = Boolean(controls);
   const contentRoundedClass = hasControls ? 'rounded-b-xl' : 'rounded-xl';
   const scrollClass = scrollable ? 'overflow-y-auto' : 'overflow-hidden';
+  const contentFlexClass = shrinkWrap ? '' : 'flex-1';
+  const contentAlignmentClass = shrinkWrap ? '' : 'flex items-center justify-center';
 
   return (
     <div className={`flex flex-col ${className}`}>
@@ -35,9 +45,9 @@ export const ViewerShell = ({ controls, children, className = '', scrollable = f
 
       {/* Content area */}
       <div
-        className={`flex-1 min-h-0 ${scrollClass} bg-muted/30 ${contentRoundedClass} ${scrollable ? '' : 'flex items-center justify-center'
+        className={`${contentFlexClass} min-h-0 ${scrollClass} bg-muted/30 ${contentRoundedClass} ${scrollable ? '' : contentAlignmentClass
           }`}
-        style={{ minHeight: VIEWER_MIN_HEIGHT }}
+        style={shrinkWrap ? undefined : { minHeight: VIEWER_MIN_HEIGHT }}
       >
         {children}
       </div>
