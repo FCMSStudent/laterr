@@ -9,6 +9,7 @@ import { Skeleton } from "@/ui";
 import { useMemo, useState, useRef } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useDominantColor } from "@/shared/hooks/use-dominant-color";
 import { cn } from "@/shared/lib/utils";
 import { format } from "date-fns";
 interface BookmarkCardProps {
@@ -123,6 +124,7 @@ export const BookmarkCard = ({
   const contentBadge = getContentBadge(type, content);
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
+  const { color: dominantColor } = useDominantColor(previewImageUrl);
   const dateText = formatDate(createdAt);
   const mediaRatio = useMemo(() => {
     // Content-type driven sizing (works best with masonry columns)
@@ -316,8 +318,15 @@ export const BookmarkCard = ({
             <contentBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
-        {/* Strong dark gradient overlay from bottom */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/0 pointer-events-none" />
+        {/* Dynamic gradient overlay from bottom - uses extracted dominant color */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: dominantColor
+              ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor}99 20%, ${dominantColor}66 40%, transparent 70%)`
+              : 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, transparent 70%)'
+          }}
+        />
 
         {/* Content type badge - top left */}
         <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 border-0 bg-[#ec4699]/[0.73] text-white flex flex-row", getTypeBadgeColor(type, isVideo))}>
@@ -325,9 +334,9 @@ export const BookmarkCard = ({
           {contentBadge.label}
         </Badge>
 
-        {/* Play button overlay for videos */}
-        {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+        {/* Play button overlay for videos - positioned in upper half to avoid text overlap */}
+        {isVideo && <div className="absolute top-1/4 left-0 right-0 flex items-center justify-center pointer-events-none">
+          <div className="w-14 h-14 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">
             <Play className="h-6 w-6 text-white fill-white ml-0.5" />
           </div>
         </div>}
