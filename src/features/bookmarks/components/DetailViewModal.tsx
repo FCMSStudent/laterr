@@ -101,7 +101,7 @@ export const DetailViewModal = ({
   // Reset state when item changes (different item selected)
   // Use itemId to track when we switch to a DIFFERENT item
   const prevItemIdRef = useRef<string | null>(null);
-  
+
   useEffect(() => {
     if (item) {
       // Only reset state when switching to a different item, not on refetch
@@ -600,7 +600,7 @@ export const DetailViewModal = ({
         </Drawer>
       ) : (
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className={`${modalSizeClasses} p-8 border-0 shadow-2xl bg-muted/30 backdrop-blur-md`}>
+          <DialogContent className={`${modalSizeClasses} p-8 border-0 shadow-2xl bg-muted/20 backdrop-blur-md`}>
             <DialogHeader className="sr-only">
               <DialogTitle>{item.title}</DialogTitle>
               <DialogDescription>Item details</DialogDescription>

@@ -120,7 +120,7 @@ export const NoteEditorModal = ({
         </div>
       </DrawerContent>
     </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[600px] max-w-[90vw] h-[600px] max-h-[80vh] border-0 glass-card flex flex-col p-0">
+      <DialogContent className="w-[600px] max-w-[90vw] h-[600px] max-h-[80vh] border-0 bg-muted/20 backdrop-blur-md rounded-2xl flex flex-col p-0">
         <DialogHeader className="sr-only">
           <DialogTitle>Edit Note</DialogTitle>
           <DialogDescription>Edit your note content</DialogDescription>
