@@ -35,9 +35,8 @@ const BADGE_COLORS: Record<string, string> = {
   video: 'bg-primary',
   document: 'bg-primary',
   file: 'bg-primary',
-  image: 'bg-primary',
+  image: 'bg-primary'
 };
-
 const getTypeBadgeColor = (type: ItemType, isVideo: boolean): string => {
   if (isVideo) return BADGE_COLORS.video;
   return BADGE_COLORS[type] || 'bg-primary';
@@ -125,7 +124,6 @@ export const BookmarkCard = ({
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
   const dateText = formatDate(createdAt);
-
   const mediaRatio = useMemo(() => {
     // Content-type driven sizing (works best with masonry columns)
     if (isVideo) return 16 / 9;
@@ -313,8 +311,8 @@ export const BookmarkCard = ({
           </div>}
           <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full object-cover", imageLoaded ? "opacity-100" : "opacity-0")} onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
         </> :
-          // Fallback: gradient background with icon
-          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+        // Fallback: gradient background with icon
+        <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
             <contentBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
@@ -322,7 +320,7 @@ export const BookmarkCard = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
         {/* Content type badge - top left */}
-        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 text-white", getTypeBadgeColor(type, isVideo))}>
+        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 bg-[#ec4699]/[0.73] text-success-foreground flex flex-row", getTypeBadgeColor(type, isVideo))}>
           <contentBadge.icon className="h-3 w-3" />
           {contentBadge.label}
         </Badge>
