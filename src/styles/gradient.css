@@ -1,149 +1,158 @@
-/* PREMIUM AMBIENT GRADIENT SYSTEM (Multi-Theme)
-   --------------------------------------------------------------
-   Supported Themes:
-   1. Day   (Default) - Crisp Air
-   2. Dawn  (Morning) - Golden Hour/Soft Pastel
-   3. Dusk  (Evening) - Vaporwave/Sunset
-   4. Night (Dark)    - Deep Cosmos
-*/
+/* =========================================================
+   Gradient Theme System
+   ========================================================= */
 
+/* Base defaults */
 :root {
-  /* GLOBAL DEFAULTS */
-  --transition-speed: 1.5s;
-  --noise-alpha: 0.04;
-  
-  /* DEFAULT THEME (Day) */
-  --gradient-accent-1: 215 95% 85%; /* Crisp Sky Blue */
-  --gradient-accent-2: 260 60% 92%; /* Soft Lavender */
-  --gradient-accent-3: 35 90% 94%;  /* Sun-kissed Cream */
-  --gradient-bg: 0 0% 100%;         /* Pure White */
+  --bg-base: 0 0% 100%;
+
+  /* Glow colors (overridden per theme) */
+  --glow-primary: 212 70% 83%;
+  --glow-secondary: 220 45% 90%;
+  --glow-tertiary: 40 30% 95%;
+
+  /* Glow intensity tuning */
+  --glow-strong: 0.9;
+  --glow-medium: 0.6;
+  --glow-soft: 0.4;
 }
 
-/* --- THEME DEFINITIONS --- */
+/* =========================================================
+   Themes
+   ========================================================= */
 
-/* 1. DAY MODE (Explicit Class) */
+/* Day — sky → cream */
 .theme-day {
-  --gradient-accent-1: 215 95% 85%;
-  --gradient-accent-2: 260 60% 92%;
-  --gradient-accent-3: 35 90% 94%;
-  --gradient-bg: 0 0% 100%;
-  --noise-alpha: 0.04;
+  --bg-base: 0 0% 100%;
+  --glow-primary: 212 70% 83%;
+  --glow-secondary: 220 45% 90%;
+  --glow-tertiary: 40 30% 95%;
 }
 
-/* 2. DAWN MODE (Soft Pinks & Peaches) */
+/* Dawn — lavender → peach */
 .theme-dawn {
-  --gradient-accent-1: 340 85% 90%; /* Soft Rose */
-  --gradient-accent-2: 30 90% 88%;  /* Pale Apricot */
-  --gradient-accent-3: 200 60% 92%; /* Morning Mist Blue */
-  --gradient-bg: 15 30% 98%;        /* Warm White Base */
-  --noise-alpha: 0.035;
+  --bg-base: 0 0% 98%;
+  --glow-primary: 260 100% 95%;
+  --glow-secondary: 20 100% 90%;
+  --glow-tertiary: 40 100% 90%;
 }
 
-/* 3. DUSK MODE (Vibrant Magentas & Deep Oranges) */
+/* Dusk — purple → sunset */
 .theme-dusk {
-  --gradient-accent-1: 270 60% 25%; /* Twilight Purple */
-  --gradient-accent-2: 320 70% 60%; /* Vibrant Pink */
-  --gradient-accent-3: 30 90% 55%;  /* Horizon Orange */
-  --gradient-bg: 260 40% 12%;       /* Darkening Sky Base */
-  --noise-alpha: 0.05;
+  --bg-base: 260 50% 10%;
+  --glow-primary: 260 60% 30%;
+  --glow-secondary: 320 80% 60%;
+  --glow-tertiary: 30 90% 60%;
 }
 
-/* 4. NIGHT MODE (Deep Void) */
+/* Night — deep navy */
 .theme-night,
 .dark {
-  --gradient-accent-1: 250 50% 10%; /* Deep Indigo */
-  --gradient-accent-2: 290 40% 18%; /* Electric Purple Glow */
-  --gradient-accent-3: 190 60% 12%; /* Midnight Cyan */
-  --gradient-bg: 240 25% 6%;        /* Void Black Base */
-  --noise-alpha: 0.05;
+  --bg-base: 248 56% 11%;
+  --glow-primary: 248 56% 11%;
+  --glow-secondary: 254 47% 32%;
+  --glow-tertiary: 248 25% 19%;
 }
 
-/* --- BASE STYLES --- */
+/* =========================================================
+   Base Background
+   ========================================================= */
 
-html, body {
-  background: hsl(var(--gradient-bg));
-  /* Super smooth transition when switching themes */
-  transition: background-color var(--transition-speed) cubic-bezier(0.2, 0.8, 0.2, 1);
-  margin: 0;
-  min-height: 100vh;
+html,
+body {
+  background-color: hsl(var(--bg-base));
+  color-scheme: light dark;
 }
 
-/* --- MAIN GRADIENT CONTAINER --- */
+/* =========================================================
+   Ambient Gradient Layer
+   ========================================================= */
 
 .gradient-bg {
   position: fixed;
-  /* Extended bounds for animation movement */
-  inset: -50% -50% -50% -50%;
-  width: 200%;
-  height: 200%;
-  z-index: -1;
+  inset: -30% 0 0 0;
+  z-index: -2;
   pointer-events: none;
+  contain: paint;
+  will-change: filter;
 
-  /* Sophisticated Layering */
-  background-image: 
-    /* Primary Glow (Top Center-ish) */
-    radial-gradient(circle at 50% 20%, hsl(var(--gradient-accent-1) / 0.8) 0%, transparent 50%),
-    /* Secondary Glow (Top Left) */
-    radial-gradient(circle at 10% 10%, hsl(var(--gradient-accent-2) / 0.6) 0%, transparent 40%),
-    /* Tertiary Glow (Top Right) */
-    radial-gradient(circle at 90% 10%, hsl(var(--gradient-accent-3) / 0.6) 0%, transparent 40%),
-    /* Anchor Glow (Bottom Center - adds depth) */
-    radial-gradient(circle at 50% 80%, hsl(var(--gradient-accent-1) / 0.4) 0%, transparent 50%),
-    /* Base Wash */
-    linear-gradient(to bottom, transparent 0%, hsl(var(--gradient-bg)) 100%);
+  background-image:
+    radial-gradient(
+      1400px 700px at 50% -15%,
+      hsl(var(--glow-primary) / var(--glow-strong)) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      1000px 550px at 0% 0%,
+      hsl(var(--glow-secondary) / var(--glow-medium)) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      1000px 550px at 100% 0%,
+      hsl(var(--glow-tertiary) / var(--glow-medium)) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      800px 400px at 50% 22%,
+      hsl(var(--glow-primary) / var(--glow-soft)) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      hsl(var(--bg-base)),
+      hsl(var(--bg-base))
+    );
 
-  /* Visual Enhancement */
-  filter: blur(60px) saturate(130%);
-  transform-origin: center center;
-  
-  /* The "Breathing" Animation */
-  animation: breathe 18s ease-in-out infinite alternate;
+  filter: blur(30px) saturate(120%);
 
-  /* Theme Transition for the gradient colors */
-  transition: opacity var(--transition-speed) ease;
-  
-  /* Elegant Fade Out at bottom of viewport */
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 20%, transparent 90%);
-  mask-image: linear-gradient(to bottom, black 0%, black 20%, transparent 90%);
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 40%,
+    black 65%,
+    transparent 100%
+  );
 }
 
-/* --- NOISE TEXTURE --- */
+/* =========================================================
+   Noise Layer
+   ========================================================= */
 
 .gradient-noise {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: var(--noise-alpha);
-  mix-blend-mode: soft-light; /* Improved blending for all themes */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
 }
 
-/* --- ANIMATIONS & OPTIMIZATIONS --- */
+/* =========================================================
+   Performance & Accessibility
+   ========================================================= */
 
-@keyframes breathe {
-  0% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-2%) scale(1.05); }
-  100% { transform: translateY(0) scale(1); }
-}
-
-/* Mobile: Reduce load */
-@media (max-width: 768px) {
+@media (max-width: 768px), (hover: none) {
   .gradient-bg {
-    filter: blur(30px) saturate(120%);
-    animation: none;
+    filter: blur(20px) saturate(110%);
   }
 }
 
-/* Reduced Motion Preference */
 @media (prefers-reduced-motion: reduce) {
   .gradient-bg {
-    animation: none;
+    filter: blur(16px) saturate(105%);
   }
 }
 
-/* Optional: Subdued variation */
+/* Optional subtle mode */
 .has-subtle-bg .gradient-bg {
-  filter: blur(40px) saturate(110%);
-  opacity: 0.6;
+  filter: blur(20px) saturate(105%);
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 30%,
+    transparent 90%
+  );
 }
