@@ -1,105 +1,172 @@
+/* =========================================
+   Premium Gradient System with Smooth Transitions
+   ========================================= */
+
+/* 1. Register properties to allow smooth interpolation */
+@property --c-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #000000;
+}
+
+@property --c-accent-2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #000000;
+}
+
+@property --c-accent-3 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #000000;
+}
+
+@property --c-bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #000000;
+}
+
 :root {
-  /* Default (Day) */
-  --gradient-accent: 212 70% 83%;
-  --gradient-accent-2: 220 45% 90%;
-  --gradient-accent-3: 40 30% 95%;
-  --gradient-bg: 0 0% 100%;
+  /* Default Day Theme */
+  --c-accent: hsl(212, 100%, 85%);
+  /* Luminous Sky Blue */
+  --c-accent-2: hsl(220, 60%, 92%);
+  /* Soft Cloud Blue */
+  --c-accent-3: hsl(35, 80%, 94%);
+  /* Warm Sunlight */
+  --c-bg: hsl(0, 0%, 100%);
+  /* Pure White */
 }
 
-/* Day Mode (Default) - Sky blue to cream */
+/* Day Mode */
 .theme-day {
-  color-scheme: light;
-  --gradient-accent: 212 70% 83%;  /* #A8C0FF */
-  --gradient-accent-2: 220 45% 90%;
-  --gradient-accent-3: 40 30% 95%;
-  --gradient-bg: 0 0% 100%;
+  --c-accent: hsl(212, 100%, 85%);
+  --c-accent-2: hsl(220, 60%, 92%);
+  --c-accent-3: hsl(35, 80%, 94%);
+  --c-bg: hsl(0, 0%, 100%);
 }
 
-/* Dawn Mode - Soft pinks and oranges */
+/* Dawn Mode - Etherial Morning */
 .theme-dawn {
-  color-scheme: light;
-  --gradient-accent: 260 100% 95%; /* Soft lavender */
-  --gradient-accent-2: 20 100% 90%; /* Soft peach */
-  --gradient-accent-3: 40 100% 90%; /* Warm cream */
-  --gradient-bg: 0 0% 98%;
+  --c-accent: hsl(265, 80%, 92%);
+  /* Morning Mist Lavender */
+  --c-accent-2: hsl(15, 90%, 94%);
+  /* First Light Peach */
+  --c-accent-3: hsl(45, 90%, 90%);
+  /* Golden Hour Cream */
+  --c-bg: hsl(260, 20%, 98%);
 }
 
-/* Dusk Mode - Deep purples and sunset pinks */
+/* Dusk Mode - Vibrant Sunset */
 .theme-dusk {
-  color-scheme: dark;
-  --gradient-accent: 260 60% 30%;  /* Deep purple */
-  --gradient-accent-2: 320 80% 60%; /* Vibrant pink */
-  --gradient-accent-3: 30 90% 60%;  /* Sunset orange */
-  --gradient-bg: 260 50% 10%;
+  --c-accent: hsl(260, 40%, 40%);
+  /* Twlight Purple */
+  --c-accent-2: hsl(330, 60%, 65%);
+  /* Afterglow Pink */
+  --c-accent-3: hsl(25, 80%, 65%);
+  /* Horizon Orange */
+  --c-bg: hsl(265, 30%, 15%);
 }
 
-/* Night Mode - Deep navy */
+/* Night Mode - Deep Cosmos */
 .theme-night,
 .dark {
-  color-scheme: dark;
-  --gradient-accent: 248 56% 11%; /* Deep navy */
-  --gradient-accent-2: 254 47% 32%; /* Rich purple */
-  --gradient-accent-3: 248 25% 19%; /* Mid-tone purple */
-  --gradient-bg: 248 56% 11%;
+  --c-accent: hsl(245, 45%, 15%);
+  /* Deep Space Navy */
+  --c-accent-2: hsl(252, 40%, 25%);
+  /* Nebula Purple */
+  --c-accent-3: hsl(245, 30%, 20%);
+  /* Galactic Blue */
+  --c-bg: hsl(240, 30%, 8%);
 }
 
+/* Base styles */
 html,
 body {
-  background: hsl(var(--gradient-bg));
-  min-height: 100%;
+  background: var(--c-bg);
+  /* Use transition for the background color specifically */
+  transition: background-color 3s ease-in-out;
 }
 
-/* Premium multi-layered glow with enhanced depth */
+/* The Gradient Mesh */
 .gradient-bg {
   position: fixed;
-  inset: -25% 0 0 0; /* extend upward for more glow */
+  inset: -40% -40%;
+  /* Oversize to allow movement without edges */
   z-index: -1;
   pointer-events: none;
-  isolation: isolate;
 
-  /* Multiple sophisticated radial glows creating depth */
+  /* Transition the custom properties for smooth color morphing */
+  transition: --c-accent 3s ease-in-out,
+    --c-accent-2 3s ease-in-out,
+    --c-accent-3 3s ease-in-out,
+    --c-bg 3s ease-in-out;
+
+  /* Complex layered gradients using the color variables directly */
   background-image:
-    radial-gradient(1400px 700px at 50% -12%, hsl(var(--gradient-accent) / 0.9) 0%, transparent 65%),
-    radial-gradient(1000px 550px at 0% 0%, hsl(var(--gradient-accent-2) / 0.6) 0%, transparent 65%),
-    radial-gradient(1000px 550px at 100% 0%, hsl(var(--gradient-accent-3) / 0.6) 0%, transparent 65%),
-    radial-gradient(800px 400px at 50% 20%, hsl(var(--gradient-accent) / 0.4) 0%, transparent 70%),
-    linear-gradient(hsl(var(--gradient-bg)), hsl(var(--gradient-bg)));
-  filter: blur(32px) saturate(120%);
+    /* Top Center: Primary Glow */
+    radial-gradient(circle at 50% 20%, color-mix(in srgb, var(--c-accent), transparent 10%) 0%, transparent 60%),
 
-  /* Smoother fade toward the bottom */
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 35%, black 60%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 0%, black 35%, black 60%, transparent 100%);
+    /* Top Left: Secondary subtle wash */
+    radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--c-accent-2), transparent 40%) 0%, transparent 50%),
+
+    /* Top Right: Accent Warmth */
+    radial-gradient(circle at 90% 10%, color-mix(in srgb, var(--c-accent-3), transparent 40%) 0%, transparent 50%),
+
+    /* Center/Bottom: Deep anchor */
+    radial-gradient(circle at 50% 80%, color-mix(in srgb, var(--c-accent), transparent 60%) 0%, transparent 50%);
+
+  /* Heavy blur for the "aurora" effect */
+  filter: blur(80px) saturate(120%);
+
+  /* Subtle breathing animation */
+  animation: aurora-flow 20s ease-in-out infinite alternate;
+
+  /* Smoother fade at bottom */
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+
+  /* Hardware acceleration */
+  transform: translateZ(0);
 }
 
-/* Performance optimization: reduce blur on low-end devices */
-@media (max-width: 768px), (hover: none) {
-  .gradient-bg {
-    filter: blur(20px) saturate(110%);
+@keyframes aurora-flow {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+
+  100% {
+    transform: scale(1.05) translate(0, -2%);
   }
 }
 
-/* Respect user preference for reduced motion / heavy effects */
-@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
-  .gradient-bg {
-    filter: blur(16px) saturate(105%);
-  }
-}
-
-/* Enhanced noise texture for premium feel */
+/* Noise Texture - Refined */
 .gradient-noise {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.045;
+  opacity: 0.03;
+  /* Very subtle */
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
 }
 
-/* Optional: tone down the effect by placing .has-subtle-bg on body or a layout wrapper */
+/* Reduced Motion & Low Power Mode */
+@media (max-width: 768px),
+(prefers-reduced-motion: reduce) {
+  .gradient-bg {
+    animation: none;
+    inset: -10%;
+    /* Smaller overdraw */
+    filter: blur(40px) saturate(110%);
+  }
+}
+
+/* Subtle mode adjustment */
 .has-subtle-bg .gradient-bg {
-  filter: blur(20px) saturate(105%);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 90%);
-  mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 90%);
+  opacity: 0.5;
+  filter: blur(60px);
 }
