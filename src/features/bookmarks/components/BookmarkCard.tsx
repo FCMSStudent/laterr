@@ -33,10 +33,11 @@ interface BookmarkCardProps {
 // Maps tag names to badge styles and labels
 type CategoryConfig = {
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{
+    className?: string;
+  }>;
   color: string;
 };
-
 const CATEGORY_BADGES: Record<string, CategoryConfig> = {
   'watch later': {
     label: 'Watch Later',
@@ -87,7 +88,7 @@ const TYPE_FALLBACK_BADGES: Record<string, CategoryConfig> = {
 // Get badge info based on tags and content type
 const getCategoryBadge = (type: ItemType, tags: string[], content?: string | null): CategoryConfig => {
   // First, check if it's a video type or URL
-  if (type === 'video' || (type === 'url' && content && isVideoUrl(content))) {
+  if (type === 'video' || type === 'url' && content && isVideoUrl(content)) {
     return CATEGORY_BADGES['watch later'];
   }
 
@@ -151,7 +152,9 @@ export const BookmarkCard = ({
   const categoryBadge = getCategoryBadge(type, tags, content);
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
-  const { color: dominantColor } = useDominantColor(previewImageUrl);
+  const {
+    color: dominantColor
+  } = useDominantColor(previewImageUrl);
   const dateText = formatDate(createdAt);
   const mediaRatio = useMemo(() => {
     // Content-type driven sizing (works best with masonry columns)
@@ -340,20 +343,15 @@ export const BookmarkCard = ({
           </div>}
           <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full object-cover", imageLoaded ? "opacity-100" : "opacity-0")} onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
         </> :
-          // Fallback: gradient background with icon
-          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+        // Fallback: gradient background with icon
+        <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
             <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
         {/* Dynamic gradient overlay from bottom - uses extracted dominant color */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: dominantColor
-              ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor}dd 30%, ${dominantColor}aa 50%, ${dominantColor}00 100%)`
-              : 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)'
-          }}
-        />
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: dominantColor ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor}dd 30%, ${dominantColor}aa 50%, ${dominantColor}00 100%)` : 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)'
+        }} />
 
         {/* Content type badge - top left */}
         {/* Content type badge - top left */}
@@ -377,10 +375,10 @@ export const BookmarkCard = ({
           </h3>
 
           {/* Date and action */}
-          <div className="flex items-center justify-between">
-            <span className="text-white/70 text-sm">{dateText}</span>
+          <div className="flex-col flex items-center justify-between">
+            
             <span className="text-white text-sm font-medium underline underline-offset-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              OPEN
+              Open
             </span>
           </div>
         </div>
