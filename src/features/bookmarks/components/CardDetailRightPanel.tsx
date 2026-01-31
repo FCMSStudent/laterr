@@ -239,7 +239,7 @@ export const CardDetailRightPanel = ({
     <div className="flex-1" />
 
     {/* ========== FOOTER: Delete centered with pink styling ========== */}
-    <div className="flex-shrink-0 py-4 flex items-center justify-center">
+    <div className="flex-shrink-0 pt-4 pb-6 flex items-center justify-center">
       <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 text-xs font-medium hover:bg-destructive/5 text-primary-foreground px-[16px]">
         <Trash2 className="w-4 h-4 mr-2" />
         Delete
