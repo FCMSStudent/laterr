@@ -1,35 +1,46 @@
 :root {
-  /* Sophisticated multi-tone gradient palette */
-  --gradient-accent: 212 95% 85%;      /* soft blue */
-  --gradient-accent-2: 280 85% 88%;    /* gentle purple */
-  --gradient-accent-3: 170 80% 90%;    /* hint of teal */
-  --gradient-bg: 0 0% 100%;            /* pure white base */
+  /* Day mode - Sky blue to cream gradient (from reference image) */
+  --gradient-accent: 212 70% 83%;
+  /* sky blue (#A8C0FF area) */
+  --gradient-accent-2: 220 45% 90%;
+  /* lighter blue transition */
+  --gradient-accent-3: 40 30% 95%;
+  /* cream/beige bottom */
+  --gradient-bg: 0 0% 100%;
+  /* pure white base */
 }
 
 .dark {
-  --gradient-accent: 212 85% 45%;      /* vibrant blue */
-  --gradient-accent-2: 280 75% 42%;    /* rich purple */
-  --gradient-accent-3: 170 70% 40%;    /* deep teal */
-  --gradient-bg: 240 10% 5%;
+  /* Night mode - Deep navy to purple gradient (from reference image) */
+  --gradient-accent: 248 56% 11%;
+  /* deep navy (#0f0c29) */
+  --gradient-accent-2: 254 47% 32%;
+  /* rich purple (#302b63) */
+  --gradient-accent-3: 248 25% 19%;
+  /* mid-tone purple (#24243e) */
+  --gradient-bg: 248 56% 11%;
+  /* match darkest navy */
 }
 
-html, body {
+html,
+body {
   background: hsl(var(--gradient-bg));
 }
 
 /* Premium multi-layered glow with enhanced depth */
 .gradient-bg {
   position: fixed;
-  inset: -25% 0 0 0;          /* extend further upward for more glow */
+  inset: -25% 0 0 0;
+  /* extend further upward for more glow */
   z-index: -1;
   pointer-events: none;
 
   /* Multiple sophisticated radial glows creating depth */
   background-image:
     radial-gradient(1400px 700px at 50% -12%, hsl(var(--gradient-accent) / 0.9) 0%, transparent 65%),
-    radial-gradient(1000px 550px at 0% 0%,       hsl(var(--gradient-accent-2) / 0.6) 0%, transparent 65%),
-    radial-gradient(1000px 550px at 100% 0%,     hsl(var(--gradient-accent-3) / 0.6) 0%, transparent 65%),
-    radial-gradient(800px 400px at 50% 20%,      hsl(var(--gradient-accent) / 0.4) 0%, transparent 70%),
+    radial-gradient(1000px 550px at 0% 0%, hsl(var(--gradient-accent-2) / 0.6) 0%, transparent 65%),
+    radial-gradient(1000px 550px at 100% 0%, hsl(var(--gradient-accent-3) / 0.6) 0%, transparent 65%),
+    radial-gradient(800px 400px at 50% 20%, hsl(var(--gradient-accent) / 0.4) 0%, transparent 70%),
     linear-gradient(hsl(var(--gradient-bg)), hsl(var(--gradient-bg)));
   filter: blur(32px) saturate(120%);
 
@@ -39,7 +50,8 @@ html, body {
 }
 
 /* Performance optimization: reduce blur on low-end devices */
-@media (max-width: 768px), (hover: none) {
+@media (max-width: 768px),
+(hover: none) {
   .gradient-bg {
     filter: blur(20px) saturate(110%);
   }
