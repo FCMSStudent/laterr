@@ -1,158 +1,335 @@
-/* =========================================================
-   Gradient Theme System
-   ========================================================= */
-
-/* Base defaults */
 :root {
-  --bg-base: 0 0% 100%;
-
-  /* Glow colors (overridden per theme) */
-  --glow-primary: 212 70% 83%;
-  --glow-secondary: 220 45% 90%;
-  --glow-tertiary: 40 30% 95%;
-
-  /* Glow intensity tuning */
-  --glow-strong: 0.9;
-  --glow-medium: 0.6;
-  --glow-soft: 0.4;
+  /* ==========================================================================
+     Theme System Configuration
+     ========================================================================== */
+  
+  /* Default transition timing for theme changes */
+  --theme-transition-duration: 500ms;
+  --theme-transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Default to Day theme */
+  --gradient-bg: 210 60% 98%;
+  --gradient-accent: 212 70% 80%;
+  --gradient-accent-2: 200 60% 85%;
+  --gradient-accent-3: 45 90% 88%;
+  --gradient-accent-4: 180 40% 90%;
 }
 
-/* =========================================================
-   Themes
-   ========================================================= */
+/* ==========================================================================
+   Theme Definitions
+   ========================================================================== */
 
-/* Day — sky → cream */
+/* Day Mode - Clear sky to warm sunlight */
 .theme-day {
-  --bg-base: 0 0% 100%;
-  --glow-primary: 212 70% 83%;
-  --glow-secondary: 220 45% 90%;
-  --glow-tertiary: 40 30% 95%;
+  --gradient-accent: 210 80% 75%;
+  --gradient-accent-2: 195 65% 80%;
+  --gradient-accent-3: 40 85% 90%;
+  --gradient-accent-4: 170 50% 85%;
+  --gradient-bg: 210 40% 98%;
 }
 
-/* Dawn — lavender → peach */
+/* Dawn Mode - Soft pink and gold sunrise */
 .theme-dawn {
-  --bg-base: 0 0% 98%;
-  --glow-primary: 260 100% 95%;
-  --glow-secondary: 20 100% 90%;
-  --glow-tertiary: 40 100% 90%;
+  --gradient-accent: 280 100% 90%;
+  --gradient-accent-2: 25 95% 88%;
+  --gradient-accent-3: 45 100% 92%;
+  --gradient-accent-4: 300 80% 92%;
+  --gradient-bg: 20 30% 96%;
 }
 
-/* Dusk — purple → sunset */
+/* Sunrise Mode - Golden hour warmth */
+.theme-sunrise {
+  --gradient-accent: 35 100% 85%;
+  --gradient-accent-2: 50 95% 80%;
+  --gradient-accent-3: 25 90% 90%;
+  --gradient-accent-4: 15 85% 88%;
+  --gradient-bg: 45 40% 96%;
+}
+
+/* Dusk Mode - Deep purples and sunset colors */
 .theme-dusk {
-  --bg-base: 260 50% 10%;
-  --glow-primary: 260 60% 30%;
-  --glow-secondary: 320 80% 60%;
-  --glow-tertiary: 30 90% 60%;
+  --gradient-accent: 265 70% 35%;
+  --gradient-accent-2: 320 75% 55%;
+  --gradient-accent-3: 30 90% 55%;
+  --gradient-accent-4: 250 60% 45%;
+  --gradient-bg: 260 40% 12%;
 }
 
-/* Night — deep navy */
-.theme-night,
-.dark {
-  --bg-base: 248 56% 11%;
-  --glow-primary: 248 56% 11%;
-  --glow-secondary: 254 47% 32%;
-  --glow-tertiary: 248 25% 19%;
+/* Sunset Mode - Warm oranges and reds */
+.theme-sunset {
+  --gradient-accent: 15 90% 60%;
+  --gradient-accent-2: 340 80% 55%;
+  --gradient-accent-3: 25 85% 55%;
+  --gradient-accent-4: 5 75% 50%;
+  --gradient-bg: 20 35% 15%;
 }
 
-/* =========================================================
-   Base Background
-   ========================================================= */
+/* Night Mode - Deep navy with subtle purple */
+.theme-night {
+  --gradient-accent: 245 55% 15%;
+  --gradient-accent-2: 255 45% 25%;
+  --gradient-accent-3: 270 40% 20%;
+  --gradient-accent-4: 230 50% 18%;
+  --gradient-bg: 245 35% 10%;
+}
+
+/* Midnight Mode - Pure dark with star-like accents */
+.theme-midnight {
+  --gradient-accent: 260 60% 8%;
+  --gradient-accent-2: 270 50% 12%;
+  --gradient-accent-3: 280 45% 10%;
+  --gradient-accent-4: 250 55% 15%;
+  --gradient-bg: 265 30% 5%;
+}
+
+/* Forest Mode - Natural greens and earth tones */
+.theme-forest {
+  --gradient-accent: 140 50% 40%;
+  --gradient-accent-2: 160 45% 35%;
+  --gradient-accent-3: 35 60% 65%;
+  --gradient-accent-4: 100 35% 45%;
+  --gradient-bg: 120 20% 95%;
+}
+
+/* Ocean Mode - Deep blues and aqua */
+.theme-ocean {
+  --gradient-accent: 200 70% 45%;
+  --gradient-accent-2: 185 60% 50%;
+  --gradient-accent-3: 165 55% 55%;
+  --gradient-accent-4: 220 65% 40%;
+  --gradient-bg: 200 30% 96%;
+}
+
+/* ==========================================================================
+   Base Background Styles
+   ========================================================================== */
 
 html,
 body {
-  background-color: hsl(var(--bg-base));
-  color-scheme: light dark;
+  background: hsl(var(--gradient-bg));
+  
+  /* Smooth theme transitions */
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-ease);
 }
 
-/* =========================================================
-   Ambient Gradient Layer
-   ========================================================= */
+/* ==========================================================================
+   Premium Multi-Layered Gradient Background
+   ========================================================================== */
 
 .gradient-bg {
   position: fixed;
-  inset: -30% 0 0 0;
-  z-index: -2;
+  inset: -50% 0 0 0;
+  z-index: -1;
   pointer-events: none;
-  contain: paint;
-  will-change: filter;
-
+  
+  /* Multi-layered sophisticated radial gradients for depth and dimension */
   background-image:
-    radial-gradient(
-      1400px 700px at 50% -15%,
-      hsl(var(--glow-primary) / var(--glow-strong)) 0%,
-      transparent 65%
-    ),
-    radial-gradient(
-      1000px 550px at 0% 0%,
-      hsl(var(--glow-secondary) / var(--glow-medium)) 0%,
-      transparent 65%
-    ),
-    radial-gradient(
-      1000px 550px at 100% 0%,
-      hsl(var(--glow-tertiary) / var(--glow-medium)) 0%,
-      transparent 65%
-    ),
-    radial-gradient(
-      800px 400px at 50% 22%,
-      hsl(var(--glow-primary) / var(--glow-soft)) 0%,
-      transparent 70%
-    ),
-    linear-gradient(
-      hsl(var(--bg-base)),
-      hsl(var(--bg-base))
-    );
-
-  filter: blur(30px) saturate(120%);
-
-  mask-image: linear-gradient(
-    to bottom,
-    black 0%,
-    black 40%,
-    black 65%,
+    radial-gradient(ellipse 1600px 800px at 50% -20%, hsl(var(--gradient-accent) / 0.85) 0%, transparent 60%),
+    radial-gradient(ellipse 1200px 600px at 20% -10%, hsl(var(--gradient-accent-2) / 0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 1200px 600px at 80% -10%, hsl(var(--gradient-accent-3) / 0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 1000px 500px at 50% 30%, hsl(var(--gradient-accent-4) / 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 800px 400px at 30% 20%, hsl(var(--gradient-accent) / 0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 800px 400px at 70% 20%, hsl(var(--gradient-accent-2) / 0.35) 0%, transparent 65%),
+    linear-gradient(to bottom, hsl(var(--gradient-bg)), hsl(var(--gradient-bg)));
+  
+  /* Enhanced blur and saturation for premium aesthetic */
+  filter: blur(40px) saturate(130%);
+  
+  /* Gradient mask for smooth fade at bottom */
+  -webkit-mask-image: linear-gradient(to bottom, 
+    black 0%, 
+    black 25%, 
+    black 60%, 
     transparent 100%
   );
+  mask-image: linear-gradient(to bottom, 
+    black 0%, 
+    black 25%, 
+    black 60%, 
+    transparent 100%
+  );
+  
+  /* Smooth transitions when theme changes */
+  transition: 
+    opacity var(--theme-transition-duration) var(--theme-transition-ease),
+    filter var(--theme-transition-duration) var(--theme-transition-ease),
+    background-image var(--theme-transition-duration) var(--theme-transition-ease);
 }
 
-/* =========================================================
-   Noise Layer
-   ========================================================= */
+/* ==========================================================================
+   Noise Texture Overlay
+   ========================================================================== */
 
 .gradient-noise {
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
-
-  opacity: 0.04;
+  opacity: 0.05;
   mix-blend-mode: overlay;
-
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  
+  /* SVG noise filter encoded as data URI */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
+  
+  /* Subtle animation for organic feel */
+  animation: noise-move 20s ease-in-out infinite alternate;
 }
 
-/* =========================================================
-   Performance & Accessibility
-   ========================================================= */
+@keyframes noise-move {
+  0% { background-position: 0 0; }
+  100% { background-position: 10px 10px; }
+}
 
-@media (max-width: 768px), (hover: none) {
+/* ==========================================================================
+   Performance Optimizations
+   ========================================================================== */
+
+/* Reduce blur complexity on mobile devices */
+@media (max-width: 768px) {
   .gradient-bg {
-    filter: blur(20px) saturate(110%);
+    inset: -75% 0 0 0;
+    filter: blur(28px) saturate(115%);
+    
+    -webkit-mask-image: linear-gradient(to bottom, 
+      black 0%, 
+      black 20%, 
+      black 50%, 
+      transparent 100%
+    );
+    mask-image: linear-gradient(to bottom, 
+      black 0%, 
+      black 20%, 
+      black 50%, 
+      transparent 100%
+    );
+  }
+  
+  .gradient-noise {
+    opacity: 0.035;
+    background-size: 150px 150px;
+    animation: none;
   }
 }
 
+/* Further optimization for smaller screens */
+@media (max-width: 480px) {
+  .gradient-bg {
+    filter: blur(22px) saturate(110%);
+    inset: -100% 0 0 0;
+  }
+}
+
+/* Respect user preference for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .gradient-bg {
-    filter: blur(16px) saturate(105%);
+    filter: blur(20px) saturate(105%);
+    transition-duration: 100ms;
+  }
+  
+  .gradient-noise {
+    animation: none;
+    opacity: 0.03;
   }
 }
 
-/* Optional subtle mode */
+/* Honor user's data saver preference */
+@media (prefers-reduced-data: reduce) {
+  .gradient-noise {
+    display: none;
+  }
+  
+  .gradient-bg {
+    filter: blur(24px) saturate(100%);
+  }
+}
+
+/* ==========================================================================
+   Theme Intensity Variants
+   ========================================================================== */
+
+/* Subtle background effect */
 .has-subtle-bg .gradient-bg {
-  filter: blur(20px) saturate(105%);
-  mask-image: linear-gradient(
-    to bottom,
-    black 0%,
-    black 30%,
-    transparent 90%
+  filter: blur(24px) saturate(110%);
+  
+  -webkit-mask-image: linear-gradient(to bottom, 
+    black 0%, 
+    black 30%, 
+    transparent 85%
   );
+  mask-image: linear-gradient(to bottom, 
+    black 0%, 
+    black 30%, 
+    transparent 85%
+  );
+}
+
+/* Intense background effect for emphasis */
+.has-intense-bg .gradient-bg {
+  filter: blur(50px) saturate(145%);
+  inset: -75% 0 0 0;
+}
+
+/* Remove blur entirely for flat design */
+.has-flat-bg .gradient-bg {
+  filter: none;
+  inset: 0;
+  
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* ==========================================================================
+   Theme-Specific Overrides (Optional Enhancements)
+   ========================================================================== */
+
+/* Night themes benefit from less blur for better readability */
+.theme-night .gradient-bg,
+.theme-midnight .gradient-bg,
+.theme-dusk .gradient-bg {
+  filter: blur(32px) saturate(110%);
+}
+
+/* Bright themes can have more saturation */
+.theme-day .gradient-bg,
+.theme-sunrise .gradient-bg {
+  filter: blur(38px) saturate(140%);
+}
+
+/* ==========================================================================
+   Accessibility Considerations
+   ========================================================================== */
+
+/* Ensure adequate contrast when focused */
+.gradient-bg:focus-within {
+  filter: blur(30px) saturate(120%);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .gradient-bg {
+    filter: blur(16px) saturate(150%);
+    opacity: 0.7;
+  }
+  
+  .gradient-noise {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+  .gradient-bg,
+  .gradient-noise {
+    display: none;
+  }
+  
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+  }
 }
