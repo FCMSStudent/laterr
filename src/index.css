@@ -102,6 +102,23 @@ All colors MUST be HSL.
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
+
+    /* Dynamic Time-Based Backgrounds */
+    --bg-dawn: linear-gradient(to bottom, hsl(260 100% 95%), hsl(20 100% 90%));
+    --bg-day: linear-gradient(180deg, #A8C0FF 0%, #3f2b96 100%);
+    /* Placeholder, will refine */
+    --bg-day-gradient: linear-gradient(to bottom, hsl(210 100% 96%), hsl(210 60% 98%));
+    --bg-dusk: linear-gradient(to bottom, hsl(260 60% 20%), hsl(320 80% 60%));
+    --bg-night: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+
+    /* Refined Gradients based on images */
+    --gradient-dawn: linear-gradient(135deg, hsl(270 50% 90%) 0%, hsl(30 80% 90%) 50%, hsl(210 80% 90%) 100%);
+    --gradient-day: linear-gradient(180deg, hsl(200 90% 90%) 0%, hsl(210 50% 98%) 100%);
+    /* Clean sky */
+    --gradient-dusk: linear-gradient(180deg, hsl(270 80% 20%) 0%, hsl(320 70% 50%) 60%, hsl(30 90% 60%) 100%);
+    /* Vibrant sunset/purple */
+    --gradient-night: linear-gradient(180deg, hsl(240 40% 10%) 0%, hsl(260 40% 15%) 100%);
+    /* Deep dark */
   }
 
   .dark {
@@ -186,7 +203,8 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: transparent;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -197,6 +215,11 @@ All colors MUST be HSL.
     body.auth-page {
       overflow: hidden;
     }
+  }
+
+  /* Dynamic Background Transition */
+  .bg-transition {
+    transition: background-image 2s ease-in-out;
   }
 
   /* Glassmorphism with browser fallbacks and performance optimization */
@@ -500,6 +523,7 @@ All colors MUST be HSL.
       transform: scale(0);
       opacity: 0.2;
     }
+
     100% {
       transform: scale(2);
       opacity: 0;

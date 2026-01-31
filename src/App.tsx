@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
+import { DynamicBackground } from "@/shared/components/DynamicBackground";
 import { Agentation } from "agentation";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
@@ -73,6 +74,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <DynamicBackground />
             <AppContent />
             {process.env.NODE_ENV === "development" && (
               // @ts-ignore - Agentation might not have types in early versions or if install failed
