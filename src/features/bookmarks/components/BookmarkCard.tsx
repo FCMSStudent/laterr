@@ -350,8 +350,8 @@ export const BookmarkCard = ({
           className="absolute inset-0 pointer-events-none"
           style={{
             background: dominantColor
-              ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor}99 20%, ${dominantColor}66 40%, transparent 70%)`
-              : 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, transparent 70%)'
+              ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor}dd 30%, ${dominantColor}aa 50%, ${dominantColor}00 100%)`
+              : 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)'
           }}
         />
 
