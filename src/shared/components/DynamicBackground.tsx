@@ -43,12 +43,7 @@ export const DynamicBackground = () => {
 
     return (
         <div
-            className="fixed inset-0 -z-10 bg-transition pointer-events-none"
-            style={{
-                background: getGradient(phase),
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-            }}
+            className={`fixed inset-0 -z-10 bg-transition pointer-events-none gradient-bg theme-${phase}`}
             aria-hidden="true"
         />
     );

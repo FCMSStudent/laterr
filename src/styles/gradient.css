@@ -1,25 +1,49 @@
 :root {
-  /* Day mode - Sky blue to cream gradient (from reference image) */
-  --gradient-accent: 212 70% 83%;
-  /* sky blue (#A8C0FF area) */
-  --gradient-accent-2: 220 45% 90%;
-  /* lighter blue transition */
-  --gradient-accent-3: 40 30% 95%;
-  /* cream/beige bottom */
+  /* Default to Day */
   --gradient-bg: 0 0% 100%;
-  /* pure white base */
 }
 
+/* Day Mode (Default) - Sky blue to cream */
+.theme-day {
+  --gradient-accent: 212 70% 83%;
+  /* #A8C0FF */
+  --gradient-accent-2: 220 45% 90%;
+  --gradient-accent-3: 40 30% 95%;
+  --gradient-bg: 0 0% 100%;
+}
+
+/* Dawn Mode - Soft pinks and oranges */
+.theme-dawn {
+  --gradient-accent: 260 100% 95%;
+  /* Soft lavender */
+  --gradient-accent-2: 20 100% 90%;
+  /* Soft peach */
+  --gradient-accent-3: 40 100% 90%;
+  /* Warm cream */
+  --gradient-bg: 0 0% 98%;
+}
+
+/* Dusk Mode - Deep purples and sunset pinks */
+.theme-dusk {
+  --gradient-accent: 260 60% 30%;
+  /* Deep purple */
+  --gradient-accent-2: 320 80% 60%;
+  /* Vibrant pink */
+  --gradient-accent-3: 30 90% 60%;
+  /* Sunset orange */
+  --gradient-bg: 260 50% 10%;
+}
+
+/* Night Mode - Deep navy */
+.theme-night,
 .dark {
-  /* Night mode - Deep navy to purple gradient (from reference image) */
   --gradient-accent: 248 56% 11%;
-  /* deep navy (#0f0c29) */
+  /* Deep navy */
   --gradient-accent-2: 254 47% 32%;
-  /* rich purple (#302b63) */
+  /* Rich purple */
   --gradient-accent-3: 248 25% 19%;
-  /* mid-tone purple (#24243e) */
+  /* Mid-tone purple */
   --gradient-bg: 248 56% 11%;
-  /* match darkest navy */
 }
 
 html,

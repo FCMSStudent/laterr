@@ -1,4 +1,5 @@
 import { Toaster } from "@/ui";
+import "./styles/gradient.css";
 import { Toaster as Sonner } from "@/ui";
 import { TooltipProvider } from "@/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
