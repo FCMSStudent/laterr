@@ -237,7 +237,7 @@ export const BookmarkCard = ({
           </DropdownMenu>
         </div>
 
-        <div className="p-5 flex flex-col justify-between min-h-[220px]">
+        <div className="p-5 flex flex-col justify-between min-h-[220px] bg-white/[0.78]">
           {/* Note content preview */}
           <div className="flex-1 overflow-hidden">
             <p className="text-foreground/80 text-sm leading-relaxed line-clamp-10">
