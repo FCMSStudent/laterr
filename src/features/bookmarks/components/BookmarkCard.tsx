@@ -86,8 +86,8 @@ const TYPE_FALLBACK_BADGES: Record<string, CategoryConfig> = {
 
 // Get badge info based on tags and content type
 const getCategoryBadge = (type: ItemType, tags: string[], content?: string | null): CategoryConfig => {
-  // First, check if it's a video URL
-  if (type === 'url' && content && isVideoUrl(content)) {
+  // First, check if it's a video type or URL
+  if (type === 'video' || (type === 'url' && content && isVideoUrl(content))) {
     return CATEGORY_BADGES['watch later'];
   }
 
@@ -356,7 +356,8 @@ export const BookmarkCard = ({
         />
 
         {/* Content type badge - top left */}
-        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 border-0 flex flex-row", categoryBadge.color)}>
+        {/* Content type badge - top left */}
+        <Badge variant="outline" className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 border-0 flex flex-row shadow-sm backdrop-blur-sm", categoryBadge.color)}>
           <categoryBadge.icon className="h-3 w-3" />
           {categoryBadge.label}
         </Badge>
