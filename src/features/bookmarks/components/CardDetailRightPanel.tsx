@@ -166,10 +166,7 @@ export const CardDetailRightPanel = ({
         TL;DR
       </h3>
       <p className="text-sm leading-relaxed line-clamp-3 text-primary-foreground text-left font-normal">
-        {(() => {
-          const words = summaryText.split(/\s+/);
-          return words.length > 40 ? words.slice(0, 40).join(" ") + "..." : summaryText;
-        })()}
+        {summaryText}
       </p>
     </div>}
 
@@ -178,8 +175,8 @@ export const CardDetailRightPanel = ({
       <div className="flex items-center gap-1.5 text-[11px] text-secondary">
         <Clock className="w-3.5 h-3.5 flex-shrink-0" />
         <span>{formatDistanceToNow(new Date(item.created_at), {
-          addSuffix: true
-        })}</span>
+            addSuffix: true
+          })}</span>
         {item.type === "url" && item.content && <>
           <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
           <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[120px]">
@@ -229,7 +226,7 @@ export const CardDetailRightPanel = ({
         {/* Add tag button/input - styled like a pill */}
         {isAddingTag ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3 flex-shrink-0">
           <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={() => {
-            if (newTagInput.trim()) onAddTagCommit(); else onAddTagCancel();
+            if (newTagInput.trim()) onAddTagCommit();else onAddTagCancel();
           }} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" placeholder="Tag name" />
         </div> : <button onClick={onAddTagStart} className="h-6 px-3 flex items-center gap-1 bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-normal rounded-full transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
           <Plus className="w-3 h-3" />
