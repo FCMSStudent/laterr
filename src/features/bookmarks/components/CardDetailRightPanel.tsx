@@ -136,16 +136,16 @@ export const CardDetailRightPanel = ({
     }
   };
   const summaryText = item.summary?.trim();
-  return <div className="card-detail-right-panel pl-6 pr-2 flex flex-col h-full bg-transparent">
+  return <div className="card-detail-right-panel pl-6 pr-2 flex flex-col h-full max-h-full overflow-hidden bg-transparent">
     {/* ========== TITLE: Prominent, larger font ========== */}
-    <div className="flex-shrink-0 pt-5 pb-4">
+    <div className="flex-shrink-0 pt-4 pb-3">
       <h2 className="text-lg font-bold leading-tight tracking-tight line-clamp-2 text-primary-foreground" title={item.title}>
         {item.title}
       </h2>
     </div>
 
     {/* ========== ACTION BAR: Side-by-side buttons ========== */}
-    <div className="flex-shrink-0 pb-5">
+    <div className="flex-shrink-0 pb-4">
       <div className="flex gap-2">
         {item.content && <Button variant="secondary" size="sm" asChild className="h-8 grow basis-0 text-xs font-medium bg-secondary/50 hover:bg-secondary/80" aria-label={item.type === 'url' ? 'Visit page in new tab' : 'Open original file in new tab'}>
           <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5" title={item.type === 'url' ? 'Visit page' : 'Open original file'}>
@@ -161,8 +161,8 @@ export const CardDetailRightPanel = ({
     </div>
 
     {/* ========== TL;DR: Pink accent label ========== */}
-    {summaryText && <div className="flex-shrink-0 pb-5">
-      <h3 className="text-xs font-semibold mb-2 text-primary-foreground">
+    {summaryText && <div className="flex-shrink-0 pb-4">
+      <h3 className="text-xs font-semibold mb-1.5 text-primary-foreground">
         TL;DR
       </h3>
       <p className="text-sm leading-relaxed line-clamp-3 text-primary-foreground text-left font-normal">
@@ -171,7 +171,7 @@ export const CardDetailRightPanel = ({
     </div>}
 
     {/* ========== METADATA: Subtle, low-contrast ========== */}
-    <div className="flex-shrink-0 pb-5">
+    <div className="flex-shrink-0 pb-4">
       <div className="flex items-center gap-1.5 text-[11px] text-secondary">
         <Clock className="w-3.5 h-3.5 flex-shrink-0" />
         <span>{formatDistanceToNow(new Date(item.created_at), {
@@ -188,18 +188,18 @@ export const CardDetailRightPanel = ({
     </div>
 
     {/* ========== NOTES: PRIMARY workspace - visually strong, fixed height ========== */}
-    <div className="flex-shrink-0 pb-5">
-      <label htmlFor="user-notes" className="block text-xs font-semibold mb-2 text-primary-foreground">
+    <div className="flex-shrink-0 pb-4">
+      <label htmlFor="user-notes" className="block text-xs font-semibold mb-1.5 text-primary-foreground">
         Notes
       </label>
-      <Textarea id="user-notes" ref={notesRef} value={userNotes} onChange={e => onNotesChange(e.target.value)} onBlur={onNotesSave} placeholder="Add your notes..." className="min-h-[112px] max-h-[112px] resize-none bg-muted/30 border-border/30 text-sm leading-relaxed" />
+      <Textarea id="user-notes" ref={notesRef} value={userNotes} onChange={e => onNotesChange(e.target.value)} onBlur={onNotesSave} placeholder="Add your notes..." className="min-h-[100px] max-h-[100px] resize-none bg-muted/30 border-border/30 text-sm leading-relaxed" />
       {saving && <p className="text-xs text-muted-foreground mt-1">Saving...</p>}
     </div>
 
 
     {/* ========== TAGS: Pink accent label ========== */}
-    <div className="flex-shrink-0 pb-5">
-      <h3 className="text-xs font-semibold mb-2 text-primary-foreground">
+    <div className="flex-shrink-0 pb-4">
+      <h3 className="text-xs font-semibold mb-1.5 text-primary-foreground">
         Tags
       </h3>
       <div className="flex flex-wrap gap-1.5">
@@ -239,7 +239,7 @@ export const CardDetailRightPanel = ({
     <div className="flex-1" />
 
     {/* ========== FOOTER: Delete centered with pink styling ========== */}
-    <div className="flex-shrink-0 pt-4 pb-6 flex items-center justify-center">
+    <div className="flex-shrink-0 pt-3 pb-2 flex items-center justify-center">
       <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 text-xs font-medium hover:bg-destructive/5 text-primary-foreground px-[16px]">
         <Trash2 className="w-4 h-4 mr-2" />
         Delete
