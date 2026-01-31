@@ -311,16 +311,16 @@ export const BookmarkCard = ({
           </div>}
           <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full object-cover", imageLoaded ? "opacity-100" : "opacity-0")} onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
         </> :
-        // Fallback: gradient background with icon
-        <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+          // Fallback: gradient background with icon
+          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
             <contentBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
         {/* Strong dark gradient overlay from bottom */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/0 pointer-events-none" />
 
         {/* Content type badge - top left */}
-        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 backdrop-blur-md border-0 bg-[#ec4699]/[0.73] text-success-foreground flex flex-row", getTypeBadgeColor(type, isVideo))}>
+        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 border-0 bg-[#ec4699]/[0.73] text-white flex flex-row", getTypeBadgeColor(type, isVideo))}>
           <contentBadge.icon className="h-3 w-3" />
           {contentBadge.label}
         </Badge>
