@@ -1,5 +1,5 @@
 import { Badge } from "@/ui";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight, BookOpen, ShoppingBag, Eye } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
 import { AspectRatio } from "@/ui";
 import { Checkbox } from "@/ui";
@@ -29,62 +29,89 @@ interface BookmarkCardProps {
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
 }
-// Badge color mapping by content type - all use primary pink
-const BADGE_COLORS: Record<string, string> = {
-  url: 'bg-primary',
-  product: 'bg-primary',
-  video: 'bg-primary',
-  document: 'bg-primary',
-  file: 'bg-primary',
-  image: 'bg-primary'
-};
-const getTypeBadgeColor = (type: ItemType, isVideo: boolean): string => {
-  if (isVideo) return BADGE_COLORS.video;
-  return BADGE_COLORS[type] || 'bg-primary';
+// Smart category badge configuration
+// Maps tag names to badge styles and labels
+type CategoryConfig = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
 };
 
-// Get content type badge info
-const getContentBadge = (type: ItemType, content?: string | null) => {
-  if (type === 'url' && content && isVideoUrl(content)) {
-    return {
-      label: 'Video',
-      icon: Play
-    };
-  }
-  switch (type) {
-    case 'url':
-      return {
-        label: 'Product',
-        icon: Link2
-      };
-    case 'note':
-      return {
-        label: 'Note',
-        icon: FileText
-      };
-    case 'document':
-    case 'file':
-      return {
-        label: 'Document',
-        icon: FileType
-      };
-    case 'image':
-      return {
-        label: 'Image',
-        icon: ImageIcon
-      };
-    case 'video':
-      return {
-        label: 'Video',
-        icon: Play
-      };
-    default:
-      return {
-        label: 'Item',
-        icon: FileText
-      };
+const CATEGORY_BADGES: Record<string, CategoryConfig> = {
+  'watch later': {
+    label: 'Watch Later',
+    icon: Play,
+    color: 'bg-violet-500/80 text-white'
+  },
+  'read later': {
+    label: 'Read Later',
+    icon: BookOpen,
+    color: 'bg-amber-500/80 text-white'
+  },
+  'wishlist': {
+    label: 'Wishlist',
+    icon: ShoppingBag,
+    color: 'bg-emerald-500/80 text-white'
   }
 };
+
+// Fallback badges for specific content types when no category tag is present
+const TYPE_FALLBACK_BADGES: Record<string, CategoryConfig> = {
+  note: {
+    label: 'Note',
+    icon: FileText,
+    color: 'bg-slate-500/80 text-white'
+  },
+  document: {
+    label: 'Document',
+    icon: FileType,
+    color: 'bg-amber-500/80 text-white'
+  },
+  file: {
+    label: 'Document',
+    icon: FileType,
+    color: 'bg-amber-500/80 text-white'
+  },
+  image: {
+    label: 'Image',
+    icon: ImageIcon,
+    color: 'bg-pink-500/80 text-white'
+  },
+  video: {
+    label: 'Watch Later',
+    icon: Play,
+    color: 'bg-violet-500/80 text-white'
+  }
+};
+
+// Get badge info based on tags and content type
+const getCategoryBadge = (type: ItemType, tags: string[], content?: string | null): CategoryConfig => {
+  // First, check if it's a video URL
+  if (type === 'url' && content && isVideoUrl(content)) {
+    return CATEGORY_BADGES['watch later'];
+  }
+
+  // Check tags for category (first matching tag wins)
+  const normalizedTags = tags.map(t => t.toLowerCase().trim());
+  for (const tag of normalizedTags) {
+    if (CATEGORY_BADGES[tag]) {
+      return CATEGORY_BADGES[tag];
+    }
+  }
+
+  // Fallback to type-based badge
+  if (TYPE_FALLBACK_BADGES[type]) {
+    return TYPE_FALLBACK_BADGES[type];
+  }
+
+  // Default fallback
+  return {
+    label: 'Item',
+    icon: Eye,
+    color: 'bg-slate-500/80 text-white'
+  };
+};
+
 // Format date for display
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
@@ -121,7 +148,7 @@ export const BookmarkCard = ({
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const SWIPE_THRESHOLD = 80;
-  const contentBadge = getContentBadge(type, content);
+  const categoryBadge = getCategoryBadge(type, tags, content);
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
   const { color: dominantColor } = useDominantColor(previewImageUrl);
@@ -210,7 +237,7 @@ export const BookmarkCard = ({
         <Trash2 className="h-5 w-5 text-destructive-foreground" />
       </div>}
 
-      <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
+      <div role="article" tabIndex={0} aria-label={`${categoryBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
         transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
       }} className={cn("bg-muted/20 border border-border/20 shadow-sm rounded-xl cursor-pointer group overflow-hidden relative", "hover:shadow-md transition-shadow duration-200", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
         {/* Selection checkbox */}
@@ -276,7 +303,7 @@ export const BookmarkCard = ({
       <Trash2 className="h-5 w-5 text-destructive-foreground" />
     </div>}
 
-    <div role="article" tabIndex={0} aria-label={`${contentBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
+    <div role="article" tabIndex={0} aria-label={`${categoryBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
       transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
     }} className={cn("rounded-xl border border-border/20 shadow-sm cursor-pointer group overflow-hidden relative", "transition-shadow duration-200 ease-out", "hover:shadow-md", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
       {/* Selection checkbox */}
@@ -315,7 +342,7 @@ export const BookmarkCard = ({
         </> :
           // Fallback: gradient background with icon
           <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-            <contentBadge.icon className="h-16 w-16 text-muted-foreground/30" />
+            <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
         {/* Dynamic gradient overlay from bottom - uses extracted dominant color */}
@@ -329,9 +356,9 @@ export const BookmarkCard = ({
         />
 
         {/* Content type badge - top left */}
-        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 border-0 bg-[#ec4699]/[0.73] text-white flex flex-row", getTypeBadgeColor(type, isVideo))}>
-          <contentBadge.icon className="h-3 w-3" />
-          {contentBadge.label}
+        <Badge className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 border-0 flex flex-row", categoryBadge.color)}>
+          <categoryBadge.icon className="h-3 w-3" />
+          {categoryBadge.label}
         </Badge>
 
         {/* Play button overlay for videos - positioned in upper half to avoid text overlap */}
