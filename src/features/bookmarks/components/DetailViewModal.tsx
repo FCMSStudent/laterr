@@ -4,7 +4,6 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui";
 import { Button } from "@/ui";
 import { LoadingSpinner } from "@/ui";
-
 import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
 import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
@@ -35,7 +34,6 @@ const areTagsEqual = (a: string[], b: string[]) => {
   const B = [...b].map(normalizeTag).sort();
   return A.length === B.length && A.every((v, i) => v === B[i]);
 };
-
 const safeParseUrl = (value: string | null | undefined) => {
   if (!value) return null;
   try {
@@ -44,14 +42,12 @@ const safeParseUrl = (value: string | null | undefined) => {
     return null;
   }
 };
-
 interface DetailViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: Item | null;
   onUpdate: () => void;
 }
-
 export const DetailViewModal = ({
   open,
   onOpenChange,
@@ -64,7 +60,6 @@ export const DetailViewModal = ({
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
   const [editingTagValue, setEditingTagValue] = useState("");
-
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSignedUrl, setLoadingSignedUrl] = useState(false);
@@ -72,13 +67,11 @@ export const DetailViewModal = ({
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [relatedItems, setRelatedItems] = useState<Item[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
-
   const isMobile = useIsMobile();
   const debouncedNotes = useDebounce(userNotes, AUTO_SAVE_DELAY);
 
   // Extract item id to avoid optional chaining in dependency arrays (not allowed by esbuild)
   const itemId = item?.id;
-
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
   const editTagInputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +83,6 @@ export const DetailViewModal = ({
       tagInputRef.current.focus();
     }
   }, [isAddingTag]);
-
   useEffect(() => {
     if (editingTagIndex !== null && editTagInputRef.current) {
       editTagInputRef.current.focus();
@@ -101,7 +93,6 @@ export const DetailViewModal = ({
   // Reset state when item changes (different item selected)
   // Use itemId to track when we switch to a DIFFERENT item
   const prevItemIdRef = useRef<string | null>(null);
-
   useEffect(() => {
     if (item) {
       // Only reset state when switching to a different item, not on refetch
@@ -120,14 +111,12 @@ export const DetailViewModal = ({
   // Autosave notes - placeholder, actual save will be triggered by handleSave defined below
   // We use a ref to avoid circular dependency issues
   const handleSaveRef = useRef<((notes: string, tags: string[], silent?: boolean) => Promise<void>) | null>(null);
-
   useEffect(() => {
     if (!item || !open) return;
     const itemNotes = item.user_notes || "";
     const itemTags = item.tags || [];
     const notesChanged = debouncedNotes !== itemNotes;
     const tagsChanged = !areTagsEqual(tags, itemTags);
-
     if ((notesChanged || tagsChanged) && handleSaveRef.current) {
       handleSaveRef.current(debouncedNotes, tags, true);
     }
@@ -143,27 +132,24 @@ export const DetailViewModal = ({
       setLoadingRelated(true);
       try {
         const primaryTag = tags[0] || DEFAULT_ITEM_TAG;
-        const { data, error } = await supabase
-          .from(SUPABASE_ITEMS_TABLE)
-          .select("*")
-          .contains("tags", [primaryTag])
-          .neq("id", item.id)
-          .order("created_at", { ascending: false })
-          .limit(10); // Fetch a few more to filter if needed
+        const {
+          data,
+          error
+        } = await supabase.from(SUPABASE_ITEMS_TABLE).select("*").contains("tags", [primaryTag]).neq("id", item.id).order("created_at", {
+          ascending: false
+        }).limit(10); // Fetch a few more to filter if needed
 
         if (error) throw error;
-
         const rawItems = (data ?? []) as any[];
-        const normalized: Item[] = rawItems.map((row) => ({
+        const normalized: Item[] = rawItems.map(row => ({
           ...row,
           tags: row.tags ?? [],
           preview_image_url: row.preview_image_url ?? null,
           summary: row.summary ?? null,
           user_notes: row.user_notes ?? null,
           content: row.content ?? null,
-          embedding: typeof row.embedding === "string" ? JSON.parse(row.embedding) : row.embedding ?? null,
+          embedding: typeof row.embedding === "string" ? JSON.parse(row.embedding) : row.embedding ?? null
         }));
-
         const withSigned = await generateSignedUrlsForItems(normalized);
         setRelatedItems(withSigned);
       } catch (err) {
@@ -173,10 +159,8 @@ export const DetailViewModal = ({
         setLoadingRelated(false);
       }
     };
-
     fetchRelated();
   }, [open, itemId, tags]);
-
   useEffect(() => {
     const generateSignedUrlForItem = async () => {
       if (!item?.content) {
@@ -205,7 +189,6 @@ export const DetailViewModal = ({
     };
     generateSignedUrlForItem();
   }, [item]);
-
   const handleSave = useCallback(async (notesToSave: string, tagsToSave: string[], silent = false) => {
     if (!item) return;
     if (notesToSave.length > USER_NOTES_MAX_LENGTH) {
@@ -219,11 +202,12 @@ export const DetailViewModal = ({
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       if (!silent) setSaving(true);
       try {
-        const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
+        const {
+          error
+        } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
           user_notes: notesToSave,
           tags: tagsToSave
         }).eq("id", item.id);
-
         if (error) throw error;
         if (!silent) toast.success("Changes saved!");
         onUpdate();
@@ -231,12 +215,13 @@ export const DetailViewModal = ({
         const errorMessage = getUpdateErrorMessage(error);
         const typedError = toTypedError(error);
         console.error("Error saving:", typedError);
-        if (!silent) toast.error(errorMessage.title, { description: errorMessage.message });
+        if (!silent) toast.error(errorMessage.title, {
+          description: errorMessage.message
+        });
       } finally {
         if (!silent) setSaving(false);
       }
     });
-
     return saveQueueRef.current;
   }, [item, onUpdate]);
 
@@ -248,7 +233,6 @@ export const DetailViewModal = ({
   // Tag Handlers
   const normalizeTagInput = (tag: string) => tag.trim();
   const normalizeTagKey = (tag: string) => normalizeTagInput(tag).toLowerCase();
-
   const handleAddTag = () => {
     const trimmed = normalizeTagInput(newTagInput);
     if (!trimmed) {
@@ -256,9 +240,8 @@ export const DetailViewModal = ({
       setIsAddingTag(false);
       return;
     }
-
     const normalizedTrimmed = normalizeTagKey(trimmed);
-    if (!tags.some((tag) => normalizeTagKey(tag) === normalizedTrimmed)) {
+    if (!tags.some(tag => normalizeTagKey(tag) === normalizedTrimmed)) {
       const newTags = [...tags, trimmed];
       setTags(newTags);
       handleSave(userNotes, newTags, true);
@@ -266,7 +249,6 @@ export const DetailViewModal = ({
     setNewTagInput("");
     setIsAddingTag(false);
   };
-
   const handleRemoveTag = (tagToRemove: string) => {
     if (editingTagIndex !== null && tags[editingTagIndex] === tagToRemove) {
       handleCancelEditTag();
@@ -275,17 +257,14 @@ export const DetailViewModal = ({
     setTags(newTags);
     handleSave(userNotes, newTags, true);
   };
-
   const handleStartEditTag = (tagIndex: number) => {
     setEditingTagIndex(tagIndex);
     setEditingTagValue(tags[tagIndex] ?? "");
   };
-
   const handleCancelEditTag = () => {
     setEditingTagIndex(null);
     setEditingTagValue("");
   };
-
   const handleCommitEditTag = () => {
     if (editingTagIndex === null) return;
     const trimmed = normalizeTagInput(editingTagValue);
@@ -293,26 +272,20 @@ export const DetailViewModal = ({
       handleCancelEditTag();
       return;
     }
-
     const normalizedTrimmed = normalizeTagKey(trimmed);
-    const duplicateIndex = tags.findIndex(
-      (tag, index) => index !== editingTagIndex && normalizeTagKey(tag) === normalizedTrimmed
-    );
-
+    const duplicateIndex = tags.findIndex((tag, index) => index !== editingTagIndex && normalizeTagKey(tag) === normalizedTrimmed);
     let newTags: string[] = [];
     if (duplicateIndex >= 0) {
       newTags = tags.filter((_, index) => index !== editingTagIndex);
       const adjustedIndex = duplicateIndex > editingTagIndex ? duplicateIndex - 1 : duplicateIndex;
       newTags[adjustedIndex] = trimmed;
     } else {
-      newTags = tags.map((tag, index) => (index === editingTagIndex ? trimmed : tag));
+      newTags = tags.map((tag, index) => index === editingTagIndex ? trimmed : tag);
     }
-
     setTags(newTags);
     handleSave(userNotes, newTags, true);
     handleCancelEditTag();
   };
-
   const handleKeyDownTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -322,7 +295,6 @@ export const DetailViewModal = ({
       setNewTagInput("");
     }
   };
-
   const handleKeyDownEditTag = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -332,13 +304,14 @@ export const DetailViewModal = ({
       handleCancelEditTag();
     }
   };
-
   const handleDelete = useCallback(async () => {
     if (!item) return;
     setDeleting(true);
     setShowDeleteAlert(false);
     try {
-      const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
+      const {
+        error
+      } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
       if (error) throw error;
       toast.success("Item removed from your space.");
       onOpenChange(false);
@@ -346,7 +319,9 @@ export const DetailViewModal = ({
     } catch (error: unknown) {
       const errorMessage = getUpdateErrorMessage(error);
       console.error("Error deleting:", errorMessage);
-      toast.error(errorMessage.title, { description: errorMessage.message });
+      toast.error(errorMessage.title, {
+        description: errorMessage.message
+      });
     } finally {
       setDeleting(false);
     }
@@ -356,20 +331,23 @@ export const DetailViewModal = ({
   const getIcon = useCallback(() => {
     if (!item) return null;
     switch (item.type) {
-      case "url": return <Link2 className="h-5 w-5" />;
+      case "url":
+        return <Link2 className="h-5 w-5" />;
       case "note":
       case "document":
-      case "file": return <FileText className="h-5 w-5" />;
-      case "image": return <ImageIcon className="h-5 w-5" />;
-      default: return null;
+      case "file":
+        return <FileText className="h-5 w-5" />;
+      case "image":
+        return <ImageIcon className="h-5 w-5" />;
+      default:
+        return null;
     }
   }, [item]);
-
   if (!item) return null;
 
   // Type Detection
-  const isVideoContent = item.type === 'video' || (item.type === 'url' && item.content && isVideoUrl(item.content));
-  const isDocumentContent = item.type === 'document' || item.type === 'file' || (item.type === 'url' && item.content?.endsWith('.pdf'));
+  const isVideoContent = item.type === 'video' || item.type === 'url' && item.content && isVideoUrl(item.content);
+  const isDocumentContent = item.type === 'document' || item.type === 'file' || item.type === 'url' && item.content?.endsWith('.pdf');
   const isNoteContent = item.type === 'note';
   const isUrlContent = item.type === 'url';
   const isImageContent = item.type === 'image';
@@ -405,97 +383,50 @@ export const DetailViewModal = ({
     }
     return `${base} detail-preview-fixed bg-muted/15`;
   };
-
   const renderPreview = () => {
     if (!item) return null;
-
     if (item.type === 'note' && item.content) {
-      return (
-        <div className="prose prose-sm dark:prose-invert max-w-none">
+      return <div className="prose prose-sm dark:prose-invert max-w-none">
           <NotePreview content={item.content} variant="full" showProgress={false} />
-        </div>
-      );
+        </div>;
     }
-
     if (item.type === 'url' && item.content) {
       if (isVideoUrl(item.content)) {
-        return (
-          <div className="aspect-video w-full max-w-full">
+        return <div className="aspect-video w-full max-w-full">
             <VideoPreview url={item.content} title={item.title} className="w-full h-full rounded-2xl overflow-hidden" />
-          </div>
-        );
+          </div>;
       }
       if (item.preview_image_url) {
-        return (
-          <ThumbnailPreview
-            imageUrl={item.preview_image_url}
-            linkUrl={item.content}
-            title={item.title}
-            className="w-full h-full"
-            variant="cover"
-          />
-        );
+        return <ThumbnailPreview imageUrl={item.preview_image_url} linkUrl={item.content} title={item.title} className="w-full h-full" variant="cover" />;
       }
     }
-
     if (item.type === 'image' && item.content) {
-      return (
-        <div className="h-full flex items-center justify-center p-6">
-          {loadingSignedUrl ? (
-            <LoadingSpinner size="sm" text="Loading image..." />
-          ) : signedUrl ? (
-            <img
-              src={signedUrl}
-              alt={item.title || "Image preview"}
-              className="max-h-full max-w-full object-contain"
-            />
-          ) : (
-            <div className="text-muted-foreground">Preview unavailable</div>
-          )}
-        </div>
-      );
+      return <div className="h-full flex items-center justify-center p-6">
+          {loadingSignedUrl ? <LoadingSpinner size="sm" text="Loading image..." /> : signedUrl ? <img src={signedUrl} alt={item.title || "Image preview"} className="max-h-full max-w-full object-contain" /> : <div className="text-muted-foreground">Preview unavailable</div>}
+        </div>;
     }
-
     if (item.content && item.type !== 'url' && item.type !== 'note' && item.type !== 'image') {
-      return (
-        <div className="h-full flex flex-col min-h-0">
-          {loadingSignedUrl ? (
-            <div className="h-full flex items-center justify-center">
+      return <div className="h-full flex flex-col min-h-0">
+          {loadingSignedUrl ? <div className="h-full flex items-center justify-center">
               <LoadingSpinner size="sm" text="Loading file preview..." />
-            </div>
-          ) : signedUrl ? (
-            <div className="flex-1 min-h-0">
-              {item.content?.toLowerCase().endsWith(".pdf") ? (
-                <PDFPreview url={signedUrl} className="h-full" />
-              ) : item.content?.toLowerCase().endsWith(".docx") ? (
-                <DOCXPreview url={signedUrl} className="h-full" />
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+            </div> : signedUrl ? <div className="flex-1 min-h-0">
+              {item.content?.toLowerCase().endsWith(".pdf") ? <PDFPreview url={signedUrl} className="h-full" /> : item.content?.toLowerCase().endsWith(".docx") ? <DOCXPreview url={signedUrl} className="h-full" /> : <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
                   <FileText className="h-16 w-16 mb-4 opacity-50" />
                   <p>Preview available in full view</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground">Preview unavailable</div>
-          )}
-        </div>
-      );
+                </div>}
+            </div> : <div className="h-full flex items-center justify-center text-muted-foreground">Preview unavailable</div>}
+        </div>;
     }
 
     // Fallback
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+    return <div className="h-full flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
           {getIcon()}
         </div>
         <p>No preview available</p>
-      </div>
-    );
+      </div>;
   };
-
-  const MobileDetailContent = () => (
-    <div className="space-y-6 pb-20">
+  const MobileDetailContent = () => <div className="space-y-6 pb-20">
       {/* Simplified mobile view reuse logic but adapt styling */}
       <div className={`aspect-video w-full rounded-xl overflow-hidden relative ${isVideoContent ? "bg-black" : "bg-muted"}`}>
         {renderPreview()}
@@ -504,25 +435,21 @@ export const DetailViewModal = ({
         <h2 className="text-xl font-bold leading-tight">{item.title}</h2>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="w-4 h-4" />
-          <span>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</span>
+          <span>{formatDistanceToNow(new Date(item.created_at), {
+            addSuffix: true
+          })}</span>
         </div>
       </div>
 
       {/* Mobile Tabs/Sections could go here, keeping it simple for now matching reference functionally */}
       <div className="space-y-4">
         <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Notes</h3>
-        <Textarea
-          value={userNotes}
-          onChange={(e) => setUserNotes(e.target.value)}
-          onBlur={() => {
-            const originalNotes = item?.user_notes ?? "";
-            if (userNotes !== originalNotes) {
-              handleSave(userNotes, tags, true);
-            }
-          }}
-          placeholder="Add your notes here..."
-          className="bg-muted/30 min-h-[120px]"
-        />
+        <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} onBlur={() => {
+        const originalNotes = item?.user_notes ?? "";
+        if (userNotes !== originalNotes) {
+          handleSave(userNotes, tags, true);
+        }
+      }} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" />
       </div>
 
       {/* Mobile Actions */}
@@ -530,11 +457,8 @@ export const DetailViewModal = ({
         <Button variant="ghost" size="icon" onClick={() => handleSave(userNotes, tags)}><Save className="w-5 h-5" /></Button>
         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
       </div>
-    </div>
-  );
-
-  const DesktopDetailContent = () => (
-    <div className={`detail-modal-grid gap-0 ${gridLayout}`}>
+    </div>;
+  const DesktopDetailContent = () => <div className={`detail-modal-grid gap-0 ${gridLayout}`}>
       {/* LEFT COLUMN: Preview - scroll behavior controlled by content type */}
       <div className="detail-preview-column pr-6">
         <div className={`${getPreviewContainerStyles()} ${isVideoContent ? "" : "flex-1 min-h-0"}`}>
@@ -543,51 +467,23 @@ export const DetailViewModal = ({
       </div>
 
       {/* RIGHT COLUMN: Sidebar - Unified CardDetailRightPanel */}
-      <CardDetailRightPanel
-        item={item}
-        userNotes={userNotes}
-        onNotesChange={setUserNotes}
-        onNotesSave={() => {
-          const originalNotes = item?.user_notes ?? "";
-          if (userNotes !== originalNotes) {
-            handleSave(userNotes, tags, true);
-          }
-        }}
-        tags={tags}
-        isAddingTag={isAddingTag}
-        newTagInput={newTagInput}
-        editingTagIndex={editingTagIndex}
-        editingTagValue={editingTagValue}
-        onAddTagStart={() => setIsAddingTag(true)}
-        onAddTagChange={setNewTagInput}
-        onAddTagCommit={handleAddTag}
-        onAddTagCancel={() => {
-          setIsAddingTag(false);
-          setNewTagInput("");
-        }}
-        onEditTagStart={handleStartEditTag}
-        onEditTagChange={setEditingTagValue}
-        onEditTagCommit={handleCommitEditTag}
-        onEditTagCancel={handleCancelEditTag}
-        onRemoveTag={handleRemoveTag}
-        onCopyLink={() => {
-          if (item.content) {
-            navigator.clipboard.writeText(item.content);
-            toast.success("Link copied to clipboard");
-          }
-        }}
-        onDelete={() => setShowDeleteAlert(true)}
-        saving={saving}
-        tagInputRef={tagInputRef}
-        editTagInputRef={editTagInputRef}
-      />
-    </div>
-  );
-
-  return (
-    <>
-      {isMobile ? (
-        <Drawer open={open} onOpenChange={onOpenChange}>
+      <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} onNotesSave={() => {
+      const originalNotes = item?.user_notes ?? "";
+      if (userNotes !== originalNotes) {
+        handleSave(userNotes, tags, true);
+      }
+    }} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
+      setIsAddingTag(false);
+      setNewTagInput("");
+    }} onEditTagStart={handleStartEditTag} onEditTagChange={setEditingTagValue} onEditTagCommit={handleCommitEditTag} onEditTagCancel={handleCancelEditTag} onRemoveTag={handleRemoveTag} onCopyLink={() => {
+      if (item.content) {
+        navigator.clipboard.writeText(item.content);
+        toast.success("Link copied to clipboard");
+      }
+    }} onDelete={() => setShowDeleteAlert(true)} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} className="" />
+    </div>;
+  return <>
+      {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
           <DrawerContent className="max-h-[90vh]">
             <DrawerHeader className="sr-only">
               <DrawerTitle>{item.title}</DrawerTitle>
@@ -597,9 +493,7 @@ export const DetailViewModal = ({
               <MobileDetailContent />
             </div>
           </DrawerContent>
-        </Drawer>
-      ) : (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
           <DialogContent className={`${modalSizeClasses} p-8 border-0 shadow-2xl bg-muted/20 backdrop-blur-md`}>
             <DialogHeader className="sr-only">
               <DialogTitle>{item.title}</DialogTitle>
@@ -607,8 +501,7 @@ export const DetailViewModal = ({
             </DialogHeader>
             <DesktopDetailContent />
           </DialogContent>
-        </Dialog>
-      )}
+        </Dialog>}
 
       {/* Delete Alert */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
@@ -625,6 +518,5 @@ export const DetailViewModal = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
-  );
+    </>;
 };

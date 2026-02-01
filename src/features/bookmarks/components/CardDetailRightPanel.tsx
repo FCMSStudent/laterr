@@ -172,7 +172,7 @@ export const CardDetailRightPanel = ({
 
     {/* ========== METADATA: Subtle, low-contrast ========== */}
     <div className="flex-shrink-0 pb-4">
-      <div className="flex items-center gap-1.5 text-[11px] text-secondary">
+      <div className="flex items-center gap-1.5 text-[11px] text-primary-foreground">
         <Clock className="w-3.5 h-3.5 flex-shrink-0" />
         <span>{formatDistanceToNow(new Date(item.created_at), {
             addSuffix: true
