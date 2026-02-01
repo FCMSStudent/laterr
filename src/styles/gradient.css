@@ -95,7 +95,7 @@ body {
 /* The Linear Gradient Background */
 .gradient-bg {
   position: fixed;
-  inset: 0;
+  inset: -20px;
   z-index: -1;
   pointer-events: none;
 
@@ -105,14 +105,16 @@ body {
     --c-accent-3 3s ease-in-out,
     --c-bg 3s ease-in-out;
 
-  /* Clean three-stop linear gradient */
+  /* Clean three-stop linear gradient with smoother distribution */
   background-image: linear-gradient(to bottom,
       var(--c-accent) 0%,
-      var(--c-accent-2) 50%,
+      var(--c-accent) 15%,
+      var(--c-accent-2) 45%,
+      var(--c-accent-3) 85%,
       var(--c-accent-3) 100%);
 
-  /* Reduced blur for linear gradient */
-  filter: blur(40px);
+  /* Minimal blur for crisp gradient */
+  filter: blur(0px);
 
   /* Hardware acceleration */
   transform: translateZ(0);
