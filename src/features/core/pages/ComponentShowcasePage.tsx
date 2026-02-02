@@ -83,7 +83,7 @@ import { QuickStatsGrid } from "@/shared/components/QuickStatsGrid";
 import { DashboardWidget } from "@/shared/components/DashboardWidget";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { PageLoading } from "@/shared/components/PageLoading";
-import { Bookmark, CreditCard, Activity, User, Search, Bell, Settings, FileText } from "lucide-react";
+import { Bookmark, CreditCard, Activity, User as UserIcon, Search, Bell, Settings, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 const ComponentShowcasePage = () => {
@@ -98,6 +98,13 @@ const ComponentShowcasePage = () => {
       email: "",
     },
   });
+
+  // Handle keyboard escape for PageLoading demo
+  const handlePageLoadingKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setShowPageLoading(false);
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -751,9 +758,16 @@ const ComponentShowcasePage = () => {
                   Show PageLoading
                 </Button>
                 {showPageLoading && (
-                  <div className="fixed inset-0 z-50 bg-background" onClick={() => setShowPageLoading(false)}>
+                  <div 
+                    className="fixed inset-0 z-50 bg-background" 
+                    onClick={() => setShowPageLoading(false)}
+                    onKeyDown={handlePageLoadingKeyDown}
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Close loading overlay"
+                  >
                     <PageLoading />
-                    <p className="text-center text-sm text-muted-foreground mt-4">Click anywhere to close</p>
+                    <p className="text-center text-sm text-muted-foreground mt-4">Click anywhere or press Escape to close</p>
                   </div>
                 )}
               </CardContent>
@@ -781,7 +795,7 @@ const ComponentShowcasePage = () => {
                   <AvatarFallback>AB</AvatarFallback>
                 </Avatar>
                 <Avatar>
-                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                  <AvatarFallback><UserIcon className="h-4 w-4" /></AvatarFallback>
                 </Avatar>
               </CardContent>
             </Card>
