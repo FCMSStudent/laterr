@@ -27,7 +27,7 @@ import { useDebounce } from "@/shared/hooks/use-debounce";
 
 // Constants
 const USER_NOTES_MAX_LENGTH = 10000;
-const AUTO_SAVE_DELAY = 500;
+const AUTO_SAVE_DELAY = 1000;
 const normalizeTag = (t: string) => t.trim().toLowerCase();
 const areTagsEqual = (a: string[], b: string[]) => {
   const A = [...a].map(normalizeTag).sort();
@@ -444,12 +444,7 @@ export const DetailViewModal = ({
       {/* Mobile Tabs/Sections could go here, keeping it simple for now matching reference functionally */}
       <div className="space-y-4">
         <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Notes</h3>
-        <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} onBlur={() => {
-        const originalNotes = item?.user_notes ?? "";
-        if (userNotes !== originalNotes) {
-          handleSave(userNotes, tags, true);
-        }
-      }} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" />
+        <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" />
       </div>
 
       {/* Mobile Actions */}
@@ -467,12 +462,7 @@ export const DetailViewModal = ({
       </div>
 
       {/* RIGHT COLUMN: Sidebar - Unified CardDetailRightPanel */}
-      <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} onNotesSave={() => {
-      const originalNotes = item?.user_notes ?? "";
-      if (userNotes !== originalNotes) {
-        handleSave(userNotes, tags, true);
-      }
-    }} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
+      <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
       setIsAddingTag(false);
       setNewTagInput("");
     }} onEditTagStart={handleStartEditTag} onEditTagChange={setEditingTagValue} onEditTagCommit={handleCommitEditTag} onEditTagCancel={handleCancelEditTag} onRemoveTag={handleRemoveTag} onCopyLink={() => {
