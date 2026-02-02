@@ -87,10 +87,6 @@ export const NavigationHeader = ({
     label: 'Bookmarks',
     icon: Bookmark
   }, {
-    path: '/subscriptions',
-    label: 'Subscriptions',
-    icon: CreditCard
-  }, {
     path: '/health',
     label: 'Health',
     icon: Activity
