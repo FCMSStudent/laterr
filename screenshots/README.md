@@ -17,25 +17,55 @@ npm run screenshots
 ## Available Screenshots
 
 - `00-full-page.png` - Full page view of the component showcase
-- `1-buttons.png` - Button components with all variants
-- `2-cards.png` - Card components
-- `3-badges.png` - Badge components with variants
-- `4-form-inputs.png` - Form input components
-- `5-select-radio.png` - Select and radio group components
-- `6-slider-calendar.png` - Slider and calendar components
-- `7-progress-alerts.png` - Progress bars and alert components
-- `8-avatar.png` - Avatar components
-- `9-accordion-tabs.png` - Accordion and tabs components
-- `10-dialogs.png` - Dialog and modal components
-- `11-dropdowns.png` - Dropdown menus and overlay components
-- `12-table.png` - Table components
-- `13-navigation.png` - Navigation components (breadcrumb, menubar)
-- `14-toggles.png` - Toggle components
-- `15-layout.png` - Layout components (separator, scroll area)
-- `16-skeleton.png` - Loading state components
-- `17-collapsible.png` - Collapsible components
-- `18-command.png` - Command palette component
-- `19-context-menu.png` - Context menu component
+- `1-navigation-layout.png` - Navigation & Layout Components
+- `2-data-display.png` - Data Display Components
+- `3-form-input.png` - Form & Input Components
+- `4-overlays-feedback.png` - Overlays & Feedback Components
+- `5-miscellaneous.png` - Miscellaneous Components
+
+## Component Categories
+
+### Navigation & Layout Components
+- NavigationHeader
+- MobileBottomNav
+- ModuleNavigationCard
+- Breadcrumbs
+- SearchBar (wrapping EnhancedInput)
+- CollapsibleSummary
+- GradientBackground
+
+### Data Display Components
+- CompactListRow
+- QuickStatsGrid
+- DashboardWidget
+- RecommendationsPanel (wrapping ItemCard)
+
+### Form & Input Components
+- EnhancedInput
+- Input
+- Textarea
+- Form Components (FormLabel, FormItem, FormControl, FormDescription, FormMessage, FormField)
+- RadioGroup & RadioGroupItem
+- Switch & Checkbox
+
+### Overlays & Feedback Components
+- Dialog (includes DialogContent, DialogHeader, etc.)
+- Drawer (includes DrawerContent, DrawerHeader, etc.)
+- AlertDialog
+- Sheet (includes SheetTrigger, SheetOverlay, etc.)
+- Popover
+- HoverCard
+- Tooltip (includes TooltipProvider)
+- Toaster (Radix Toast)
+- Sonner Toaster
+- LoadingSpinner
+- PageLoading
+
+### Miscellaneous Components
+- Avatar
+- Badge
+- Tabs (includes TabsList, TabsTrigger, TabsContent)
+- Separator
 
 ## Component Showcase Page
 
