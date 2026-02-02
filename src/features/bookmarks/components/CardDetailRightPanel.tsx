@@ -204,7 +204,13 @@ export const CardDetailRightPanel = ({
         {/* Visible tags */}
         {visibleTags.map((tag, index) => <div key={`${tag}-${index}`} className="group flex-shrink-0">
           {editingTagIndex === index ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3">
-            <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={onEditTagCancel} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" />
+            <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={(e) => {
+              // Use setTimeout to allow the focus event to complete first
+              // This prevents stealing focus from the notes textarea
+              setTimeout(() => {
+                onEditTagCancel();
+              }, 100);
+            }} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" />
           </div> : <Badge variant="secondary" onDoubleClick={() => onEditTagStart(index)} className="h-6 px-3 rounded-full text-xs font-normal bg-secondary/60 hover:bg-secondary/80 cursor-default flex items-center gap-1.5 border-0">
             {tag}
             <button onClick={e => {
@@ -223,8 +229,12 @@ export const CardDetailRightPanel = ({
 
         {/* Add tag button/input - styled like a pill */}
         {isAddingTag ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3 flex-shrink-0">
-          <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={() => {
-            if (newTagInput.trim()) onAddTagCommit();else onAddTagCancel();
+          <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={(e) => {
+            // Use setTimeout to allow the focus event to complete first
+            // This prevents stealing focus from the notes textarea
+            setTimeout(() => {
+              if (newTagInput.trim()) onAddTagCommit();else onAddTagCancel();
+            }, 100);
           }} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" placeholder="Tag name" />
         </div> : <button onClick={onAddTagStart} className="h-6 px-3 flex items-center gap-1 bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-normal rounded-full transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
           <Plus className="w-3 h-3" />
