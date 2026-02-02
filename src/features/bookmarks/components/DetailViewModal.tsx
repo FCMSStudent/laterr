@@ -76,18 +76,34 @@ export const DetailViewModal = ({
   const tagInputRef = useRef<HTMLInputElement>(null);
   const editTagInputRef = useRef<HTMLInputElement>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const prevIsAddingTagRef = useRef(false);
+  const prevEditingTagIndexRef = useRef<number | null>(null);
 
-  // Focus tag input when adding
+  // Focus tag input when adding - only when transitioning to true
   useEffect(() => {
-    if (isAddingTag && tagInputRef.current) {
-      tagInputRef.current.focus();
+    if (isAddingTag && !prevIsAddingTagRef.current && tagInputRef.current) {
+      // Use setTimeout to ensure focus happens after any blur events
+      setTimeout(() => {
+        if (tagInputRef.current && isAddingTag) {
+          tagInputRef.current.focus();
+        }
+      }, 0);
     }
+    prevIsAddingTagRef.current = isAddingTag;
   }, [isAddingTag]);
+  
+  // Focus tag input when editing - only when transitioning to a valid index
   useEffect(() => {
-    if (editingTagIndex !== null && editTagInputRef.current) {
-      editTagInputRef.current.focus();
-      editTagInputRef.current.select();
+    if (editingTagIndex !== null && editingTagIndex !== prevEditingTagIndexRef.current && editTagInputRef.current) {
+      // Use setTimeout to ensure focus happens after any blur events
+      setTimeout(() => {
+        if (editTagInputRef.current && editingTagIndex !== null) {
+          editTagInputRef.current.focus();
+          editTagInputRef.current.select();
+        }
+      }, 0);
     }
+    prevEditingTagIndexRef.current = editingTagIndex;
   }, [editingTagIndex]);
 
   // Reset state when item changes (different item selected)
