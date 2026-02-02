@@ -13,6 +13,9 @@ import { ThemeToggle } from '@/shared/components/ThemeToggle';
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(72);
 type AuthMode = 'login' | 'signup' | 'forgot-password' | 'reset-password';
+
+// Guest mode for agent testing - creates an anonymous session
+const GUEST_MODE_ENABLED = true;
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
@@ -299,6 +302,29 @@ export default function Auth() {
     }
   };
 
+  // Guest mode handler for agent testing
+  const handleGuestAccess = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      toast({
+        title: 'Guest Mode',
+        description: 'Signed in as guest for testing.'
+      });
+      navigate('/dashboard');
+    } catch (error: unknown) {
+      const errorMessage = getAuthErrorMessage(error);
+      toast({
+        title: errorMessage.title,
+        description: errorMessage.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Visual illustration component (returns null - no illustration)
 
   // Success state for signup
@@ -527,6 +553,22 @@ export default function Auth() {
               {mode === 'login' ? 'Sign In' : 'Sign Up'}
             </LoadingButton>
           </form>
+
+          {/* Guest Mode for Agent Testing */}
+          {GUEST_MODE_ENABLED && (
+            <div className="mt-4">
+              <LoadingButton
+                type="button"
+                variant="outline"
+                onClick={handleGuestAccess}
+                loading={loading}
+                className="w-full py-5 rounded-xl font-medium text-sm border-dashed border-2 hover:bg-secondary/50"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Continue as Guest (Agent Testing)
+              </LoadingButton>
+            </div>
+          )}
 
           <div className="mt-8 text-left">
             <button onClick={() => {
