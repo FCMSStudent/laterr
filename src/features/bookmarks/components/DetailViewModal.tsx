@@ -228,7 +228,11 @@ export const DetailViewModal = ({
         }).eq("id", item.id);
         if (error) throw error;
         if (!silent) toast.success("Changes saved!");
-        onUpdate();
+        // Only call onUpdate for non-silent saves to prevent focus loss during autosave
+        // Silent saves happen during typing - we don't want to trigger refetch
+        if (!silent) {
+          onUpdate();
+        }
       } catch (error: unknown) {
         const errorMessage = getUpdateErrorMessage(error);
         const typedError = toTypedError(error);
