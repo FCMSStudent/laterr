@@ -18,6 +18,7 @@ import Health from "@/features/health/pages/HealthPage";
 import Settings from "@/features/settings/pages/SettingsPage";
 import NotFound from "@/features/core/pages/NotFoundPage";
 import { ViewerLoadingTestPage } from "@/features/core/pages/ViewerLoadingTestPage";
+import ComponentShowcasePage from "@/features/core/pages/ComponentShowcasePage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const AppContent = () => {
         {process.env.NODE_ENV === "development" && (
           <Route path="/viewer-loading-test" element={<ViewerLoadingTestPage />} />
         )}
+        <Route path="/components" element={<ComponentShowcasePage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
