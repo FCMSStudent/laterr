@@ -9,9 +9,10 @@ interface ModuleNavigationCardProps {
   title: string;
   description: string;
   count?: number;
-  href: string;
-  onClick: () => void;
+  href?: string;
+  onClick?: () => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export const ModuleNavigationCard = ({
@@ -21,14 +22,27 @@ export const ModuleNavigationCard = ({
   count,
   onClick,
   className,
+  disabled = false,
 }: ModuleNavigationCardProps) => {
+  const handleClick = () => {
+    if (!disabled && onClick) {
+      onClick();
+    }
+  };
+
   return (
     <Card 
       className={cn(
-        "cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02] group",
+        "transition-all group",
+        disabled 
+          ? "cursor-not-allowed" 
+          : "cursor-pointer hover:shadow-xl hover:scale-[1.02]",
         className
       )}
-      onClick={onClick}
+      onClick={handleClick}
+      role={disabled ? "presentation" : "button"}
+      aria-disabled={disabled}
+      tabIndex={disabled ? -1 : 0}
     >
       <CardHeader>
         <div className="flex items-start justify-between">

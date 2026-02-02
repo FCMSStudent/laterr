@@ -63,17 +63,15 @@ const Dashboard = () => {
               icon={CreditCard}
               title="Coming Soon"
               description="Subscriptions feature will be available soon"
-              href=""
-              onClick={() => {}}
-              className="opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none"
+              disabled={true}
+              className="opacity-60"
             />
             <ModuleNavigationCard
               icon={Activity}
               title="Coming Soon"
               description="Health tracking feature will be available soon"
-              href=""
-              onClick={() => {}}
-              className="opacity-60 cursor-not-allowed hover:scale-100 hover:shadow-none"
+              disabled={true}
+              className="opacity-60"
             />
           </div>
         </main>
