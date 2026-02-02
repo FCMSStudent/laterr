@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BookMarked, CreditCard, Heart, LayoutDashboard } from "lucide-react";
+import { BookMarked, LayoutDashboard } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 interface NavItem {
@@ -12,8 +12,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Home", path: "/" },
   { icon: BookMarked, label: "Bookmarks", path: "/bookmarks" },
-  { icon: CreditCard, label: "Subs", path: "/subscriptions" },
-  { icon: Heart, label: "Health", path: "/health" },
 ];
 
 export const MobileBottomNav = () => {
