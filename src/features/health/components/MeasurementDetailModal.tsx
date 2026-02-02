@@ -1,7 +1,7 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
-import { Button } from "@/ui";
-import { Badge } from "@/ui";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui";
 import { Trash2, Plus, TrendingUp, TrendingDown, Minus, Calendar, Clock } from "lucide-react";
 import { format } from "date-fns";
 import type { HealthMeasurement, MeasurementType } from "@/features/health/types";

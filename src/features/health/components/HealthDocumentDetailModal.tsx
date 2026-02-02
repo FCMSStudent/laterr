@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
-import { Button } from "@/ui";
-import { Badge } from "@/ui";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
-import { ScrollArea } from "@/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui";
+import { ScrollArea } from "@/shared/components/ui";
 import {
   Trash2, Download, RefreshCw, Calendar, Building, FileText,
   ExternalLink, Sparkles, Beaker, Loader2

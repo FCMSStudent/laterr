@@ -1,4 +1,4 @@
-import { AspectRatio, Skeleton } from "@/ui";
+import { AspectRatio, Skeleton } from "@/shared/components/ui";
 
 export const ItemCardSkeleton = () => {
   return (

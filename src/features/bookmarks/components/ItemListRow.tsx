@@ -1,10 +1,10 @@
-import { Badge } from "@/ui";
+import { Badge } from "@/shared/components/ui";
 import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Clock } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
-import { Checkbox } from "@/ui";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
-import { Button } from "@/ui";
-import { Skeleton } from "@/ui";
+import { Checkbox } from "@/shared/components/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
+import { Skeleton } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
 import { useState, useRef } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";

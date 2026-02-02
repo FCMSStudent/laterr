@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { ArrowRight } from "lucide-react";

@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
-import { Button } from "@/ui";
-import { LoadingButton } from "@/ui";
-import { Badge } from "@/ui";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
+import { LoadingButton } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui";
 import { Breadcrumbs } from "@/shared/components/Breadcrumbs";
 import {
   ArrowLeft,

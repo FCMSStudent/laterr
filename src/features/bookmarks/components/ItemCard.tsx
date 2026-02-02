@@ -1,11 +1,11 @@
-import { Badge } from "@/ui";
+import { Badge } from "@/shared/components/ui";
 import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, Clock } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
-import { AspectRatio } from "@/ui";
-import { Checkbox } from "@/ui";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
-import { Button } from "@/ui";
-import { Skeleton } from "@/ui";
+import { AspectRatio } from "@/shared/components/ui";
+import { Checkbox } from "@/shared/components/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
+import { Skeleton } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
 import { useState, useRef, useCallback } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";

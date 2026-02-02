@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui";
-import { Button } from "@/ui";
-import { LoadingSpinner } from "@/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
+import { LoadingSpinner } from "@/shared/components/ui";
 import { PDFPreview } from "@/features/bookmarks/components/PDFPreview";
 import { DOCXPreview } from "@/features/bookmarks/components/DOCXPreview";
 import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
@@ -11,8 +11,8 @@ import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPrevi
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
 import { CardDetailRightPanel } from "@/features/bookmarks/components/CardDetailRightPanel";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Globe, Clock, X, Edit2 } from "lucide-react";
-import { Badge } from "@/ui";
-import { Input, Textarea } from "@/ui";
+import { Badge } from "@/shared/components/ui";
+import { Input, Textarea } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

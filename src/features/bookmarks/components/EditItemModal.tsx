@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/ui";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/ui";
-import { LoadingButton } from "@/ui";
-import { Input } from "@/ui";
-import { Textarea } from "@/ui";
-import { Label } from "@/ui";
-import { Badge } from "@/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui";
+import { LoadingButton } from "@/shared/components/ui";
+import { Input } from "@/shared/components/ui";
+import { Textarea } from "@/shared/components/ui";
+import { Label } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

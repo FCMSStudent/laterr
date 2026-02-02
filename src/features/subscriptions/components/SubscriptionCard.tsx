@@ -1,7 +1,7 @@
-import { Badge } from "@/ui";
+import { Badge } from "@/shared/components/ui";
 import { MoreVertical, Trash2, Edit, ExternalLink } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
-import { Button } from "@/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
 import { differenceInDays } from "date-fns";
 import { formatCurrency, calculateMonthlyCost, formatBillingCycle } from "@/features/subscriptions/utils/currency-utils";
 import { CATEGORY_COLORS } from "@/features/subscriptions/constants";

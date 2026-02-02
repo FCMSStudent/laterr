@@ -1,7 +1,7 @@
 import { useRef, useMemo } from "react";
-import { Button } from "@/ui";
-import { Badge } from "@/ui";
-import { Input, Textarea } from "@/ui";
+import { Button } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
+import { Input, Textarea } from "@/shared/components/ui";
 import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Item } from "@/features/bookmarks/types";

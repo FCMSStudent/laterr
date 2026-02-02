@@ -6,10 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/ui";
-import { Button } from "@/ui";
-import { Progress } from "@/ui";
-import { Alert, AlertDescription, AlertTitle } from "@/ui";
+} from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
+import { Progress } from "@/shared/components/ui";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui";
 import { Sparkles, Loader2, CheckCircle, XCircle, Info } from "lucide-react";
 import { 
   backfillAllEmbeddings, 

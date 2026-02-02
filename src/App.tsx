@@ -1,7 +1,7 @@
-import { Toaster } from "@/ui";
+import { Toaster } from "@/shared/components/ui";
 import "./styles/gradient.css";
-import { Toaster as Sonner } from "@/ui";
-import { TooltipProvider } from "@/ui";
+import { Toaster as Sonner } from "@/shared/components/ui";
+import { TooltipProvider } from "@/shared/components/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -9,15 +9,15 @@ import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import { DynamicBackground } from "@/shared/components/DynamicBackground";
 import { Agentation } from "agentation";
-import Landing from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import Bookmarks from "./pages/Bookmarks";
-import Subscriptions from "./pages/Subscriptions";
-import Auth from "./pages/Auth";
-import Health from "./pages/Health";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import { ViewerLoadingTestPage } from "./pages/ViewerLoadingTest";
+import Landing from "@/features/landing/pages/LandingPage";
+import Dashboard from "@/features/dashboard/pages/DashboardPage";
+import Bookmarks from "@/features/bookmarks/pages/BookmarksPage";
+import Subscriptions from "@/features/subscriptions/pages/SubscriptionsPage";
+import Auth from "@/features/auth/pages/AuthPage";
+import Health from "@/features/health/pages/HealthPage";
+import Settings from "@/features/settings/pages/SettingsPage";
+import NotFound from "@/features/core/pages/NotFoundPage";
+import { ViewerLoadingTestPage } from "@/features/core/pages/ViewerLoadingTestPage";
 
 const queryClient = new QueryClient();
 

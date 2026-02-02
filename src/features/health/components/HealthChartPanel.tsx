@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { Button } from "@/ui";
+import { Button } from "@/shared/components/ui";
 import { format, subDays, subMonths, subYears, isAfter } from "date-fns";
 import type { HealthMeasurement, MeasurementType } from "@/features/health/types";
 import { extractNumericValue } from "@/features/health/utils/health-utils";

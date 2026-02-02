@@ -1,4 +1,4 @@
-import { Button } from "@/ui";
+import { Button } from "@/shared/components/ui";
 import { cn } from '@/shared/lib/utils';
 import type { SubscriptionStatus } from '@/features/subscriptions/types';
 

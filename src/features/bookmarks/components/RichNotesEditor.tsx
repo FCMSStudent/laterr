@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Button } from "@/ui";
+import { Button } from "@/shared/components/ui";
 import { ChecklistItem } from './ChecklistItem';
 import { BulletItem } from './BulletItem';
 import { NumberedItem } from './NumberedItem';

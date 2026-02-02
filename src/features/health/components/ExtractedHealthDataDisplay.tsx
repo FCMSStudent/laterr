@@ -1,6 +1,6 @@
-import { Badge } from "@/ui";
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui";
-import { Separator } from "@/ui";
+import { Badge } from "@/shared/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui";
+import { Separator } from "@/shared/components/ui";
 import { 
   Beaker, 
   Pill, 

@@ -1,6 +1,6 @@
 import { Clock, ChevronRight } from "lucide-react";
 import type { Item } from "@/features/bookmarks/types";
-import { Badge } from "./ui/badge";
+import { Badge } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
 
 interface RecentlyViewedSectionProps {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { LoadingSpinner } from "@/ui";
-import { Button } from "@/ui";
+import { LoadingSpinner } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
 import { RefreshCw } from 'lucide-react';
 import mammoth from 'mammoth';
 import DOMPurify from 'dompurify';

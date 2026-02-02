@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button } from "@/ui";
-import { Input } from "@/ui";
-import { ScrollArea } from "@/ui";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/ui";
+import { Button } from "@/shared/components/ui";
+import { Input } from "@/shared/components/ui";
+import { ScrollArea } from "@/shared/components/ui";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/shared/components/ui";
 import { MessageCircle, Send, Loader2, Bot, User, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/shared/lib/utils';

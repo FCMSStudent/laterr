@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Play, ExternalLink } from 'lucide-react';
-import { Button } from "@/ui";
+import { Button } from "@/shared/components/ui";
 import { ViewerShell } from './ViewerShell';
 import {
   isYouTubeUrl,

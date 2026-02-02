@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from "@/ui";
+import { Button } from "@/shared/components/ui";
 import { Plus, Activity, FileText, X } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 

@@ -1,5 +1,5 @@
-import { Card, CardContent } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Card, CardContent } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
 import { Bookmark, CreditCard, Activity } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { UnifiedActivity } from "@/shared/hooks/useUnifiedActivity";

@@ -1,4 +1,4 @@
-import { EnhancedInput } from "./ui/input";
+import { EnhancedInput } from "@/shared/components/ui";
 
 interface SearchBarProps {
   value: string;

@@ -1,4 +1,4 @@
-import { Button } from "./ui/button";
+import { Button } from "@/shared/components/ui";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Bookmark, CreditCard, Activity, LogOut, ArrowLeft, Plus, Search, Settings } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -8,9 +8,9 @@ import { AuthError } from "@/shared/types/errors";
 import { AUTH_ERRORS } from "@/shared/lib/error-messages";
 import { useState, useEffect, ReactNode } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { Input } from "./ui/input";
-import { Badge } from "./ui/badge";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { Input } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/shared/components/ui";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 interface NavigationHeaderProps {

@@ -1,6 +1,6 @@
-import { Badge } from "@/ui";
-import { Button } from "@/ui";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui";
+import { Badge } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui";
 import { 
   MoreVertical, Trash2, TrendingUp, TrendingDown, Minus,
   Scale, Heart, Droplet, Activity, Moon, Footprints, Flame, Thermometer, Wind, Percent
