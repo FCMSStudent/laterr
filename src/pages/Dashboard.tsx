@@ -61,17 +61,17 @@ const Dashboard = () => {
             />
             <ModuleNavigationCard
               icon={CreditCard}
-              title="Subscriptions"
-              description="Track and manage your recurring payments"
-              href="/subscriptions"
-              onClick={() => navigate('/subscriptions')}
+              title="Coming Soon"
+              description="Subscriptions feature will be available soon"
+              disabled={true}
+              className="opacity-60"
             />
             <ModuleNavigationCard
               icon={Activity}
-              title="Health"
-              description="Monitor your health metrics and documents"
-              href="/health"
-              onClick={() => navigate('/health')}
+              title="Coming Soon"
+              description="Health tracking feature will be available soon"
+              disabled={true}
+              className="opacity-60"
             />
           </div>
         </main>
