@@ -25,8 +25,8 @@ export const ModuleNavigationCard = ({
   disabled = false,
 }: ModuleNavigationCardProps) => {
   const handleClick = () => {
-    if (!disabled && onClick) {
-      onClick();
+    if (!disabled) {
+      onClick?.();
     }
   };
 
@@ -40,7 +40,7 @@ export const ModuleNavigationCard = ({
         className
       )}
       onClick={handleClick}
-      role={disabled ? "presentation" : "button"}
+      role="button"
       aria-disabled={disabled}
       tabIndex={disabled ? -1 : 0}
     >
