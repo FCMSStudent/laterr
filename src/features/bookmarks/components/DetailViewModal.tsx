@@ -83,11 +83,12 @@ export const DetailViewModal = ({
   useEffect(() => {
     if (isAddingTag && !prevIsAddingTagRef.current && tagInputRef.current) {
       // Use setTimeout to ensure focus happens after any blur events
+      // Match the 100ms delay used in blur handlers to prevent race conditions
       setTimeout(() => {
         if (tagInputRef.current && isAddingTag) {
           tagInputRef.current.focus();
         }
-      }, 0);
+      }, 100);
     }
     prevIsAddingTagRef.current = isAddingTag;
   }, [isAddingTag]);
@@ -96,12 +97,13 @@ export const DetailViewModal = ({
   useEffect(() => {
     if (editingTagIndex !== null && editingTagIndex !== prevEditingTagIndexRef.current && editTagInputRef.current) {
       // Use setTimeout to ensure focus happens after any blur events
+      // Match the 100ms delay used in blur handlers to prevent race conditions
       setTimeout(() => {
         if (editTagInputRef.current && editingTagIndex !== null) {
           editTagInputRef.current.focus();
           editTagInputRef.current.select();
         }
-      }, 0);
+      }, 100);
     }
     prevEditingTagIndexRef.current = editingTagIndex;
   }, [editingTagIndex]);
