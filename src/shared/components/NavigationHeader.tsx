@@ -86,10 +86,6 @@ export const NavigationHeader = ({
     path: '/bookmarks',
     label: 'Bookmarks',
     icon: Bookmark
-  }, {
-    path: '/health',
-    label: 'Health',
-    icon: Activity
   }];
   const showInlineSearch = onSearchChange !== undefined;
   return <header className="flex items-center gap-2 w-full">
