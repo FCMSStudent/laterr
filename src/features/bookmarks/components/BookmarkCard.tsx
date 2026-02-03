@@ -76,7 +76,7 @@ const TYPE_FALLBACK_BADGES: Record<string, CategoryConfig> = {
   image: {
     label: 'Image',
     icon: ImageIcon,
-    color: 'bg-pink-500/80 text-white'
+    color: 'bg-slate-500/80 text-white'
   },
   video: {
     label: 'Watch Later',

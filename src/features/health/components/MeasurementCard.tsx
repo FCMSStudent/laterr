@@ -34,7 +34,7 @@ const MEASUREMENT_COLORS: Record<MeasurementType, string> = {
   weight: 'border-l-primary',
   blood_pressure: 'border-l-red-500',
   glucose: 'border-l-blue-500',
-  heart_rate: 'border-l-pink-500',
+  heart_rate: 'border-l-slate-500',
   body_fat: 'border-l-yellow-500',
   sleep_hours: 'border-l-indigo-500',
   steps: 'border-l-green-500',

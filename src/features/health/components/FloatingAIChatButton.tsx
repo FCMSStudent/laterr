@@ -21,8 +21,8 @@ export const FloatingAIChatButton = () => {
         className={cn(
           'fixed bottom-32 right-4 z-40',
           'w-14 h-14 rounded-full',
-          'bg-gradient-to-br from-purple-500 to-pink-500',
-          'hover:from-purple-600 hover:to-pink-600',
+          'bg-gradient-to-br from-slate-600 to-slate-400',
+          'hover:from-slate-700 hover:to-slate-500',
           'text-white shadow-2xl hover:shadow-xl',
           'premium-transition hover:scale-110 p-0'
         )}

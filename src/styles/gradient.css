@@ -61,13 +61,13 @@
 
 /* Dusk Mode - Transition */
 .theme-dusk {
-  --c-accent: hsl(245, 45%, 30%);
-  /* Muted Navy */
-  --c-accent-2: hsl(255, 35%, 50%);
-  /* Soft Indigo */
-  --c-accent-3: hsl(260, 25%, 70%);
-  /* Grey Lavender */
-  --c-bg: hsl(245, 40%, 20%);
+  --c-accent: hsl(215, 45%, 22%);
+  /* Muted Steel */
+  --c-accent-2: hsl(205, 40%, 40%);
+  /* Soft Blue */
+  --c-accent-3: hsl(200, 45%, 60%);
+  /* Light Steel */
+  --c-bg: hsl(215, 45%, 16%);
 }
 
 /* Night Mode - Navy to Lavender */
@@ -75,13 +75,13 @@
 .theme-night,
 .dark,
 html.dark .gradient-bg {
-  --c-accent: hsl(245, 50%, 8%);
+  --c-accent: hsl(220, 50%, 10%);
   /* Deep navy (top) */
-  --c-accent-2: hsl(255, 45%, 28%);
-  /* Indigo purple (middle) */
-  --c-accent-3: hsl(260, 35%, 75%);
-  /* Light lavender (bottom) */
-  --c-bg: hsl(245, 50%, 8%);
+  --c-accent-2: hsl(215, 35%, 22%);
+  /* Steel blue (middle) */
+  --c-accent-3: hsl(210, 30%, 45%);
+  /* Soft steel (bottom) */
+  --c-bg: hsl(220, 50%, 10%);
   /* Deep navy base */
 }
 
