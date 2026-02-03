@@ -211,39 +211,86 @@ export function buildAnalysisPrompt(
         slideCount?: number;
     }
 ): string {
-    const baseInstruction = `**CRITICAL: Base your response ONLY on the provided content. Do not infer, assume, or add information not present in the text.**\n\n`;
+    const baseInstruction = `You are an expert document analyzer that extracts comprehensive metadata with high accuracy.
+
+**CRITICAL RULES**:
+1. Base your response ONLY on the provided content
+2. Do not infer, assume, or add information not present in the text
+3. Be specific and factual in all fields
+4. Generate descriptive tags based on actual content themes
+5. Provide confidence assessment based on available content
+
+`;
 
     let prompt = baseInstruction;
-    prompt += `**Filename**: ${fileName}\n\n`;
+    prompt += `**Filename**: ${fileName}\n`;
+    prompt += `**File Type**: ${fileType}\n\n`;
 
     if (context.metadata && Object.keys(context.metadata).length > 0) {
         prompt += `**Metadata**: ${JSON.stringify(context.metadata)}\n\n`;
     }
 
     if (context.pageCount) {
-        prompt += `**Pages**: ${context.pageCount}\n\n`;
+        prompt += `**Document Structure**: ${context.pageCount} pages\n\n`;
     }
 
     if (context.rowCount && context.columnCount) {
-        prompt += `**Structure**: ${context.rowCount} rows, ${context.columnCount} columns\n\n`;
+        prompt += `**Spreadsheet Structure**: ${context.rowCount} rows × ${context.columnCount} columns\n\n`;
     }
 
     if (context.slideCount) {
-        prompt += `**Total slides**: ${context.slideCount}\n\n`;
+        prompt += `**Presentation**: ${context.slideCount} slides\n\n`;
     }
 
     if (context.textSample) {
-        prompt += `**Content Sample**:\n${context.textSample}\n\n`;
+        const sampleLength = context.textSample.length;
+        prompt += `**Content Sample** (${sampleLength} chars):\n${context.textSample}\n\n`;
     }
 
-    prompt += `Provide structured metadata:\n`;
-    prompt += `1. **Title**: Descriptive title based on actual content\n`;
-    prompt += `2. **Description**: Detailed description based only on visible content\n`;
-    prompt += `3. **Category**: Classify as academic, business, personal, technical, medical, financial, legal, creative, or other\n`;
-    prompt += `4. **Tags**: 4-6 specific tags based strictly on the content\n`;
-    prompt += `5. **Summary**: 2-3 sentence summary of the main content\n`;
-    prompt += `6. **Key Points**: 3-5 main topics or findings from the content\n\n`;
-    prompt += `Use the analyze_file function to provide structured output.`;
+    prompt += `**Your Task**: Extract comprehensive metadata using the analyze_file function:\n\n`;
+    prompt += `1. **Title**: Create a clear, descriptive title based on actual content (max 100 chars)\n`;
+    prompt += `   - Use document heading or main topic\n`;
+    prompt += `   - Improve filename if needed for clarity\n`;
+    prompt += `   - Be concise but informative\n\n`;
+    
+    prompt += `2. **Description**: Write a detailed description (100-300 chars)\n`;
+    prompt += `   - Describe what the document is about\n`;
+    prompt += `   - Include purpose and key information\n`;
+    prompt += `   - Base only on visible content\n\n`;
+    
+    prompt += `3. **Category**: Choose ONE most specific category:\n`;
+    prompt += `   - academic: Research papers, theses, study materials\n`;
+    prompt += `   - business: Reports, proposals, contracts, invoices\n`;
+    prompt += `   - personal: Letters, resumes, journals, notes\n`;
+    prompt += `   - technical: Manuals, specs, documentation, code\n`;
+    prompt += `   - medical: Health records, prescriptions, research\n`;
+    prompt += `   - financial: Statements, budgets, tax documents\n`;
+    prompt += `   - legal: Contracts, agreements, policies\n`;
+    prompt += `   - creative: Designs, artwork, stories, music\n`;
+    prompt += `   - other: If none of the above fit\n\n`;
+    
+    prompt += `4. **Tags**: Generate 4-6 specific, relevant tags\n`;
+    prompt += `   - Use lowercase with hyphens (e.g., "project-management")\n`;
+    prompt += `   - Focus on topics, themes, and content types\n`;
+    prompt += `   - Include document type (pdf, report, presentation, etc.)\n`;
+    prompt += `   - Add domain-specific tags when applicable\n\n`;
+    
+    prompt += `5. **Summary**: Write a concise 2-3 sentence summary\n`;
+    prompt += `   - Capture the main point or purpose\n`;
+    prompt += `   - Include key findings or conclusions if present\n`;
+    prompt += `   - Keep it factual and informative\n\n`;
+    
+    prompt += `6. **Key Points**: Extract 3-5 main points or takeaways\n`;
+    prompt += `   - Focus on important information\n`;
+    prompt += `   - Use bullet-point style\n`;
+    prompt += `   - Be specific and actionable\n\n`;
+    
+    prompt += `7. **Extracted Text**: Include important text content\n`;
+    prompt += `   - Main headings and subheadings\n`;
+    prompt += `   - Key quotes or statements\n`;
+    prompt += `   - Important data or findings\n\n`;
+
+    prompt += `Provide all metadata using the analyze_file function with structured output.`;
 
     return prompt;
 }
