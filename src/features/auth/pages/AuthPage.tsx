@@ -514,7 +514,7 @@ export default function Auth() {
         <div className="glass-card rounded-3xl p-10 shadow-apple">
           
           <div className="text-left mb-8">
-            <img alt="Laterr" className="h-40 mb-3" src="/lovable-uploads/9382ae30-888c-4d72-b3bc-422289913c8d.png" />
+            <img alt="Laterr" className="h-40 mb-3 logo-neutral" src="/lovable-uploads/9382ae30-888c-4d72-b3bc-422289913c8d.png" />
             <p className="text-muted-foreground text-sm">Your personal knowledge space</p>
           </div>
 

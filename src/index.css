@@ -33,8 +33,8 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 265 4% 12.9%;
 
-    /* Refined blue primary - more vibrant */
-    --primary: 330 81.1881% 60.3922%;
+    /* Refined slate primary - calm and neutral */
+    --primary: 215 18% 45%;
     --primary-foreground: 248 0.3% 98.4%;
 
     /* Elegant gray secondary */
@@ -63,7 +63,7 @@ All colors MUST be HSL.
 
     --border: 256 1.3% 92.9%;
     --input: 256 1.3% 92.9%;
-    --ring: 257 4% 70.4%;
+    --ring: 215 16% 70%;
 
     --radius: 1.5rem;
 
@@ -84,7 +84,7 @@ All colors MUST be HSL.
     --glass-glow: 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
 
     /* Elegant gradient */
-    --gradient-soft: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(212 100% 58%) 100%);
+    --gradient-soft: linear-gradient(135deg, hsl(215 20% 60%) 0%, hsl(210 30% 82%) 100%);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 265 4% 12.9%;
@@ -115,21 +115,21 @@ All colors MUST be HSL.
     --spacing: 0.25rem;
 
     /* Dynamic Time-Based Backgrounds */
-    --bg-dawn: linear-gradient(to bottom, hsl(260 100% 95%), hsl(20 100% 90%));
+    --bg-dawn: linear-gradient(to bottom, hsl(210 60% 92%), hsl(35 70% 92%));
     /* Sky blue to cream day gradient - replica of reference image */
     --bg-day: linear-gradient(180deg, hsl(212 70% 83%) 0%, hsl(40 30% 95%) 100%);
     --bg-day-gradient: linear-gradient(180deg, hsl(212 70% 83%) 0%, hsl(40 30% 95%) 100%);
-    --bg-dusk: linear-gradient(to bottom, hsl(260 60% 20%), hsl(320 80% 60%));
-    /* Deep navy to purple night gradient - replica of reference image */
-    --bg-night: linear-gradient(180deg, hsl(248 56% 11%) 0%, hsl(254 47% 32%) 50%, hsl(248 25% 19%) 100%);
+    --bg-dusk: linear-gradient(to bottom, hsl(215 45% 22%), hsl(205 55% 45%));
+    /* Deep navy to steel night gradient */
+    --bg-night: linear-gradient(180deg, hsl(220 45% 10%) 0%, hsl(215 35% 22%) 50%, hsl(220 30% 14%) 100%);
 
     /* Refined Gradients based on reference images */
-    --gradient-dawn: linear-gradient(135deg, hsl(270 50% 90%) 0%, hsl(30 80% 90%) 50%, hsl(210 80% 90%) 100%);
+    --gradient-dawn: linear-gradient(135deg, hsl(210 55% 90%) 0%, hsl(35 70% 92%) 50%, hsl(200 60% 92%) 100%);
     /* Clean sky blue to cream - day mode replica */
     --gradient-day: linear-gradient(180deg, hsl(212 70% 83%) 0%, hsl(220 45% 90%) 50%, hsl(40 30% 95%) 100%);
-    --gradient-dusk: linear-gradient(180deg, hsl(270 80% 20%) 0%, hsl(320 70% 50%) 60%, hsl(30 90% 60%) 100%);
-    /* Deep navy to purple - night mode replica */
-    --gradient-night: linear-gradient(180deg, hsl(248 56% 11%) 0%, hsl(254 47% 32%) 50%, hsl(248 25% 19%) 100%);
+    --gradient-dusk: linear-gradient(180deg, hsl(220 50% 16%) 0%, hsl(210 45% 35%) 60%, hsl(200 55% 55%) 100%);
+    /* Deep navy to steel - night mode replica */
+    --gradient-night: linear-gradient(180deg, hsl(220 45% 10%) 0%, hsl(215 35% 22%) 50%, hsl(220 30% 14%) 100%);
   }
 
   .dark {
@@ -142,8 +142,8 @@ All colors MUST be HSL.
     --popover: 266 4% 20.8%;
     --popover-foreground: 248 0.3% 98.4%;
 
-    /* Keep the vibrant pink primary color from light mode */
-    --primary: 330 81.1881% 60.3922%;
+    /* Keep the slate primary color from light mode */
+    --primary: 215 20% 55%;
     --primary-foreground: 248 0.3% 98.4%;
 
     --secondary: 260 4.1% 27.9%;
@@ -172,7 +172,7 @@ All colors MUST be HSL.
 
     --border: 0 0% 100% / 10%;
     --input: 0 0% 100% / 15%;
-    --ring: 264 2.7% 55.1%;
+    --ring: 215 16% 60%;
 
     --glass-bg: var(--glass-medium);
     --glass-border: var(--glass-border-light);
@@ -418,6 +418,10 @@ All colors MUST be HSL.
   .glass-input:focus-visible {
     border-color: var(--glass-border-accent);
     box-shadow: var(--glass-glow), 0 0 0 1px var(--glass-border-accent) inset;
+  }
+
+  .logo-neutral {
+    filter: grayscale(1) contrast(1.05) brightness(0.95);
   }
 
   .animate-float {
