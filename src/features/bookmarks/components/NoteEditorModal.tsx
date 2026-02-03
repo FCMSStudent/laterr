@@ -132,7 +132,7 @@ export const NoteEditorModal = ({
     </Dialog>}
 
     <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-      <AlertDialogContent className="glass-card border-0">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this note?</AlertDialogTitle>
           <AlertDialogDescription>

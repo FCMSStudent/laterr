@@ -173,7 +173,7 @@ export const SubscriptionDetailModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto border-0 glass-card">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <Breadcrumbs items={breadcrumbItems} />
           <div className="flex items-center justify-between gap-3">

@@ -36,8 +36,8 @@ export const StatusFilterTabs = ({
             className={cn(
               'h-8 px-3 rounded-md transition-all',
               activeFilter === filter.value 
-                ? 'bg-background shadow-sm' 
-                : 'hover:bg-background/50'
+                ? 'glass-light shadow-sm' 
+                : 'hover:bg-white/10'
             )}
           >
             {filter.label}

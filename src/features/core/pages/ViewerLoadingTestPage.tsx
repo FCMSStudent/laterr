@@ -15,7 +15,7 @@ export const ViewerLoadingTestPage = () => {
   const [docxUrl, setDocxUrl] = useState('');
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">Viewer Loading State Test</h1>

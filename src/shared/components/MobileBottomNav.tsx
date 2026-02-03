@@ -35,7 +35,7 @@ export const MobileBottomNav = () => {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-heavy pb-safe border-t border-white/10"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-heavy pb-safe border-t border-white/15 shadow-[0_-8px_24px_rgba(0,0,0,0.15)]"
       aria-label="Mobile navigation"
     >
       <div className="flex items-center justify-around h-[72px] px-1">

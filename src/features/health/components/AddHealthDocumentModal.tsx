@@ -499,7 +499,7 @@ export const AddHealthDocumentModal = ({
   ) : (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-lg !bg-background border-border shadow-xl max-h-[90vh] overflow-y-auto"
+        className="sm:max-w-lg max-h-[90vh] overflow-y-auto"
         onPointerDownOutside={(e) => loading && e.preventDefault()}
         onEscapeKeyDown={(e) => loading && e.preventDefault()}
       >

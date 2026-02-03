@@ -108,7 +108,7 @@ const ComponentShowcasePage = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background p-8">
+      <div className="min-h-screen p-8">
         <div className="max-w-7xl mx-auto space-y-12">
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold">UI Components Showcase</h1>

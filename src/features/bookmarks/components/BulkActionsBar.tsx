@@ -46,7 +46,7 @@ export const BulkActionsBar = ({
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-200">
-      <div className="bg-background/95 backdrop-blur-sm border rounded-full px-4 py-2 shadow-2xl flex items-center gap-2">
+      <div className="glass-medium rounded-full px-4 py-2 shadow-2xl flex items-center gap-2">
         <span className="text-sm font-medium px-2">
           {selectedCount}
         </span>

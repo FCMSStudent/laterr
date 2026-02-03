@@ -201,7 +201,7 @@ export const ItemListRow = ({
         onTouchEnd={handleTouchEnd}
         style={{ transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined }}
         className={cn(
-          "glass-card rounded-xl p-3 md:p-4 cursor-pointer hover:scale-[1.005] premium-transition hover:shadow-lg group overflow-hidden relative focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:outline-none flex items-center gap-3 md:gap-4 bg-card",
+          "glass-card rounded-xl p-3 md:p-4 cursor-pointer hover:scale-[1.005] premium-transition hover:shadow-lg group overflow-hidden relative focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:outline-none flex items-center gap-3 md:gap-4",
           isSelected && "ring-2 ring-primary bg-primary/5 scale-[0.99]",
           isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50"
         )}

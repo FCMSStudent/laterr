@@ -679,7 +679,7 @@ export const AddItemModal = ({
   ) : (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-md !bg-background border-border shadow-xl"
+        className="sm:max-w-md"
         onPointerDownOutside={(e) => loading && e.preventDefault()}
         onEscapeKeyDown={(e) => loading && e.preventDefault()}
       >

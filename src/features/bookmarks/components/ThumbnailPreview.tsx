@@ -76,7 +76,7 @@ export const ThumbnailPreview = ({
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
           {linkUrl && (
             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="bg-background/90 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
+              <div className="glass-light px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
                 <ExternalLink className="h-4 w-4" />
                 Open Link
               </div>
@@ -91,7 +91,7 @@ export const ThumbnailPreview = ({
           variant="ghost"
           size="sm"
           onClick={handleExternalClick}
-          className="absolute top-2 right-2 bg-background/80 hover:bg-background text-foreground h-8 w-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          className="absolute top-2 right-2 glass-light hover:shadow-md text-foreground h-8 w-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
           aria-label="Open link in new tab"
         >
           <ExternalLink className="h-4 w-4" />

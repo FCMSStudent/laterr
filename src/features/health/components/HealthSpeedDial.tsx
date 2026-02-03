@@ -31,7 +31,7 @@ export const HealthSpeedDial = ({
       {isOpen && (
         <div className="absolute bottom-16 right-0 flex flex-col gap-3 mb-2 animate-in slide-in-from-bottom-4 duration-200">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium bg-background px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
+            <span className="text-sm font-medium glass-light px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
               Log Measurement
             </span>
             <Button
@@ -44,7 +44,7 @@ export const HealthSpeedDial = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium bg-background px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
+            <span className="text-sm font-medium glass-light px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
               Upload Document
             </span>
             <Button

@@ -312,7 +312,7 @@ export const AddMeasurementModal = ({
     </Drawer>
   ) : (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md !bg-background border-border shadow-xl">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground">
             Log Measurement

@@ -84,7 +84,7 @@ export const SubscriptionCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 rounded-full bg-background/80 hover:bg-background"
+              className="h-8 w-8 p-0 rounded-full glass-light hover:shadow-md"
               aria-label="Card actions"
             >
               <MoreVertical className="h-4 w-4" />
