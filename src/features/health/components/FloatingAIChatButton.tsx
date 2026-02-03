@@ -33,8 +33,8 @@ export const FloatingAIChatButton = () => {
 
       {/* Chat panel modal/drawer */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-          <div className="fixed inset-x-0 bottom-0 md:right-4 md:bottom-4 md:left-auto md:w-96 md:max-h-[600px] h-[80vh] md:h-auto bg-background border rounded-t-2xl md:rounded-2xl shadow-2xl flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+          <div className="fixed inset-x-0 bottom-0 md:right-4 md:bottom-4 md:left-auto md:w-96 md:max-h-[600px] h-[80vh] md:h-auto glass-heavy rounded-t-2xl md:rounded-2xl shadow-2xl flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <div className="flex items-center gap-2">

@@ -191,7 +191,7 @@ export const ItemCard = ({
     {/* Main card */}
     <div role="article" tabIndex={0} aria-label={`${getTypeLabel()}: ${title}${summary ? `. ${summary}` : ''}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onMouseEnter={() => setShowAllTags(true)} onMouseLeave={() => setShowAllTags(false)} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
       transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
-    }} className={cn("glass-card rounded-2xl p-5 md:p-7 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden relative focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:outline-none min-h-[280px] md:min-h-[320px] bg-card", type === 'note' && "border border-border/60 bg-muted/20", isSelected && "ring-2 ring-primary bg-primary/5 scale-[0.98]", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
+    }} className={cn("glass-card rounded-2xl p-5 md:p-7 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden relative focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:outline-none min-h-[280px] md:min-h-[320px]", type === 'note' && "border border-border/60", isSelected && "ring-2 ring-primary bg-primary/5 scale-[0.98]", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
       {/* Selection checkbox */}
       {isSelectionMode && <div className="absolute top-4 left-4 z-10 animate-in zoom-in-50 duration-200" onClick={e => e.stopPropagation()}>
         <Checkbox checked={isSelected} onCheckedChange={checked => onSelectionChange?.(id, checked as boolean)} aria-label={`Select ${title}`} className={cn(isSelected && "animate-in zoom-in-75 duration-150")} />
@@ -202,7 +202,7 @@ export const ItemCard = ({
       <div className={cn("absolute top-4 right-4 z-10 premium-transition", isMobile ? showMobileActions ? "opacity-100" : "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100")}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-            <Button variant="ghost" size="sm" className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full bg-background/80 hover:bg-background min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0" aria-label="Card actions">
+            <Button variant="ghost" size="sm" className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full glass-light hover:shadow-md min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0" aria-label="Card actions">
               <MoreVertical className="h-5 w-5 md:h-4 md:w-4" />
             </Button>
           </DropdownMenuTrigger>

@@ -470,7 +470,7 @@ export const DetailViewModal = ({
       </div>
 
       {/* Mobile Actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 border-t bg-background/95 backdrop-blur flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 p-4 border-t glass-medium flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => handleSave(userNotes, tags)}><Save className="w-5 h-5" /></Button>
         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
       </div>

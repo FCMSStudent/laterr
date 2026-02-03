@@ -97,7 +97,7 @@ export const NavigationHeader = ({
     {/* Inline search bar on mobile */}
     {showInlineSearch && <div className="flex-1 relative">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-      <Input type="search" value={searchValue || ""} onChange={e => onSearchChange?.(e.target.value)} placeholder={searchPlaceholder} className="h-10 pl-9 pr-3 rounded-full bg-secondary/50 border-0 text-sm" data-search-input />
+      <Input type="search" value={searchValue || ""} onChange={e => onSearchChange?.(e.target.value)} placeholder={searchPlaceholder} className="h-10 pl-9 pr-3 rounded-full glass-input text-sm" data-search-input />
     </div>}
 
     {/* Filter & Sort button */}
@@ -108,7 +108,7 @@ export const NavigationHeader = ({
       {navItems.map(item => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path || item.path === '/' && location.pathname === '/app' || item.path === '/bookmarks' && location.pathname === '/bookmarks';
-        return <Button key={item.path} onClick={() => navigate(item.path)} variant="ghost" size="sm" className={cn("h-9 px-3 gap-2 text-sm font-medium rounded-full transition-colors", isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-transparent")}>
+        return <Button key={item.path} onClick={() => navigate(item.path)} variant="ghost" size="sm" className={cn("h-9 px-3 gap-2 text-sm font-medium rounded-full transition-colors", isActive ? "glass-light text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-transparent")}>
           <Icon className="w-4 h-4" aria-hidden="true" />
           {item.label}
         </Button>;

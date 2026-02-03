@@ -457,7 +457,7 @@ export const AddSubscriptionModal = ({
     </Drawer>
   ) : (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto !bg-background border-border shadow-xl">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground">
             Add Subscription

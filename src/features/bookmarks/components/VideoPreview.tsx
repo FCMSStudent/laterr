@@ -84,7 +84,7 @@ export const VideoPreview = ({ url, title, className = '' }: VideoPreviewProps) 
               variant="ghost"
               size="sm"
               onClick={handleOpenExternal}
-              className="absolute top-2 right-2 bg-background/80 hover:bg-background text-foreground h-8 w-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              className="absolute top-2 right-2 glass-light hover:shadow-md text-foreground h-8 w-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
               aria-label="Open video in new tab"
             >
               <ExternalLink className="h-4 w-4" />

@@ -2,7 +2,7 @@ import { AspectRatio, Skeleton } from "@/shared/components/ui";
 
 export const ItemCardSkeleton = () => {
   return (
-    <div className="glass-card rounded-2xl p-5 md:p-7 min-h-[280px] md:min-h-[320px] bg-card">
+    <div className="glass-card rounded-2xl p-5 md:p-7 min-h-[280px] md:min-h-[320px]">
       {/* Media Section */}
       <AspectRatio ratio={16 / 9} className="mb-4 md:mb-6">
         <Skeleton className="w-full h-full rounded-xl bg-muted/20" />

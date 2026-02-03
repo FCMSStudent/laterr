@@ -63,7 +63,7 @@ export const MeasurementDetailModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl !bg-background border-border shadow-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold text-foreground flex items-center gap-3">
             {typeInfo?.label || measurementType}

@@ -203,7 +203,7 @@ export const CardDetailRightPanel = ({
       <div className="flex flex-wrap gap-1.5">
         {/* Visible tags */}
         {visibleTags.map((tag, index) => <div key={`${tag}-${index}`} className="group flex-shrink-0">
-          {editingTagIndex === index ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3">
+          {editingTagIndex === index ? <div className="flex items-center h-6 glass-input border border-primary rounded-full px-3">
             <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={(e) => {
               // Use setTimeout to allow the focus event to complete first
               // This prevents stealing focus from the notes textarea
@@ -228,7 +228,7 @@ export const CardDetailRightPanel = ({
         </Badge>}
 
         {/* Add tag button/input - styled like a pill */}
-        {isAddingTag ? <div className="flex items-center h-6 bg-background border border-primary rounded-full px-3 flex-shrink-0">
+        {isAddingTag ? <div className="flex items-center h-6 glass-input border border-primary rounded-full px-3 flex-shrink-0">
           <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={(e) => {
             // Use setTimeout to allow the focus event to complete first
             // This prevents stealing focus from the notes textarea
