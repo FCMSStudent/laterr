@@ -5,6 +5,10 @@ import { parseHTML } from "https://esm.sh/linkedom@0.18.5";
 import { Readability } from "https://esm.sh/@mozilla/readability@0.5.0";
 import { createLogger } from "../_shared/logger.ts";
 
+// Configuration constants
+const AI_TEMPERATURE = 0.3; // Lower temperature for consistent results
+const LATEST_CHROME_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
 // Multi-layer metadata extraction interface
 interface ExtractedMetadata {
   title?: string;
@@ -227,7 +231,7 @@ async function retryWithBackoff<T>(
   maxRetries: number = 3,
   baseDelay: number = 1000
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error = new Error('Retry failed without error');
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -248,7 +252,7 @@ async function retryWithBackoff<T>(
     }
   }
   
-  throw lastError!;
+  throw lastError;
 }
 
 serve(async (req) => {
@@ -483,7 +487,7 @@ serve(async (req) => {
             signal: controller.signal,
             redirect: 'follow',
             headers: { 
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+              'User-Agent': LATEST_CHROME_USER_AGENT,
               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
               'Accept-Language': 'en-US,en;q=0.9',
             }
@@ -622,7 +626,7 @@ Provide comprehensive metadata in JSON format.`;
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          temperature: 0.3, // Lower temperature for more consistent results
+          temperature: AI_TEMPERATURE,
         }),
       });
       

@@ -143,8 +143,8 @@ export const AddItemModal = ({
         hasImage: !!data.previewImageUrl
       });
 
-      // Set suggested category from AI
-      if (data.tag || data.category) {
+      // Set suggested category from AI (prioritize category over tag)
+      if (data.category || data.tag) {
         setSuggestedCategory(data.category || data.tag);
       }
 

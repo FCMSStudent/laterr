@@ -8,6 +8,19 @@ import { ApiError } from "./types.ts";
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
 
+// Category definitions for consistent classification
+export const FILE_CATEGORIES = {
+  academic: "Research papers, theses, study materials, educational content",
+  business: "Reports, proposals, contracts, invoices, business documents",
+  personal: "Letters, resumes, journals, personal notes, correspondence",
+  technical: "Manuals, specifications, documentation, code, technical guides",
+  medical: "Health records, prescriptions, medical research, clinical documents",
+  financial: "Statements, budgets, tax documents, financial reports",
+  legal: "Contracts, agreements, policies, legal documents",
+  creative: "Designs, artwork, stories, music, creative projects",
+  other: "Miscellaneous content that doesn't fit other categories"
+} as const;
+
 /**
  * Structured output schema for file analysis
  */
@@ -259,15 +272,10 @@ export function buildAnalysisPrompt(
     prompt += `   - Base only on visible content\n\n`;
     
     prompt += `3. **Category**: Choose ONE most specific category:\n`;
-    prompt += `   - academic: Research papers, theses, study materials\n`;
-    prompt += `   - business: Reports, proposals, contracts, invoices\n`;
-    prompt += `   - personal: Letters, resumes, journals, notes\n`;
-    prompt += `   - technical: Manuals, specs, documentation, code\n`;
-    prompt += `   - medical: Health records, prescriptions, research\n`;
-    prompt += `   - financial: Statements, budgets, tax documents\n`;
-    prompt += `   - legal: Contracts, agreements, policies\n`;
-    prompt += `   - creative: Designs, artwork, stories, music\n`;
-    prompt += `   - other: If none of the above fit\n\n`;
+    Object.entries(FILE_CATEGORIES).forEach(([key, desc]) => {
+        prompt += `   - ${key}: ${desc}\n`;
+    });
+    prompt += `\n`;
     
     prompt += `4. **Tags**: Generate 4-6 specific, relevant tags\n`;
     prompt += `   - Use lowercase with hyphens (e.g., "project-management")\n`;
