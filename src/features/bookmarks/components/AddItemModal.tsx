@@ -103,7 +103,7 @@ export const AddItemModal = ({
       return;
     }
     setLoading(true);
-    setStatusStep('uploading');
+    setStatusStep('analyzing url');
     try {
       const {
         data: {
@@ -111,6 +111,8 @@ export const AddItemModal = ({
         }
       } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      
+      setStatusStep('extracting metadata');
       const {
         data,
         error
@@ -132,15 +134,25 @@ export const AddItemModal = ({
         return;
       }
 
-      // Set suggested category from AI
-      if (data.tag) {
-        setSuggestedCategory(data.tag);
+      // Log metadata quality for debugging
+      console.log('📊 Metadata extracted:', {
+        title: data.title,
+        tags: data.tags,
+        category: data.category,
+        confidence: data.confidence,
+        hasImage: !!data.previewImageUrl
+      });
+
+      // Set suggested category from AI (prioritize category over tag)
+      if (data.category || data.tag) {
+        setSuggestedCategory(data.category || data.tag);
       }
 
       // Generate embedding for semantic search
       let embedding: number[] | null = null;
       try {
         setStatusStep('generating embeddings');
+        const embeddingTags = data.tags || (data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS]);
         const {
           data: embeddingData,
           error: embeddingError
@@ -148,7 +160,7 @@ export const AddItemModal = ({
           body: {
             title: data.title,
             summary: data.summary,
-            tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
+            tags: embeddingTags,
             extractedText: data.description || ''
           }
         });
@@ -181,8 +193,17 @@ export const AddItemModal = ({
         title: data.title,
         content: urlResult.data,
         summary: data.summary,
-        tags: data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS],
+        tags: data.tags || (data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS]),
+        category: data.category || suggestedCategory || DEFAULT_ITEM_TAG,
         preview_image_url: data.previewImageUrl,
+        metadata: {
+          author: data.author,
+          platform: data.platform,
+          contentType: data.contentType,
+          siteName: data.siteName,
+          publishedTime: data.publishedTime,
+          confidence: data.confidence,
+        },
         embedding: embedding ? JSON.stringify(embedding) : null,
         user_id: user.id
       });

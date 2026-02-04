@@ -5,6 +5,23 @@ import { parseHTML } from "https://esm.sh/linkedom@0.18.5";
 import { Readability } from "https://esm.sh/@mozilla/readability@0.5.0";
 import { createLogger } from "../_shared/logger.ts";
 
+// Configuration constants
+const AI_TEMPERATURE = 0.3; // Lower temperature for consistent results
+const LATEST_CHROME_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
+// Multi-layer metadata extraction interface
+interface ExtractedMetadata {
+  title?: string;
+  description?: string;
+  image?: string;
+  author?: string;
+  siteName?: string;
+  type?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
+  tags?: string[];
+}
+
 class HttpError extends Error {
   status: number;
   code: string;
@@ -34,6 +51,209 @@ const summarizeAiResponse = (data: any, status: number) => ({
   responseSize: JSON.stringify(data ?? {}).length,
   hasToolCalls: Boolean(data?.choices?.[0]?.message?.tool_calls?.length),
 });
+
+/**
+ * Extract metadata from Open Graph tags
+ */
+function extractOpenGraph(html: string): ExtractedMetadata {
+  const metadata: ExtractedMetadata = {};
+  
+  const ogTags = [
+    { pattern: /property=["']og:title["'][^>]*content=["']([^"']*)["']/i, key: 'title' },
+    { pattern: /property=["']og:description["'][^>]*content=["']([^"']*)["']/i, key: 'description' },
+    { pattern: /property=["']og:image["'][^>]*content=["']([^"']*)["']/i, key: 'image' },
+    { pattern: /property=["']og:site_name["'][^>]*content=["']([^"']*)["']/i, key: 'siteName' },
+    { pattern: /property=["']og:type["'][^>]*content=["']([^"']*)["']/i, key: 'type' },
+    { pattern: /property=["']article:published_time["'][^>]*content=["']([^"']*)["']/i, key: 'publishedTime' },
+    { pattern: /property=["']article:modified_time["'][^>]*content=["']([^"']*)["']/i, key: 'modifiedTime' },
+    { pattern: /property=["']article:author["'][^>]*content=["']([^"']*)["']/i, key: 'author' },
+  ];
+  
+  for (const tag of ogTags) {
+    const match = html.match(tag.pattern);
+    if (match && match[1]) {
+      (metadata as any)[tag.key] = match[1];
+    }
+  }
+  
+  return metadata;
+}
+
+/**
+ * Extract metadata from Twitter Card tags
+ */
+function extractTwitterCard(html: string): ExtractedMetadata {
+  const metadata: ExtractedMetadata = {};
+  
+  const twitterTags = [
+    { pattern: /name=["']twitter:title["'][^>]*content=["']([^"']*)["']/i, key: 'title' },
+    { pattern: /name=["']twitter:description["'][^>]*content=["']([^"']*)["']/i, key: 'description' },
+    { pattern: /name=["']twitter:image["'][^>]*content=["']([^"']*)["']/i, key: 'image' },
+    { pattern: /name=["']twitter:creator["'][^>]*content=["']([^"']*)["']/i, key: 'author' },
+  ];
+  
+  for (const tag of twitterTags) {
+    const match = html.match(tag.pattern);
+    if (match && match[1]) {
+      (metadata as any)[tag.key] = match[1];
+    }
+  }
+  
+  return metadata;
+}
+
+/**
+ * Extract metadata from standard HTML meta tags
+ */
+function extractHtmlMeta(html: string): ExtractedMetadata {
+  const metadata: ExtractedMetadata = {};
+  
+  // Title from <title> tag
+  const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+  if (titleMatch && titleMatch[1]) {
+    metadata.title = titleMatch[1];
+  }
+  
+  // Meta description
+  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
+  if (descMatch && descMatch[1]) {
+    metadata.description = descMatch[1];
+  }
+  
+  // Meta author
+  const authorMatch = html.match(/<meta[^>]*name=["']author["'][^>]*content=["']([^"']*)["']/i);
+  if (authorMatch && authorMatch[1]) {
+    metadata.author = authorMatch[1];
+  }
+  
+  // Meta keywords (convert to tags)
+  const keywordsMatch = html.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']*)["']/i);
+  if (keywordsMatch && keywordsMatch[1]) {
+    metadata.tags = keywordsMatch[1].split(',').map(k => k.trim()).filter(k => k.length > 0);
+  }
+  
+  return metadata;
+}
+
+/**
+ * Extract JSON-LD structured data
+ */
+function extractJsonLd(html: string): ExtractedMetadata {
+  const metadata: ExtractedMetadata = {};
+  
+  try {
+    const jsonLdMatches = html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+    
+    for (const match of jsonLdMatches) {
+      try {
+        const data = JSON.parse(match[1]);
+        
+        // Handle different schema.org types
+        if (data['@type'] === 'Article' || data['@type'] === 'BlogPosting' || data['@type'] === 'NewsArticle') {
+          metadata.title = metadata.title || data.headline || data.name;
+          metadata.description = metadata.description || data.description;
+          metadata.author = metadata.author || data.author?.name || data.author;
+          metadata.publishedTime = metadata.publishedTime || data.datePublished;
+          metadata.modifiedTime = metadata.modifiedTime || data.dateModified;
+          metadata.image = metadata.image || data.image?.url || data.image;
+        } else if (data['@type'] === 'WebPage' || data['@type'] === 'WebSite') {
+          metadata.title = metadata.title || data.name || data.headline;
+          metadata.description = metadata.description || data.description;
+        } else if (data['@type'] === 'VideoObject') {
+          metadata.title = metadata.title || data.name;
+          metadata.description = metadata.description || data.description;
+          metadata.image = metadata.image || data.thumbnailUrl;
+        }
+      } catch (e) {
+        // Skip invalid JSON-LD
+        console.log('⚠️ Invalid JSON-LD block, skipping');
+      }
+    }
+  } catch (e) {
+    console.log('⚠️ Error extracting JSON-LD:', e);
+  }
+  
+  return metadata;
+}
+
+/**
+ * Multi-layer fallback metadata extraction
+ * Priority: Open Graph → Twitter Cards → JSON-LD → HTML meta
+ */
+function extractMetadataWithFallback(html: string): ExtractedMetadata {
+  console.log('🔍 Starting multi-layer metadata extraction');
+  
+  // Layer 1: Open Graph
+  const ogMetadata = extractOpenGraph(html);
+  console.log('📊 Open Graph:', Object.keys(ogMetadata).length, 'fields');
+  
+  // Layer 2: Twitter Cards
+  const twitterMetadata = extractTwitterCard(html);
+  console.log('🐦 Twitter Cards:', Object.keys(twitterMetadata).length, 'fields');
+  
+  // Layer 3: JSON-LD
+  const jsonLdMetadata = extractJsonLd(html);
+  console.log('📋 JSON-LD:', Object.keys(jsonLdMetadata).length, 'fields');
+  
+  // Layer 4: HTML meta tags
+  const htmlMetadata = extractHtmlMeta(html);
+  console.log('📄 HTML Meta:', Object.keys(htmlMetadata).length, 'fields');
+  
+  // Merge with priority (first non-empty value wins)
+  const merged: ExtractedMetadata = {
+    title: ogMetadata.title || twitterMetadata.title || jsonLdMetadata.title || htmlMetadata.title,
+    description: ogMetadata.description || twitterMetadata.description || jsonLdMetadata.description || htmlMetadata.description,
+    image: ogMetadata.image || twitterMetadata.image || jsonLdMetadata.image,
+    author: ogMetadata.author || twitterMetadata.author || jsonLdMetadata.author || htmlMetadata.author,
+    siteName: ogMetadata.siteName,
+    type: ogMetadata.type,
+    publishedTime: ogMetadata.publishedTime || jsonLdMetadata.publishedTime,
+    modifiedTime: ogMetadata.modifiedTime || jsonLdMetadata.modifiedTime,
+    tags: htmlMetadata.tags,
+  };
+  
+  // Remove undefined values
+  Object.keys(merged).forEach(key => {
+    if ((merged as any)[key] === undefined) {
+      delete (merged as any)[key];
+    }
+  });
+  
+  console.log('✅ Merged metadata:', Object.keys(merged).length, 'fields');
+  return merged;
+}
+
+/**
+ * Retry with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error = new Error('Retry failed without error');
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry on client errors (4xx)
+      if (error instanceof HttpError && error.status >= 400 && error.status < 500) {
+        throw error;
+      }
+      
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.log(`⏳ Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError;
+}
 
 serve(async (req) => {
   const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
@@ -254,31 +474,41 @@ serve(async (req) => {
     // Fallback to HTML scraping if needed
     let cleanText = '';
     let firecrawlUsed = false;
+    let extractedMetadata: ExtractedMetadata = {};
     
     if (shouldFetchHtml) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const pageResponse = await fetch(url, {
-          signal: controller.signal,
-          redirect: 'follow',
-          headers: { 'User-Agent': 'Laterr-Bot/1.0' }
+        // Use retry mechanism for fetching
+        const html = await retryWithBackoff(async () => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          
+          const pageResponse = await fetch(url, {
+            signal: controller.signal,
+            redirect: 'follow',
+            headers: { 
+              'User-Agent': LATEST_CHROME_USER_AGENT,
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.9',
+            }
+          });
+          clearTimeout(timeoutId);
+          
+          if (!pageResponse.ok) {
+            throw new Error(`HTTP ${pageResponse.status}: ${pageResponse.statusText}`);
+          }
+          
+          return await pageResponse.text();
         });
-        clearTimeout(timeoutId);
-        const html = await pageResponse.text();
         
-        // Extract Open Graph image
-        const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']*)["']/i);
-        previewImageUrl = previewImageUrl || (ogImageMatch ? ogImageMatch[1] : null);
+        // Multi-layer metadata extraction
+        extractedMetadata = extractMetadataWithFallback(html);
         
-        // Extract page title
-        const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-        pageTitle = pageTitle || (titleMatch ? titleMatch[1] : 'Untitled');
-        
-        // Extract meta description
-        const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
-        metaDescription = descMatch ? descMatch[1] : '';
+        // Use extracted metadata with fallback to existing values
+        pageTitle = pageTitle || extractedMetadata.title || 'Untitled';
+        metaDescription = metaDescription || extractedMetadata.description || '';
+        previewImageUrl = previewImageUrl || extractedMetadata.image || null;
+        authorName = authorName || extractedMetadata.author || '';
         
         // Use Readability to extract main article content
         try {
@@ -292,77 +522,131 @@ serve(async (req) => {
           if (article && article.textContent) {
             // Use the extracted article text content (already cleaned by Readability)
             cleanText = article.textContent.trim().replace(/\s+/g, ' ').substring(0, 3000);
-            console.log('Successfully extracted article content using Readability');
+            console.log('✅ Successfully extracted article content using Readability');
           } else {
             // Fallback to simple HTML stripping if Readability fails
             cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
-            console.log('Readability extraction failed, using fallback HTML stripping');
+            console.log('⚠️ Readability extraction failed, using fallback HTML stripping');
           }
         } catch (error) {
           // Fallback to simple HTML stripping on error
-          console.error('Error using Readability:', error);
+          console.error('⚠️ Error using Readability:', error);
           cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
         }
       } catch (primaryError) {
-        console.log('Primary fetch failed, trying Firecrawl fallback:', primaryError);
+        console.log('⚠️ Primary fetch failed, trying Firecrawl fallback:', primaryError);
         
-        // Firecrawl fallback
-        const firecrawlData = await fetchWithFirecrawl(url);
+        // Firecrawl fallback with retry
+        const firecrawlData = await retryWithBackoff(
+          () => fetchWithFirecrawl(url),
+          2,
+          2000
+        ).catch(() => null);
+        
         if (firecrawlData) {
           pageTitle = firecrawlData.title || pageTitle || 'Untitled';
           cleanText = firecrawlData.content;
           metaDescription = firecrawlData.description;
           previewImageUrl = firecrawlData.imageUrl || previewImageUrl;
           firecrawlUsed = true;
-          console.log('Successfully retrieved content via Firecrawl fallback');
+          console.log('✅ Successfully retrieved content via Firecrawl fallback');
         } else {
-          // Both methods failed
-          console.error('Both primary fetch and Firecrawl fallback failed');
-          throw new Error('Failed to fetch URL content');
+          // Graceful degradation - return minimal metadata
+          console.error('❌ Both primary fetch and Firecrawl fallback failed, using minimal metadata');
+          pageTitle = url;
+          metaDescription = 'Content could not be retrieved';
+          cleanText = '';
         }
       }
     }
     
-    console.log('Analyzing content with AI...');
+    console.log('🤖 Analyzing content with AI...');
     
-    // Use AI to generate summary and tags
+    // Use AI to generate summary and tags with retry mechanism
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: '**CRITICAL: Base your response ONLY on the provided content. Do not infer, assume, or add information not present in the text.** You are a helpful assistant that analyzes web content and categorizes it. Respond in JSON format: {"title": "improved title", "summary": "2-3 sentence summary", "tag": "read later", "contentType": "video|article|product|document"}. Use ONLY one of these tags: "watch later" (videos/entertainment), "read later" (articles/documents/text), or "wishlist" (products/items to buy). Choose only ONE tag that best fits the content based on what is actually provided.'
-          },
-          {
-            role: 'user',
-            content: platform 
-              ? `**Extract factual information only from the provided data.**\n\nAnalyze this ${platform} video:\n\nTitle: ${pageTitle}\nChannel: ${authorName}\n\nCategorize based strictly on this information and provide a summary.`
-              : `**Extract factual information only from the provided data.**\n\nAnalyze this webpage:\n\nTitle: ${pageTitle}\nDescription: ${metaDescription}\n\nURL: ${url}\n\nArticle Content: ${cleanText}\n\nDetermine the content type based only on what is visible in the article content above. Categorize appropriately.`
-          }
-        ],
-      }),
-    });
+    
+    // Enhanced AI prompt with better instructions
+    const systemPrompt = `You are an expert content analyzer that extracts metadata from web content with high accuracy. 
 
-    if (aiResponse.status === 429) {
-      throw new HttpError(429, 'rate_limited', 'AI provider rate limited', { providerStatus: aiResponse.status });
-    }
+Your task is to analyze the provided content and return a JSON object with the following fields:
+{
+  "title": "A clear, descriptive title (improve if needed)",
+  "summary": "A concise 2-3 sentence summary of the main content",
+  "tags": ["tag1", "tag2", "tag3"],
+  "category": "article|video|product|tutorial|news|blog|documentation|social|entertainment|other",
+  "contentType": "article|video|product|document|social-media|news",
+  "confidence": 0.0-1.0
+}
 
-    if (aiResponse.status === 402) {
-      throw new HttpError(402, 'credits_exhausted', 'AI provider credits exhausted', { providerStatus: aiResponse.status });
-    }
+Rules:
+1. Base your response ONLY on the provided content
+2. Generate 3-6 relevant tags based on topics, themes, and categories
+3. Choose the most specific category that fits
+4. Confidence should reflect how much content was available (0.9+ if full content, 0.5-0.8 if limited)
+5. Keep tags lowercase and use hyphens instead of spaces
+6. Make the title informative but concise (max 100 chars)
+7. Summary should capture the essence without speculation`;
+
+    const userPrompt = platform 
+      ? `Analyze this ${platform} video:
+
+Title: ${pageTitle}
+${authorName ? `Channel/Author: ${authorName}` : ''}
+${metaDescription ? `Description: ${metaDescription}` : ''}
+
+Provide metadata in JSON format.`
+      : `Analyze this webpage:
+
+Title: ${pageTitle}
+${metaDescription ? `Meta Description: ${metaDescription}` : ''}
+${extractedMetadata.author ? `Author: ${extractedMetadata.author}` : ''}
+${extractedMetadata.siteName ? `Site: ${extractedMetadata.siteName}` : ''}
+${extractedMetadata.publishedTime ? `Published: ${extractedMetadata.publishedTime}` : ''}
+URL: ${url}
+
+${cleanText ? `Content (first 3000 chars):\n${cleanText}` : 'No content extracted'}
+
+${extractedMetadata.tags?.length ? `Existing tags: ${extractedMetadata.tags.join(', ')}` : ''}
+
+Provide comprehensive metadata in JSON format.`;
+
+    const aiResponse = await retryWithBackoff(async () => {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: AI_TEMPERATURE,
+        }),
+      });
+      
+      if (response.status === 429) {
+        throw new HttpError(429, 'rate_limited', 'AI provider rate limited', { providerStatus: response.status });
+      }
+      
+      if (response.status === 402) {
+        throw new HttpError(402, 'credits_exhausted', 'AI provider credits exhausted', { providerStatus: response.status });
+      }
+      
+      if (!response.ok) {
+        throw new Error(`AI request failed with status ${response.status}`);
+      }
+      
+      return response;
+    }, 3, 2000);
 
     const aiData = await aiResponse.json();
-    console.log('AI response summary:', summarizeAiResponse(aiData, aiResponse.status));
+    console.log('📊 AI response summary:', summarizeAiResponse(aiData, aiResponse.status));
     if (isDebugLoggingEnabled()) {
       console.log('AI response payload:', aiData);
     }
@@ -374,35 +658,60 @@ serve(async (req) => {
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
       rawResult = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : content;
     } catch (e) {
-      console.error('Error extracting AI response content:', e);
+      console.error('⚠️ Error extracting AI response content:', e);
       rawResult = undefined;
     }
 
-    // Use validateAndParseAiJson with fallback
+    // Use validateAndParseAiJson with comprehensive fallback
     const fallback = {
       title: pageTitle,
       summary: metaDescription || 'No summary available',
-      tags: ['article']
+      tags: extractedMetadata.tags || ['article'],
+      category: platform ? 'video' : 'article'
     };
     
     const result = validateAndParseAiJson(rawResult, fallback);
+
+    // Merge AI results with extracted metadata for best quality
+    const mergedTags = result.tags && result.tags.length > 0 
+      ? result.tags 
+      : extractedMetadata.tags || fallback.tags;
 
     // Final cleanup pass on all metadata before returning
     const finalMetadata = cleanMetadataFields({
       title: result.title || pageTitle,
       summary: result.summary,
-      tags: result.tags
+      tags: mergedTags,
+      category: result.category || fallback.category
+    });
+
+    // Determine tag based on content type
+    const primaryTag = platform 
+      ? 'watch later' 
+      : (result.contentType === 'product' ? 'wishlist' : 'read later');
+
+    console.log('✅ Metadata extraction complete:', {
+      title: finalMetadata.title?.substring(0, 50),
+      tagCount: finalMetadata.tags?.length || 0,
+      category: finalMetadata.category,
+      hasImage: !!previewImageUrl,
+      confidence: result.confidence || 'unknown'
     });
 
     return new Response(
       JSON.stringify({
         title: finalMetadata.title || pageTitle,
         summary: finalMetadata.summary,
-        tag: result.tag || (platform ? 'watch later' : 'read later'),
+        tags: finalMetadata.tags,
+        tag: result.tag || primaryTag,
+        category: finalMetadata.category,
         previewImageUrl: previewImageUrl,
-        author: authorName || undefined,
+        author: authorName || extractedMetadata.author || undefined,
         platform: platform || undefined,
-        contentType: result.contentType || 'article'
+        contentType: result.contentType || (platform ? 'video' : 'article'),
+        siteName: extractedMetadata.siteName || undefined,
+        publishedTime: extractedMetadata.publishedTime || undefined,
+        confidence: result.confidence || undefined,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
     );
