@@ -306,7 +306,9 @@ export default function Auth() {
   const handleGuestAccess = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInAnonymously();
+      const {
+        error
+      } = await supabase.auth.signInAnonymously();
       if (error) throw error;
       toast({
         title: 'Guest Mode',
@@ -514,7 +516,7 @@ export default function Auth() {
         <div className="glass-card rounded-3xl p-10 shadow-apple">
           
           <div className="text-left mb-8">
-            <img alt="Laterr" className="h-40 mb-3 logo-neutral" src="/lovable-uploads/9382ae30-888c-4d72-b3bc-422289913c8d.png" />
+            <img alt="Laterr" className="h-40 mb-3 logo-neutral object-scale-down" src="/lovable-uploads/9382ae30-888c-4d72-b3bc-422289913c8d.png" />
             <p className="text-muted-foreground text-sm">Your personal knowledge space</p>
           </div>
 
@@ -555,20 +557,12 @@ export default function Auth() {
           </form>
 
           {/* Guest Mode for Agent Testing */}
-          {GUEST_MODE_ENABLED && (
-            <div className="mt-4">
-              <LoadingButton
-                type="button"
-                variant="outline"
-                onClick={handleGuestAccess}
-                loading={loading}
-                className="w-full py-5 rounded-xl font-medium text-sm border-dashed border-2 hover:bg-secondary/50"
-              >
+          {GUEST_MODE_ENABLED && <div className="mt-4">
+              <LoadingButton type="button" variant="outline" onClick={handleGuestAccess} loading={loading} className="w-full py-5 rounded-xl font-medium text-sm border-dashed border-2 hover:bg-secondary/50">
                 <Sparkles className="w-4 h-4 mr-2" />
                 Continue as Guest (Agent Testing)
               </LoadingButton>
-            </div>
-          )}
+            </div>}
 
           <div className="mt-8 text-left">
             <button onClick={() => {
