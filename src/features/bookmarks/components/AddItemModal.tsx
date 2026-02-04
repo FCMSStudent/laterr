@@ -545,15 +545,15 @@ export const AddItemModal = ({
   const ModalContent = () => (
     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
       <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
-        <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition min-h-[44px] md:min-h-0">
+        <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground smooth-transition min-h-[44px] md:min-h-0">
           <Link2 className="h-4 w-4" />
           URL
         </TabsTrigger>
-        <TabsTrigger value="note" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition min-h-[44px] md:min-h-0">
+        <TabsTrigger value="note" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground smooth-transition min-h-[44px] md:min-h-0">
           <FileText className="h-4 w-4" />
           Note
         </TabsTrigger>
-        <TabsTrigger value="image" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white smooth-transition min-h-[44px] md:min-h-0">
+        <TabsTrigger value="image" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground smooth-transition min-h-[44px] md:min-h-0">
           <File className="h-4 w-4" />
           Files
         </TabsTrigger>

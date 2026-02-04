@@ -37,7 +37,7 @@ export const StatusFilterTabs = ({
               'h-8 px-3 rounded-md transition-all',
               activeFilter === filter.value 
                 ? 'glass-light shadow-sm' 
-                : 'hover:bg-white/10'
+                : 'hover:bg-muted/50'
             )}
           >
             {filter.label}
