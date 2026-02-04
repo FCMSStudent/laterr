@@ -492,7 +492,7 @@ export const DetailViewModal = ({
         navigator.clipboard.writeText(item.content);
         toast.success("Link copied to clipboard");
       }
-    }} onDelete={() => setShowDeleteAlert(true)} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} className="" />
+    }} onDelete={() => setShowDeleteAlert(true)} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} className="bg-black/0" />
     </div>;
   return <>
       {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
