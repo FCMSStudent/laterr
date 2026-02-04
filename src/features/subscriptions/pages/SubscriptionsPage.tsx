@@ -261,7 +261,7 @@ const Subscriptions = () => {
       {isMobile && (
         <Button
           onClick={() => setShowAddModal(true)}
-          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-xl premium-transition hover:scale-110 p-0"
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl hover:shadow-xl premium-transition hover:scale-110 p-0"
           aria-label="Add new subscription"
         >
           <Plus className="w-6 h-6" aria-hidden="true" />
