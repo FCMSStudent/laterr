@@ -223,11 +223,11 @@ const Health = () => {
         {/* Tabs - Only Measurements and Documents */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="grid w-full grid-cols-2 bg-muted rounded-xl">
-            <TabsTrigger value="measurements" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="measurements" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Activity className="h-4 w-4" />
               <span className="hidden sm:inline">Measurements</span>
             </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="documents" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">Documents</span>
             </TabsTrigger>
