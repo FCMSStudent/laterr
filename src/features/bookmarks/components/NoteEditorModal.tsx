@@ -94,7 +94,7 @@ export const NoteEditorModal = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, handleSave]);
   const editorContent = <div className="flex flex-col h-full gap-4">
-    <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title..." className="text-lg font-semibold border border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/10 backdrop-blur-sm focus-visible:ring-0 focus-visible:ring-offset-0 p-0 px-[16px] py-[16px] rounded-xl" maxLength={200} />
+    <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title..." className="text-lg font-semibold glass-input focus-visible:ring-0 focus-visible:ring-offset-0 p-0 px-[16px] py-[16px] rounded-xl" maxLength={200} />
 
     <RichNotesEditor value={content} onChange={setContent} placeholder="Type / for commands..." className="flex-1" />
 

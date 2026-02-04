@@ -155,7 +155,7 @@ export const NavigationHeader = ({
     {/* Add button - integrated */}
     {onAddClick && (isMobile ? <Button onClick={onAddClick} variant="ghost" size="icon" className="h-10 w-10 text-primary hover:text-primary/80 shrink-0" aria-label={`${addLabel} new item`}>
         <Plus className="w-6 h-6" aria-hidden="true" />
-      </Button> : <Button onClick={onAddClick} size="sm" className="h-9 gap-2 rounded-full text-background bg-primary px-[12px] py-0" aria-label={`${addLabel} new item`}>
+      </Button> : <Button onClick={onAddClick} size="sm" className="h-9 gap-2 rounded-full text-primary-foreground bg-primary px-[12px] py-0" aria-label={`${addLabel} new item`}>
         <Plus className="w-4 h-4" aria-hidden="true" />
         {addLabel}
       </Button>)}

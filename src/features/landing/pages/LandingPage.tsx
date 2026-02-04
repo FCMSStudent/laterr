@@ -44,7 +44,7 @@ const Landing = () => {
 
         {/* CTA Button */}
         <div className="pt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
-          <Button onClick={handleGetStarted} size="lg" className="bg-primary hover:bg-primary/90 text-white shadow-xl hover:shadow-2xl premium-transition hover:scale-[1.05] font-semibold text-lg px-12 py-7 rounded-2xl">
+          <Button onClick={handleGetStarted} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl hover:shadow-2xl premium-transition hover:scale-[1.05] font-semibold text-lg px-12 py-7 rounded-2xl">
             <Sparkles className="w-5 h-5 mr-2" aria-hidden="true" />
             Get Started
           </Button>

@@ -34,7 +34,7 @@ export const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm hover:shadow-md",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        glass: "glass-light hover:glass-medium text-foreground shadow-sm hover:shadow-md border-0",
+        glass: "bg-[var(--glass-light)] hover:bg-[var(--glass-medium)] text-foreground shadow-sm hover:shadow-md backdrop-blur-[var(--glass-blur-light)] border border-[var(--glass-border-light)]",
       },
       size: {
         default: "h-10 px-5 py-2",

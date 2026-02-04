@@ -211,7 +211,7 @@ export const RichNotesEditor = ({
   return (
     <div className={cn("space-y-2 flex flex-col h-full", className)}>
       {/* Toolbar */}
-      <div className="flex items-center gap-1 p-2 bg-white/40 dark:bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 dark:border-white/10 flex-shrink-0">
+      <div className="flex items-center gap-1 p-2 glass-light rounded-xl flex-shrink-0">
         <Button
           variant="ghost"
           size="sm"
@@ -290,7 +290,7 @@ export const RichNotesEditor = ({
       </div>
 
       {/* Blocks */}
-      <div className="space-y-1 min-h-[200px] p-3 rounded-xl border border-white/20 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm flex-1 overflow-y-auto">
+      <div className="space-y-1 min-h-[200px] p-3 rounded-xl glass-input flex-1 overflow-y-auto">
         {notesData.blocks.length === 0 ? (
           <div className="text-sm text-muted-foreground py-2">
             {placeholder}

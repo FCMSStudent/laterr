@@ -36,7 +36,7 @@ export const HealthSpeedDial = ({
             </span>
             <Button
               onClick={() => handleAction(onAddMeasurement)}
-              className="w-12 h-12 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl"
+              className="w-12 h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl"
               aria-label="Log measurement"
             >
               <Activity className="w-5 h-5" />
@@ -49,7 +49,7 @@ export const HealthSpeedDial = ({
             </span>
             <Button
               onClick={() => handleAction(onAddDocument)}
-              className="w-12 h-12 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl"
+              className="w-12 h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl"
               aria-label="Upload document"
             >
               <FileText className="w-5 h-5" />
@@ -62,7 +62,7 @@ export const HealthSpeedDial = ({
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-xl premium-transition p-0',
+          'w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl hover:shadow-xl premium-transition p-0',
           isOpen && 'rotate-45'
         )}
         aria-label={isOpen ? 'Close menu' : 'Open add menu'}
