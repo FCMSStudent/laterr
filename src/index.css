@@ -729,13 +729,7 @@ All colors MUST be HSL.
     max-height: 100%;
     overflow: hidden;
     flex-shrink: 0;
-
-    /* Improved contrast - more solid background */
-    background: hsl(var(--background) / 0.98);
-  }
-
-  .dark .card-detail-right-panel {
-    background: hsl(var(--background) / 0.95);
+    background: transparent;
   }
 
   /* Inspector scrollbar for summary when expanded */
