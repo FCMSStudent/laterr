@@ -214,11 +214,13 @@ export type Database = {
       }
       items: {
         Row: {
+          category: string | null
           category_id: string | null
           content: string | null
           created_at: string
           embedding: string | null
           id: string
+          metadata: Json | null
           preview_image_url: string | null
           summary: string | null
           tags: string[] | null
@@ -229,11 +231,13 @@ export type Database = {
           user_notes: string | null
         }
         Insert: {
+          category?: string | null
           category_id?: string | null
           content?: string | null
           created_at?: string
           embedding?: string | null
           id?: string
+          metadata?: Json | null
           preview_image_url?: string | null
           summary?: string | null
           tags?: string[] | null
@@ -244,11 +248,13 @@ export type Database = {
           user_notes?: string | null
         }
         Update: {
+          category?: string | null
           category_id?: string | null
           content?: string | null
           created_at?: string
           embedding?: string | null
           id?: string
+          metadata?: Json | null
           preview_image_url?: string | null
           summary?: string | null
           tags?: string[] | null
