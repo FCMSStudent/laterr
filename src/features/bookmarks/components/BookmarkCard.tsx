@@ -370,12 +370,12 @@ export const BookmarkCard = ({
         {/* Text overlay - bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
           {/* Title */}
-          <h3 className="font-bold text-white text-lg leading-tight line-clamp-2">
+          <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 transition-transform duration-200 ease-out group-hover:-translate-y-2 group-focus-within:-translate-y-2">
             {title}
           </h3>
         </div>
 
-        <span className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 text-white text-sm font-medium underline underline-offset-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">
+        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 text-white text-sm font-medium underline underline-offset-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 transition-all duration-200 ease-out pointer-events-none">
           Open
         </span>
       </AspectRatio>
