@@ -92,7 +92,7 @@ export const DetailViewModal = ({
     }
     prevIsAddingTagRef.current = isAddingTag;
   }, [isAddingTag]);
-  
+
   // Focus tag input when editing - only when transitioning to a valid index
   useEffect(() => {
     if (editingTagIndex !== null && editingTagIndex !== prevEditingTagIndexRef.current && editTagInputRef.current) {
@@ -492,7 +492,7 @@ export const DetailViewModal = ({
         navigator.clipboard.writeText(item.content);
         toast.success("Link copied to clipboard");
       }
-    }} onDelete={() => setShowDeleteAlert(true)} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} />
+    }} onDelete={() => setShowDeleteAlert(true)} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} className="" />
     </div>;
   return <>
       {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
