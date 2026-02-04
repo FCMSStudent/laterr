@@ -190,7 +190,14 @@ export const CardDetailRightPanel = ({
       <label htmlFor="user-notes" className="block text-xs font-semibold mb-1.5 text-primary-foreground">
         Notes
       </label>
-      <Textarea id="user-notes" ref={notesRef} value={userNotes} onChange={e => onNotesChange(e.target.value)} placeholder="Add your notes..." className="min-h-[100px] max-h-[100px] resize-none glass-input rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50" />
+      <Textarea 
+        id="user-notes" 
+        ref={notesRef} 
+        value={userNotes} 
+        onChange={e => onNotesChange(e.target.value)} 
+        placeholder="Add your notes..." 
+        className="min-h-[100px] max-h-[100px] resize-none glass-input rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50" 
+      />
       {saving && <p className="text-xs text-muted-foreground mt-1">Saving...</p>}
     </div>
 
