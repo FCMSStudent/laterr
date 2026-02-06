@@ -498,11 +498,15 @@ const Index = () => {
       </div>
 
       <div className="flex items-center justify-center pb-2">
-        <div className="inline-flex items-center rounded-full border border-border/60 bg-muted/30 p-1">
+        <div className="relative inline-flex items-center rounded-full border border-border/60 bg-muted/30 p-1">
+          <span
+            className={`absolute inset-y-1 w-1/2 rounded-full bg-background shadow-sm transition-transform duration-200 ${viewScope === "trash" ? "translate-x-full" : "translate-x-0"}`}
+            aria-hidden="true"
+          />
           <Button
             size="sm"
             variant={viewScope === "active" ? "secondary" : "ghost"}
-            className="rounded-full px-4"
+            className={`relative z-10 rounded-full px-3 transition-colors ${viewScope === "active" ? "text-foreground bg-transparent hover:bg-transparent" : "text-muted-foreground hover:text-foreground"}`}
             onClick={() => setViewScope("active")}
           >
             All
@@ -510,7 +514,7 @@ const Index = () => {
           <Button
             size="sm"
             variant={viewScope === "trash" ? "secondary" : "ghost"}
-            className="rounded-full px-4"
+            className={`relative z-10 rounded-full px-3 transition-colors ${viewScope === "trash" ? "text-foreground bg-transparent hover:bg-transparent" : "text-muted-foreground hover:text-foreground"}`}
             onClick={() => setViewScope("trash")}
           >
             Trash

@@ -103,18 +103,18 @@ export const NavigationHeader = ({
     icon: Bookmark
   }];
   const showInlineSearch = onSearchChange !== undefined;
-  return <header className="flex items-center gap-2 md:gap-3 w-full">
+  return <header className="flex items-center gap-3 md:gap-4 w-full py-1">
     {/* Left cluster */}
-    <div className={cn("flex items-center gap-2 shrink-0", isMobile && canGoBack && "gap-1")}>
+    <div className={cn("flex items-center gap-3 shrink-0", isMobile && canGoBack && "gap-1")}>
       {canGoBack && <Button onClick={() => navigate(-1)} variant="ghost" size="icon" className={cn("h-9 w-9 md:h-8 md:w-8 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform", isMobile && "-ml-1")} aria-label="Go back">
           <ArrowLeft className="w-[18px] h-[18px] md:w-4 md:h-4" aria-hidden="true" />
         </Button>}
-      <h1 className="nav-title text-base md:text-lg font-semibold text-foreground leading-none truncate max-w-[160px] md:max-w-[280px]">
+      <h1 className="nav-title text-base md:text-lg font-semibold text-foreground leading-none truncate max-w-[180px] md:max-w-[320px]">
         {title}
       </h1>
 
       {/* Module navigation tabs - desktop only */}
-      {!hideNavigation && !isMobile && <nav aria-label="Module navigation" className="flex items-center ml-2">
+      {!hideNavigation && !isMobile && <nav aria-label="Module navigation" className="flex items-center ml-3">
           <div className="flex items-center rounded-full glass-light border border-white/20 p-1">
             {navItems.map(item => {
               const isActive = location.pathname === item.path || item.path === '/' && location.pathname === '/app' || item.path === '/bookmarks' && location.pathname === '/bookmarks';
@@ -127,8 +127,8 @@ export const NavigationHeader = ({
     </div>
 
     {/* Center cluster */}
-    <div className="flex items-center gap-2 flex-1 min-w-0">
-      {showInlineSearch && <div className="flex-1 relative min-w-[140px] max-w-[520px]">
+    <div className="flex items-center gap-3 flex-1 min-w-0">
+      {showInlineSearch && <div className="flex-1 relative min-w-[140px] max-w-[560px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input type="search" value={searchValue || ""} onChange={e => onSearchChange?.(e.target.value)} placeholder={searchPlaceholder} className="h-9 md:h-10 pl-9 pr-3 rounded-full glass-input text-xs md:text-sm" data-search-input />
         </div>}
@@ -136,7 +136,7 @@ export const NavigationHeader = ({
     </div>
 
     {/* Right cluster */}
-    <div className="flex items-center gap-1 md:gap-2 shrink-0">
+    <div className="flex items-center gap-2 md:gap-3 shrink-0">
       {/* Add button - integrated */}
       {onAddClick && (isMobile ? <Button onClick={onAddClick} variant="ghost" size="icon" className="h-9 w-9 text-primary hover:text-primary/80 shrink-0" aria-label={`${addLabel} new item`}>
             <Plus className="w-[18px] h-[18px]" aria-hidden="true" />
