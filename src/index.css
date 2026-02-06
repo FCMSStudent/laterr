@@ -490,6 +490,35 @@ All colors MUST be HSL.
     line-height: 1.15;
   }
 
+  .nav-title {
+    position: relative;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .nav-title::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--gradient-soft);
+    opacity: 0.35;
+  }
+
+  .dark .nav-title::after {
+    opacity: 0.25;
+  }
+
+  @media (max-width: 640px) {
+    .nav-title::after {
+      bottom: -5px;
+      opacity: 0.3;
+    }
+  }
+
   /* Responsive typography - scale down headings on mobile */
   @media (max-width: 640px) {
     h1 {
