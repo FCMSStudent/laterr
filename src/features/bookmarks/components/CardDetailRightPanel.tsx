@@ -5,6 +5,7 @@ import { Input, Textarea } from "@/shared/components/ui";
 import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Item } from "@/features/bookmarks/types";
+import { cn } from "@/shared/lib/utils";
 
 /**
  * Props for the CardDetailRightPanel component.
@@ -44,6 +45,7 @@ interface CardDetailRightPanelProps {
   saving: boolean;
   tagInputRef?: React.RefObject<HTMLInputElement>;
   editTagInputRef?: React.RefObject<HTMLInputElement>;
+  className?: string;
 }
 
 // Maximum visible tags before showing "+N" overflow indicator
@@ -96,7 +98,8 @@ export const CardDetailRightPanel = ({
   onDelete,
   saving,
   tagInputRef,
-  editTagInputRef
+  editTagInputRef,
+  className
 }: CardDetailRightPanelProps) => {
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
@@ -134,7 +137,7 @@ export const CardDetailRightPanel = ({
     }
   };
   const summaryText = item.summary?.trim();
-  return <div className="card-detail-right-panel pl-6 pr-2 flex flex-col h-full max-h-full overflow-hidden bg-transparent">
+  return <div className={cn("card-detail-right-panel pl-6 pr-2 flex flex-col h-full max-h-full overflow-hidden bg-transparent", className)}>
     {/* ========== TITLE: Prominent, larger font ========== */}
     <div className="flex-shrink-0 pt-4 pb-3">
       <h2 className="text-lg font-bold leading-tight tracking-tight line-clamp-2 text-primary-foreground" title={item.title}>
