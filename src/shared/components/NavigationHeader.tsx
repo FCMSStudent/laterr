@@ -105,8 +105,8 @@ export const NavigationHeader = ({
   const showInlineSearch = onSearchChange !== undefined;
   return <header className="flex items-center gap-2 md:gap-3 w-full">
     {/* Left cluster */}
-    <div className="flex items-center gap-2 shrink-0">
-      {canGoBack && <Button onClick={() => navigate(-1)} variant="ghost" size="icon" className="h-9 w-9 md:h-8 md:w-8 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform" aria-label="Go back">
+    <div className={cn("flex items-center gap-2 shrink-0", isMobile && canGoBack && "gap-1")}>
+      {canGoBack && <Button onClick={() => navigate(-1)} variant="ghost" size="icon" className={cn("h-9 w-9 md:h-8 md:w-8 text-muted-foreground hover:text-foreground shrink-0 active:scale-95 transition-transform", isMobile && "-ml-1")} aria-label="Go back">
           <ArrowLeft className="w-[18px] h-[18px] md:w-4 md:h-4" aria-hidden="true" />
         </Button>}
       <h1 className="nav-title text-base md:text-lg font-semibold text-foreground leading-none truncate max-w-[160px] md:max-w-[280px]">
@@ -115,14 +115,14 @@ export const NavigationHeader = ({
 
       {/* Module navigation tabs - desktop only */}
       {!hideNavigation && !isMobile && <nav aria-label="Module navigation" className="flex items-center ml-2">
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path || item.path === '/' && location.pathname === '/app' || item.path === '/bookmarks' && location.pathname === '/bookmarks';
-            return <Button key={item.path} onClick={() => navigate(item.path)} variant="ghost" size="sm" className={cn("h-8 px-3 gap-2 text-xs font-medium rounded-full transition-colors", isActive ? "glass-light text-foreground" : "text-muted-foreground/80 hover:text-foreground hover:bg-transparent")}>
-              <Icon className="w-4 h-4" aria-hidden="true" />
-              {item.label}
-            </Button>;
-          })}
+          <div className="flex items-center rounded-full glass-light border border-white/20 p-1">
+            {navItems.map(item => {
+              const isActive = location.pathname === item.path || item.path === '/' && location.pathname === '/app' || item.path === '/bookmarks' && location.pathname === '/bookmarks';
+              return <Button key={item.path} onClick={() => navigate(item.path)} variant="ghost" size="sm" className={cn("h-7 px-3 text-[11px] font-medium rounded-full transition-colors", isActive ? "bg-white/70 text-foreground shadow-sm" : "text-muted-foreground/80 hover:text-foreground hover:bg-transparent")}>
+                {item.label}
+              </Button>;
+            })}
+          </div>
         </nav>}
     </div>
 
