@@ -23,7 +23,7 @@ export const FloatingAIChatButton = () => {
           'w-14 h-14 rounded-full',
           'bg-gradient-to-br from-slate-600 to-slate-400',
           'hover:from-slate-700 hover:to-slate-500',
-          'text-white shadow-2xl hover:shadow-xl',
+          'text-primary-foreground shadow-2xl hover:shadow-xl',
           'premium-transition hover:scale-110 p-0'
         )}
         aria-label="Open AI health assistant"
