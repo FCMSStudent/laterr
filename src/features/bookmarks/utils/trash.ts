@@ -5,22 +5,25 @@ import {
   SUPABASE_STORAGE_BUCKET_THUMBNAILS,
 } from "@/shared/lib/storage-constants";
 
+// Define allowed bucket types as a union of literal types
+type AllowedBucket = typeof SUPABASE_STORAGE_BUCKET_ITEM_IMAGES | typeof SUPABASE_STORAGE_BUCKET_THUMBNAILS;
+
 type StorageObjectRef = {
-  bucket: string;
+  bucket: AllowedBucket;
   key: string;
 };
 
-const ALLOWED_BUCKETS = new Set([
-  SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
-  SUPABASE_STORAGE_BUCKET_THUMBNAILS,
-]);
+const isAllowedBucket = (bucket: string): bucket is AllowedBucket => {
+  return bucket === SUPABASE_STORAGE_BUCKET_ITEM_IMAGES || 
+         bucket === SUPABASE_STORAGE_BUCKET_THUMBNAILS;
+};
 
 const extractFromPath = (path: string): StorageObjectRef | null => {
   const match = path.match(/^\/([^/]+)\/(.+)$/);
   if (!match) return null;
   const bucket = match[1];
   const key = match[2];
-  if (!ALLOWED_BUCKETS.has(bucket) || !key) return null;
+  if (!isAllowedBucket(bucket) || !key) return null;
   return { bucket, key };
 };
 
@@ -29,7 +32,7 @@ const extractFromUrlPath = (pathname: string): StorageObjectRef | null => {
   if (!match) return null;
   const bucket = match[1];
   const key = match[2];
-  if (!ALLOWED_BUCKETS.has(bucket) || !key) return null;
+  if (!isAllowedBucket(bucket) || !key) return null;
   return { bucket, key };
 };
 
