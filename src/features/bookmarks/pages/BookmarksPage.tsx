@@ -4,14 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
 import { ItemListRow } from "@/features/bookmarks/components/ItemListRow";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
-import { SearchBar } from "@/shared/components/SearchBar";
-import { NavigationHeader } from "@/shared/components/NavigationHeader";
-import { Button } from "@/shared/components/ui";
-import { Sparkles, Plus, Loader2, Search } from "lucide-react";
+import { Button, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/components/ui";
+import { Sparkles, Plus, Loader2, Search, Settings, LogOut, MoreVertical, Sun } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useProgressiveDisclosure } from "@/shared/hooks/useProgressiveDisclosure";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
+import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { useTheme } from "next-themes";
+import { AuthError } from "@/shared/types/errors";
+import { AUTH_ERRORS } from "@/shared/lib/error-messages";
 import { FilterBar, MobileFilterSortButton, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
 import { BulkActionsBar } from "@/features/bookmarks/components/BulkActionsBar";
 import { useInfiniteScroll } from "@/features/bookmarks/hooks/useInfiniteScroll";
@@ -76,8 +79,30 @@ const Index = () => {
   const {
     toast
   } = useToast();
+  const { theme, setTheme } = useTheme();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const isMobile = useIsMobile();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      const authError = new AuthError(AUTH_ERRORS.SIGN_OUT_FAILED.message, error instanceof Error ? error : undefined);
+      toast({
+        title: AUTH_ERRORS.SIGN_OUT_FAILED.title,
+        description: authError.message,
+        variant: "destructive"
+      });
+      setSigningOut(false);
+    } else {
+      navigate('/');
+    }
+  };
+
+  const handleToggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   // Persist view mode
   useEffect(() => {
@@ -557,6 +582,94 @@ const Index = () => {
             <span className="hidden sm:inline">Add</span>
           </Button>
         )}
+
+        {/* Settings & Actions */}
+        <AlertDialog>
+          {!isMobile && (
+            <>
+              <Button
+                onClick={() => navigate("/settings")}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground/80 hover:text-foreground shrink-0"
+                aria-label="Settings"
+              >
+                <Settings className="w-4 h-4" aria-hidden="true" />
+              </Button>
+              <div className="opacity-85 hover:opacity-100 transition-opacity">
+                <ThemeToggle />
+              </div>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground/80 hover:text-foreground shrink-0"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="w-4 h-4" aria-hidden="true" />
+                </Button>
+              </AlertDialogTrigger>
+            </>
+          )}
+
+          {isMobile && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+                  aria-label="More options"
+                >
+                  <MoreVertical className="w-[18px] h-[18px]" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                <DropdownMenuItem onSelect={() => navigate("/settings")}>
+                  <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleToggleTheme}>
+                  <Sun className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Toggle theme
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem className="text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Sign out
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sign out?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You'll need to sign in again to access your data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={signingOut}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleSignOut}
+                disabled={signingOut}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {signingOut ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    Signing out...
+                  </>
+                ) : (
+                  "Sign Out"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </header>
 
 
