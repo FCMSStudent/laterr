@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
+import { OfflineIndicator } from "@/shared/components/OfflineIndicator";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import { DynamicBackground } from "@/shared/components/DynamicBackground";
 import { Agentation } from "agentation";
@@ -50,6 +51,8 @@ const AppContent = () => {
       </Routes>
       {/* Mobile Bottom Navigation - only show on mobile and not on auth pages */}
       {isMobile && !isAuthPage && <MobileBottomNav />}
+      {/* Offline Indicator */}
+      <OfflineIndicator />
     </div>
   );
 };

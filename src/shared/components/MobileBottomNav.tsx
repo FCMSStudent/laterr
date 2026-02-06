@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BookMarked, LayoutDashboard } from "lucide-react";
+import { BookMarked, LayoutDashboard, Activity, CreditCard } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { useHapticFeedback } from "@/shared/hooks/useHapticFeedback";
 
 interface NavItem {
   icon: React.ElementType;
@@ -12,12 +13,15 @@ interface NavItem {
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Home", path: "/" },
   { icon: BookMarked, label: "Bookmarks", path: "/bookmarks" },
+  { icon: Activity, label: "Health", path: "/health" },
+  { icon: CreditCard, label: "Subscriptions", path: "/subscriptions" },
 ];
 
 export const MobileBottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [pressedItem, setPressedItem] = useState<string | null>(null);
+  const { trigger } = useHapticFeedback();
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -28,6 +32,7 @@ export const MobileBottomNav = () => {
 
   const handlePress = (path: string) => {
     setPressedItem(path);
+    trigger('light');
     navigate(path);
     // Reset after animation
     setTimeout(() => setPressedItem(null), 150);

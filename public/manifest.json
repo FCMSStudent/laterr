@@ -1,17 +1,31 @@
 {
   "name": "Laterr - Save it for later",
   "short_name": "Laterr",
-  "description": "Organize your thoughts, links, and images in a visual way. AI-powered knowledge management.",
-  "start_url": "/",
+  "description": "Organize your thoughts, links, and images in a visual way.",
+  "start_url": "/bookmarks",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#353138",
   "theme_color": "#353138",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "any",
-      "type": "image/x-icon"
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "categories": ["productivity", "utilities"]
 }
