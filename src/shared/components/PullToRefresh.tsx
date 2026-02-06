@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, ReactNode } from "react";
+import { useState, useRef, useEffect, ReactNode, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useHapticFeedback } from "@/shared/hooks/useHapticFeedback";
@@ -22,20 +22,20 @@ export const PullToRefresh = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const { trigger } = useHapticFeedback();
 
-  const canPull = () => {
+  const canPull = useCallback(() => {
     if (disabled || isRefreshing) return false;
     
     // Only allow pull when at the top of the page
     const scrollTop = containerRef.current?.scrollTop ?? window.scrollY;
     return scrollTop === 0;
-  };
+  }, [disabled, isRefreshing]);
 
-  const handleTouchStart = (e: TouchEvent) => {
+  const handleTouchStart = useCallback((e: TouchEvent) => {
     if (!canPull()) return;
     setStartY(e.touches[0].clientY);
-  };
+  }, [canPull]);
 
-  const handleTouchMove = (e: TouchEvent) => {
+  const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!canPull() || startY === 0) return;
 
     const currentY = e.touches[0].clientY;
@@ -57,9 +57,9 @@ export const PullToRefresh = ({
         e.preventDefault();
       }
     }
-  };
+  }, [canPull, startY, threshold, pullDistance, trigger]);
 
-  const handleTouchEnd = async () => {
+  const handleTouchEnd = useCallback(async () => {
     if (pullDistance >= threshold && !isRefreshing) {
       setIsRefreshing(true);
       trigger('heavy');
@@ -77,7 +77,7 @@ export const PullToRefresh = ({
       setPullDistance(0);
       setStartY(0);
     }
-  };
+  }, [pullDistance, threshold, isRefreshing, trigger, onRefresh]);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -92,7 +92,7 @@ export const PullToRefresh = ({
       element.removeEventListener('touchmove', handleTouchMove);
       element.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [startY, pullDistance, isRefreshing, disabled]);
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   const isActivated = pullDistance >= threshold;
   const pullPercentage = Math.min((pullDistance / threshold) * 100, 100);
