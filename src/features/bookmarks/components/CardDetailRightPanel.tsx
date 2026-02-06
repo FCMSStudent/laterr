@@ -2,7 +2,7 @@ import { useRef, useMemo } from "react";
 import { Button } from "@/shared/components/ui";
 import { Badge } from "@/shared/components/ui";
 import { Input, Textarea } from "@/shared/components/ui";
-import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2 } from "lucide-react";
+import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2, RotateCcw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Item } from "@/features/bookmarks/types";
 import { cn } from "@/shared/lib/utils";
@@ -42,6 +42,10 @@ interface CardDetailRightPanelProps {
   onRemoveTag: (tag: string) => void;
   onCopyLink: () => void;
   onDelete: () => void;
+  onRestore?: () => void;
+  onPermanentDelete?: () => void;
+  isTrashed?: boolean;
+  readOnly?: boolean;
   saving: boolean;
   tagInputRef?: React.RefObject<HTMLInputElement>;
   editTagInputRef?: React.RefObject<HTMLInputElement>;
@@ -96,6 +100,10 @@ export const CardDetailRightPanel = ({
   onRemoveTag,
   onCopyLink,
   onDelete,
+  onRestore,
+  onPermanentDelete,
+  isTrashed = false,
+  readOnly = false,
   saving,
   tagInputRef,
   editTagInputRef,
@@ -197,11 +205,15 @@ export const CardDetailRightPanel = ({
         id="user-notes" 
         ref={notesRef} 
         value={userNotes} 
-        onChange={e => onNotesChange(e.target.value)} 
+        onChange={e => {
+          if (readOnly) return;
+          onNotesChange(e.target.value);
+        }} 
         placeholder="Add your notes..." 
         className="min-h-[100px] max-h-[100px] resize-none glass-input rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50" 
+        readOnly={readOnly}
       />
-      {saving && <p className="text-xs text-muted-foreground mt-1">Saving...</p>}
+      {saving && !readOnly && <p className="text-xs text-muted-foreground mt-1">Saving...</p>}
     </div>
 
 
@@ -213,7 +225,7 @@ export const CardDetailRightPanel = ({
       <div className="flex flex-wrap gap-1.5">
         {/* Visible tags */}
         {visibleTags.map((tag, index) => <div key={`${tag}-${index}`} className="group flex-shrink-0">
-          {editingTagIndex === index ? <div className="flex items-center h-6 glass-input border border-primary rounded-full px-3">
+          {editingTagIndex === index && !readOnly ? <div className="flex items-center h-6 glass-input border border-primary rounded-full px-3">
             <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={(e) => {
               // Use setTimeout to allow the focus event to complete first
               // This prevents stealing focus from the notes textarea
@@ -223,12 +235,12 @@ export const CardDetailRightPanel = ({
             }} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" />
           </div> : <Badge variant="secondary" onDoubleClick={() => onEditTagStart(index)} className="h-6 px-3 rounded-full text-xs font-normal bg-secondary/60 hover:bg-secondary/80 cursor-default flex items-center gap-1.5 border-0">
             {tag}
-            <button onClick={e => {
+            {!readOnly && <button onClick={e => {
               e.stopPropagation();
               onRemoveTag(tag);
             }} className="w-3 h-3 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity" aria-label={`Remove ${tag} tag`}>
               <X className="w-3 h-3" />
-            </button>
+            </button>}
           </Badge>}
         </div>)}
 
@@ -238,7 +250,7 @@ export const CardDetailRightPanel = ({
         </Badge>}
 
         {/* Add tag button/input - styled like a pill */}
-        {isAddingTag ? <div className="flex items-center h-6 glass-input border border-primary rounded-full px-3 flex-shrink-0">
+        {isAddingTag && !readOnly ? <div className="flex items-center h-6 glass-input border border-primary rounded-full px-3 flex-shrink-0">
           <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={(e) => {
             // Use setTimeout to allow the focus event to complete first
             // This prevents stealing focus from the notes textarea
@@ -246,7 +258,7 @@ export const CardDetailRightPanel = ({
               if (newTagInput.trim()) onAddTagCommit();else onAddTagCancel();
             }, 100);
           }} className="h-full border-0 p-0 text-xs w-20 focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground/60" placeholder="Tag name" />
-        </div> : <button onClick={onAddTagStart} className="h-6 px-3 flex items-center gap-1 bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-normal rounded-full transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
+        </div> : !readOnly && <button onClick={onAddTagStart} className="h-6 px-3 flex items-center gap-1 bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-xs font-normal rounded-full transition-colors flex-shrink-0 border-0" title="Add new tag" aria-label="Add new tag">
           <Plus className="w-3 h-3" />
           Add
         </button>}
@@ -257,11 +269,28 @@ export const CardDetailRightPanel = ({
     <div className="flex-1" />
 
     {/* ========== FOOTER: Delete centered with neutral styling ========== */}
-    <div className="flex-shrink-0 pt-3 pb-2 flex items-center justify-center">
-      <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 text-xs font-medium hover:bg-destructive/5 text-primary-foreground px-[16px]">
-        <Trash2 className="w-4 h-4 mr-2" />
-        Delete
-      </Button>
+    <div className="flex-shrink-0 pt-3 pb-2 flex items-center justify-center gap-2">
+      {isTrashed ? (
+        <>
+          {onRestore && (
+            <Button variant="ghost" size="sm" onClick={onRestore} className="h-8 text-xs font-medium hover:bg-primary/10 text-primary-foreground px-[16px]">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Restore
+            </Button>
+          )}
+          {onPermanentDelete && (
+            <Button variant="ghost" size="sm" onClick={onPermanentDelete} className="h-8 text-xs font-medium hover:bg-destructive/10 text-primary-foreground px-[16px]">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete permanently
+            </Button>
+          )}
+        </>
+      ) : (
+        <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 text-xs font-medium hover:bg-destructive/5 text-primary-foreground px-[16px]">
+          <Trash2 className="w-4 h-4 mr-2" />
+          Move to Trash
+        </Button>
+      )}
     </div>
   </div>;
 };

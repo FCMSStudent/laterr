@@ -10,7 +10,7 @@ import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
 import { CardDetailRightPanel } from "@/features/bookmarks/components/CardDetailRightPanel";
-import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Globe, Clock, X, Edit2 } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Globe, Clock, X, Edit2, RotateCcw } from "lucide-react";
 import { Badge } from "@/shared/components/ui";
 import { Input, Textarea } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
@@ -24,6 +24,7 @@ import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/shared/lib/
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import type { Item } from "@/features/bookmarks/types";
 import { useDebounce } from "@/shared/hooks/use-debounce";
+import { removeItemStorageObjects } from "@/features/bookmarks/utils/trash";
 
 // Constants
 const USER_NOTES_MAX_LENGTH = 10000;
@@ -68,6 +69,7 @@ export const DetailViewModal = ({
   const [relatedItems, setRelatedItems] = useState<Item[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const isMobile = useIsMobile();
+  const isTrashed = Boolean(item?.deleted_at);
   const debouncedNotes = useDebounce(userNotes, AUTO_SAVE_DELAY);
 
   // Extract item id to avoid optional chaining in dependency arrays (not allowed by esbuild)
@@ -130,7 +132,7 @@ export const DetailViewModal = ({
   // We use a ref to avoid circular dependency issues
   const handleSaveRef = useRef<((notes: string, tags: string[], silent?: boolean) => Promise<void>) | null>(null);
   useEffect(() => {
-    if (!item || !open) return;
+    if (!item || !open || isTrashed) return;
     const itemNotes = item.user_notes || "";
     const itemTags = item.tags || [];
     const notesChanged = debouncedNotes !== itemNotes;
@@ -138,7 +140,7 @@ export const DetailViewModal = ({
     if ((notesChanged || tagsChanged) && handleSaveRef.current) {
       handleSaveRef.current(debouncedNotes, tags, true);
     }
-  }, [debouncedNotes, tags, open, item]);
+  }, [debouncedNotes, tags, open, item, isTrashed]);
 
   // Fetch related items (same tag, excluding current)
   useEffect(() => {
@@ -153,7 +155,7 @@ export const DetailViewModal = ({
         const {
           data,
           error
-        } = await supabase.from(SUPABASE_ITEMS_TABLE).select("*").contains("tags", [primaryTag]).neq("id", item.id).order("created_at", {
+        } = await supabase.from(SUPABASE_ITEMS_TABLE).select("*").contains("tags", [primaryTag]).neq("id", item.id).is("deleted_at", null).order("created_at", {
           ascending: false
         }).limit(10); // Fetch a few more to filter if needed
 
@@ -208,7 +210,7 @@ export const DetailViewModal = ({
     generateSignedUrlForItem();
   }, [item]);
   const handleSave = useCallback(async (notesToSave: string, tagsToSave: string[], silent = false) => {
-    if (!item) return;
+    if (!item || isTrashed) return;
     if (notesToSave.length > USER_NOTES_MAX_LENGTH) {
       toast.error(UPDATE_ERRORS.NOTES_TOO_LONG.title, {
         description: UPDATE_ERRORS.NOTES_TOO_LONG.message
@@ -245,7 +247,7 @@ export const DetailViewModal = ({
       }
     });
     return saveQueueRef.current;
-  }, [item, onUpdate]);
+  }, [item, onUpdate, isTrashed]);
 
   // Keep ref in sync with handleSave for autosave useEffect
   useEffect(() => {
@@ -256,6 +258,7 @@ export const DetailViewModal = ({
   const normalizeTagInput = (tag: string) => tag.trim();
   const normalizeTagKey = (tag: string) => normalizeTagInput(tag).toLowerCase();
   const handleAddTag = () => {
+    if (isTrashed) return;
     const trimmed = normalizeTagInput(newTagInput);
     if (!trimmed) {
       setNewTagInput("");
@@ -272,6 +275,7 @@ export const DetailViewModal = ({
     setIsAddingTag(false);
   };
   const handleRemoveTag = (tagToRemove: string) => {
+    if (isTrashed) return;
     if (editingTagIndex !== null && tags[editingTagIndex] === tagToRemove) {
       handleCancelEditTag();
     }
@@ -280,6 +284,7 @@ export const DetailViewModal = ({
     handleSave(userNotes, newTags, true);
   };
   const handleStartEditTag = (tagIndex: number) => {
+    if (isTrashed) return;
     setEditingTagIndex(tagIndex);
     setEditingTagValue(tags[tagIndex] ?? "");
   };
@@ -288,6 +293,7 @@ export const DetailViewModal = ({
     setEditingTagValue("");
   };
   const handleCommitEditTag = () => {
+    if (isTrashed) return;
     if (editingTagIndex === null) return;
     const trimmed = normalizeTagInput(editingTagValue);
     if (!trimmed) {
@@ -333,14 +339,60 @@ export const DetailViewModal = ({
     try {
       const {
         error
-      } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
+      } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
+        deleted_at: new Date().toISOString()
+      }).eq("id", item.id);
       if (error) throw error;
-      toast.success("Item removed from your space.");
+      toast.success("Item moved to trash.");
       onOpenChange(false);
       onUpdate();
     } catch (error: unknown) {
       const errorMessage = getUpdateErrorMessage(error);
       console.error("Error deleting:", errorMessage);
+      toast.error(errorMessage.title, {
+        description: errorMessage.message
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }, [item, onOpenChange, onUpdate]);
+
+  const handleRestore = useCallback(async () => {
+    if (!item) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
+        deleted_at: null
+      }).eq("id", item.id);
+      if (error) throw error;
+      toast.success("Item restored.");
+      onOpenChange(false);
+      onUpdate();
+    } catch (error: unknown) {
+      const errorMessage = getUpdateErrorMessage(error);
+      console.error("Error restoring:", errorMessage);
+      toast.error(errorMessage.title, {
+        description: errorMessage.message
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }, [item, onOpenChange, onUpdate]);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!item) return;
+    setDeleting(true);
+    setShowDeleteAlert(false);
+    try {
+      await removeItemStorageObjects(item);
+      const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
+      if (error) throw error;
+      toast.success("Item permanently deleted.");
+      onOpenChange(false);
+      onUpdate();
+    } catch (error: unknown) {
+      const errorMessage = getUpdateErrorMessage(error);
+      console.error("Error permanently deleting:", errorMessage);
       toast.error(errorMessage.title, {
         description: errorMessage.message
       });
@@ -466,13 +518,22 @@ export const DetailViewModal = ({
       {/* Mobile Tabs/Sections could go here, keeping it simple for now matching reference functionally */}
       <div className="space-y-4">
         <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Notes</h3>
-        <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" />
+        <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" readOnly={isTrashed} />
       </div>
 
       {/* Mobile Actions */}
       <div className="fixed bottom-0 left-0 right-0 p-4 border-t glass-medium flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={() => handleSave(userNotes, tags)}><Save className="w-5 h-5" /></Button>
-        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
+        {isTrashed ? (
+          <>
+            <Button variant="ghost" size="icon" onClick={handleRestore}><RotateCcw className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" size="icon" onClick={() => handleSave(userNotes, tags)}><Save className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
+          </>
+        )}
       </div>
     </div>;
   const DesktopDetailContent = () => <div className={`detail-modal-grid gap-0 ${gridLayout}`}>
@@ -492,7 +553,7 @@ export const DetailViewModal = ({
         navigator.clipboard.writeText(item.content);
         toast.success("Link copied to clipboard");
       }
-    }} onDelete={() => setShowDeleteAlert(true)} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} className="bg-black/0" />
+    }} onDelete={() => setShowDeleteAlert(true)} onRestore={handleRestore} onPermanentDelete={() => setShowDeleteAlert(true)} isTrashed={isTrashed} readOnly={isTrashed} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} className="bg-black/0" />
     </div>;
   return <>
       {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
@@ -519,14 +580,20 @@ export const DetailViewModal = ({
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {isTrashed ? "Delete this item permanently?" : "Move this item to trash?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the item from your library.
+              {isTrashed
+                ? "This action cannot be undone. Files will be removed from storage."
+                : "You can restore it later from Trash. Items auto-delete after 30 days."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogAction onClick={isTrashed ? handlePermanentDelete : handleDelete} className="bg-destructive hover:bg-destructive/90">
+              {isTrashed ? "Delete permanently" : "Move to Trash"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

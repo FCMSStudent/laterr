@@ -131,6 +131,7 @@ export async function getRecommendations(
       .from('items')
       .select('id, embedding')
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .not('embedding', 'is', null)
       .order('created_at', { ascending: false })
       .limit(5);

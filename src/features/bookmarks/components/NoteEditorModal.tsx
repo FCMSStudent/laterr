@@ -68,14 +68,16 @@ export const NoteEditorModal = ({
     try {
       const {
         error
-      } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().eq("id", item.id);
+      } = await supabase.from(SUPABASE_ITEMS_TABLE).update({
+        deleted_at: new Date().toISOString()
+      }).eq("id", item.id);
       if (error) throw error;
-      toast.success("Note deleted");
+      toast.success("Note moved to trash");
       onOpenChange(false);
       onUpdate();
     } catch (error) {
       console.error("Error deleting note:", error);
-      toast.error("Failed to delete note");
+      toast.error("Failed to move note to trash");
     } finally {
       setDeleting(false);
     }
@@ -103,7 +105,7 @@ export const NoteEditorModal = ({
         <Save className="h-4 w-4 mr-2" />
         Save
       </LoadingButton>
-      <Button onClick={() => setShowDeleteAlert(true)} disabled={deleting} variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" aria-label="Delete note">
+      <Button onClick={() => setShowDeleteAlert(true)} disabled={deleting} variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" aria-label="Move note to trash">
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
@@ -134,15 +136,15 @@ export const NoteEditorModal = ({
     <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete this note?</AlertDialogTitle>
+          <AlertDialogTitle>Move this note to trash?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete "{item.title}". This action cannot be undone.
+            You can restore it later from Trash. Items auto-delete after 30 days.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel className="glass-input min-h-[44px]">Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]">
-            Delete
+            Move to Trash
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

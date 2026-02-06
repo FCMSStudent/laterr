@@ -1,5 +1,5 @@
 import { Badge } from "@/shared/components/ui";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight, BookOpen, ShoppingBag, Eye } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight, BookOpen, ShoppingBag, Eye, RotateCcw } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
 import { AspectRatio } from "@/shared/components/ui";
 import { Checkbox } from "@/shared/components/ui";
@@ -27,6 +27,9 @@ interface BookmarkCardProps {
   isSelected?: boolean;
   onSelectionChange?: (id: string, selected: boolean) => void;
   onDelete?: (id: string) => void;
+  onRestore?: (id: string) => void;
+  onPermanentDelete?: (id: string) => void;
+  isTrashed?: boolean;
   onEdit?: (id: string) => void;
 }
 // Smart category badge configuration
@@ -137,6 +140,9 @@ export const BookmarkCard = ({
   isSelected = false,
   onSelectionChange,
   onDelete,
+  onRestore,
+  onPermanentDelete,
+  isTrashed = false,
   onEdit
 }: BookmarkCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -201,7 +207,7 @@ export const BookmarkCard = ({
         longPressTimerRef.current = null;
       }
     }
-    if (isMobile && onDelete && !isSelectionMode) {
+    if (isMobile && onDelete && !isSelectionMode && !isTrashed) {
       const diff = touchStartX.current - e.touches[0].clientX;
       const verticalDiff = Math.abs(e.touches[0].clientY - touchStartY.current);
       if (diff > 10 && verticalDiff < 30) {
@@ -215,7 +221,7 @@ export const BookmarkCard = ({
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
-    if (swipeOffset > SWIPE_THRESHOLD && onDelete) {
+    if (swipeOffset > SWIPE_THRESHOLD && onDelete && !isTrashed) {
       onDelete(id);
     }
     setSwipeOffset(0);
@@ -234,7 +240,7 @@ export const BookmarkCard = ({
   if (isNoteType) {
     return <div className="relative overflow-hidden rounded-xl">
       {/* Swipe delete action background */}
-      {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-xl transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
+      {isMobile && onDelete && !isTrashed && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-xl transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
         width: `${Math.max(swipeOffset, 0)}px`
       }}>
         <Trash2 className="h-5 w-5 text-destructive-foreground" />
@@ -257,13 +263,21 @@ export const BookmarkCard = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
-              {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
+              {!isTrashed && onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>}
-              {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
+              {!isTrashed && onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete
+                Move to Trash
+              </DropdownMenuItem>}
+              {isTrashed && onRestore && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onRestore(id))}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Restore
+              </DropdownMenuItem>}
+              {isTrashed && onPermanentDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onPermanentDelete(id))} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete permanently
               </DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -300,7 +314,7 @@ export const BookmarkCard = ({
   // Image/URL variant - full-bleed image with text overlay
   return <div className="relative rounded-xl">
     {/* Swipe delete action background */}
-    {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-xl transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
+    {isMobile && onDelete && !isTrashed && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-xl transition-opacity duration-200", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
       width: `${Math.max(swipeOffset, 0)}px`
     }}>
       <Trash2 className="h-5 w-5 text-destructive-foreground" />
@@ -323,13 +337,21 @@ export const BookmarkCard = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
-            {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
+            {!isTrashed && onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>}
-            {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
+            {!isTrashed && onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive">
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              Move to Trash
+            </DropdownMenuItem>}
+            {isTrashed && onRestore && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onRestore(id))}>
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Restore
+            </DropdownMenuItem>}
+            {isTrashed && onPermanentDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onPermanentDelete(id))} className="text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete permanently
             </DropdownMenuItem>}
           </DropdownMenuContent>
         </DropdownMenu>

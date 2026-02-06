@@ -1,5 +1,5 @@
 import { Badge } from "@/shared/components/ui";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Clock } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Clock, RotateCcw } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
 import { Checkbox } from "@/shared/components/ui";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui";
@@ -26,6 +26,9 @@ interface ItemListRowProps {
   isSelected?: boolean;
   onSelectionChange?: (id: string, selected: boolean) => void;
   onDelete?: (id: string) => void;
+  onRestore?: (id: string) => void;
+  onPermanentDelete?: (id: string) => void;
+  isTrashed?: boolean;
   onEdit?: (id: string) => void;
 }
 
@@ -44,6 +47,9 @@ export const ItemListRow = ({
   isSelected = false,
   onSelectionChange,
   onDelete,
+  onRestore,
+  onPermanentDelete,
+  isTrashed = false,
   onEdit
 }: ItemListRowProps) => {
   const [expandedTags, setExpandedTags] = useState(false);
@@ -137,7 +143,7 @@ export const ItemListRow = ({
     }
 
     // Handle swipe for delete
-    if (isMobile && onDelete && !isSelectionMode) {
+    if (isMobile && onDelete && !isSelectionMode && !isTrashed) {
       const diff = touchStartX.current - e.touches[0].clientX;
       const verticalDiff = Math.abs(e.touches[0].clientY - touchStartY.current);
       
@@ -155,7 +161,7 @@ export const ItemListRow = ({
       longPressTimerRef.current = null;
     }
 
-    if (swipeOffset > SWIPE_THRESHOLD && onDelete) {
+    if (swipeOffset > SWIPE_THRESHOLD && onDelete && !isTrashed) {
       onDelete(id);
     }
     setSwipeOffset(0);
@@ -177,7 +183,7 @@ export const ItemListRow = ({
   return (
     <div className="relative overflow-hidden rounded-xl">
       {/* Swipe delete action background */}
-      {isMobile && onDelete && (
+      {isMobile && onDelete && !isTrashed && (
         <div 
           className={cn(
             "absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-xl premium-transition",
@@ -327,19 +333,34 @@ export const ItemListRow = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              {onEdit && (
+              {!isTrashed && onEdit && (
                 <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
               )}
-              {onDelete && (
+              {!isTrashed && onDelete && (
                 <DropdownMenuItem
                   onClick={e => handleMenuAction(e, () => onDelete(id))}
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
+                  Move to Trash
+                </DropdownMenuItem>
+              )}
+              {isTrashed && onRestore && (
+                <DropdownMenuItem onClick={e => handleMenuAction(e, () => onRestore(id))}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Restore
+                </DropdownMenuItem>
+              )}
+              {isTrashed && onPermanentDelete && (
+                <DropdownMenuItem
+                  onClick={e => handleMenuAction(e, () => onPermanentDelete(id))}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete permanently
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

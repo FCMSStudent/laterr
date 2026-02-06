@@ -1,5 +1,5 @@
 import { Badge } from "@/shared/components/ui";
-import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, Clock } from "lucide-react";
+import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, Clock, RotateCcw } from "lucide-react";
 import type { ItemType } from "@/features/bookmarks/types";
 import { AspectRatio } from "@/shared/components/ui";
 import { Checkbox } from "@/shared/components/ui";
@@ -28,6 +28,9 @@ interface ItemCardProps {
   isSelected?: boolean;
   onSelectionChange?: (id: string, selected: boolean) => void;
   onDelete?: (id: string) => void;
+  onRestore?: (id: string) => void;
+  onPermanentDelete?: (id: string) => void;
+  isTrashed?: boolean;
   onEdit?: (id: string) => void;
 }
 export const ItemCard = ({
@@ -46,6 +49,9 @@ export const ItemCard = ({
   isSelected = false,
   onSelectionChange,
   onDelete,
+  onRestore,
+  onPermanentDelete,
+  isTrashed = false,
   onEdit
 }: ItemCardProps) => {
   const [showAllTags, setShowAllTags] = useState(false);
@@ -149,7 +155,7 @@ export const ItemCard = ({
     }
 
     // Handle swipe for delete
-    if (isMobile && onDelete && !isSelectionMode) {
+    if (isMobile && onDelete && !isSelectionMode && !isTrashed) {
       const diff = touchStartX.current - e.touches[0].clientX;
       const verticalDiff = Math.abs(e.touches[0].clientY - touchStartY.current);
 
@@ -165,7 +171,7 @@ export const ItemCard = ({
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
-    if (swipeOffset > SWIPE_THRESHOLD && onDelete) {
+    if (swipeOffset > SWIPE_THRESHOLD && onDelete && !isTrashed) {
       onDelete(id);
     }
     setSwipeOffset(0);
@@ -182,7 +188,7 @@ export const ItemCard = ({
   const readingTime = getReadingTime(content);
   return <div className="relative overflow-hidden rounded-2xl">
     {/* Swipe delete action background */}
-    {isMobile && onDelete && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-2xl premium-transition", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
+    {isMobile && onDelete && !isTrashed && <div className={cn("absolute inset-y-0 right-0 bg-destructive flex items-center justify-end px-4 rounded-r-2xl premium-transition", swipeOffset > 0 ? "opacity-100" : "opacity-0")} style={{
       width: `${Math.max(swipeOffset, 0)}px`
     }}>
       <Trash2 className="h-5 w-5 text-white" />
@@ -207,13 +213,21 @@ export const ItemCard = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            {onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))} className="min-h-[44px] md:min-h-0 text-base md:text-sm">
+            {!isTrashed && onEdit && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onEdit(id))} className="min-h-[44px] md:min-h-0 text-base md:text-sm">
               <Edit className="mr-2 h-5 w-5 md:h-4 md:w-4" />
               Edit
             </DropdownMenuItem>}
-            {onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive min-h-[44px] md:min-h-0 text-base md:text-sm">
+            {!isTrashed && onDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onDelete(id))} className="text-destructive focus:text-destructive min-h-[44px] md:min-h-0 text-base md:text-sm">
               <Trash2 className="mr-2 h-5 w-5 md:h-4 md:w-4" />
-              Delete
+              Move to Trash
+            </DropdownMenuItem>}
+            {isTrashed && onRestore && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onRestore(id))} className="min-h-[44px] md:min-h-0 text-base md:text-sm">
+              <RotateCcw className="mr-2 h-5 w-5 md:h-4 md:w-4" />
+              Restore
+            </DropdownMenuItem>}
+            {isTrashed && onPermanentDelete && <DropdownMenuItem onClick={e => handleMenuAction(e, () => onPermanentDelete(id))} className="text-destructive focus:text-destructive min-h-[44px] md:min-h-0 text-base md:text-sm">
+              <Trash2 className="mr-2 h-5 w-5 md:h-4 md:w-4" />
+              Delete permanently
             </DropdownMenuItem>}
           </DropdownMenuContent>
         </DropdownMenu>

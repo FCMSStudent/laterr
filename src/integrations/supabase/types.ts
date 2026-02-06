@@ -218,6 +218,7 @@ export type Database = {
           category_id: string | null
           content: string | null
           created_at: string
+          deleted_at: string | null
           embedding: string | null
           id: string
           metadata: Json | null
@@ -235,6 +236,7 @@ export type Database = {
           category_id?: string | null
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
           embedding?: string | null
           id?: string
           metadata?: Json | null
@@ -252,6 +254,7 @@ export type Database = {
           category_id?: string | null
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
           embedding?: string | null
           id?: string
           metadata?: Json | null
