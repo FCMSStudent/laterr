@@ -681,7 +681,7 @@ const Index = () => {
         </div>
 
 
-        {loading ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pb-12 [column-fill:_balance]">
+        {loading ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pb-12">
           {Array.from({
             length: 8
           }).map((_, index) => (
@@ -706,7 +706,7 @@ const Index = () => {
             </Button>
           )}
         </div> : <section aria-label="Items collection">
-          {viewMode === 'grid' ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pt-1 pb-12 [column-fill:_balance]">
+          {viewMode === 'grid' ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pt-1 pb-12">
             {filteredItems.map(item => (
               <div key={item.id} className="break-inside-avoid mb-5 md:mb-6">
                 <BookmarkCard id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} onDelete={handleMoveToTrash} onRestore={handleRestoreItem} onPermanentDelete={handlePermanentDeleteItem} isTrashed={Boolean(item.deleted_at)} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />
