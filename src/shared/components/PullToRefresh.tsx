@@ -20,6 +20,7 @@ export const PullToRefresh = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startY, setStartY] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hapticTriggeredRef = useRef(false);
   const { trigger } = useHapticFeedback();
 
   const canPull = useCallback(() => {
@@ -33,6 +34,7 @@ export const PullToRefresh = ({
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (!canPull()) return;
     setStartY(e.touches[0].clientY);
+    hapticTriggeredRef.current = false; // Reset haptic trigger flag
   }, [canPull]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -47,9 +49,10 @@ export const PullToRefresh = ({
       const adjustedDistance = Math.min(distance / resistance, threshold * 1.5);
       setPullDistance(adjustedDistance);
 
-      // Trigger haptic feedback at threshold
-      if (adjustedDistance >= threshold && pullDistance < threshold) {
+      // Trigger haptic feedback at threshold (only once per pull)
+      if (adjustedDistance >= threshold && !hapticTriggeredRef.current) {
         trigger('medium');
+        hapticTriggeredRef.current = true;
       }
 
       // Prevent default scrolling when pulling
@@ -57,7 +60,7 @@ export const PullToRefresh = ({
         e.preventDefault();
       }
     }
-  }, [canPull, startY, threshold, pullDistance, trigger]);
+  }, [canPull, startY, threshold, trigger]);
 
   const handleTouchEnd = useCallback(async () => {
     if (pullDistance >= threshold && !isRefreshing) {
@@ -72,10 +75,12 @@ export const PullToRefresh = ({
         setIsRefreshing(false);
         setPullDistance(0);
         setStartY(0);
+        hapticTriggeredRef.current = false;
       }
     } else {
       setPullDistance(0);
       setStartY(0);
+      hapticTriggeredRef.current = false;
     }
   }, [pullDistance, threshold, isRefreshing, trigger, onRefresh]);
 

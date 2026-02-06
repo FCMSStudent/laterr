@@ -1,20 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { WifiOff, Wifi } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 export const OfflineIndicator = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showIndicator, setShowIndicator] = useState(!navigator.onLine);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
       setShowIndicator(true);
       // Hide the "back online" message after 3 seconds
-      setTimeout(() => setShowIndicator(false), 3000);
+      timeoutRef.current = setTimeout(() => setShowIndicator(false), 3000);
     };
 
     const handleOffline = () => {
+      // Clear any existing timeout when going offline
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       setIsOnline(false);
       setShowIndicator(true);
     };
@@ -25,6 +31,10 @@ export const OfflineIndicator = () => {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      // Clear timeout on unmount
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
 
