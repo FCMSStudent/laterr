@@ -7,7 +7,7 @@ import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkelet
 import { SearchBar } from "@/shared/components/SearchBar";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/shared/components/ui";
-import { Sparkles, Plus, Loader2 } from "lucide-react";
+import { Sparkles, Plus, Loader2, Search } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -465,11 +465,11 @@ const Index = () => {
       // Open after a short tick.
       setTimeout(() => {
         setSelectedItem(found);
-      if (found.type === 'note' && !found.deleted_at) {
-        setShowNoteEditor(true);
-      } else {
-        setShowDetailModal(true);
-      }
+        if (found.type === 'note' && !found.deleted_at) {
+          setShowNoteEditor(true);
+        } else {
+          setShowDetailModal(true);
+        }
       }, 0);
     };
 
@@ -494,11 +494,13 @@ const Index = () => {
 
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div className="mb-4">
-        <NavigationHeader title="Bookmarks" onAddClick={isTrashView ? undefined : () => setShowAddModal(true)} addLabel="Add" searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search" filterButton={<MobileFilterSortButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} />
+        <NavigationHeader title="Bookmarks" onAddClick={isTrashView ? undefined : () => setShowAddModal(true)} addLabel="Add" filterButton={<MobileFilterSortButton selectedTag={selectedTag} selectedTypeFilter={typeFilter} selectedSort={sortOption} onTagSelect={setSelectedTag} onTypeFilterChange={setTypeFilter} onSortChange={setSortOption} onClearAll={handleClearAllFilters} />} />
       </div>
 
-      <div className="flex items-center justify-center pb-2">
-        <div className="relative inline-flex items-center rounded-full border border-border/60 bg-muted/30 p-1">
+      {/* Unified Search & Filter Bar */}
+      <div className="flex items-center gap-3 pb-3">
+        {/* All/Trash Toggle */}
+        <div className="relative inline-flex items-center rounded-full border border-border/60 bg-muted/30 p-1 shrink-0">
           <span
             className={`absolute inset-y-1 w-1/2 rounded-full bg-background shadow-sm transition-transform duration-200 ${viewScope === "trash" ? "translate-x-full" : "translate-x-0"}`}
             aria-hidden="true"
@@ -520,6 +522,19 @@ const Index = () => {
             Trash
           </Button>
         </div>
+
+        {/* Search Input */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search bookmarks..."
+            className="w-full h-9 pl-9 pr-3 rounded-full border border-border/60 bg-muted/30 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-transparent transition-shadow"
+            data-search-input
+          />
+        </div>
       </div>
 
 
@@ -534,11 +549,11 @@ const Index = () => {
         {loading ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pb-12 [column-fill:_balance]">
           {Array.from({
             length: 8
-           }).map((_, index) => (
-             <div key={index} className="break-inside-avoid mb-5 md:mb-6">
-               <ItemCardSkeleton />
-             </div>
-           ))}
+          }).map((_, index) => (
+            <div key={index} className="break-inside-avoid mb-5 md:mb-6">
+              <ItemCardSkeleton />
+            </div>
+          ))}
         </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
           <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
           <h2 className="text-2xl font-bold text-foreground tracking-tight">
