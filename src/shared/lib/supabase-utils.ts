@@ -104,28 +104,65 @@ export async function generateSignedUrl(
  * @param items - Array of items to process
  * @returns Array of items with signed URLs for preview images
  * 
- * Note: Processes all items concurrently. For very large datasets, consider batching.
+ * Note: Batches requests to Supabase storage to reduce network overhead.
  * Individual failures are caught and logged without affecting other items.
  */
 export async function generateSignedUrlsForItems(items: Item[]): Promise<Item[]> {
-  return Promise.all(
-    items.map(async (item) => {
-      if (!item.preview_image_url) {
-        return item;
-      }
+  const marker = SUPABASE_STORAGE_ITEM_IMAGES_PATH_PREFIX;
 
-      try {
-        const signedUrl = await generateSignedUrl(item.preview_image_url);
-        if (signedUrl) {
-          return { ...item, preview_image_url: signedUrl };
-        }
-      } catch (e) {
-        console.error('Failed to create signed URL for item:', item.id, e);
-      }
+  // Identify items that need processing and extract their storage keys
+  const itemsToProcess = items
+    .filter(item => item.preview_image_url && item.preview_image_url.includes(marker))
+    .map(item => {
+      const idx = item.preview_image_url!.indexOf(marker);
+      const key = item.preview_image_url!.substring(idx + marker.length);
+      return { id: item.id, key };
+    });
 
+  if (itemsToProcess.length === 0) {
+    return items;
+  }
+
+  // Deduplicate keys to minimize API calls
+  const uniqueKeys = Array.from(new Set(itemsToProcess.map(i => i.key)));
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(SUPABASE_STORAGE_BUCKET_ITEM_IMAGES)
+      .createSignedUrls(uniqueKeys, PREVIEW_SIGNED_URL_EXPIRATION);
+
+    if (error) throw error;
+
+    // Create a lookup map for signed URLs: path -> signedUrl
+    const signedUrlsMap = new Map<string, string>();
+    data?.forEach(entry => {
+      if (entry.signedUrl && !entry.error) {
+        signedUrlsMap.set(entry.path || '', entry.signedUrl);
+      } else if (entry.error) {
+        console.error(`Failed to create signed URL for path ${entry.path}:`, entry.error);
+      }
+    });
+
+    // Map of itemId to its respective storage key for O(1) lookup during item mapping
+    const itemKeyMap = new Map(itemsToProcess.map(i => [i.id, i.key]));
+
+    // Return items with their updated signed URLs
+    return items.map(item => {
+      const key = itemKeyMap.get(item.id);
+      if (key && signedUrlsMap.has(key)) {
+        return {
+          ...item,
+          preview_image_url: signedUrlsMap.get(key)
+        };
+      }
       return item;
-    })
-  );
+    });
+  } catch (e) {
+    console.error('Failed to create batched signed URLs:', e);
+    // On error, return original items. Alternatively, we could fallback to individual requests,
+    // but a batch failure usually indicates a larger issue (auth, network, etc.)
+    return items;
+  }
 }
 
 /**
