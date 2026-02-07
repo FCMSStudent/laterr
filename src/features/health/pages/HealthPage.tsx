@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MeasurementCard } from "@/features/health/components/MeasurementCard";
@@ -24,11 +24,10 @@ import { useHealthDocuments } from "@/features/health/hooks/useHealthDocuments";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui";
 import { AlertCircle } from "lucide-react";
 
-// Lazy load modal components
-const AddMeasurementModal = lazy(() => import("@/features/health/components/AddMeasurementModal").then(({ AddMeasurementModal }) => ({ default: AddMeasurementModal })));
-const MeasurementDetailModal = lazy(() => import("@/features/health/components/MeasurementDetailModal").then(({ MeasurementDetailModal }) => ({ default: MeasurementDetailModal })));
-const AddHealthDocumentModal = lazy(() => import("@/features/health/components/AddHealthDocumentModal").then(({ AddHealthDocumentModal }) => ({ default: AddHealthDocumentModal })));
-const HealthDocumentDetailModal = lazy(() => import("@/features/health/components/HealthDocumentDetailModal").then(({ HealthDocumentDetailModal }) => ({ default: HealthDocumentDetailModal })));
+import { AddMeasurementModal } from "@/features/health/components/AddMeasurementModal";
+import { MeasurementDetailModal } from "@/features/health/components/MeasurementDetailModal";
+import { AddHealthDocumentModal } from "@/features/health/components/AddHealthDocumentModal";
+import { HealthDocumentDetailModal } from "@/features/health/components/HealthDocumentDetailModal";
 
 const Health = () => {
   const [activeTab, setActiveTab] = useState("measurements");
@@ -326,40 +325,38 @@ const Health = () => {
       {/* Floating AI Chat Button */}
       <FloatingAIChatButton />
 
-      <Suspense fallback={null}>
-        <AddMeasurementModal
-          open={showAddMeasurementModal}
-          onOpenChange={setShowAddMeasurementModal}
-          onMeasurementAdded={fetchMeasurements}
+      <AddMeasurementModal
+        open={showAddMeasurementModal}
+        onOpenChange={setShowAddMeasurementModal}
+        onMeasurementAdded={fetchMeasurements}
+      />
+
+      {selectedMeasurement && (
+        <MeasurementDetailModal
+          open={showMeasurementDetailModal}
+          onOpenChange={setShowMeasurementDetailModal}
+          measurement={selectedMeasurement}
+          allMeasurements={measurements.filter(m => m.measurement_type === selectedMeasurement.measurement_type)}
+          onUpdate={fetchMeasurements}
+          onDelete={handleDeleteMeasurement}
         />
+      )}
 
-        {selectedMeasurement && (
-          <MeasurementDetailModal
-            open={showMeasurementDetailModal}
-            onOpenChange={setShowMeasurementDetailModal}
-            measurement={selectedMeasurement}
-            allMeasurements={measurements.filter(m => m.measurement_type === selectedMeasurement.measurement_type)}
-            onUpdate={fetchMeasurements}
-            onDelete={handleDeleteMeasurement}
-          />
-        )}
+      <AddHealthDocumentModal
+        open={showAddDocumentModal}
+        onOpenChange={setShowAddDocumentModal}
+        onDocumentAdded={fetchDocuments}
+      />
 
-        <AddHealthDocumentModal
-          open={showAddDocumentModal}
-          onOpenChange={setShowAddDocumentModal}
-          onDocumentAdded={fetchDocuments}
+      {selectedDocument && (
+        <HealthDocumentDetailModal
+          open={showDocumentDetailModal}
+          onOpenChange={setShowDocumentDetailModal}
+          document={selectedDocument}
+          onUpdate={fetchDocuments}
+          onDelete={handleDeleteDocument}
         />
-
-        {selectedDocument && (
-          <HealthDocumentDetailModal
-            open={showDocumentDetailModal}
-            onOpenChange={setShowDocumentDetailModal}
-            document={selectedDocument}
-            onUpdate={fetchDocuments}
-            onDelete={handleDeleteDocument}
-          />
-        )}
-      </Suspense>
+      )}
     </div>
   );
 };
