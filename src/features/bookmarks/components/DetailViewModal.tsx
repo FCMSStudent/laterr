@@ -16,7 +16,7 @@ import { Input, Textarea } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { DEFAULT_ITEM_TAG, SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
 import { generateSignedUrl, generateSignedUrlsForItems } from "@/shared/lib/supabase-utils";
 import { toTypedError } from "@/shared/types/errors";

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { EnhancedInput } from "@/shared/components/ui";
 import { LoadingButton } from "@/shared/components/ui";
-import { useToast } from '@/shared/hooks/use-toast';
+import { useToast } from '@/shared/hooks/useToast';
 import { z } from 'zod';
 import { AuthError, toTypedError } from '@/shared/types/errors';
 import { AUTH_ERRORS, getAuthErrorMessage } from '@/shared/lib/error-messages';

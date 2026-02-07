@@ -17,7 +17,7 @@ import { cn } from "@/shared/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import {
   SUBSCRIPTION_TABLES,
   DEFAULT_CATEGORIES,

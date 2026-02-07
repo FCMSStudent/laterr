@@ -9,7 +9,7 @@ import { Badge } from "@/shared/components/ui";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
 import type { Item } from "@/features/bookmarks/types";
 

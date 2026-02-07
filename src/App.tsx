@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/shared/components/ui";
 import { TooltipProvider } from "@/shared/components/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
 import { OfflineIndicator } from "@/shared/components/OfflineIndicator";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";

@@ -3,7 +3,7 @@ import { Button } from "@/shared/components/ui";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/components/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/shared/components/ui";
 import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown, Filter, LayoutGrid, LayoutList, CheckSquare } from "lucide-react";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import type { ItemType } from "@/features/bookmarks/types";
 import { CATEGORY_OPTIONS } from "@/features/bookmarks/constants";
 import { ReactNode } from "react";

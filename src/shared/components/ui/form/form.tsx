@@ -5,7 +5,7 @@ import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider } fro
 
 import { cn } from "@/shared/lib/utils";
 import { Label } from "./label";
-import { useFormField } from "@/shared/hooks/use-form-field";
+import { useFormField } from "@/shared/hooks/useFormField";
 
 const Form = FormProvider;
 

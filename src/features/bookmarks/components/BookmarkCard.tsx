@@ -8,8 +8,8 @@ import { Button } from "@/shared/components/ui";
 import { Skeleton } from "@/shared/components/ui";
 import { useMemo, useState, useRef } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useDominantColor } from "@/shared/hooks/use-dominant-color";
+import { useIsMobile } from "@/shared/hooks/useMobile";
+import { useDominantColor } from "@/shared/hooks/useDominantColor";
 import { cn } from "@/shared/lib/utils";
 import { format } from "date-fns";
 interface BookmarkCardProps {
