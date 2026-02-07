@@ -10,7 +10,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { Input } from "@/shared/components/ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/shared/components/ui";
-import { LoadingSpinner } from "./LoadingSpinner";
+import { LoadingSpinner } from "@/shared/components/ui";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import {
   DropdownMenu,

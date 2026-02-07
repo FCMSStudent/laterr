@@ -11,7 +11,7 @@ import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useProgressiveDisclosure } from "@/shared/hooks/useProgressiveDisclosure";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { LoadingSpinner } from "@/shared/components/ui";
 import { useTheme } from "next-themes";
 import { AuthError } from "@/shared/types/errors";
 import { AUTH_ERRORS } from "@/shared/lib/error-messages";

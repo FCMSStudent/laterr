@@ -1,4 +1,4 @@
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { LoadingSpinner } from "@/shared/components/ui";
 
 export const PageLoading = () => {
     return (

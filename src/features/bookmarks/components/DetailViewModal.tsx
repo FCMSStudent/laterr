@@ -23,7 +23,7 @@ import { toTypedError } from "@/shared/types/errors";
 import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/shared/lib/error-messages";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import type { Item } from "@/features/bookmarks/types";
-import { useDebounce } from "@/shared/hooks/use-debounce";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { removeItemStorageObjects } from "@/features/bookmarks/utils/trash";
 
 // Constants
