@@ -7,7 +7,7 @@ import { Textarea } from "@/shared/components/ui";
 import { Label } from "@/shared/components/ui";
 import { Badge } from "@/shared/components/ui";
 import { X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/useMobile";
 import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";

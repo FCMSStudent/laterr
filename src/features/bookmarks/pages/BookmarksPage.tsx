@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
 import { ItemListRow } from "@/features/bookmarks/components/ItemListRow";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";

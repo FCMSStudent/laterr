@@ -2,7 +2,7 @@
  * Semantic search utilities using embeddings for content recommendations
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import type { Item } from "@/features/bookmarks/types";
 import { isValidEmbedding } from "@/features/bookmarks/constants";
 

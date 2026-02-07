@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
 import { SUBSCRIPTION_TABLES } from "@/features/subscriptions/constants";
 

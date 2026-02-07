@@ -17,7 +17,7 @@ import {
   DollarSign,
   RefreshCw
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { SUBSCRIPTION_TABLES, CATEGORY_COLORS } from "@/features/subscriptions/constants";
