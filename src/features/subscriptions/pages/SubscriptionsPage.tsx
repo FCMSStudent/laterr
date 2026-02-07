@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionCard } from "@/features/subscriptions/components/SubscriptionCard";
@@ -19,10 +19,9 @@ import { toTypedError } from "@/shared/types/errors";
 import { differenceInDays } from "date-fns";
 import { parseSubscriptionDate } from "@/features/subscriptions/utils/date-utils";
 
-// Lazy load modal components
-const AddSubscriptionModal = lazy(() => import("@/features/subscriptions/components/AddSubscriptionModal").then(({ AddSubscriptionModal }) => ({ default: AddSubscriptionModal })));
-const SubscriptionDetailModal = lazy(() => import("@/features/subscriptions/components/SubscriptionDetailModal").then(({ SubscriptionDetailModal }) => ({ default: SubscriptionDetailModal })));
-const EditSubscriptionModal = lazy(() => import("@/features/subscriptions/components/EditSubscriptionModal").then(({ EditSubscriptionModal }) => ({ default: EditSubscriptionModal })));
+import { AddSubscriptionModal } from "@/features/subscriptions/components/AddSubscriptionModal";
+import { SubscriptionDetailModal } from "@/features/subscriptions/components/SubscriptionDetailModal";
+import { EditSubscriptionModal } from "@/features/subscriptions/components/EditSubscriptionModal";
 
 type User = { id: string; email?: string };
 
@@ -268,31 +267,29 @@ const Subscriptions = () => {
         </Button>
       )}
 
-      <Suspense fallback={null}>
-        <AddSubscriptionModal
-          open={showAddModal}
-          onOpenChange={setShowAddModal}
-          onSubscriptionAdded={fetchSubscriptions}
-        />
+      <AddSubscriptionModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onSubscriptionAdded={fetchSubscriptions}
+      />
 
-        {selectedSubscription && (
-          <>
-            <SubscriptionDetailModal
-              open={showDetailModal}
-              onOpenChange={setShowDetailModal}
-              subscription={selectedSubscription}
-              onUpdate={fetchSubscriptions}
-            />
+      {selectedSubscription && (
+        <>
+          <SubscriptionDetailModal
+            open={showDetailModal}
+            onOpenChange={setShowDetailModal}
+            subscription={selectedSubscription}
+            onUpdate={fetchSubscriptions}
+          />
 
-            <EditSubscriptionModal
-              open={showEditModal}
-              onOpenChange={setShowEditModal}
-              subscription={selectedSubscription}
-              onSubscriptionUpdated={fetchSubscriptions}
-            />
-          </>
-        )}
-      </Suspense>
+          <EditSubscriptionModal
+            open={showEditModal}
+            onOpenChange={setShowEditModal}
+            subscription={selectedSubscription}
+            onSubscriptionUpdated={fetchSubscriptions}
+          />
+        </>
+      )}
     </div>
   );
 };
