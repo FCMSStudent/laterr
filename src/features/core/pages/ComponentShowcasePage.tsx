@@ -82,7 +82,7 @@ import { GradientBackground } from "@/shared/components/GradientBackground";
 import { CompactListRow } from "@/shared/components/CompactListRow";
 import { QuickStatsGrid } from "@/shared/components/QuickStatsGrid";
 import { DashboardWidget } from "@/shared/components/DashboardWidget";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { LoadingSpinner } from "@/shared/components/ui";
 import { PageLoading } from "@/shared/components/PageLoading";
 import { Bookmark, CreditCard, Activity, User as UserIcon, Search, Bell, Settings, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";

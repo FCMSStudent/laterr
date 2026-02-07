@@ -7,7 +7,7 @@ import { Button } from "@/shared/components/ui";
 import { Skeleton } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
 import { useState, useRef } from "react";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { cn } from "@/shared/lib/utils";
 
 interface ItemListRowProps {

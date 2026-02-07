@@ -14,16 +14,16 @@ import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, 
 import { Badge } from "@/shared/components/ui";
 import { Input, Textarea } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { DEFAULT_ITEM_TAG, SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
 import { generateSignedUrl, generateSignedUrlsForItems } from "@/shared/lib/supabase-utils";
 import { toTypedError } from "@/shared/types/errors";
 import { UPDATE_ERRORS, getUpdateErrorMessage, ITEM_ERRORS } from "@/shared/lib/error-messages";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import type { Item } from "@/features/bookmarks/types";
-import { useDebounce } from "@/shared/hooks/use-debounce";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { removeItemStorageObjects } from "@/features/bookmarks/utils/trash";
 
 // Constants

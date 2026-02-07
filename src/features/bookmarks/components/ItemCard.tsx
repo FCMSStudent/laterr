@@ -10,7 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useState, useRef, useCallback } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { cn } from "@/shared/lib/utils";
 interface ItemCardProps {
   id: string;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { SubscriptionCard } from "@/features/subscriptions/components/SubscriptionCard";
 import { SubscriptionListRow } from "@/features/subscriptions/components/SubscriptionListRow";
 import { CollapsibleStatsSummary } from "@/features/subscriptions/components/CollapsibleStatsSummary";
@@ -9,9 +9,9 @@ import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkelet
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/shared/components/ui";
 import { CreditCard, Plus } from "lucide-react";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/hooks/useToast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { SUBSCRIPTION_TABLES } from "@/features/subscriptions/constants";
 import { formatCurrency, calculateMonthlyCost, calculateAnnualCost } from "@/features/subscriptions/utils/currency-utils";
 import type { Subscription, SubscriptionStatus, SubscriptionBillingCycle } from "@/features/subscriptions/types";

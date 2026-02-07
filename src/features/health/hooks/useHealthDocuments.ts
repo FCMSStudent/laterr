@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { HEALTH_TABLES } from '@/features/health/constants';
 import { isValidEmbedding } from '@/features/bookmarks/constants';
 import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from '@/shared/lib/storage-constants';

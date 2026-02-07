@@ -9,7 +9,7 @@ import { Separator } from "@/shared/components/ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/shared/components/ui";
 import { useGlassIntensity, GlassIntensity } from "@/shared/hooks/useGlassIntensity";
 import { useRecentlyViewed } from "@/shared/hooks/useRecentlyViewed";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 

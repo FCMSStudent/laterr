@@ -3,10 +3,10 @@ import { Slot } from "@radix-ui/react-slot";
 import { VariantProps } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { cn } from "@/shared/lib/utils";
 import { sidebarMenuButtonVariants } from "@/shared/lib/ui-utils";
-import { SidebarContext, useSidebar } from "@/shared/hooks/use-sidebar";
+import { SidebarContext, useSidebar } from "@/shared/hooks/useSidebar";
 import { Button } from "../button/Button";
 import { Input } from "../input/input";
 import { Separator } from "../layout/separator";

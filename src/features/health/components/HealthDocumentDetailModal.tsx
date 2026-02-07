@@ -9,7 +9,7 @@ import {
   ExternalLink, Sparkles, Beaker, Loader2
 } from "lucide-react";
 import { format } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import type { HealthDocument, DocumentType } from "@/features/health/types";
 import { DOCUMENT_TYPES, HEALTH_TABLES } from "@/features/health/constants";

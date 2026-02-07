@@ -4,7 +4,7 @@ import { Input } from "@/shared/components/ui";
 import { ScrollArea } from "@/shared/components/ui";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/shared/components/ui";
 import { MessageCircle, Send, Loader2, Bot, User, AlertTriangle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/shared/lib/utils';
 import { getEdgeFunctionErrorDetails, type EdgeFunctionErrorDetails } from '@/shared/lib/error-utils';
 

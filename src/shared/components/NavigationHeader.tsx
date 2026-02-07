@@ -2,15 +2,15 @@ import { Button } from "@/shared/components/ui";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Bookmark, LogOut, ArrowLeft, Plus, Search, Settings, MoreVertical, Sun } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/shared/hooks/use-toast";
+import { supabase } from "@/lib/supabase/client";
+import { useToast } from "@/shared/hooks/useToast";
 import { AuthError } from "@/shared/types/errors";
 import { AUTH_ERRORS } from "@/shared/lib/error-messages";
 import { useState, useEffect, ReactNode } from "react";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsMobile } from "@/shared/hooks/useMobile";
 import { Input } from "@/shared/components/ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/shared/components/ui";
-import { LoadingSpinner } from "./LoadingSpinner";
+import { LoadingSpinner } from "@/shared/components/ui";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import {
   DropdownMenu,

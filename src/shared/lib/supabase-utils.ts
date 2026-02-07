@@ -3,7 +3,7 @@
  * file uploads, and other Supabase-related tasks
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { PREVIEW_SIGNED_URL_EXPIRATION } from "@/features/bookmarks/constants";
 import {
   SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
