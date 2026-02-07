@@ -1,7 +1,6 @@
 import "./styles/gradient.css";
 import { Agentation } from "agentation";
-import { AppProviders } from "@/app/providers";
-import { AppRoutes } from "@/app/routes";
+import { AppProviders, AppRoutes } from "@/app";
 
 const App = () => {
   // Agentation integration (dev-only)
