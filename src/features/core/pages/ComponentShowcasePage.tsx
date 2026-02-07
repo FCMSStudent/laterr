@@ -10,6 +10,7 @@ import {
   Input,
   EnhancedInput,
   Textarea,
+  EnhancedTextarea,
   Label,
   Checkbox,
   RadioGroup,
@@ -421,12 +422,34 @@ const ComponentShowcasePage = () => {
             {/* Textarea */}
             <Card>
               <CardHeader>
-                <CardTitle>Textarea</CardTitle>
-                <CardDescription>Multi-line text input</CardDescription>
+                <CardTitle>Textarea & EnhancedTextarea</CardTitle>
+                <CardDescription>Multi-line text input with enhanced features</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Label htmlFor="textarea">Message</Label>
-                <Textarea id="textarea" placeholder="Type your message here..." />
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="textarea">Basic Textarea</Label>
+                  <Textarea id="textarea" placeholder="Type your message here..." />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="enhanced-textarea">Enhanced Textarea with Character Count</Label>
+                  <EnhancedTextarea
+                    id="enhanced-textarea"
+                    placeholder="Type here to see character count..."
+                    maxLength={100}
+                    showCharacterCount={true}
+                    helperText="Try typing more than 90 characters to see the warning color."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="enhanced-textarea-error">Enhanced Textarea with Error</Label>
+                  <EnhancedTextarea
+                    id="enhanced-textarea-error"
+                    placeholder="Error state..."
+                    error="This field is required"
+                  />
+                </div>
               </CardContent>
             </Card>
 

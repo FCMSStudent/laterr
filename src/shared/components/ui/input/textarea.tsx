@@ -82,7 +82,18 @@ const EnhancedTextarea = React.forwardRef<HTMLTextAreaElement, EnhancedTextareaP
           </div>
           
           {/* Character Counter */}
-          {showCharacterCount && maxLength}
+          {showCharacterCount && maxLength && (
+            <p
+              className={cn(
+                "text-xs tabular-nums transition-colors",
+                isNearLimit ? "text-amber-500 font-medium" : "text-muted-foreground",
+                charCount >= maxLength && "text-destructive font-bold"
+              )}
+              aria-live={isNearLimit ? "polite" : "off"}
+            >
+              {charCount} / {maxLength}
+            </p>
+          )}
         </div>
       </div>;
 });
