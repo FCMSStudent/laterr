@@ -370,12 +370,26 @@ export const BookmarkCard = ({
             <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
-        {/* Rich gradient overlay - App Store style with dominant color */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: dominantColor 
-            ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor} 20%, ${dominantColor}f0 32%, ${dominantColor}cc 45%, ${dominantColor}66 60%, transparent 80%)` 
-            : 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.75) 40%, rgba(0,0,0,0.4) 60%, transparent 80%)'
-        }} />
+        {/* Rich gradient overlay - App Store style with dominant color or vibrant type-based fallback */}
+        {(() => {
+          // Type-based vibrant fallback colors when dominant color extraction fails
+          const fallbackGradients: Record<string, string> = {
+            video: 'linear-gradient(to top, rgb(109, 40, 217) 0%, rgb(109, 40, 217) 20%, rgba(109, 40, 217, 0.9) 32%, rgba(109, 40, 217, 0.7) 45%, rgba(109, 40, 217, 0.3) 60%, transparent 80%)',
+            image: 'linear-gradient(to top, rgb(15, 23, 42) 0%, rgb(15, 23, 42) 20%, rgba(15, 23, 42, 0.9) 32%, rgba(15, 23, 42, 0.7) 45%, rgba(15, 23, 42, 0.3) 60%, transparent 80%)',
+            url: 'linear-gradient(to top, rgb(30, 64, 175) 0%, rgb(30, 64, 175) 20%, rgba(30, 64, 175, 0.9) 32%, rgba(30, 64, 175, 0.7) 45%, rgba(30, 64, 175, 0.3) 60%, transparent 80%)',
+            document: 'linear-gradient(to top, rgb(180, 83, 9) 0%, rgb(180, 83, 9) 20%, rgba(180, 83, 9, 0.9) 32%, rgba(180, 83, 9, 0.7) 45%, rgba(180, 83, 9, 0.3) 60%, transparent 80%)',
+            file: 'linear-gradient(to top, rgb(180, 83, 9) 0%, rgb(180, 83, 9) 20%, rgba(180, 83, 9, 0.9) 32%, rgba(180, 83, 9, 0.7) 45%, rgba(180, 83, 9, 0.3) 60%, transparent 80%)',
+          };
+          const fallback = fallbackGradients[isVideo ? 'video' : type] || fallbackGradients.url;
+          
+          return (
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: dominantColor 
+                ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor} 20%, ${dominantColor}f0 32%, ${dominantColor}cc 45%, ${dominantColor}66 60%, transparent 80%)` 
+                : fallback
+            }} />
+          );
+        })()}
 
         {/* Play button overlay for videos - centered */}
         {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ paddingBottom: '25%' }}>
