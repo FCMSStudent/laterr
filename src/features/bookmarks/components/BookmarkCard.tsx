@@ -163,12 +163,12 @@ export const BookmarkCard = ({
   } = useDominantColor(previewImageUrl);
   const dateText = formatDate(createdAt);
   const mediaRatio = useMemo(() => {
-    // Content-type driven sizing (works best with masonry columns)
-    if (isVideo) return 16 / 9;
-    if (type === 'image') return 4 / 5;
-    if (type === 'document' || type === 'file') return 3 / 4;
-    if (type === 'url') return 4 / 5;
-    return 3 / 4;
+    // App Store-style taller cards for richer content display
+    if (isVideo) return 3 / 4;  // Taller video cards for more text space
+    if (type === 'image') return 3 / 4;  // Portrait for images
+    if (type === 'document' || type === 'file') return 4 / 5;
+    if (type === 'url') return 4 / 5;  // URL bookmarks
+    return 4 / 5;  // Default
   }, [isVideo, type]);
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -370,36 +370,39 @@ export const BookmarkCard = ({
             <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
-        {/* Dynamic gradient overlay from bottom - uses extracted dominant color */}
+        {/* Rich gradient overlay - App Store style with dominant color */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: dominantColor ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor}dd 30%, ${dominantColor}aa 50%, ${dominantColor}00 100%)` : 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)'
+          background: dominantColor 
+            ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor} 20%, ${dominantColor}f0 32%, ${dominantColor}cc 45%, ${dominantColor}66 60%, transparent 80%)` 
+            : 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.75) 40%, rgba(0,0,0,0.4) 60%, transparent 80%)'
         }} />
 
-        {/* Content type badge - top left */}
-        {/* Content type badge - top left */}
-        <Badge variant="outline" className={cn("absolute top-4 left-4 z-10 text-xs font-medium items-center gap-1.5 px-2.5 py-1 border-0 flex flex-row shadow-sm backdrop-blur-sm", categoryBadge.color)}>
-          <categoryBadge.icon className="h-3 w-3" />
-          {categoryBadge.label}
-        </Badge>
-
-        {/* Play button overlay for videos - positioned in upper half to avoid text overlap */}
-        {isVideo && <div className="absolute top-1/4 left-0 right-0 flex items-center justify-center pointer-events-none">
-          <div className="w-14 h-14 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center">
-            <Play className="h-6 w-6 text-white fill-white ml-0.5" />
+        {/* Play button overlay for videos - centered */}
+        {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ paddingBottom: '25%' }}>
+          <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center shadow-lg">
+            <Play className="h-7 w-7 text-white fill-white ml-0.5" />
           </div>
         </div>}
 
-        {/* Text overlay - bottom */}
+        {/* Text overlay - App Store style with category label, title, and summary */}
         <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+          {/* Category label */}
+          <span className="text-white/90 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">
+            {categoryBadge.label}
+          </span>
+          
           {/* Title */}
-          <h3 className="font-bold text-white text-base leading-tight line-clamp-2 transition-transform duration-200 ease-out group-hover:-translate-y-3 group-focus-within:-translate-y-3">
+          <h3 className="font-bold text-white text-lg leading-snug line-clamp-2 mb-1">
             {title}
           </h3>
+          
+          {/* Summary/description */}
+          {summary && (
+            <p className="text-white/75 text-sm leading-relaxed line-clamp-2">
+              {summary}
+            </p>
+          )}
         </div>
-
-        <span className="absolute bottom-2 left-5 z-20 text-white text-sm font-medium underline underline-offset-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 transition-all duration-200 ease-out pointer-events-none">
-          Open
-        </span>
       </AspectRatio>
     </div>
   </div>;
