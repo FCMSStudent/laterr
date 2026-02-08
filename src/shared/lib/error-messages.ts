@@ -16,12 +16,8 @@ export const AUTH_ERRORS = {
     message: 'Password must be at least 6 characters long',
   },
   INVALID_CREDENTIALS: {
-    title: 'Sign In Failed',
+    title: 'Authentication Failed',
     message: 'The email or password you entered is incorrect. Please try again.',
-  },
-  USER_NOT_FOUND: {
-    title: 'Account Not Found',
-    message: 'No account exists with this email. Would you like to sign up instead?',
   },
   EMAIL_ALREADY_EXISTS: {
     title: 'Email Already in Use',
@@ -203,11 +199,12 @@ export function getAuthErrorMessage(error: unknown): { title: string; message: s
     const message = error.message.toLowerCase();
     
     // Check for specific Supabase auth error patterns
-    if (message.includes('invalid login credentials') || message.includes('invalid email or password')) {
+    if (
+      message.includes('invalid login credentials') ||
+      message.includes('invalid email or password') ||
+      message.includes('user not found')
+    ) {
       return AUTH_ERRORS.INVALID_CREDENTIALS;
-    }
-    if (message.includes('user not found')) {
-      return AUTH_ERRORS.USER_NOT_FOUND;
     }
     if (message.includes('email already') || message.includes('already registered')) {
       return AUTH_ERRORS.EMAIL_ALREADY_EXISTS;
