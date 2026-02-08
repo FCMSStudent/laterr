@@ -31,6 +31,9 @@ interface BookmarkCardProps {
   onPermanentDelete?: (id: string) => void;
   isTrashed?: boolean;
   onEdit?: (id: string) => void;
+  sourceName?: string;
+  sourceFavicon?: string;
+  size?: "standard" | "tall";
 }
 // Smart category badge configuration
 // Maps tag names to badge styles and labels
@@ -143,7 +146,10 @@ export const BookmarkCard = ({
   onRestore,
   onPermanentDelete,
   isTrashed = false,
-  onEdit
+  onEdit,
+  sourceName,
+  sourceFavicon,
+  size = "tall"
 }: BookmarkCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -164,12 +170,20 @@ export const BookmarkCard = ({
   const dateText = formatDate(createdAt);
   const mediaRatio = useMemo(() => {
     // App Store-style taller cards for richer content display
+    if (size === "standard") {
+      // Standard aspect ratios (shorter cards)
+      if (isVideo) return 9 / 16;  // Standard video
+      if (type === 'image') return 1;  // Square for images
+      return 4 / 5;  // Default standard
+    }
+    
+    // Tall variant (default) - better for rich text overlay
     if (isVideo) return 3 / 4;  // Taller video cards for more text space
     if (type === 'image') return 3 / 4;  // Portrait for images
     if (type === 'document' || type === 'file') return 4 / 5;
     if (type === 'url') return 4 / 5;  // URL bookmarks
-    return 4 / 5;  // Default
-  }, [isVideo, type]);
+    return 4 / 5;  // Default tall
+  }, [isVideo, type, size]);
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -370,51 +384,73 @@ export const BookmarkCard = ({
             <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
-        {/* Rich gradient overlay - App Store style with dominant color or vibrant type-based fallback */}
+        {/* Premium gradient overlay - App Store style with dominant color */}
         {(() => {
           // Type-based vibrant fallback colors when dominant color extraction fails
           const fallbackGradients: Record<string, string> = {
-            video: 'linear-gradient(to top, rgb(109, 40, 217) 0%, rgb(109, 40, 217) 20%, rgba(109, 40, 217, 0.9) 32%, rgba(109, 40, 217, 0.7) 45%, rgba(109, 40, 217, 0.3) 60%, transparent 80%)',
-            image: 'linear-gradient(to top, rgb(15, 23, 42) 0%, rgb(15, 23, 42) 20%, rgba(15, 23, 42, 0.9) 32%, rgba(15, 23, 42, 0.7) 45%, rgba(15, 23, 42, 0.3) 60%, transparent 80%)',
-            url: 'linear-gradient(to top, rgb(30, 64, 175) 0%, rgb(30, 64, 175) 20%, rgba(30, 64, 175, 0.9) 32%, rgba(30, 64, 175, 0.7) 45%, rgba(30, 64, 175, 0.3) 60%, transparent 80%)',
-            document: 'linear-gradient(to top, rgb(180, 83, 9) 0%, rgb(180, 83, 9) 20%, rgba(180, 83, 9, 0.9) 32%, rgba(180, 83, 9, 0.7) 45%, rgba(180, 83, 9, 0.3) 60%, transparent 80%)',
-            file: 'linear-gradient(to top, rgb(180, 83, 9) 0%, rgb(180, 83, 9) 20%, rgba(180, 83, 9, 0.9) 32%, rgba(180, 83, 9, 0.7) 45%, rgba(180, 83, 9, 0.3) 60%, transparent 80%)',
+            video: 'linear-gradient(to top, rgb(109, 40, 217) 0%, rgb(109, 40, 217) 35%, rgba(109, 40, 217, 0.95) 40%, rgba(109, 40, 217, 0.85) 50%, rgba(109, 40, 217, 0.65) 60%, rgba(109, 40, 217, 0.3) 75%, transparent 90%)',
+            image: 'linear-gradient(to top, rgb(15, 23, 42) 0%, rgb(15, 23, 42) 35%, rgba(15, 23, 42, 0.95) 40%, rgba(15, 23, 42, 0.85) 50%, rgba(15, 23, 42, 0.65) 60%, rgba(15, 23, 42, 0.3) 75%, transparent 90%)',
+            url: 'linear-gradient(to top, rgb(30, 64, 175) 0%, rgb(30, 64, 175) 35%, rgba(30, 64, 175, 0.95) 40%, rgba(30, 64, 175, 0.85) 50%, rgba(30, 64, 175, 0.65) 60%, rgba(30, 64, 175, 0.3) 75%, transparent 90%)',
+            document: 'linear-gradient(to top, rgb(180, 83, 9) 0%, rgb(180, 83, 9) 35%, rgba(180, 83, 9, 0.95) 40%, rgba(180, 83, 9, 0.85) 50%, rgba(180, 83, 9, 0.65) 60%, rgba(180, 83, 9, 0.3) 75%, transparent 90%)',
+            file: 'linear-gradient(to top, rgb(180, 83, 9) 0%, rgb(180, 83, 9) 35%, rgba(180, 83, 9, 0.95) 40%, rgba(180, 83, 9, 0.85) 50%, rgba(180, 83, 9, 0.65) 60%, rgba(180, 83, 9, 0.3) 75%, transparent 90%)',
           };
           const fallback = fallbackGradients[isVideo ? 'video' : type] || fallbackGradients.url;
           
           return (
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: dominantColor 
-                ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor} 20%, ${dominantColor}f0 32%, ${dominantColor}cc 45%, ${dominantColor}66 60%, transparent 80%)` 
-                : fallback
-            }} />
+            <div 
+              className="absolute inset-0 pointer-events-none backdrop-blur-[2px]" 
+              style={{
+                background: dominantColor 
+                  ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor} 35%, ${dominantColor}f2 40%, ${dominantColor}d9 50%, ${dominantColor}a6 60%, ${dominantColor}4d 75%, transparent 90%)` 
+                  : fallback
+              }} 
+            />
           );
         })()}
 
-        {/* Play button overlay for videos - centered */}
-        {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ paddingBottom: '25%' }}>
+        {/* Play button overlay for videos - perfectly centered */}
+        {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center shadow-lg">
             <Play className="h-7 w-7 text-white fill-white ml-0.5" />
           </div>
         </div>}
 
-        {/* Text overlay - App Store style with category label, title, and summary */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+        {/* Text overlay - Premium App Store style with category, title, summary, and optional source */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 z-10 space-y-1.5">
           {/* Category label */}
-          <span className="text-white/90 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">
+          <span className="text-white/90 text-[10px] font-bold uppercase tracking-wider block">
             {categoryBadge.label}
           </span>
           
           {/* Title */}
-          <h3 className="font-bold text-white text-lg leading-snug line-clamp-2 mb-1">
+          <h3 className="font-bold text-white text-lg leading-snug line-clamp-2">
             {title}
           </h3>
           
           {/* Summary/description */}
           {summary && (
-            <p className="text-white/75 text-sm leading-relaxed line-clamp-2">
+            <p className="text-white/80 text-sm leading-relaxed line-clamp-3">
               {summary}
             </p>
+          )}
+
+          {/* Optional source attribution row */}
+          {(sourceName || sourceFavicon) && (
+            <div className="flex items-center gap-2 pt-1">
+              {sourceFavicon && (
+                <img 
+                  src={sourceFavicon} 
+                  alt="" 
+                  className="w-4 h-4 rounded-sm object-cover"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
+              {sourceName && (
+                <span className="text-white/70 text-xs font-medium">
+                  {sourceName}
+                </span>
+              )}
+            </div>
           )}
         </div>
       </AspectRatio>
