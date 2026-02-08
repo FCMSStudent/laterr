@@ -440,7 +440,7 @@ export const BookmarkCard = ({
               {sourceFavicon && (
                 <img 
                   src={sourceFavicon} 
-                  alt="" 
+                  alt={sourceName ? `${sourceName} icon` : "Source icon"} 
                   className="w-4 h-4 rounded-sm object-cover"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
