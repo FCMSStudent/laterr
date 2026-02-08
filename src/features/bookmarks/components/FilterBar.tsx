@@ -6,7 +6,7 @@ import { ArrowUpDown, X, FileText, Link2, Image as ImageIcon, ChevronDown, Filte
 import { useIsMobile } from "@/shared/hooks/useMobile";
 import type { ItemType } from "@/features/bookmarks/types";
 import { CATEGORY_OPTIONS } from "@/features/bookmarks/constants";
-import { ReactNode } from "react";
+import { ReactNode, memo } from "react";
 export type SortOption = "date-desc" | "date-asc" | "title-asc" | "title-desc" | "type";
 export type ViewMode = "grid" | "list";
 interface FilterBarProps {
@@ -32,7 +32,10 @@ interface FilterBarProps {
 }
 
 // Combined filter & sort button for header
-export const MobileFilterSortButton = ({
+/**
+ * Optimized with React.memo to prevent unnecessary re-renders of the filter button in the header.
+ */
+export const MobileFilterSortButton = memo(({
   selectedTag,
   selectedTypeFilter,
   selectedSort,
@@ -136,7 +139,9 @@ export const MobileFilterSortButton = ({
         </div>
       </DrawerContent>
     </Drawer>;
-};
+});
+
+MobileFilterSortButton.displayName = "MobileFilterSortButton";
 
 // Legacy exports for backward compatibility
 export const MobileFilterButton = MobileFilterSortButton;
@@ -150,7 +155,11 @@ export const MobileSortButton = ({
   // This is now a no-op since sort is merged into MobileFilterSortButton
   return null;
 };
-export const FilterBar = ({
+/**
+ * FilterBar component for managing bookmark filters and sorting.
+ * Optimized with React.memo to prevent re-renders when other page state changes.
+ */
+export const FilterBar = memo(({
   selectedTag,
   selectedSort,
   selectedTypeFilter,
@@ -270,4 +279,6 @@ export const FilterBar = ({
           </Button>
         </div>}
     </div>;
-};
+});
+
+FilterBar.displayName = "FilterBar";

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Item } from "@/features/bookmarks/types";
 import { getRecommendations } from "@/features/bookmarks/utils/semantic-search";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui";
@@ -14,9 +14,18 @@ interface RecommendationsPanelProps {
  * Displays recommended items based on user's recent activity and interests
  * Uses semantic similarity from embeddings to suggest relevant content
  */
+const STABLE_EMPTY_TAG_HANDLER = () => {};
+
 export const RecommendationsPanel = ({ onItemClick, refreshTrigger = 0 }: RecommendationsPanelProps) => {
   const [recommendations, setRecommendations] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleItemClick = useCallback((id: string) => {
+    const item = recommendations.find(i => i.id === id);
+    if (item && onItemClick) {
+      onItemClick(item);
+    }
+  }, [recommendations, onItemClick]);
 
   useEffect(() => {
     const loadRecommendations = async () => {
@@ -90,8 +99,8 @@ export const RecommendationsPanel = ({ onItemClick, refreshTrigger = 0 }: Recomm
             tags={item.tags || []}
             createdAt={item.created_at}
             updatedAt={item.updated_at}
-            onClick={() => onItemClick?.(item)}
-            onTagClick={() => {}}
+            onClick={handleItemClick}
+            onTagClick={STABLE_EMPTY_TAG_HANDLER}
           />
         ))}
       </CardContent>

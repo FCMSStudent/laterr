@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/shared/components/ui";
 import { Skeleton } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
-import { useState, useRef } from "react";
+import { useState, useRef, memo } from "react";
 import { useIsMobile } from "@/shared/hooks/useMobile";
 import { cn } from "@/shared/lib/utils";
 
@@ -20,7 +20,7 @@ interface ItemListRowProps {
   tags: string[];
   createdAt: string;
   updatedAt?: string;
-  onClick: () => void;
+  onClick: (id: string) => void;
   onTagClick: (tag: string) => void;
   isSelectionMode?: boolean;
   isSelected?: boolean;
@@ -32,7 +32,11 @@ interface ItemListRowProps {
   onEdit?: (id: string) => void;
 }
 
-export const ItemListRow = ({
+/**
+ * ItemListRow component displays a single bookmark item in a list layout.
+ * Optimized with React.memo to prevent unnecessary re-renders when parent state changes.
+ */
+export const ItemListRow = memo(({
   id,
   type,
   title,
@@ -174,7 +178,7 @@ export const ItemListRow = ({
       setShowMobileActions(false);
       return;
     }
-    onClick();
+    onClick(id);
   };
 
   const visibleTags = isMobile ? (expandedTags ? tags : tags.slice(0, 2)) : tags.slice(0, 4);
@@ -369,4 +373,6 @@ export const ItemListRow = ({
       </div>
     </div>
   );
-};
+});
+
+ItemListRow.displayName = "ItemListRow";
