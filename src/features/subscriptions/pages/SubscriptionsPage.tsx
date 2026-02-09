@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { SubscriptionCard } from "@/features/subscriptions/components/SubscriptionCard";
 import { SubscriptionListRow } from "@/features/subscriptions/components/SubscriptionListRow";
 import { CollapsibleStatsSummary } from "@/features/subscriptions/components/CollapsibleStatsSummary";
 import { StatusFilterTabs } from "@/features/subscriptions/components/StatusFilterTabs";
+import { SubscriptionFilterBar, MobileSubscriptionFilterButton, type SubscriptionSortOption } from "@/features/subscriptions/components/SubscriptionFilterBar";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { Button } from "@/shared/components/ui";
@@ -34,6 +35,8 @@ const Subscriptions = () => {
   const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState<SubscriptionSortOption>("date-asc");
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | 'all' | 'due_soon'>('all');
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -54,6 +57,17 @@ const Subscriptions = () => {
     const daysUntil = differenceInDays(nextBillingDate, new Date());
     return daysUntil >= 0 && daysUntil <= 7;
   }).length;
+
+  // Extract unique tags from all subscriptions
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    subscriptions.forEach(sub => {
+      if (sub.tags) {
+        sub.tags.forEach(tag => tagSet.add(tag));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [subscriptions]);
 
   const fetchSubscriptions = useCallback(async () => {
     try {
@@ -175,6 +189,7 @@ const Subscriptions = () => {
   useEffect(() => {
     let filtered = subscriptions;
 
+    // Search filter
     if (debouncedSearchQuery) {
       const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
       filtered = filtered.filter(sub =>
@@ -185,11 +200,19 @@ const Subscriptions = () => {
       );
     }
 
+    // Category filter
     if (selectedCategory) {
       filtered = filtered.filter(sub => sub.category === selectedCategory);
     }
 
-    // Apply status filter
+    // Tag filter
+    if (selectedTag) {
+      filtered = filtered.filter(sub => 
+        sub.tags && sub.tags.includes(selectedTag)
+      );
+    }
+
+    // Status filter
     if (statusFilter === 'active') {
       filtered = filtered.filter(sub => sub.status === 'active');
     } else if (statusFilter === 'due_soon') {
@@ -206,8 +229,42 @@ const Subscriptions = () => {
       filtered = filtered.filter(sub => sub.status === statusFilter);
     }
 
-    setFilteredSubscriptions(filtered);
-  }, [debouncedSearchQuery, selectedCategory, statusFilter, subscriptions]);
+    // Sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortOption) {
+        case "date-asc": {
+          const dateA = parseSubscriptionDate(a.next_billing_date);
+          const dateB = parseSubscriptionDate(b.next_billing_date);
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+          return dateA.getTime() - dateB.getTime();
+        }
+        case "date-desc": {
+          const dateA = parseSubscriptionDate(a.next_billing_date);
+          const dateB = parseSubscriptionDate(b.next_billing_date);
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+          return dateB.getTime() - dateA.getTime();
+        }
+        case "amount-asc":
+          return a.amount - b.amount;
+        case "amount-desc":
+          return b.amount - a.amount;
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        case "status": {
+          const statusOrder = { active: 0, paused: 1, cancelled: 2 };
+          return statusOrder[a.status] - statusOrder[b.status];
+        }
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredSubscriptions(sorted);
+  }, [debouncedSearchQuery, selectedCategory, selectedTag, statusFilter, sortOption, subscriptions]);
 
   const handleSubscriptionClick = (subscription: Subscription) => {
     setSelectedSubscription(subscription);
@@ -232,6 +289,23 @@ const Subscriptions = () => {
             addLabel="Add"
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
+            rightElement={
+              isMobile ? (
+                <MobileSubscriptionFilterButton
+                  selectedTag={selectedTag}
+                  selectedCategory={selectedCategory}
+                  selectedSort={sortOption}
+                  onTagSelect={setSelectedTag}
+                  onCategoryChange={setSelectedCategory}
+                  onSortChange={setSortOption}
+                  onClearAll={() => {
+                    setSelectedTag(null);
+                    setSelectedCategory(null);
+                  }}
+                  availableTags={availableTags}
+                />
+              ) : undefined
+            }
           />
         </div>
 
@@ -250,6 +324,23 @@ const Subscriptions = () => {
           onFilterChange={setStatusFilter}
           dueSoonCount={upcomingRenewals}
         />
+
+        {/* Desktop Filter Bar */}
+        {!isMobile && (
+          <SubscriptionFilterBar
+            selectedTag={selectedTag}
+            selectedCategory={selectedCategory}
+            selectedSort={sortOption}
+            onTagSelect={setSelectedTag}
+            onCategoryChange={setSelectedCategory}
+            onSortChange={setSortOption}
+            onClearAll={() => {
+              setSelectedTag(null);
+              setSelectedCategory(null);
+            }}
+            availableTags={availableTags}
+          />
+        )}
 
         <main id="main-content">
           <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">

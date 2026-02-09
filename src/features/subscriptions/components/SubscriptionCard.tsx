@@ -12,6 +12,7 @@ interface SubscriptionCardProps {
   subscription: Subscription;
   onClick: () => void;
   onCategoryClick: (category: string) => void;
+  onTagClick?: (tag: string) => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
   onToggleFavorite?: (id: string) => void;
@@ -21,6 +22,7 @@ export const SubscriptionCard = ({
   subscription,
   onClick,
   onCategoryClick,
+  onTagClick,
   onDelete,
   onEdit,
   onToggleFavorite
@@ -194,7 +196,15 @@ export const SubscriptionCard = ({
         {tags && tags.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
             {tags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs font-medium">
+              <Badge 
+                key={index} 
+                variant="outline" 
+                className="text-xs font-medium cursor-pointer hover:bg-accent transition-colors"
+                onClick={e => {
+                  e.stopPropagation();
+                  if (onTagClick) onTagClick(tag);
+                }}
+              >
                 #{tag}
               </Badge>
             ))}
