@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { cn } from "@/shared/lib/utils";
 import { parseNotes, getChecklistStats } from "@/features/bookmarks/utils/notes-parser";
 import { CheckSquare, Square, FileText } from "lucide-react";
@@ -11,7 +12,11 @@ interface NotePreviewProps {
   className?: string;
 }
 
-export const NotePreview = ({
+/**
+ * NotePreview component renders a parsed preview of note content.
+ * Memoized to avoid re-parsing note content on every parent render.
+ */
+export const NotePreview = memo(({
   content,
   maxLines = 4,
   variant = 'compact',
@@ -136,4 +141,6 @@ export const NotePreview = ({
       </div>
     </div>
   );
-};
+});
+
+NotePreview.displayName = "NotePreview";

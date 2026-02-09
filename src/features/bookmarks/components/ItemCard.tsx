@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/shared/components/ui";
 import { Skeleton } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, memo } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
 import { useIsMobile } from "@/shared/hooks/useMobile";
@@ -22,7 +22,7 @@ interface ItemCardProps {
   tags: string[];
   createdAt: string;
   updatedAt?: string;
-  onClick: () => void;
+  onClick: (id: string) => void;
   onTagClick: (tag: string) => void;
   isSelectionMode?: boolean;
   isSelected?: boolean;
@@ -33,7 +33,11 @@ interface ItemCardProps {
   isTrashed?: boolean;
   onEdit?: (id: string) => void;
 }
-export const ItemCard = ({
+/**
+ * ItemCard component displays a single bookmark item.
+ * Optimized with React.memo to prevent unnecessary re-renders in lists.
+ */
+export const ItemCard = memo(({
   id,
   type,
   title,
@@ -183,7 +187,7 @@ export const ItemCard = ({
       setShowMobileActions(false);
       return;
     }
-    onClick();
+    onClick(id);
   };
   const readingTime = getReadingTime(content);
   return <div className="relative overflow-hidden rounded-2xl">
@@ -304,4 +308,6 @@ export const ItemCard = ({
       </div>
     </div>
   </div>;
-};
+});
+
+ItemCard.displayName = "ItemCard";

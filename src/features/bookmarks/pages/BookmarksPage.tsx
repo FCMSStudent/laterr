@@ -462,7 +462,10 @@ const Index = () => {
     }
     setFilteredItems(sorted);
   }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption, viewScope]);
-  const handleItemClick = (item: Item) => {
+  const handleItemClick = useCallback((id: string) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
     setSelectedItem(item);
     // Open note editor for note-type items, detail modal for others
     if (item.type === 'note' && !item.deleted_at) {
@@ -470,7 +473,7 @@ const Index = () => {
     } else {
       setShowDetailModal(true);
     }
-  };
+  }, [items]);
 
   // Allow nested UIs (like DetailViewModal) to request opening another item.
   useEffect(() => {
@@ -501,10 +504,10 @@ const Index = () => {
     window.addEventListener(OPEN_ITEM_EVENT, handler);
     return () => window.removeEventListener(OPEN_ITEM_EVENT, handler);
   }, [items]);
-  const handleClearAllFilters = () => {
+  const handleClearAllFilters = useCallback(() => {
     setSelectedTag(null);
     setTypeFilter(null);
-  };
+  }, []);
   const handleRefresh = useCallback(() => {
     setPage(0);
     fetchItems(0, false);
@@ -709,11 +712,11 @@ const Index = () => {
           {viewMode === 'grid' ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pt-1 pb-12">
             {filteredItems.map(item => (
               <div key={item.id} className="break-inside-avoid mb-5 md:mb-6">
-                <BookmarkCard id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} onDelete={handleMoveToTrash} onRestore={handleRestoreItem} onPermanentDelete={handlePermanentDeleteItem} isTrashed={Boolean(item.deleted_at)} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />
+                <BookmarkCard id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} onDelete={handleMoveToTrash} onRestore={handleRestoreItem} onPermanentDelete={handlePermanentDeleteItem} isTrashed={Boolean(item.deleted_at)} onEdit={handleEditItem} onClick={handleItemClick} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />
               </div>
             ))}
           </div> : <div className="space-y-2 pb-12">
-            {filteredItems.map(item => <ItemListRow key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} onDelete={handleMoveToTrash} onRestore={handleRestoreItem} onPermanentDelete={handlePermanentDeleteItem} isTrashed={Boolean(item.deleted_at)} onEdit={handleEditItem} onClick={() => handleItemClick(item)} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
+            {filteredItems.map(item => <ItemListRow key={item.id} id={item.id} type={item.type} title={item.title} summary={item.summary} previewImageUrl={item.preview_image_url} content={item.content} tags={item.tags} createdAt={item.created_at} updatedAt={item.updated_at} onDelete={handleMoveToTrash} onRestore={handleRestoreItem} onPermanentDelete={handlePermanentDeleteItem} isTrashed={Boolean(item.deleted_at)} onEdit={handleEditItem} onClick={handleItemClick} onTagClick={setSelectedTag} isSelectionMode={isSelectionMode} isSelected={selectedItems.has(item.id)} onSelectionChange={handleSelectionChange} />)}
           </div>}
 
           {/* Infinite scroll sentinel */}

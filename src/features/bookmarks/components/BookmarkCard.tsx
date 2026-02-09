@@ -6,7 +6,7 @@ import { Checkbox } from "@/shared/components/ui";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui";
 import { Button } from "@/shared/components/ui";
 import { Skeleton } from "@/shared/components/ui";
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, memo } from "react";
 import { isVideoUrl } from "@/features/bookmarks/utils/video-utils";
 import { useIsMobile } from "@/shared/hooks/useMobile";
 import { useDominantColor } from "@/shared/hooks/useDominantColor";
@@ -21,7 +21,7 @@ interface BookmarkCardProps {
   tags: string[];
   createdAt?: string;
   summary?: string | null;
-  onClick: () => void;
+  onClick: (id: string) => void;
   onTagClick: (tag: string) => void;
   isSelectionMode?: boolean;
   isSelected?: boolean;
@@ -128,7 +128,12 @@ const formatDate = (dateString?: string): string => {
     return '';
   }
 };
-export const BookmarkCard = ({
+/**
+ * BookmarkCard component displays a single bookmark item in a grid layout.
+ * Optimized with React.memo to prevent unnecessary re-renders when parent state
+ * (like search query or filter visibility) changes but the item itself remains the same.
+ */
+export const BookmarkCard = memo(({
   id,
   type,
   title,
@@ -247,7 +252,7 @@ export const BookmarkCard = ({
       setShowMobileActions(false);
       return;
     }
-    onClick();
+    onClick(id);
   };
 
   // Note type: white card with text overlay
@@ -315,7 +320,7 @@ export const BookmarkCard = ({
             </div>
             <button className="text-muted-foreground hover:text-foreground transition-colors ml-3 flex-shrink-0" onClick={e => {
               e.stopPropagation();
-              onClick();
+              onClick(id);
             }} aria-label="Open note">
               <ArrowUpRight className="h-5 w-5" />
             </button>
@@ -456,4 +461,6 @@ export const BookmarkCard = ({
       </AspectRatio>
     </div>
   </div>;
-};
+});
+
+BookmarkCard.displayName = "BookmarkCard";

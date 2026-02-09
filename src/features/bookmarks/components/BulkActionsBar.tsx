@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Loader2 } from "lucide-react";
 
 interface BulkActionsBarProps {
@@ -26,7 +26,7 @@ interface BulkActionsBarProps {
   onCancel: () => void;
 }
 
-export const BulkActionsBar = ({
+export const BulkActionsBar = memo(({
   mode = "active",
   selectedCount,
   totalCount,
@@ -201,4 +201,6 @@ export const BulkActionsBar = ({
       </div>
     </div>
   );
-};
+});
+
+BulkActionsBar.displayName = "BulkActionsBar";
