@@ -34,6 +34,28 @@ Tests for trash/restore functionality with authenticated users.
 ### `screenshots.spec.ts`
 Generates visual documentation screenshots of UI components.
 
+## Current Test Status
+
+### Passing Tests ✅
+The following test suites are currently verified to work:
+- **UI Card Components** (2 tests)
+  - Component showcase card display
+  - Card styling validation
+- **Component Showcase Visual Tests** (3 tests)
+  - Full page screenshot
+  - Section screenshots
+  - Documentation generation
+
+### Tests Requiring Authentication
+The following tests will skip if guest login is not available:
+- **BookmarkCard Z-Index Tests** - Require access to `/bookmarks` page
+- **MeasurementCard Tests** - Require access to `/health` page
+- **Bookmark-specific Overlay Tests** - Require bookmark data
+
+To run these tests, ensure:
+1. Guest mode is enabled (`GUEST_MODE_ENABLED=true` in AuthPage.tsx), OR
+2. Provide test credentials via `E2E_EMAIL` and `E2E_PASSWORD` environment variables
+
 ## Running Tests
 
 ### Prerequisites
@@ -99,15 +121,37 @@ Tests are configured in `playwright.config.ts`:
 - **Retries**: 2 in CI, 0 locally
 - **Screenshots**: Only on failure
 - **Trace**: On first retry
+- **Web Server**: Automatically starts `npm run dev` before running tests
 
-## Guest Login Mode
+## Authentication and Guest Login Mode
 
-The tests use guest login (anonymous authentication) to test components without requiring test credentials. The `loginAsGuest()` helper function:
-1. Navigates to `/auth`
-2. Clicks "Continue as Guest (Agent Testing)" button
-3. Waits for navigation to dashboard/bookmarks
+The tests are designed to work flexibly with authentication:
 
-This ensures tests work consistently without needing E2E_EMAIL/E2E_PASSWORD environment variables.
+### Guest Login Available
+If guest login is enabled in the app (`GUEST_MODE_ENABLED` in `AuthPage.tsx`):
+- Tests will use `tryGuestLogin()` to authenticate as a guest user
+- All card and overlay tests will run with full functionality
+- The helper automatically clicks "Continue as Guest (Agent Testing)" button
+
+### Guest Login Not Available  
+If guest login is disabled or authentication is required:
+- **Component Showcase tests** will still pass (no auth required)
+- **Bookmark/Health page tests** will be skipped gracefully
+- Tests won't fail due to authentication issues
+- Appropriate console warnings will be logged
+
+### Using Test Credentials
+To run all tests with a real user account:
+```bash
+# Set environment variables
+export E2E_EMAIL="your-test-email@example.com"
+export E2E_PASSWORD="your-test-password"
+
+# Run tests
+npx playwright test
+```
+
+Then update the `tryGuestLogin()` function to use credentials instead.
 
 ## Key Test Cases
 
