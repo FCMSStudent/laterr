@@ -130,8 +130,20 @@ const formatDate = (dateString?: string): string => {
 };
 
 const toRgba = (color: string, alpha: number) => {
+  // rgb(...) -> rgba(...)
   if (color.startsWith('rgb(')) {
     return color.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
+  }
+  // hex #rrggbb or #rgb -> rgba(r,g,b,alpha)
+  const hexMatch = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hexMatch) {
+    const hex = hexMatch[1].length === 3
+      ? hexMatch[1].split('').map(c => c + c).join('')
+      : hexMatch[1];
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
   return color;
 };
@@ -382,13 +394,17 @@ export const BookmarkCard = memo(({
       </div>
 
       <AspectRatio ratio={mediaRatio}>
-        {/* Dominant color base to force tinting even before image load */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundColor: dominantColor ? toRgba(dominantColor, 0.35) : "rgba(0,0,0,0.25)"
-          }}
-        />
+        {/* Base tint only when image is loading, missing, or has error */}
+        {(!imageLoaded || imageError || !previewImageUrl) && (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: dominantColor
+                ? toRgba(dominantColor, 0.35)
+                : "rgba(0,0,0,0.25)"
+            }}
+          />
+        )}
 
         {/* Full-bleed image */}
         {previewImageUrl && !imageError ? <>
@@ -402,14 +418,14 @@ export const BookmarkCard = memo(({
             <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
-        {/* Subtle gradient overlay - reduced coverage, uses dominant color from thumbnail */}
+        {/* Dominant color gradient overlay - 50% coverage */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: dominantColor 
-              ? `linear-gradient(to top, ${toRgba(dominantColor, 0.95)} 0%, ${toRgba(dominantColor, 0.75)} 8%, ${toRgba(dominantColor, 0.45)} 16%, ${toRgba(dominantColor, 0.2)} 24%, transparent 35%)`
-              : 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 10%, rgba(0,0,0,0.25) 18%, transparent 30%)'
-          }} 
+            background: dominantColor
+              ? `linear-gradient(to top, ${toRgba(dominantColor, 0.95)} 0%, ${toRgba(dominantColor, 0.75)} 15%, ${toRgba(dominantColor, 0.45)} 30%, ${toRgba(dominantColor, 0.2)} 40%, transparent 50%)`
+              : 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0.25) 35%, transparent 50%)'
+          }}
         />
 
         {/* Play button overlay for videos - perfectly centered */}
