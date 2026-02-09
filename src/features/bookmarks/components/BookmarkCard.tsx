@@ -128,6 +128,13 @@ const formatDate = (dateString?: string): string => {
     return '';
   }
 };
+
+const toRgba = (color: string, alpha: number) => {
+  if (color.startsWith('rgb(')) {
+    return color.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
+  }
+  return color;
+};
 /**
  * BookmarkCard component displays a single bookmark item in a grid layout.
  * Optimized with React.memo to prevent unnecessary re-renders when parent state
@@ -169,9 +176,7 @@ export const BookmarkCard = memo(({
   const categoryBadge = getCategoryBadge(type, tags, content);
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
-  const {
-    color: dominantColor
-  } = useDominantColor(previewImageUrl);
+  const { color: dominantColor } = useDominantColor(previewImageUrl);
   const dateText = formatDate(createdAt);
   const mediaRatio = useMemo(() => {
     // App Store-style taller cards for richer content display
@@ -377,6 +382,14 @@ export const BookmarkCard = memo(({
       </div>
 
       <AspectRatio ratio={mediaRatio}>
+        {/* Dominant color base to force tinting even before image load */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundColor: dominantColor ? toRgba(dominantColor, 0.35) : "rgba(0,0,0,0.25)"
+          }}
+        />
+
         {/* Full-bleed image */}
         {previewImageUrl && !imageError ? <>
           {!imageLoaded && <div className="absolute inset-0 z-10">
@@ -389,13 +402,13 @@ export const BookmarkCard = memo(({
             <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
-        {/* Subtle gradient overlay - uses dominant color from thumbnail */}
-        <div 
-          className="absolute inset-0 pointer-events-none" 
+        {/* Subtle gradient overlay - reduced coverage, uses dominant color from thumbnail */}
+        <div
+          className="absolute inset-0 pointer-events-none"
           style={{
             background: dominantColor 
-              ? `linear-gradient(to top, ${dominantColor} 0%, ${dominantColor}e6 10%, ${dominantColor}99 20%, ${dominantColor}4d 30%, transparent 45%)` 
-              : 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 15%, rgba(0,0,0,0.3) 25%, transparent 40%)'
+              ? `linear-gradient(to top, ${toRgba(dominantColor, 0.95)} 0%, ${toRgba(dominantColor, 0.75)} 8%, ${toRgba(dominantColor, 0.45)} 16%, ${toRgba(dominantColor, 0.2)} 24%, transparent 35%)`
+              : 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 10%, rgba(0,0,0,0.25) 18%, transparent 30%)'
           }} 
         />
 
