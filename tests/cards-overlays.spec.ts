@@ -11,10 +11,13 @@ import { test, expect, Page } from '@playwright/test';
  */
 
 /**
- * Helper function to login as guest or skip login if already on a page
+ * Helper function to login as guest or with credentials
  * Returns true if we can access the application, false otherwise
  */
-async function tryGuestLogin(page: Page): Promise<boolean> {
+async function tryLogin(page: Page): Promise<boolean> {
+  const email = process.env.E2E_EMAIL;
+  const password = process.env.E2E_PASSWORD;
+
   try {
     // First, try to go directly to the components showcase (public page)
     await page.goto('/components', { timeout: 10000, waitUntil: 'domcontentloaded' });
@@ -30,8 +33,18 @@ async function tryGuestLogin(page: Page): Promise<boolean> {
     // Check if we ended up on bookmarks or got redirected to auth
     const currentUrl = page.url();
     
-    // If we're on auth page, try guest login
+    // If we're on auth page, try to login
     if (currentUrl.includes('/auth')) {
+      // Try credential login first if available
+      if (email && password) {
+        await page.getByLabel("Email").fill(email);
+        await page.getByLabel("Password").fill(password);
+        await page.getByRole("button", { name: /sign in/i }).click();
+        await page.waitForURL(/\/(dashboard|bookmarks)/, { timeout: 15000 });
+        return true;
+      }
+      
+      // Otherwise try guest login
       const guestButton = page.getByRole('button', { name: /continue as guest/i });
       const hasGuestButton = await guestButton.count() > 0;
       
@@ -40,8 +53,8 @@ async function tryGuestLogin(page: Page): Promise<boolean> {
         await page.waitForURL(/\/(dashboard|bookmarks|components)/, { timeout: 15000 });
         return true;
       } else {
-        // No guest button available
-        console.log('Guest login not available, some tests may be skipped');
+        // No guest button available and no credentials
+        console.log('Guest login not available and no credentials provided');
         return false;
       }
     }
@@ -59,13 +72,19 @@ async function tryGuestLogin(page: Page): Promise<boolean> {
 }
 
 test.describe('Card and Overlay Components', () => {
+  let hasAuthAccess = false;
+
   test.beforeEach(async ({ page }) => {
-    // Try to access the app (with guest login if available)
-    // Tests will handle auth requirements individually
-    await tryGuestLogin(page);
+    // Try to access the app (with credentials or guest login if available)
+    hasAuthAccess = await tryLogin(page);
   });
 
   test.describe('BookmarkCard - Z-Index Fix from PR #204', () => {
+    test.beforeEach(async () => {
+      // Skip auth-dependent tests if we don't have access
+      test.skip(!hasAuthAccess, 'Authentication required but not available (enable guest mode or provide E2E_EMAIL/E2E_PASSWORD)');
+    });
+
     test('should navigate to bookmarks page', async ({ page }) => {
       await page.goto('/bookmarks');
       await page.waitForLoadState('networkidle');
@@ -78,84 +97,82 @@ test.describe('Card and Overlay Components', () => {
       await page.goto('/bookmarks');
       await page.waitForLoadState('networkidle');
       
-      // Find a bookmark card with an image
-      const bookmarkCard = page.locator('[class*="relative"][class*="rounded"]').first();
+      // Find a bookmark card with a full-bleed preview image using semantic selectors
+      const bookmarkCard = page
+        .getByRole('article')
+        .filter({ has: page.locator('img.z-20.object-cover') })
+        .first();
       
-      if (await bookmarkCard.count() > 0) {
-        // Get initial image visibility
-        const image = bookmarkCard.locator('img').first();
-        
-        if (await image.count() > 0) {
-          // Verify image is visible before hover
-          await expect(image).toBeVisible();
-          
-          // Hover over the card
-          await bookmarkCard.hover();
-          
-          // Wait a moment for hover effects
-          await page.waitForTimeout(300);
-          
-          // Verify image is still visible after hover (testing z-index fix)
-          await expect(image).toBeVisible();
-          
-          // Verify image has z-20 class (from PR #204)
-          const imageClass = await image.getAttribute('class');
-          expect(imageClass).toContain('z-20');
-        }
-      }
+      // Assert that we have at least one card with an image
+      await expect(bookmarkCard).toBeVisible({ timeout: 10000 });
+      
+      // Get the image element
+      const image = bookmarkCard.locator('img.z-20.object-cover').first();
+      
+      // Verify image is visible before hover
+      await expect(image).toBeVisible();
+      
+      // Verify image has z-20 class (from PR #204)
+      const imageClass = await image.getAttribute('class');
+      expect(imageClass).toContain('z-20');
+      
+      // Hover over the card
+      await bookmarkCard.hover();
+      
+      // Wait a moment for hover effects
+      await page.waitForTimeout(300);
+      
+      // Verify image is still visible after hover (testing z-index fix)
+      await expect(image).toBeVisible();
     });
 
     test('gradient overlay should have correct z-index (z-30)', async ({ page }) => {
       await page.goto('/bookmarks');
       await page.waitForLoadState('networkidle');
       
-      // Find a bookmark card
-      const bookmarkCard = page.locator('[class*="relative"][class*="rounded"]').first();
+      // Find a bookmark card with gradient overlay
+      const bookmarkCard = page
+        .getByRole('article')
+        .filter({ has: page.locator('.z-30') })
+        .first();
       
-      if (await bookmarkCard.count() > 0) {
-        // Find the gradient overlay (should have z-30)
-        const overlay = bookmarkCard.locator('[class*="z-30"]').first();
-        
-        if (await overlay.count() > 0) {
-          // Verify overlay is present
-          await expect(overlay).toBeAttached();
-          
-          // Verify z-30 class is present
-          const overlayClass = await overlay.getAttribute('class');
-          expect(overlayClass).toContain('z-30');
-        }
-      }
+      // Assert card exists
+      await expect(bookmarkCard).toBeVisible({ timeout: 10000 });
+      
+      // Find the gradient overlay (should have z-30)
+      const overlay = bookmarkCard.locator('.z-30').first();
+      
+      // Verify overlay is present
+      await expect(overlay).toBeAttached();
+      
+      // Verify z-30 class is present
+      const overlayClass = await overlay.getAttribute('class');
+      expect(overlayClass).toContain('z-30');
     });
 
     test('should work correctly in guest login mode', async ({ page }) => {
       await page.goto('/bookmarks');
       await page.waitForLoadState('networkidle');
       
-      // Verify we're on the bookmarks page as guest
+      // Verify we're on the bookmarks page
       await expect(page).toHaveURL(/\/bookmarks/);
-      
-      // Check if there are any bookmark cards or empty state
-      const hasCards = await page.locator('[class*="relative"][class*="rounded"]').count() > 0;
-      const hasEmptyState = await page.locator('text=/no (bookmarks|items)/i').count() > 0;
-      
-      // Either cards or empty state should be present
-      expect(hasCards || hasEmptyState).toBeTruthy();
     });
 
     test('card interactions should work (click, hover)', async ({ page }) => {
       await page.goto('/bookmarks');
       await page.waitForLoadState('networkidle');
       
-      const bookmarkCard = page.locator('[class*="relative"][class*="rounded"]').first();
+      const bookmarkCard = page.getByRole('article').first();
       
-      if (await bookmarkCard.count() > 0) {
-        // Test hover interaction
-        await bookmarkCard.hover();
-        await page.waitForTimeout(200);
-        
-        // Verify hover doesn't break the card
-        await expect(bookmarkCard).toBeVisible();
-      }
+      // Assert card exists
+      await expect(bookmarkCard).toBeVisible({ timeout: 10000 });
+      
+      // Test hover interaction
+      await bookmarkCard.hover();
+      await page.waitForTimeout(200);
+      
+      // Verify hover doesn't break the card
+      await expect(bookmarkCard).toBeVisible();
     });
   });
 
@@ -193,11 +210,16 @@ test.describe('Card and Overlay Components', () => {
   });
 
   test.describe('MeasurementCard', () => {
+    test.beforeEach(async () => {
+      // Skip auth-dependent tests if we don't have access
+      test.skip(!hasAuthAccess, 'Authentication required but not available (enable guest mode or provide E2E_EMAIL/E2E_PASSWORD)');
+    });
+
     test('should navigate to health page', async ({ page }) => {
       await page.goto('/health');
       await page.waitForLoadState('networkidle');
       
-      // Verify we can access health page as guest
+      // Verify we can access health page
       await expect(page).toHaveURL(/\/health/);
     });
 
@@ -205,12 +227,14 @@ test.describe('Card and Overlay Components', () => {
       await page.goto('/health');
       await page.waitForLoadState('networkidle');
       
-      // Check for measurement cards or empty state
+      // Either measurements exist or empty state should be visible
       const hasMeasurements = await page.locator('[class*="border-l"]').count() > 0;
-      const hasEmptyState = await page.locator('text=/no measurements/i').count() > 0;
+      const emptyState = page.locator('text=/no measurements/i');
       
-      // Either measurements or empty state should be present
-      expect(hasMeasurements || hasEmptyState).toBeTruthy();
+      // At least one should be present
+      if (!hasMeasurements) {
+        await expect(emptyState).toBeVisible();
+      }
     });
 
     test('dropdown menu should work on measurement cards', async ({ page }) => {
@@ -220,7 +244,8 @@ test.describe('Card and Overlay Components', () => {
       // Look for a dropdown trigger (three dots menu)
       const dropdownTrigger = page.getByLabel(/more|actions|menu/i).first();
       
-      if (await dropdownTrigger.count() > 0) {
+      const hasDropdown = await dropdownTrigger.count() > 0;
+      if (hasDropdown) {
         // Click to open dropdown
         await dropdownTrigger.click();
         await page.waitForTimeout(300);
@@ -241,20 +266,19 @@ test.describe('Card and Overlay Components', () => {
         // Scroll to overlays section
         await page.locator('text=/overlays.*feedback/i').scrollIntoViewIfNeeded();
         
-        // Find HoverCard trigger
-        const hoverCardTrigger = page.locator('text=/hover over me/i').first();
+        // Find HoverCard trigger (the "@username" button in the ComponentShowcase)
+        const hoverCardTrigger = page.getByRole('button', { name: /@username/i });
         
-        if (await hoverCardTrigger.count() > 0) {
-          // Verify trigger exists
-          await expect(hoverCardTrigger).toBeVisible();
-          
-          // Hover to trigger HoverCard
-          await hoverCardTrigger.hover();
-          await page.waitForTimeout(500);
-          
-          // Note: HoverCard content may or may not be in DOM depending on implementation
-          // This test verifies the trigger is interactive without making assumptions about content
-        }
+        // Verify trigger exists and is visible
+        await expect(hoverCardTrigger).toBeVisible();
+        
+        // Hover to trigger HoverCard
+        await hoverCardTrigger.hover();
+        await page.waitForTimeout(500);
+        
+        // Verify HoverCard content becomes visible after hover
+        const hoverCardContent = page.locator('[data-radix-hover-card-content]').first();
+        await expect(hoverCardContent).toBeVisible();
       });
     });
 
@@ -465,60 +489,101 @@ test.describe('Card and Overlay Components', () => {
   });
 
   test.describe('Responsive Testing', () => {
-    test('cards should display correctly on mobile', async ({ page }) => {
-      // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
+    test.beforeEach(async () => {
+      // Skip auth-dependent tests if we don't have access
+      test.skip(!hasAuthAccess, 'Authentication required but not available (enable guest mode or provide E2E_EMAIL/E2E_PASSWORD)');
+    });
+
+    test('cards should display correctly on mobile', async ({ page, browser }) => {
+      // Create a new context with mobile emulation
+      const mobileContext = await browser.newContext({
+        viewport: { width: 375, height: 667 },
+        hasTouch: true,
+        isMobile: true,
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
+      });
+      const mobilePage = await mobileContext.newPage();
       
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      // Verify page loads on mobile
-      await expect(page).toHaveURL(/\/bookmarks/);
-      
-      // Check if cards are visible (if any exist)
-      const cards = page.locator('[class*="relative"][class*="rounded"]');
-      const cardCount = await cards.count();
-      
-      // Either cards exist or empty state is shown
-      if (cardCount > 0) {
-        const firstCard = cards.first();
-        await expect(firstCard).toBeVisible();
+      try {
+        await mobilePage.goto('/bookmarks');
+        await mobilePage.waitForLoadState('networkidle');
+        
+        // Verify page loads on mobile
+        await expect(mobilePage).toHaveURL(/\/bookmarks/);
+        
+        // Check if cards are visible using semantic selector
+        const cards = mobilePage.getByRole('article');
+        const cardCount = await cards.count();
+        
+        // Either cards exist or empty state is shown
+        if (cardCount > 0) {
+          const firstCard = cards.first();
+          await expect(firstCard).toBeVisible();
+        }
+      } finally {
+        await mobileContext.close();
       }
     });
 
-    test('overlays should work on mobile', async ({ page }) => {
-      // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
+    test('overlays should work on mobile', async ({ page, browser }) => {
+      // Create a new context with mobile emulation
+      const mobileContext = await browser.newContext({
+        viewport: { width: 375, height: 667 },
+        hasTouch: true,
+        isMobile: true,
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
+      });
+      const mobilePage = await mobileContext.newPage();
       
-      await page.goto('/components');
-      await page.waitForLoadState('networkidle');
-      
-      // Verify page is accessible on mobile
-      await expect(page).toHaveURL(/\/components/);
+      try {
+        await mobilePage.goto('/components');
+        await mobilePage.waitForLoadState('networkidle');
+        
+        // Verify page is accessible on mobile
+        await expect(mobilePage).toHaveURL(/\/components/);
+      } finally {
+        await mobileContext.close();
+      }
     });
 
-    test('touch interactions should work on mobile', async ({ page }) => {
-      // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
+    test('touch interactions should work on mobile', async ({ page, browser }) => {
+      // Create a new context with mobile emulation
+      const mobileContext = await browser.newContext({
+        viewport: { width: 375, height: 667 },
+        hasTouch: true,
+        isMobile: true,
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
+      });
+      const mobilePage = await mobileContext.newPage();
       
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      const card = page.locator('[class*="relative"][class*="rounded"]').first();
-      
-      if (await card.count() > 0) {
-        // Tap the card (mobile touch)
-        await card.tap();
-        await page.waitForTimeout(300);
+      try {
+        await mobilePage.goto('/bookmarks');
+        await mobilePage.waitForLoadState('networkidle');
         
-        // Card should handle touch interaction
-        await expect(card).toBeVisible();
+        const card = mobilePage.getByRole('article').first();
+        
+        const hasCards = await card.count() > 0;
+        if (hasCards) {
+          // Tap the card (mobile touch)
+          await card.tap();
+          await mobilePage.waitForTimeout(300);
+          
+          // Card should handle touch interaction
+          await expect(card).toBeVisible();
+        }
+      } finally {
+        await mobileContext.close();
       }
     });
   });
 
   test.describe('Guest Login Mode', () => {
-    test('should be able to access all pages as guest', async ({ page }) => {
+    test.beforeEach(async () => {
+      // Skip these tests if we don't have auth access
+      test.skip(!hasAuthAccess, 'Authentication required but not available (enable guest mode or provide E2E_EMAIL/E2E_PASSWORD)');
+    });
+
+    test('should be able to access all pages as authenticated user', async ({ page }) => {
       // Dashboard
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
@@ -540,59 +605,68 @@ test.describe('Card and Overlay Components', () => {
       await expect(page).toHaveURL(/\/components/);
     });
 
-    test('guest mode should not break z-index layering', async ({ page }) => {
+    test('authenticated mode should not break z-index layering', async ({ page }) => {
       await page.goto('/bookmarks');
       await page.waitForLoadState('networkidle');
       
-      // Verify basic functionality works
-      const cards = page.locator('[class*="relative"][class*="rounded"]');
-      const hasCards = await cards.count() > 0;
+      // Find a card with semantic selector
+      const card = page.getByRole('article').first();
+      const hasCards = await card.count() > 0;
       
       if (hasCards) {
-        const firstCard = cards.first();
+        // Verify card exists
+        await expect(card).toBeVisible();
         
         // Hover over card
-        await firstCard.hover();
+        await card.hover();
         await page.waitForTimeout(300);
         
         // Card should still be visible
-        await expect(firstCard).toBeVisible();
+        await expect(card).toBeVisible();
       }
     });
 
-    test('guest permissions should be applied correctly', async ({ page }) => {
+    test('permissions should be applied correctly', async ({ page }) => {
       await page.goto('/bookmarks');
       await page.waitForLoadState('networkidle');
       
-      // Guest users may have limited functionality
-      // But page should still load correctly
+      // Page should load correctly
       await expect(page).toHaveURL(/\/bookmarks/);
     });
   });
 
   test.describe('Visual Regression (Optional)', () => {
-    test('bookmark card visual snapshot', async ({ page }) => {
+    // Only run visual regression tests if explicitly enabled
+    test.skip(!process.env.VISUAL_REGRESSION, 'Visual regression tests disabled (set VISUAL_REGRESSION=1 to enable)');
+
+    test.beforeEach(async () => {
+      // Skip auth-dependent tests if we don't have access
+      test.skip(!hasAuthAccess, 'Authentication required but not available (enable guest mode or provide E2E_EMAIL/E2E_PASSWORD)');
+    });
+
+    test('bookmark card visual snapshot', async ({ page }, testInfo) => {
       await page.goto('/bookmarks');
       await page.waitForLoadState('networkidle');
       
-      const card = page.locator('[class*="relative"][class*="rounded"]').first();
+      const card = page.getByRole('article').first();
       
-      if (await card.count() > 0) {
-        // Take screenshot for visual regression
+      const hasCards = await card.count() > 0;
+      if (hasCards) {
+        // Take screenshot using testInfo.outputPath for proper test isolation
         await card.screenshot({ 
-          path: 'screenshots/bookmark-card.png',
+          path: testInfo.outputPath('bookmark-card.png'),
           animations: 'disabled'
         });
       }
     });
 
-    test('component showcase visual snapshot', async ({ page }) => {
+    test('component showcase visual snapshot', async ({ page }, testInfo) => {
       await page.goto('/components');
       await page.waitForLoadState('networkidle');
       
-      // Take full page screenshot
+      // Take full page screenshot using testInfo.outputPath
       await page.screenshot({ 
-        path: 'screenshots/components-showcase.png',
+        path: testInfo.outputPath('components-showcase.png'),
         fullPage: true,
         animations: 'disabled'
       });

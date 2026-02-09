@@ -41,16 +41,23 @@ The following test suites are currently verified to work:
 - **UI Card Components** (2 tests)
   - Component showcase card display
   - Card styling validation
-- **Component Showcase Visual Tests** (3 tests)
-  - Full page screenshot
-  - Section screenshots
-  - Documentation generation
+- **Component Showcase Visual Tests** (7 tests total)
+  - Full page screenshot (1 test)
+  - Section screenshots (5 tests)
+  - Documentation generation (1 test)
 
 ### Tests Requiring Authentication
-The following tests will skip if guest login is not available:
+The following tests **require authentication** and will skip if neither guest login nor E2E credentials are available:
 - **BookmarkCard Z-Index Tests** - Require access to `/bookmarks` page
 - **MeasurementCard Tests** - Require access to `/health` page
 - **Bookmark-specific Overlay Tests** - Require bookmark data
+- **Responsive Mobile Tests** - Require access to `/bookmarks` page
+- **Guest/Auth Mode Tests** - Require authenticated access
+
+These tests will **skip gracefully** with the message:
+```
+Authentication required but not available (enable guest mode or provide E2E_EMAIL/E2E_PASSWORD)
+```
 
 To run these tests, ensure:
 1. Guest mode is enabled (`GUEST_MODE_ENABLED=true` in AuthPage.tsx), OR
@@ -127,31 +134,30 @@ Tests are configured in `playwright.config.ts`:
 
 The tests are designed to work flexibly with authentication:
 
-### Guest Login Available
-If guest login is enabled in the app (`GUEST_MODE_ENABLED` in `AuthPage.tsx`):
-- Tests will use `tryGuestLogin()` to authenticate as a guest user
+### With Credentials (Recommended for Full Coverage)
+If you provide test credentials:
+- Set `E2E_EMAIL` and `E2E_PASSWORD` environment variables
+- Tests will use `tryLogin()` to authenticate with these credentials
 - All card and overlay tests will run with full functionality
-- The helper automatically clicks "Continue as Guest (Agent Testing)" button
 
-### Guest Login Not Available  
-If guest login is disabled or authentication is required:
-- **Component Showcase tests** will still pass (no auth required)
-- **Bookmark/Health page tests** will be skipped gracefully
-- Tests won't fail due to authentication issues
-- Appropriate console warnings will be logged
-
-### Using Test Credentials
-To run all tests with a real user account:
 ```bash
-# Set environment variables
 export E2E_EMAIL="your-test-email@example.com"
 export E2E_PASSWORD="your-test-password"
-
-# Run tests
-npx playwright test
+npx playwright test tests/cards-overlays.spec.ts
 ```
 
-Then update the `tryGuestLogin()` function to use credentials instead.
+### With Guest Login
+If guest login is enabled in the app (`GUEST_MODE_ENABLED=true` in `AuthPage.tsx`):
+- Tests will use `tryLogin()` to authenticate as a guest user
+- All card and overlay tests will run
+- The helper automatically clicks "Continue as Guest (Agent Testing)" button
+
+### Without Authentication
+If neither credentials nor guest login are available:
+- **Component Showcase tests** will still pass (no auth required)
+- **Bookmark/Health page tests** will be **skipped** with clear messages
+- Tests won't fail due to authentication issues
+- Skip messages indicate: "Authentication required but not available"
 
 ## Key Test Cases
 
@@ -250,7 +256,8 @@ Set up in your CI pipeline:
 ### Guest login not working
 - Verify Supabase anonymous auth is enabled
 - Check `GUEST_MODE_ENABLED` is true in `AuthPage.tsx`
-- Ensure button text matches selector in `tryGuestLogin()`
+- Ensure button text matches selector in `tryLogin()`
+- OR provide `E2E_EMAIL` and `E2E_PASSWORD` credentials instead
 
 ### Components not found
 - Wait for elements to load: `await page.waitForLoadState('networkidle')`
@@ -270,11 +277,13 @@ Set up in your CI pipeline:
 
 When adding new tests:
 1. Follow existing test structure and naming conventions
-2. Use the `tryGuestLogin()` helper for authentication
-3. Add descriptive test names that explain what's being tested
-4. Include comments for complex interactions
-5. Handle both success and empty states gracefully
-6. Clean up after tests (close modals, reset state)
+2. Use the `tryLogin()` helper for authentication
+3. Add `test.skip(!hasAuthAccess, 'message')` for auth-dependent tests
+4. Add descriptive test names that explain what's being tested
+5. Include comments for complex interactions
+6. Use semantic selectors (role, label) over CSS selectors
+7. Assert elements exist rather than wrapping in `if (count() > 0)`
+8. Clean up after tests (close modals, reset state)
 
 ## Resources
 
