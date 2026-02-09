@@ -60,6 +60,7 @@ const Subscriptions = () => {
       const { data, error } = await supabase
         .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
         .select('*')
+        .is('deleted_at', null) // Only fetch non-deleted subscriptions
         .order('next_billing_date', { ascending: true });
 
       if (error) throw error;
@@ -69,6 +70,7 @@ const Subscriptions = () => {
         tags: item.tags ?? [],
         billing_cycle: item.billing_cycle as SubscriptionBillingCycle,
         status: item.status as SubscriptionStatus,
+        is_favorite: item.is_favorite ?? false,
       }));
 
       setSubscriptions(normalizedSubscriptions);
@@ -88,16 +90,17 @@ const Subscriptions = () => {
 
   const handleDeleteSubscription = useCallback(async (subscriptionId: string) => {
     try {
+      // Soft delete: set deleted_at timestamp instead of hard deleting
       const { error } = await supabase
         .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', subscriptionId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Subscription deleted successfully"
+        description: "Subscription moved to trash"
       });
       fetchSubscriptions();
     } catch (error: unknown) {
@@ -110,6 +113,34 @@ const Subscriptions = () => {
       });
     }
   }, [toast, fetchSubscriptions]);
+
+  const handleToggleFavorite = useCallback(async (subscriptionId: string) => {
+    try {
+      const subscription = subscriptions.find(s => s.id === subscriptionId);
+      if (!subscription) return;
+
+      const { error } = await supabase
+        .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
+        .update({ is_favorite: !subscription.is_favorite })
+        .eq('id', subscriptionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: subscription.is_favorite ? "Removed from favorites" : "Added to favorites"
+      });
+      fetchSubscriptions();
+    } catch (error: unknown) {
+      const typedError = toTypedError(error);
+      console.error('Error toggling favorite:', typedError);
+      toast({
+        title: "Error",
+        description: "Failed to update favorite status",
+        variant: "destructive"
+      });
+    }
+  }, [subscriptions, toast, fetchSubscriptions]);
 
   const handleEditSubscription = useCallback((subscriptionId: string) => {
     const subscription = subscriptions.find(s => s.id === subscriptionId);

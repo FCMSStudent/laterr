@@ -15,7 +15,8 @@ import {
   Ban,
   Edit,
   DollarSign,
-  RefreshCw
+  RefreshCw,
+  Star
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -130,6 +131,31 @@ export const SubscriptionDetailModal = ({
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error("Failed to update status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!subscription) return;
+    
+    setActionLoading('favorite');
+    try {
+      const { error } = await supabase
+        .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
+        .update({ 
+          is_favorite: !subscription.is_favorite,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', subscription.id);
+
+      if (error) throw error;
+
+      toast.success(subscription.is_favorite ? "Removed from favorites" : "Added to favorites");
+      onUpdate();
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error("Failed to update favorite status");
     } finally {
       setActionLoading(null);
     }
@@ -376,6 +402,17 @@ export const SubscriptionDetailModal = ({
 
             {/* Quick Actions */}
             <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToggleFavorite}
+                disabled={actionLoading === 'favorite'}
+                className="gap-2"
+              >
+                <Star className={`h-4 w-4 ${subscription.is_favorite ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                {subscription.is_favorite ? 'Unfavorite' : 'Favorite'}
+              </Button>
+              
               <LoadingButton
                 onClick={handleMarkAsPaid}
                 loading={actionLoading === 'paid'}

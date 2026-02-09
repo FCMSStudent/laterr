@@ -1,5 +1,5 @@
 import { Badge } from "@/shared/components/ui";
-import { MoreVertical, Trash2, Edit, ExternalLink } from "lucide-react";
+import { MoreVertical, Trash2, Edit, ExternalLink, Star } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/components/ui";
 import { Button } from "@/shared/components/ui";
 import { differenceInDays } from "date-fns";
@@ -14,6 +14,7 @@ interface SubscriptionCardProps {
   onCategoryClick: (category: string) => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
+  onToggleFavorite?: (id: string) => void;
 }
 
 export const SubscriptionCard = ({
@@ -21,7 +22,8 @@ export const SubscriptionCard = ({
   onClick,
   onCategoryClick,
   onDelete,
-  onEdit
+  onEdit,
+  onToggleFavorite
 }: SubscriptionCardProps) => {
   const {
     id,
@@ -34,7 +36,8 @@ export const SubscriptionCard = ({
     status,
     category,
     tags,
-    website_url
+    website_url,
+    is_favorite
   } = subscription;
 
   const monthlyAmount = calculateMonthlyCost(amount, billing_cycle as SubscriptionBillingCycle);
@@ -77,6 +80,13 @@ export const SubscriptionCard = ({
       className="glass-card rounded-2xl p-6 cursor-pointer hover:scale-[1.02] premium-transition hover:shadow-2xl group overflow-hidden relative focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:outline-none"
       style={{ borderLeft: `4px solid ${categoryColor}` }}
     >
+      {/* Favorite star indicator */}
+      {is_favorite && (
+        <div className="absolute top-4 left-4 z-10">
+          <Star className="h-5 w-5 fill-yellow-500 text-yellow-500" />
+        </div>
+      )}
+      
       {/* Actions menu */}
       <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 premium-transition">
         <DropdownMenu>
@@ -91,6 +101,12 @@ export const SubscriptionCard = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            {onToggleFavorite && (
+              <DropdownMenuItem onClick={e => handleMenuAction(e, () => onToggleFavorite(id))}>
+                <Star className={`mr-2 h-4 w-4 ${is_favorite ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                {is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+              </DropdownMenuItem>
+            )}
             {website_url && (
               <DropdownMenuItem
                 onClick={e => {

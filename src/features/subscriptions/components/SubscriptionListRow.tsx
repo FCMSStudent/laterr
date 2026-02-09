@@ -1,4 +1,4 @@
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Star } from 'lucide-react';
 import { formatCurrency } from '@/features/subscriptions/utils/currency-utils';
 import { format, differenceInDays } from 'date-fns';
 import type { Subscription } from '@/features/subscriptions/types';
@@ -19,7 +19,7 @@ export const SubscriptionListRow = ({
   subscription,
   onClick,
 }: SubscriptionListRowProps) => {
-  const { name, amount, currency, next_billing_date, status } = subscription;
+  const { name, amount, currency, next_billing_date, status, is_favorite } = subscription;
 
   // Calculate days until renewal
   const nextBillingDate = parseSubscriptionDate(next_billing_date);
@@ -57,6 +57,7 @@ export const SubscriptionListRow = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <div className={cn('w-2 h-2 rounded-full', getStatusDotColor())} aria-hidden="true" />
+          {is_favorite && <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500 flex-shrink-0" />}
           <span className="font-medium text-sm text-foreground truncate">{name}</span>
         </div>
         {showCountdown ? (
