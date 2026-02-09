@@ -71,6 +71,20 @@ async function tryLogin(page: Page): Promise<boolean> {
   }
 }
 
+/**
+ * Helper to create a mobile browser context with proper device emulation
+ */
+const MOBILE_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15';
+
+async function createMobileContext(browser: any) {
+  return await browser.newContext({
+    viewport: { width: 375, height: 667 },
+    hasTouch: true,
+    isMobile: true,
+    userAgent: MOBILE_USER_AGENT,
+  });
+}
+
 test.describe('Card and Overlay Components', () => {
   let hasAuthAccess = false;
 
@@ -496,12 +510,7 @@ test.describe('Card and Overlay Components', () => {
 
     test('cards should display correctly on mobile', async ({ page, browser }) => {
       // Create a new context with mobile emulation
-      const mobileContext = await browser.newContext({
-        viewport: { width: 375, height: 667 },
-        hasTouch: true,
-        isMobile: true,
-        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
-      });
+      const mobileContext = await createMobileContext(browser);
       const mobilePage = await mobileContext.newPage();
       
       try {
@@ -527,12 +536,7 @@ test.describe('Card and Overlay Components', () => {
 
     test('overlays should work on mobile', async ({ page, browser }) => {
       // Create a new context with mobile emulation
-      const mobileContext = await browser.newContext({
-        viewport: { width: 375, height: 667 },
-        hasTouch: true,
-        isMobile: true,
-        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
-      });
+      const mobileContext = await createMobileContext(browser);
       const mobilePage = await mobileContext.newPage();
       
       try {
@@ -548,12 +552,7 @@ test.describe('Card and Overlay Components', () => {
 
     test('touch interactions should work on mobile', async ({ page, browser }) => {
       // Create a new context with mobile emulation
-      const mobileContext = await browser.newContext({
-        viewport: { width: 375, height: 667 },
-        hasTouch: true,
-        isMobile: true,
-        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
-      });
+      const mobileContext = await createMobileContext(browser);
       const mobilePage = await mobileContext.newPage();
       
       try {
