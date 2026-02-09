@@ -271,6 +271,11 @@ const Subscriptions = () => {
     setShowDetailModal(true);
   };
 
+  const handleClearFilters = useCallback(() => {
+    setSelectedTag(null);
+    setSelectedCategory(null);
+  }, []);
+
   if (!user) {
     return null;
   }
@@ -298,10 +303,7 @@ const Subscriptions = () => {
                   onTagSelect={setSelectedTag}
                   onCategoryChange={setSelectedCategory}
                   onSortChange={setSortOption}
-                  onClearAll={() => {
-                    setSelectedTag(null);
-                    setSelectedCategory(null);
-                  }}
+                  onClearAll={handleClearFilters}
                   availableTags={availableTags}
                 />
               ) : undefined
@@ -334,10 +336,7 @@ const Subscriptions = () => {
             onTagSelect={setSelectedTag}
             onCategoryChange={setSelectedCategory}
             onSortChange={setSortOption}
-            onClearAll={() => {
-              setSelectedTag(null);
-              setSelectedCategory(null);
-            }}
+            onClearAll={handleClearFilters}
             availableTags={availableTags}
           />
         )}
