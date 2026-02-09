@@ -59,11 +59,10 @@ async function tryGuestLogin(page: Page): Promise<boolean> {
 }
 
 test.describe('Card and Overlay Components', () => {
-  let canAccessApp = false;
-
   test.beforeEach(async ({ page }) => {
     // Try to access the app (with guest login if available)
-    canAccessApp = await tryGuestLogin(page);
+    // Tests will handle auth requirements individually
+    await tryGuestLogin(page);
   });
 
   test.describe('BookmarkCard - Z-Index Fix from PR #204', () => {
@@ -246,13 +245,15 @@ test.describe('Card and Overlay Components', () => {
         const hoverCardTrigger = page.locator('text=/hover over me/i').first();
         
         if (await hoverCardTrigger.count() > 0) {
+          // Verify trigger exists
+          await expect(hoverCardTrigger).toBeVisible();
+          
           // Hover to trigger HoverCard
           await hoverCardTrigger.hover();
           await page.waitForTimeout(500);
           
-          // Verify HoverCard appears
-          const hoverCard = page.locator('[role="dialog"]').or(page.locator('[data-radix-hover-card-content]'));
-          // HoverCard may or may not appear depending on implementation
+          // Note: HoverCard content may or may not be in DOM depending on implementation
+          // This test verifies the trigger is interactive without making assumptions about content
         }
       });
     });
@@ -333,13 +334,15 @@ test.describe('Card and Overlay Components', () => {
         const drawerTrigger = page.getByRole('button', { name: /open drawer|show drawer/i }).first();
         
         if (await drawerTrigger.count() > 0) {
+          // Verify trigger exists
+          await expect(drawerTrigger).toBeVisible();
+          
           // Open drawer
           await drawerTrigger.click();
           await page.waitForTimeout(500);
           
-          // Verify drawer is visible
-          const drawer = page.locator('[role="dialog"]').or(page.locator('[data-vaul-drawer]'));
-          // Drawer implementation may vary
+          // Note: Drawer implementation may vary (Vaul drawer vs dialog)
+          // This test verifies the trigger is interactive
           
           // Close drawer
           await page.keyboard.press('Escape');
@@ -447,13 +450,15 @@ test.describe('Card and Overlay Components', () => {
         const tooltipTrigger = page.locator('[data-radix-tooltip-trigger]').first();
         
         if (await tooltipTrigger.count() > 0) {
+          // Verify trigger exists
+          await expect(tooltipTrigger).toBeVisible();
+          
           // Hover to show tooltip
           await tooltipTrigger.hover();
           await page.waitForTimeout(500);
           
-          // Tooltip may appear
-          const tooltip = page.locator('[role="tooltip"]');
-          // Tooltip visibility is optional based on implementation
+          // Note: Tooltip visibility depends on implementation and delay settings
+          // This test verifies the trigger is interactive
         }
       });
     });
