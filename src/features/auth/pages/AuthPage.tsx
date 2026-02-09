@@ -222,7 +222,12 @@ export default function Auth() {
       } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl
       });
-      if (error) throw error;
+
+      // Handle user not found error gracefully to prevent enumeration
+      if (error && !error.message.toLowerCase().includes('user not found')) {
+        throw error;
+      }
+
       setResetEmailSent(true);
     } catch (error: unknown) {
       const errorMessage = getAuthErrorMessage(error);
