@@ -61,6 +61,7 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_deleted_at ON public.subscriptions(
 CREATE INDEX IF NOT EXISTS idx_subscriptions_is_favorite ON public.subscriptions(is_favorite);
 
 -- Add trigger for automatic updated_at timestamp updates
+-- Note: Depends on public.update_updated_at_column() function created in migration 20251027091450
 DROP TRIGGER IF EXISTS update_subscriptions_updated_at ON public.subscriptions;
 CREATE TRIGGER update_subscriptions_updated_at
   BEFORE UPDATE ON public.subscriptions

@@ -112,7 +112,6 @@ export const SubscriptionDetailModal = ({
     try {
       const updateData: Record<string, unknown> = {
         status: newStatus,
-        updated_at: new Date().toISOString(),
       };
 
       if (newStatus === 'cancelled') {
@@ -144,8 +143,7 @@ export const SubscriptionDetailModal = ({
       const { error } = await supabase
         .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
         .update({ 
-          is_favorite: !subscription.is_favorite,
-          updated_at: new Date().toISOString()
+          is_favorite: !subscription.is_favorite
         })
         .eq('id', subscription.id);
 
