@@ -192,7 +192,7 @@ export const BookmarkCard = memo(({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onClick();
+      onClick(id);
     }
   };
   const handleMenuAction = (e: React.MouseEvent, action: () => void) => {

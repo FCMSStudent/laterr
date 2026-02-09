@@ -104,7 +104,7 @@ export const ItemListRow = memo(({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onClick();
+      onClick(id);
     }
   };
 
