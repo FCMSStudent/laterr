@@ -1,0 +1,48 @@
+name: Nightly Performance Sweep
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # Run at 1:00 AM every day
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  performance-sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run performance sweep
+        run: pnpm exec ts-node scripts/performance-sweep.ts
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      - name: Create Pull Request
+        if: success()
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'perf: nightly automated performance cleanup'
+          title: 'perf: nightly automated performance cleanup'
+          body: |
+            Automated performance optimizations found during nightly sweep.
+
+            Check `performance-logs.json` for details.
+          branch: perf/nightly-cleanup
+          base: main
+          delete-branch: true

@@ -27,7 +27,7 @@ import { AddItemModal } from "@/features/bookmarks/components/AddItemModal";
 import { DetailViewModal } from "@/features/bookmarks/components/DetailViewModal";
 import { EditItemModal } from "@/features/bookmarks/components/EditItemModal";
 import { NoteEditorModal } from "@/features/bookmarks/components/NoteEditorModal";
-import { removeItemStorageObjects } from "@/features/bookmarks/utils/trash";
+import { removeItemStorageObjects, removeMultipleItemsStorageObjects } from "@/features/bookmarks/utils/trash";
 
 const PAGE_SIZE = 20;
 
@@ -43,7 +43,6 @@ const Index = () => {
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[]>([]);
-  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
@@ -328,7 +327,7 @@ const Index = () => {
     try {
       const ids = Array.from(selectedItems);
       const itemsToDelete = items.filter(item => ids.includes(item.id));
-      await Promise.all(itemsToDelete.map(item => removeItemStorageObjects(item)));
+      await removeMultipleItemsStorageObjects(itemsToDelete);
       const { error } = await supabase.from(SUPABASE_ITEMS_TABLE).delete().in('id', ids);
       if (error) throw error;
       toast({
@@ -416,15 +415,7 @@ const Index = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate, fetchItems]);
-  useEffect(() => {
-    if (!user) return;
-    setPage(0);
-    setHasMore(true);
-    setIsSelectionMode(false);
-    setSelectedItems(new Set());
-    fetchItems(0, false);
-  }, [viewScope, user, fetchItems]);
-  useEffect(() => {
+  const filteredItems = useMemo(() => {
     let filtered = items;
     if (debouncedSearchQuery) {
       const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
@@ -460,8 +451,16 @@ const Index = () => {
         sorted.sort((a, b) => a.type.localeCompare(b.type));
         break;
     }
-    setFilteredItems(sorted);
+    return sorted;
   }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption, viewScope]);
+  useEffect(() => {
+    if (!user) return;
+    setPage(0);
+    setHasMore(true);
+    setIsSelectionMode(false);
+    setSelectedItems(new Set());
+    fetchItems(0, false);
+  }, [viewScope, user, fetchItems]);
   const handleItemClick = useCallback((id: string) => {
     const item = items.find(i => i.id === id);
     if (!item) return;

@@ -66,16 +66,6 @@ export const collectItemStorageRefs = (item: Item): StorageObjectRef[] => {
   return Array.from(refs.values());
 };
 
-const groupRefsByBucket = (refs: StorageObjectRef[]): Map<string, string[]> => {
-  const grouped = new Map<string, string[]>();
-  refs.forEach((ref) => {
-    const current = grouped.get(ref.bucket) ?? [];
-    current.push(ref.key);
-    grouped.set(ref.bucket, current);
-  });
-  return grouped;
-};
-
 const chunk = <T,>(items: T[], size: number): T[][] => {
   const chunks: T[][] = [];
   for (let i = 0; i < items.length; i += size) {
@@ -85,21 +75,52 @@ const chunk = <T,>(items: T[], size: number): T[][] => {
 };
 
 export const removeItemStorageObjects = async (item: Item): Promise<void> => {
-  const refs = collectItemStorageRefs(item);
-  if (refs.length === 0) return;
+  return removeMultipleItemsStorageObjects([item]);
+};
 
-  const grouped = groupRefsByBucket(refs);
-  for (const [bucket, keys] of grouped.entries()) {
+/**
+ * Removes storage objects for multiple items in batches.
+ * Optimized to minimize API calls by grouping by bucket and chunking.
+ */
+export const removeMultipleItemsStorageObjects = async (items: Item[]): Promise<void> => {
+  if (items.length === 0) return;
+
+  const allRefs: StorageObjectRef[] = [];
+  items.forEach(item => {
+    allRefs.push(...collectItemStorageRefs(item));
+  });
+
+  if (allRefs.length === 0) return;
+
+  // Group by bucket and deduplicate keys within each bucket
+  const grouped = new Map<string, Set<string>>();
+  allRefs.forEach((ref) => {
+    if (!grouped.has(ref.bucket)) {
+      grouped.set(ref.bucket, new Set());
+    }
+    grouped.get(ref.bucket)!.add(ref.key);
+  });
+
+  const promises: Promise<void>[] = [];
+
+  for (const [bucket, keySet] of grouped.entries()) {
+    const keys = Array.from(keySet);
     const keyChunks = chunk(keys, 100);
+
     for (const keyBatch of keyChunks) {
-      const { error } = await supabase.storage.from(bucket).remove(keyBatch);
-      if (error) {
-        console.warn("Failed to remove storage objects", {
-          bucket,
-          keys: keyBatch,
-          error,
-        });
-      }
+      promises.push(
+        supabase.storage.from(bucket).remove(keyBatch).then(({ error }) => {
+          if (error) {
+            console.warn("Failed to remove storage objects", {
+              bucket,
+              keys: keyBatch,
+              error,
+            });
+          }
+        })
+      );
     }
   }
+
+  await Promise.all(promises);
 };

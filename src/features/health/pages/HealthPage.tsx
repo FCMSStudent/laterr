@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { MeasurementCard } from "@/features/health/components/MeasurementCard";
@@ -39,8 +39,6 @@ const Health = () => {
   const [selectedDocument, setSelectedDocument] = useState<HealthDocument | null>(null);
   const [measurements, setMeasurements] = useState<HealthMeasurement[]>([]);
   const [documents, setDocuments] = useState<HealthDocument[]>([]);
-  const [filteredMeasurements, setFilteredMeasurements] = useState<HealthMeasurement[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<HealthDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
@@ -51,15 +49,6 @@ const Health = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const isMobile = useIsMobile();
 
-  // Group measurements by date
-  const groupedMeasurements = filteredMeasurements.reduce((groups, measurement) => {
-    const date = startOfDay(parseISO(measurement.measured_at)).toISOString();
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(measurement);
-    return groups;
-  }, {} as Record<string, HealthMeasurement[]>);
 
   const getDateLabel = (dateStr: string) => {
     const date = parseISO(dateStr);
@@ -87,7 +76,6 @@ const Health = () => {
       if (error) throw error;
       const measurementsData = (data ?? []) as HealthMeasurement[];
       setMeasurements(measurementsData);
-      setFilteredMeasurements(measurementsData);
 
       const latestWeight = measurementsData.find(m => m.measurement_type === 'weight');
       const latestBP = measurementsData.find(m => m.measurement_type === 'blood_pressure');
@@ -116,7 +104,6 @@ const Health = () => {
     } else {
       setDocumentsError(null);
       setDocuments(data || []);
-      setFilteredDocuments(data || []);
     }
   }, [fetchDocsHook]);
 
@@ -125,6 +112,40 @@ const Health = () => {
     await Promise.all([fetchMeasurements(), fetchDocuments()]);
     setLoading(false);
   }, [fetchMeasurements, fetchDocuments]);
+
+  const filteredMeasurements = useMemo(() => {
+    if (!debouncedSearchQuery) return measurements;
+    const query = debouncedSearchQuery.toLowerCase();
+    return measurements.filter(m =>
+      m.measurement_type.toLowerCase().includes(query) ||
+      m.notes?.toLowerCase().includes(query) ||
+      m.tags?.some(t => t.toLowerCase().includes(query))
+    );
+  }, [debouncedSearchQuery, measurements]);
+
+  const filteredDocuments = useMemo(() => {
+    if (!debouncedSearchQuery) return documents;
+    const query = debouncedSearchQuery.toLowerCase();
+    return documents.filter(d =>
+      d.title.toLowerCase().includes(query) ||
+      d.document_type.toLowerCase().includes(query) ||
+      d.provider_name?.toLowerCase().includes(query) ||
+      d.summary?.toLowerCase().includes(query) ||
+      d.tags?.some(t => t.toLowerCase().includes(query))
+    );
+  }, [debouncedSearchQuery, documents]);
+
+  // Group measurements by date
+  const groupedMeasurements = useMemo(() => {
+    return filteredMeasurements.reduce((groups, measurement) => {
+      const date = startOfDay(parseISO(measurement.measured_at)).toISOString();
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(measurement);
+      return groups;
+    }, {} as Record<string, HealthMeasurement[]>);
+  }, [filteredMeasurements]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -143,34 +164,6 @@ const Health = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, fetchAll]);
-
-  useEffect(() => {
-    if (!debouncedSearchQuery) {
-      setFilteredMeasurements(measurements);
-      return;
-    }
-    const query = debouncedSearchQuery.toLowerCase();
-    setFilteredMeasurements(measurements.filter(m =>
-      m.measurement_type.toLowerCase().includes(query) ||
-      m.notes?.toLowerCase().includes(query) ||
-      m.tags?.some(t => t.toLowerCase().includes(query))
-    ));
-  }, [debouncedSearchQuery, measurements]);
-
-  useEffect(() => {
-    if (!debouncedSearchQuery) {
-      setFilteredDocuments(documents);
-      return;
-    }
-    const query = debouncedSearchQuery.toLowerCase();
-    setFilteredDocuments(documents.filter(d =>
-      d.title.toLowerCase().includes(query) ||
-      d.document_type.toLowerCase().includes(query) ||
-      d.provider_name?.toLowerCase().includes(query) ||
-      d.summary?.toLowerCase().includes(query) ||
-      d.tags?.some(t => t.toLowerCase().includes(query))
-    ));
-  }, [debouncedSearchQuery, documents]);
 
   const handleDeleteMeasurement = useCallback(async (id: string) => {
     try {

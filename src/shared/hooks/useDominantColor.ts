@@ -1,9 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import ColorThief from 'colorthief';
 
+// Simple in-memory cache for dominant colors to avoid redundant processing
+// Limited to 100 entries to prevent memory leaks
+const MAX_CACHE_SIZE = 100;
+const colorCache = new Map<string, string | null>();
+
 /**
  * Hook to extract the dominant color from an image URL.
  * Returns an RGB color string that can be used in CSS.
+ * Optimized with an internal cache to prevent redundant extractions for same URLs.
  */
 export function useDominantColor(imageUrl: string | null | undefined) {
     const [color, setColor] = useState<string | null>(null);
@@ -13,6 +19,12 @@ export function useDominantColor(imageUrl: string | null | undefined) {
     useEffect(() => {
         if (!imageUrl) {
             setColor(null);
+            return;
+        }
+
+        // Check cache first
+        if (colorCache.has(imageUrl)) {
+            setColor(colorCache.get(imageUrl)!);
             return;
         }
 
@@ -26,10 +38,23 @@ export function useDominantColor(imageUrl: string | null | undefined) {
                 const colorThief = new ColorThief();
                 const dominantColor = colorThief.getColor(img);
                 if (dominantColor) {
-                    setColor(`rgb(${dominantColor[0]}, ${dominantColor[1]}, ${dominantColor[2]})`);
+                    const colorStr = `rgb(${dominantColor[0]}, ${dominantColor[1]}, ${dominantColor[2]})`;
+
+                    // Maintain cache size
+                    if (colorCache.size >= MAX_CACHE_SIZE) {
+                        const firstKey = colorCache.keys().next().value;
+                        if (firstKey) colorCache.delete(firstKey);
+                    }
+
+                    colorCache.set(imageUrl, colorStr);
+                    setColor(colorStr);
+                } else {
+                    colorCache.set(imageUrl, null);
+                    setColor(null);
                 }
             } catch (error) {
                 // Fallback to null if color extraction fails (e.g., CORS issues)
+                colorCache.set(imageUrl, null);
                 setColor(null);
             } finally {
                 setIsLoading(false);
@@ -37,6 +62,7 @@ export function useDominantColor(imageUrl: string | null | undefined) {
         };
 
         img.onerror = () => {
+            colorCache.set(imageUrl, null);
             setColor(null);
             setIsLoading(false);
         };
