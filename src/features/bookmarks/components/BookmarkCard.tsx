@@ -411,7 +411,14 @@ export const BookmarkCard = memo(({
           {!imageLoaded && <div className="absolute inset-0 z-10">
             <Skeleton className="w-full h-full rounded-xl" />
           </div>}
-          <img src={previewImageUrl} alt="" className={cn("absolute inset-0 w-full h-full object-cover", imageLoaded ? "opacity-100" : "opacity-0")} onLoad={() => setImageLoaded(true)} onError={() => setImageError(true)} />
+          <img 
+            src={previewImageUrl} 
+            alt="" 
+            className={cn("absolute inset-0 w-full h-full object-cover z-20", imageLoaded ? "opacity-100" : "opacity-0")} 
+            style={{ willChange: 'opacity' }}
+            onLoad={() => setImageLoaded(true)} 
+            onError={() => setImageError(true)} 
+          />
         </> :
         // Fallback: gradient background with icon
         <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
@@ -420,11 +427,12 @@ export const BookmarkCard = memo(({
 
         {/* Dominant color gradient overlay - 50% coverage */}
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none z-30"
           style={{
             background: dominantColor
               ? `linear-gradient(to top, ${toRgba(dominantColor, 0.95)} 0%, ${toRgba(dominantColor, 0.75)} 15%, ${toRgba(dominantColor, 0.45)} 30%, ${toRgba(dominantColor, 0.2)} 40%, transparent 50%)`
-              : 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0.25) 35%, transparent 50%)'
+              : 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0.25) 35%, transparent 50%)',
+            willChange: 'opacity'
           }}
         />
 
