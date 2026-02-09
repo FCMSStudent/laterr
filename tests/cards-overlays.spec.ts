@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 /**
  * Comprehensive E2E tests for Card and Overlay Components
@@ -14,7 +14,7 @@ import { test, expect } from '@playwright/test';
  * Helper function to login as guest or skip login if already on a page
  * Returns true if we can access the application, false otherwise
  */
-async function tryGuestLogin(page: any): Promise<boolean> {
+async function tryGuestLogin(page: Page): Promise<boolean> {
   try {
     // First, try to go directly to the components showcase (public page)
     await page.goto('/components', { timeout: 10000, waitUntil: 'domcontentloaded' });

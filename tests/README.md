@@ -250,7 +250,7 @@ Set up in your CI pipeline:
 ### Guest login not working
 - Verify Supabase anonymous auth is enabled
 - Check `GUEST_MODE_ENABLED` is true in `AuthPage.tsx`
-- Ensure button text matches selector in `loginAsGuest()`
+- Ensure button text matches selector in `tryGuestLogin()`
 
 ### Components not found
 - Wait for elements to load: `await page.waitForLoadState('networkidle')`
@@ -270,7 +270,7 @@ Set up in your CI pipeline:
 
 When adding new tests:
 1. Follow existing test structure and naming conventions
-2. Use the `loginAsGuest()` helper for authentication
+2. Use the `tryGuestLogin()` helper for authentication
 3. Add descriptive test names that explain what's being tested
 4. Include comments for complex interactions
 5. Handle both success and empty states gracefully
