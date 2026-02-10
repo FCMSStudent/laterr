@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Scale, Heart, Droplet, TrendingUp, TrendingDown, Minus, ChevronDown } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import type { HealthMeasurement } from '@/features/health/types';
@@ -17,20 +17,28 @@ export const InlineHealthStats = ({ measurements }: InlineHealthStatsProps) => {
   const [expanded, setExpanded] = useState(false);
 
   // Extract latest measurements
-  const latestWeight = measurements.find(m => m.measurement_type === 'weight');
-  const latestBP = measurements.find(m => m.measurement_type === 'blood_pressure');
-  const latestGlucose = measurements.find(m => m.measurement_type === 'glucose');
+  const { weightValue, bpValue, glucoseValue } = useMemo(() => {
+    const latestWeight = measurements.find(m => m.measurement_type === 'weight');
+    const latestBP = measurements.find(m => m.measurement_type === 'blood_pressure');
+    const latestGlucose = measurements.find(m => m.measurement_type === 'glucose');
 
-  const weightValue = latestWeight ? extractNumericValue(latestWeight.value) : null;
-  const bpValue = latestBP?.value && 'systolic' in latestBP.value 
-    ? { systolic: latestBP.value.systolic as number, diastolic: latestBP.value.diastolic as number } 
-    : null;
-  const glucoseValue = latestGlucose ? extractNumericValue(latestGlucose.value) : null;
+    return {
+      weightValue: latestWeight ? extractNumericValue(latestWeight.value) : null,
+      bpValue: latestBP?.value && 'systolic' in latestBP.value
+        ? { systolic: latestBP.value.systolic as number, diastolic: latestBP.value.diastolic as number }
+        : null,
+      glucoseValue: latestGlucose ? extractNumericValue(latestGlucose.value) : null,
+    };
+  }, [measurements]);
 
   // Get trends
-  const weightTrend = calculateTrend(measurements.filter(m => m.measurement_type === 'weight'));
-  const bpTrend = calculateTrend(measurements.filter(m => m.measurement_type === 'blood_pressure'));
-  const glucoseTrend = calculateTrend(measurements.filter(m => m.measurement_type === 'glucose'));
+  const { weightTrend, bpTrend, glucoseTrend } = useMemo(() => {
+    return {
+      weightTrend: calculateTrend(measurements.filter(m => m.measurement_type === 'weight')),
+      bpTrend: calculateTrend(measurements.filter(m => m.measurement_type === 'blood_pressure')),
+      glucoseTrend: calculateTrend(measurements.filter(m => m.measurement_type === 'glucose')),
+    };
+  }, [measurements]);
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
