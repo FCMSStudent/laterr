@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for git log checks
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -28,13 +30,13 @@ jobs:
       - name: Run performance sweep
         run: pnpm exec tsx scripts/performance-sweep.ts
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
       - name: Create Pull Request
         if: success()
         uses: peter-evans/create-pull-request@v6
+        id: cpr
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'perf: nightly automated performance cleanup'
@@ -46,3 +48,11 @@ jobs:
           branch: perf/nightly-cleanup
           base: main
           delete-branch: true
+
+      - name: Send Slack Notification
+        if: always()
+        run: pnpm exec tsx scripts/performance-sweep.ts
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SEND_NOTIFICATION_ONLY: "true"
+          PR_URL: ${{ steps.cpr.outputs.pull-request-url }}

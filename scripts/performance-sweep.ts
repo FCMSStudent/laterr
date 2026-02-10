@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createClient } from '@supabase/supabase-js';
 
 // Performance thresholds
 const API_RESPONSE_THRESHOLD_MS = 500;
@@ -10,25 +11,70 @@ interface OptimizationResult {
   description: string;
   impact: string;
   file?: string;
+  line?: string;
+  suggestedFix?: string;
 }
 
 /**
- * Scans for N+1 queries in storage removals
+ * Scans for N+1 queries (async calls in loops)
  */
-function scanForN1Storage(): OptimizationResult[] {
+function scanForN1Queries(): OptimizationResult[] {
   const results: OptimizationResult[] = [];
   try {
-    const output = execSync('grep -rnE "\\.map\\(.*removeItemStorageObjects" src/ || true').toString();
-    if (output) {
-      output.split('\n').filter(Boolean).forEach(line => {
+    // 1. Storage removals in map
+    const storageMap = execSync('grep -rnE "\\.map\\(.*removeItemStorageObjects" src/ || true').toString();
+    if (storageMap) {
+      storageMap.split('\n').filter(Boolean).forEach(line => {
+        const [file, lineNum] = line.split(':');
         results.push({
           category: 'backend_api',
           description: 'Detected potential N+1 storage removal pattern',
           impact: 'Multiple storage API calls in a loop',
-          file: line.split(':')[0]
+          file,
+          line: lineNum,
+          suggestedFix: 'Use removeMultipleItemsStorageObjects instead'
         });
       });
     }
+
+    // 2. Generic async calls in loops (map/forEach with await)
+    const asyncLoops = execSync('grep -rnE "\\.(map|forEach)\\(async" src/ || true').toString();
+    if (asyncLoops) {
+      asyncLoops.split('\n').filter(Boolean).forEach(line => {
+        const [file, lineNum] = line.split(':');
+        if (!file.includes('node_modules') && !file.includes('.test.')) {
+          results.push({
+            category: 'backend_api',
+            description: 'Detected async operation inside loop (Potential N+1)',
+            impact: 'Serial or parallel individual API calls instead of batching',
+            file,
+            line: lineNum
+          });
+        }
+      });
+    }
+
+    // 3. Supabase calls inside loops (Heuristic)
+    const supabaseInLoops = execSync('grep -rnE "\\b(supabase|from)\\(" src/ || true').toString();
+    const supabaseUsage: Record<string, number> = {};
+    supabaseInLoops.split('\n').filter(Boolean).forEach(line => {
+      const file = line.split(':')[0];
+      if (!file.includes('node_modules') && !file.includes('.test.')) {
+        supabaseUsage[file] = (supabaseUsage[file] || 0) + 1;
+      }
+    });
+
+    Object.entries(supabaseUsage).forEach(([file, count]) => {
+      if (count > 15) {
+         results.push({
+           category: 'backend_api',
+           description: `High number of Supabase calls (${count}) in single file`,
+           impact: 'Potential for redundant queries; consider consolidating or batching',
+           file
+         });
+      }
+    });
+
   } catch (e) {
     console.error('Error scanning for N+1:', e);
   }
@@ -40,19 +86,56 @@ function scanForN1Storage(): OptimizationResult[] {
  */
 function scanForMissingMemo(): OptimizationResult[] {
   const results: OptimizationResult[] = [];
-  // Look for complex filtering/sorting in useEffect instead of useMemo
   try {
-    const output = execSync('grep -rn "useEffect(() => {.*\\.filter(" src/features/ || true').toString();
-    if (output) {
-      output.split('\n').filter(Boolean).forEach(line => {
-        results.push({
-          category: 'frontend_react',
-          description: 'Detected filtering logic inside useEffect',
-          impact: 'Potential redundant re-renders; should use useMemo',
-          file: line.split(':')[0]
-        });
-      });
-    }
+    // 1. Complex filtering/sorting in component body (not wrapped in useMemo)
+    const expensiveOps = execSync('grep -rnE "\\.(filter|sort|reduce)\\(" src/ || true').toString();
+    expensiveOps.split('\n').filter(Boolean).forEach(line => {
+        const [file, lineNum] = line.split(':');
+        if (file.endsWith('.tsx') && !file.includes('.test.')) {
+            const content = fs.readFileSync(file, 'utf8');
+            const lines = content.split('\n');
+            const lineIdx = parseInt(lineNum) - 1;
+
+            // Look back up to 5 lines for useMemo
+            let isInsideMemo = false;
+            for (let i = Math.max(0, lineIdx - 5); i <= lineIdx; i++) {
+                if (lines[i].includes('useMemo')) {
+                    isInsideMemo = true;
+                    break;
+                }
+            }
+
+            if (!isInsideMemo) {
+                results.push({
+                    category: 'frontend_react',
+                    description: `Detected expensive operation (${lines[lineIdx].includes('filter') ? 'filter' : 'sort/reduce'}) outside useMemo`,
+                    impact: 'Calculation runs on every render',
+                    file,
+                    line: lineNum,
+                    suggestedFix: 'Wrap in useMemo'
+                });
+            }
+        }
+    });
+
+    // 2. Components used in lists that might need memoization
+    const listComponents = execSync('grep -rnE "\\.map\\(.*=>.*<[A-Z]" src/ || true').toString();
+    listComponents.split('\n').filter(Boolean).forEach(line => {
+        const [file, lineNum] = line.split(':');
+        const match = line.match(/<([A-Z][a-zA-Z0-9]*)/);
+        if (match && file.endsWith('.tsx')) {
+            const componentName = match[1];
+            results.push({
+                category: 'frontend_react',
+                description: `Component <${componentName}> used in list mapping`,
+                impact: 'May cause redundant re-renders if not memoized',
+                file,
+                line: lineNum,
+                suggestedFix: `Check if <${componentName}> is memoized`
+            });
+        }
+    });
+
   } catch (e) {
     console.error('Error scanning for missing memo:', e);
   }
@@ -60,14 +143,79 @@ function scanForMissingMemo(): OptimizationResult[] {
 }
 
 /**
- * Runs performance benchmarks by analyzing build artifacts and bundle sizes
+ * Reviews recent merges for performance regressions
  */
-function runBenchmarks() {
+function reviewRecentMerges(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    try {
+        const merges = execSync('git log --merges --since="24 hours ago" --pretty=format:"%h %s" || true').toString();
+        if (merges) {
+            merges.split('\n').filter(Boolean).forEach(merge => {
+                const [hash, ...msgParts] = merge.split(' ');
+                const msg = msgParts.join(' ');
+
+                // Scan the diff for performance-related changes
+                const diff = execSync(`git diff ${hash}^..${hash} || true`).toString();
+                if (diff.includes('useEffect') || diff.includes('supabase') || diff.includes('.map') ||
+                    msg.toLowerCase().includes('perf') || msg.toLowerCase().includes('fix')) {
+                    results.push({
+                        category: 'process',
+                        description: `Recent merge "${msg}" contains potential performance impact`,
+                        impact: 'Changes in useEffect or API patterns should be reviewed',
+                        file: hash
+                    });
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Error reviewing merges:', e);
+    }
+    return results;
+}
+
+/**
+ * Benchmarks actual API response times if credentials are available
+ */
+async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: string }> {
+    const url = process.env.VITE_SUPABASE_URL;
+    const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!url || !key) {
+        return { apiResponseTimeMs: 0, status: 'skipped (no credentials)' };
+    }
+
+    try {
+        const supabase = createClient(url, key);
+        const start = Date.now();
+        // Perform a very simple query to measure latency
+        const { error } = await supabase.from('items').select('id').limit(1);
+        const end = Date.now();
+
+        if (error) {
+            console.warn('Benchmark query failed:', error.message);
+            return { apiResponseTimeMs: 0, status: 'failed' };
+        }
+
+        return { apiResponseTimeMs: end - start, status: 'success' };
+    } catch (e) {
+        console.error('Benchmark error:', e);
+        return { apiResponseTimeMs: 0, status: 'error' };
+    }
+}
+
+/**
+ * Runs performance benchmarks
+ */
+async function runBenchmarks() {
   console.log('Running performance benchmarks...');
+  const apiBenchmark = await runApiBenchmarks();
+
   const metrics = {
     bundleSizeKB: 0,
     largeFilesCount: 0,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    apiLatencyMs: apiBenchmark.apiResponseTimeMs,
+    apiStatus: apiBenchmark.status
   };
 
   try {
@@ -90,41 +238,65 @@ function runBenchmarks() {
 /**
  * Logs the results to performance-logs.json
  */
-function logResults(optimizations: OptimizationResult[]) {
+function logResults(optimizations: OptimizationResult[], benchmarks: Record<string, unknown>) {
   const logPath = path.join(process.cwd(), 'performance-logs.json');
   let logs = [];
   if (fs.existsSync(logPath)) {
-    logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
+    try {
+        logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
+    } catch (e) {
+        logs = [];
+    }
   }
 
-  logs.unshift({
+  const summary = {
     timestamp: new Date().toISOString(),
     type: 'nightly_sweep',
     optimizations,
+    benchmarks,
     status: optimizations.length > 0 ? 'optimizations_found' : 'healthy'
-  });
+  };
 
-  fs.writeFileSync(logPath, JSON.stringify(logs, null, 2));
+  logs.unshift(summary);
+  // Keep only last 20 runs
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
+  fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
 /**
  * Sends Slack notification via webhook
  */
-async function sendSlackNotification(optimizations: OptimizationResult[]) {
+async function sendSlackNotification(summary: { optimizations: OptimizationResult[]; benchmarks: { apiLatencyMs: number } }, prUrl?: string) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) {
     console.warn('SLACK_WEBHOOK_URL not set, skipping notification.');
     return;
   }
 
+  const optimizations = summary.optimizations;
+  const slaExceeded = summary.benchmarks.apiLatencyMs > API_RESPONSE_THRESHOLD_MS;
+
+  const backendLeadTag = "<@backend-lead>";
+
+  let text = `🚀 *Nightly Performance Sweep Report* - ${new Date().toLocaleDateString()}\n`;
+  if (prUrl) {
+      text += `📦 *Pull Request:* ${prUrl}\n`;
+  }
+
+  if (slaExceeded) {
+      text += `⚠️ *SLA THRESHOLD EXCEEDED (Latency: ${summary.benchmarks.apiLatencyMs}ms)* - cc ${backendLeadTag}\n`;
+  }
+
   const message = {
-    text: `🚀 *Nightly Performance Sweep Report* - ${new Date().toLocaleDateString()}`,
+    text,
     attachments: [
       {
-        color: optimizations.length > 0 ? '#f59e0b' : '#10b981',
+        color: slaExceeded ? '#ef4444' : (optimizations.length > 0 ? '#f59e0b' : '#10b981'),
         title: 'Optimization Summary',
         text: optimizations.length > 0
-          ? `Found and flagged ${optimizations.length} potential optimizations.\n${optimizations.map(o => `• [${o.category}] ${o.description} in ${o.file}`).join('\n')}`
+          ? `Found ${optimizations.length} potential optimizations.\n` +
+            optimizations.slice(0, 8).map(o => `• [${o.category}] ${o.description} in ${o.file}`).join('\n') +
+            (optimizations.length > 8 ? `\n...and ${optimizations.length - 8} more.` : '')
           : 'No major performance regressions detected. System is within SLA thresholds.'
       }
     ]
@@ -146,16 +318,30 @@ async function sendSlackNotification(optimizations: OptimizationResult[]) {
 }
 
 async function main() {
+  if (process.env.SEND_NOTIFICATION_ONLY) {
+    if (!fs.existsSync('performance-summary.json')) return;
+    const summary = JSON.parse(fs.readFileSync('performance-summary.json', 'utf8'));
+    await sendSlackNotification(summary, process.env.PR_URL);
+    return;
+  }
+
   console.log('Starting nightly performance sweep...');
 
-  const n1Issues = scanForN1Storage();
+  const n1Issues = scanForN1Queries();
   const memoIssues = scanForMissingMemo();
-  const benchmarks = runBenchmarks();
+  const mergeIssues = reviewRecentMerges();
 
-  const allIssues = [...n1Issues, ...memoIssues];
+  const allIssues = [...n1Issues, ...memoIssues, ...mergeIssues];
+  const benchmarks = await runBenchmarks();
 
-  logResults(allIssues);
-  await sendSlackNotification(allIssues);
+  logResults(allIssues, benchmarks);
+
+  if (process.env.SLACK_WEBHOOK_URL && !process.env.GITHUB_ACTIONS) {
+      await sendSlackNotification({
+        optimizations: allIssues,
+        benchmarks: { apiLatencyMs: benchmarks.apiLatencyMs }
+      });
+  }
 
   console.log('Performance sweep completed.', { benchmarks });
 }
