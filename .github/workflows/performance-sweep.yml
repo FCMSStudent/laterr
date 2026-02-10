@@ -26,7 +26,7 @@ jobs:
         run: pnpm install
 
       - name: Run performance sweep
-        run: pnpm exec ts-node scripts/performance-sweep.ts
+        run: pnpm exec tsx scripts/performance-sweep.ts
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
