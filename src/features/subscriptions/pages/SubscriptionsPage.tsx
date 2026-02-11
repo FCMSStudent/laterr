@@ -32,7 +32,6 @@ const Subscriptions = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -87,7 +86,6 @@ const Subscriptions = () => {
       }));
 
       setSubscriptions(normalizedSubscriptions);
-      setFilteredSubscriptions(normalizedSubscriptions);
     } catch (error: unknown) {
       const typedError = toTypedError(error);
       console.error('Error fetching subscriptions:', typedError);
@@ -178,7 +176,7 @@ const Subscriptions = () => {
     return () => subscription.unsubscribe();
   }, [navigate, fetchSubscriptions]);
 
-  useEffect(() => {
+  const filteredSubscriptions = useMemo(() => {
     let filtered = subscriptions;
 
     // Search filter
@@ -222,7 +220,7 @@ const Subscriptions = () => {
     }
 
     // Sorting
-    const sorted = [...filtered].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       switch (sortOption) {
         case "date-asc": {
           const dateA = parseSubscriptionDate(a.next_billing_date);
@@ -247,15 +245,13 @@ const Subscriptions = () => {
         case "name-desc":
           return b.name.localeCompare(a.name);
         case "status": {
-          const statusOrder = { active: 0, paused: 1, cancelled: 2 };
-          return statusOrder[a.status] - statusOrder[b.status];
+          const statusOrder: Record<string, number> = { active: 0, paused: 1, cancelled: 2 };
+          return (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
         }
         default:
           return 0;
       }
     });
-
-    setFilteredSubscriptions(sorted);
   }, [debouncedSearchQuery, selectedCategory, selectedTag, statusFilter, sortOption, subscriptions]);
 
   const handleSubscriptionClick = (subscription: Subscription) => {
