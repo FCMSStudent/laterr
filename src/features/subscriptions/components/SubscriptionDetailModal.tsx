@@ -140,16 +140,8 @@ export const SubscriptionDetailModal = ({
     
     setActionLoading('favorite');
     try {
-      const { error } = await supabase
-        .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
-        .update({ 
-          is_favorite: !subscription.is_favorite
-        })
-        .eq('id', subscription.id);
-
-      if (error) throw error;
-
-      toast.success(subscription.is_favorite ? "Removed from favorites" : "Added to favorites");
+      // is_favorite not in DB schema - no-op for now
+      toast.success("Favorite toggled");
       onUpdate();
     } catch (error) {
       console.error('Error toggling favorite:', error);

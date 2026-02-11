@@ -26,7 +26,7 @@ export interface Subscription {
   notes?: string | null;
   reminder_days_before: number;
   tags?: string[] | null;
-  is_favorite: boolean;
+  is_favorite?: boolean;
   deleted_at?: string | null;
   created_at: string;
   updated_at: string;
