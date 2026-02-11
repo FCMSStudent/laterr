@@ -34,3 +34,5 @@ playwright/.auth/
 *.njsproj
 *.sln
 *.sw?
+ui-maintenance-report.json
+playwright-results.json
