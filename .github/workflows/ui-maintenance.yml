@@ -1,0 +1,58 @@
+name: Automated UI/UX Maintenance
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Run at 2:00 AM every day
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ui-maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run UI maintenance audit and auto-fix
+        run: pnpm exec tsx scripts/ui-maintenance.ts --fix --runtime
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      - name: Create Pull Request
+        id: cpr
+        if: success()
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(ui): weekly design consistency and accessibility sweep including auto-fixes'
+          title: 'chore(ui): weekly design consistency and accessibility sweep including auto-fixes'
+          body: |
+            Automated UI/UX improvements and consistency fixes found during nightly sweep.
+
+            Check `ui-maintenance-report.json` for details.
+          branch: ui/nightly-maintenance
+          base: main
+          delete-branch: true
+
+      - name: Send Slack Notification
+        if: always()
+        run: pnpm exec tsx scripts/ui-maintenance.ts --notify
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          PULL_REQUEST_URL: ${{ steps.cpr.outputs.pull-request-url }}
