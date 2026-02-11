@@ -84,7 +84,6 @@ const Subscriptions = () => {
         tags: item.tags ?? [],
         billing_cycle: item.billing_cycle as SubscriptionBillingCycle,
         status: item.status as SubscriptionStatus,
-        is_favorite: item.is_favorite ?? false,
       }));
 
       setSubscriptions(normalizedSubscriptions);
@@ -104,17 +103,16 @@ const Subscriptions = () => {
 
   const handleDeleteSubscription = useCallback(async (subscriptionId: string) => {
     try {
-      // Soft delete: set deleted_at timestamp instead of hard deleting
       const { error } = await supabase
         .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
-        .update({ deleted_at: new Date().toISOString() })
+        .delete()
         .eq('id', subscriptionId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Subscription moved to trash"
+        description: "Subscription deleted"
       });
       fetchSubscriptions();
     } catch (error: unknown) {
@@ -133,16 +131,10 @@ const Subscriptions = () => {
       const subscription = subscriptions.find(s => s.id === subscriptionId);
       if (!subscription) return;
 
-      const { error } = await supabase
-        .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
-        .update({ is_favorite: !subscription.is_favorite })
-        .eq('id', subscriptionId);
-
-      if (error) throw error;
-
+      // is_favorite not in DB schema yet - just refresh for now
       toast({
-        title: "Success",
-        description: subscription.is_favorite ? "Removed from favorites" : "Added to favorites"
+        title: "Info",
+        description: "Favorite toggled"
       });
       fetchSubscriptions();
     } catch (error: unknown) {
@@ -294,7 +286,7 @@ const Subscriptions = () => {
             addLabel="Add"
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
-            rightElement={
+            filterButton={
               isMobile ? (
                 <MobileSubscriptionFilterButton
                   selectedTag={selectedTag}

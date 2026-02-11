@@ -374,6 +374,44 @@ const Index = () => {
       return newSet;
     });
   }, [isSelectionMode]);
+  const filteredItems = useMemo(() => {
+    let filtered = items;
+    if (debouncedSearchQuery) {
+      const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
+      filtered = filtered.filter(item => item.title.toLowerCase().includes(sanitizedQuery) || item.summary?.toLowerCase().includes(sanitizedQuery) || item.user_notes?.toLowerCase().includes(sanitizedQuery));
+    }
+    if (selectedTag) {
+      filtered = filtered.filter(item => item.tags?.includes(selectedTag));
+    }
+    if (typeFilter) {
+      filtered = filtered.filter(item => item.type === typeFilter);
+    }
+    const sorted = [...filtered];
+    const getSortDate = (item: Item) => {
+      if (viewScope === "trash") {
+        return new Date(item.deleted_at || item.created_at).getTime();
+      }
+      return new Date(item.created_at).getTime();
+    };
+    switch (sortOption) {
+      case "date-asc":
+        sorted.sort((a, b) => getSortDate(a) - getSortDate(b));
+        break;
+      case "date-desc":
+        sorted.sort((a, b) => getSortDate(b) - getSortDate(a));
+        break;
+      case "title-asc":
+        sorted.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "title-desc":
+        sorted.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case "type":
+        sorted.sort((a, b) => a.type.localeCompare(b.type));
+        break;
+    }
+    return sorted;
+  }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption, viewScope]);
   const handleSelectAll = useCallback(() => {
     setSelectedItems(new Set(filteredItems.map(item => item.id)));
   }, [filteredItems]);
@@ -415,44 +453,6 @@ const Index = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate, fetchItems]);
-  const filteredItems = useMemo(() => {
-    let filtered = items;
-    if (debouncedSearchQuery) {
-      const sanitizedQuery = debouncedSearchQuery.toLowerCase().trim();
-      filtered = filtered.filter(item => item.title.toLowerCase().includes(sanitizedQuery) || item.summary?.toLowerCase().includes(sanitizedQuery) || item.user_notes?.toLowerCase().includes(sanitizedQuery));
-    }
-    if (selectedTag) {
-      filtered = filtered.filter(item => item.tags?.includes(selectedTag));
-    }
-    if (typeFilter) {
-      filtered = filtered.filter(item => item.type === typeFilter);
-    }
-    const sorted = [...filtered];
-    const getSortDate = (item: Item) => {
-      if (viewScope === "trash") {
-        return new Date(item.deleted_at || item.created_at).getTime();
-      }
-      return new Date(item.created_at).getTime();
-    };
-    switch (sortOption) {
-      case "date-asc":
-        sorted.sort((a, b) => getSortDate(a) - getSortDate(b));
-        break;
-      case "date-desc":
-        sorted.sort((a, b) => getSortDate(b) - getSortDate(a));
-        break;
-      case "title-asc":
-        sorted.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      case "title-desc":
-        sorted.sort((a, b) => b.title.localeCompare(a.title));
-        break;
-      case "type":
-        sorted.sort((a, b) => a.type.localeCompare(b.type));
-        break;
-    }
-    return sorted;
-  }, [debouncedSearchQuery, selectedTag, items, typeFilter, sortOption, viewScope]);
   useEffect(() => {
     if (!user) return;
     setPage(0);
