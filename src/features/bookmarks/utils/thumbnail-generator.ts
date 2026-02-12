@@ -62,6 +62,7 @@ export async function generatePdfThumbnail(file: File): Promise<Blob> {
   const renderContext: Parameters<typeof page.render>[0] = {
     canvasContext: ctx,
     viewport: scaledViewport,
+    canvas,
   };
   await page.render(renderContext).promise;
   return new Promise((resolve, reject) => {
