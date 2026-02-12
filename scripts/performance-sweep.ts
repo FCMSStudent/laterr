@@ -246,7 +246,7 @@ function scanForMissingMemo(): OptimizationResult[] {
     });
 
     // 3. Arrow functions passed as props to components (Unnecessary re-renders)
-    const arrowProps = execSync('grep -rnE "<[A-Z][a-zA-Z0-9]*.*\\w+=\\{?\\s*\\([^)]*\\)\\s*=>" src/ || true').toString();
+    const arrowProps = execSync('grep -rnE "<[A-Z][a-zA-Z0-9]*[^>]*\\w+\\s*=\\s*\\{\\s*\\([^)]*\\)\\s*=>" src/ || true').toString();
     arrowProps.split('\n').filter(Boolean).forEach(line => {
         const [file, lineNum] = line.split(':');
         const match = line.match(/<([A-Z][a-zA-Z0-9]*)/);
