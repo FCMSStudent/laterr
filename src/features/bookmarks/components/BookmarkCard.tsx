@@ -426,62 +426,70 @@ export const BookmarkCard = memo(({
             <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
-        {/* Dominant color gradient overlay - 50% coverage */}
+        {/* Dominant color gradient overlay - extended 60% coverage for readability */}
         <div
           data-testid="bookmark-card-overlay"
           className="absolute inset-0 pointer-events-none z-30"
           style={{
             background: dominantColor
-              ? `linear-gradient(to top, ${toRgba(dominantColor, 0.95)} 0%, ${toRgba(dominantColor, 0.75)} 15%, ${toRgba(dominantColor, 0.45)} 30%, ${toRgba(dominantColor, 0.2)} 40%, transparent 50%)`
-              : 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0.25) 35%, transparent 50%)',
+              ? `linear-gradient(to top, ${toRgba(dominantColor, 0.97)} 0%, ${toRgba(dominantColor, 0.85)} 18%, ${toRgba(dominantColor, 0.55)} 35%, ${toRgba(dominantColor, 0.25)} 50%, transparent 62%)`
+              : 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 22%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.12) 55%, transparent 65%)',
             willChange: 'opacity'
           }}
         />
 
         {/* Play button overlay for videos - perfectly centered */}
-        {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-35">
           <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center shadow-lg">
             <Play className="h-7 w-7 text-white fill-white ml-0.5" />
           </div>
         </div>}
 
-        {/* Text overlay - Premium App Store style with category, title, summary, and optional source */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 z-40 space-y-1.5">
-          {/* Category label */}
-          <span className="text-white/90 text-[10px] font-bold uppercase tracking-wider block">
-            {categoryBadge.label}
-          </span>
-          
-          {/* Title */}
-          <h3 className="font-bold text-white text-lg leading-snug line-clamp-2">
-            {title}
-          </h3>
-          
-          {/* Summary/description */}
-          {summary && (
-            <p className="text-white/80 text-sm leading-relaxed line-clamp-3">
-              {summary}
-            </p>
-          )}
+        {/* Frosted glass text panel */}
+        <div className="absolute bottom-0 left-0 right-0 z-40">
+          <div className="px-5 pb-5 pt-4 backdrop-blur-xl space-y-2"
+            style={{
+              background: dominantColor
+                ? `linear-gradient(to top, ${toRgba(dominantColor, 0.55)} 0%, ${toRgba(dominantColor, 0.15)} 100%)`
+                : 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.08) 100%)',
+            }}
+          >
+            {/* Category label */}
+            <span className="text-white/80 text-[10px] font-semibold uppercase tracking-[0.12em] block">
+              {categoryBadge.label}
+            </span>
 
-          {/* Optional source attribution row */}
-          {(sourceName || sourceFavicon) && (
-            <div className="flex items-center gap-2 pt-1">
-              {sourceFavicon && (
-                <img 
-                  src={sourceFavicon} 
-                  alt={sourceName ? `${sourceName} icon` : "Source icon"} 
-                  className="w-4 h-4 rounded-sm object-cover"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
-              )}
-              {sourceName && (
-                <span className="text-white/70 text-xs font-medium">
-                  {sourceName}
-                </span>
-              )}
-            </div>
-          )}
+            {/* Title */}
+            <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 drop-shadow-sm">
+              {title}
+            </h3>
+
+            {/* Summary/description */}
+            {summary && (
+              <p className="text-white/75 text-[13px] leading-relaxed line-clamp-2 font-light">
+                {summary}
+              </p>
+            )}
+
+            {/* Optional source attribution row */}
+            {(sourceName || sourceFavicon) && (
+              <div className="flex items-center gap-2 pt-0.5">
+                {sourceFavicon && (
+                  <img
+                    src={sourceFavicon}
+                    alt={sourceName ? `${sourceName} icon` : "Source icon"}
+                    className="w-3.5 h-3.5 rounded-sm object-cover opacity-80"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                )}
+                {sourceName && (
+                  <span className="text-white/60 text-[11px] font-medium tracking-wide">
+                    {sourceName}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </AspectRatio>
     </div>
