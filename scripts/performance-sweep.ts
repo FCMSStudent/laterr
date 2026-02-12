@@ -221,15 +221,16 @@ function scanForMissingMemo(): OptimizationResult[] {
                 if (importLine) {
                     const pathMatch = importLine.match(/from\s+["'](.+)["']/);
                     if (pathMatch) {
-                        let importPath = pathMatch[1];
+                        const importPath = pathMatch[1];
+                        let resolvedPath: string | null = null;
                         if (importPath.startsWith('@/')) {
-                            importPath = importPath.replace('@/', 'src/') + '.tsx';
+                            resolvedPath = importPath.replace('@/', 'src/') + '.tsx';
                         } else if (importPath.startsWith('.')) {
-                            importPath = path.join(path.dirname(file), importPath) + '.tsx';
+                            resolvedPath = path.join(path.dirname(file), importPath) + '.tsx';
                         }
 
-                        if (fs.existsSync(importPath)) {
-                            const def = fs.readFileSync(importPath, 'utf8');
+                        if (resolvedPath && fs.existsSync(resolvedPath)) {
+                            const def = fs.readFileSync(resolvedPath, 'utf8');
                             if (def.includes('memo(') || def.includes('React.memo(')) {
                                 isMemoized = true;
                             }
