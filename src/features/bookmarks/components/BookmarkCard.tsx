@@ -13,6 +13,7 @@ import { useIsMobile } from "@/shared/hooks/useMobile";
 import { useDominantColor } from "@/shared/hooks/useDominantColor";
 import { cn } from "@/shared/lib/utils";
 import { format } from "date-fns";
+import { NotePreview } from "./NotePreview";
 interface BookmarkCardProps {
   id: string;
   type: ItemType;
@@ -150,19 +151,26 @@ const toRgba = (color: string, alpha: number) => {
   return color;
 };
 
+const getPerceivedBrightness = (color: string | null | undefined): number | null => {
+  if (!color) return null;
+  const parsed = parseColor(color);
+  if (!parsed) return null;
+  const [r, g, b] = parsed;
+  return (r * 299 + g * 587 + b * 114) / 1000;
+};
+
 /**
  * Darken a color so its relative luminance is low enough for white text.
  * Light dominant colors (beige, light grey, pink) get pulled down to a
  * readable level while preserving hue.
  */
-const ensureDark = (color: string): string => {
+const ensureDark = (color: string | null | undefined): string | null => {
+  if (!color) return null;
   const parsed = parseColor(color);
   if (!parsed) return color;
   let [r, g, b] = parsed;
-  // Perceived brightness (0-255): quick luminance approximation
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  // Target max brightness ~80 (out of 255) for good contrast with white text
-   if (brightness > 55) {
+  if (brightness > 55) {
     const scale = 55 / brightness;
     r = Math.round(r * scale);
     g = Math.round(g * scale);
@@ -212,8 +220,27 @@ export const BookmarkCard = memo(({
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
   const { color: rawDominantColor } = useDominantColor(previewImageUrl);
-  const dominantColor = useMemo(() => rawDominantColor ? ensureDark(rawDominantColor) : null, [rawDominantColor]);
+  const isDocumentLike = type === 'document' || type === 'file';
+  const dominantBrightness = getPerceivedBrightness(rawDominantColor);
+  const contrastMode: "light-text" | "dark-text" = dominantBrightness !== null && dominantBrightness >= 180
+    ? "dark-text"
+    : "light-text";
+  const dominantColor = useMemo(
+    () => (contrastMode === "light-text" ? ensureDark(rawDominantColor) : rawDominantColor),
+    [rawDominantColor, contrastMode]
+  );
   const dateText = formatDate(createdAt);
+  const overlayColor = dominantColor || (contrastMode === "light-text" ? "rgb(20, 24, 34)" : "rgb(248, 250, 252)");
+  const mediaContainerBackground = isDocumentLike
+    ? (dominantColor ? toRgba(dominantColor, 0.15) : "hsl(220 15% 12%)")
+    : undefined;
+  const textShadow = contrastMode === "light-text"
+    ? "0 1px 4px rgba(0,0,0,0.5)"
+    : "0 1px 3px rgba(255,255,255,0.35)";
+  const titleClass = contrastMode === "light-text" ? "text-white" : "text-slate-950";
+  const summaryClass = contrastMode === "light-text" ? "text-white/75" : "text-slate-900/85";
+  const labelClass = contrastMode === "light-text" ? "text-white/80" : "text-slate-900/80";
+  const sourceClass = contrastMode === "light-text" ? "text-white/60" : "text-slate-800/80";
   const mediaRatio = useMemo(() => {
     // App Store-style taller cards for richer content display
     if (size === "standard") {
@@ -427,15 +454,19 @@ export const BookmarkCard = memo(({
         </DropdownMenu>
       </div>
 
-      <AspectRatio ratio={mediaRatio}>
+      <AspectRatio
+        ratio={mediaRatio}
+        data-testid="bookmark-card-media"
+        style={{ backgroundColor: mediaContainerBackground }}
+      >
         {/* Base tint only when image is loading, missing, or has error */}
         {(!imageLoaded || imageError || !previewImageUrl) && (
           <div
             className="absolute inset-0"
             style={{
-              backgroundColor: dominantColor
-                ? toRgba(dominantColor, 0.35)
-                : "rgba(0,0,0,0.25)"
+              backgroundColor: overlayColor
+                ? toRgba(overlayColor, contrastMode === "light-text" ? 0.35 : 0.2)
+                : (contrastMode === "light-text" ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.2)")
             }}
           />
         )}
@@ -449,17 +480,12 @@ export const BookmarkCard = memo(({
             data-testid="bookmark-card-image"
             src={previewImageUrl} 
             alt="" 
-           className={cn(
+            className={cn(
               "absolute inset-0 w-full h-full z-20",
-              imageLoaded ? "opacity-100" : "opacity-0",
-              (type === 'document' || type === 'file') ? "object-contain" : "object-cover"
-            )} 
-            style={{
-              willChange: 'opacity',
-              backgroundColor: (type === 'document' || type === 'file')
-                ? (dominantColor ? toRgba(dominantColor, 0.15) : 'hsl(220 15% 12%)')
-                : undefined
-            }}
+              isDocumentLike ? "object-contain" : "object-cover",
+              imageLoaded ? "opacity-100" : "opacity-0"
+            )}
+            style={{ willChange: 'opacity' }}
             onLoad={() => setImageLoaded(true)} 
             onError={() => setImageError(true)} 
           />
@@ -479,10 +505,15 @@ export const BookmarkCard = memo(({
         {/* Gradient-only transition zone – no blur, feathers color upward */}
         <div
           data-testid="bookmark-card-overlay"
+          data-contrast-mode={contrastMode}
           className="absolute inset-0 pointer-events-none z-30"
           style={{
-            background: dominantColor
-              ? `linear-gradient(to top, ${toRgba(dominantColor, 0.95)} 0%, ${toRgba(dominantColor, 0.80)} 12%, ${toRgba(dominantColor, 0.50)} 28%, ${toRgba(dominantColor, 0.20)} 42%, ${toRgba(dominantColor, 0.08)} 55%, transparent 68%)`
+            background: overlayColor
+              ? (
+                contrastMode === "light-text"
+                  ? `linear-gradient(to top, ${toRgba(overlayColor, 0.95)} 0%, ${toRgba(overlayColor, 0.80)} 12%, ${toRgba(overlayColor, 0.50)} 28%, ${toRgba(overlayColor, 0.20)} 42%, ${toRgba(overlayColor, 0.08)} 55%, transparent 68%)`
+                  : `linear-gradient(to top, ${toRgba(overlayColor, 0.95)} 0%, ${toRgba(overlayColor, 0.82)} 14%, ${toRgba(overlayColor, 0.58)} 30%, ${toRgba(overlayColor, 0.32)} 44%, ${toRgba(overlayColor, 0.14)} 58%, transparent 72%)`
+              )
               : 'linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.60) 15%, rgba(0,0,0,0.30) 35%, rgba(0,0,0,0.08) 52%, transparent 68%)',
             willChange: 'opacity'
           }}
@@ -490,8 +521,14 @@ export const BookmarkCard = memo(({
 
         {/* Play button overlay for videos - perfectly centered */}
         {isVideo && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-35">
-          <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center shadow-lg">
-            <Play className="h-7 w-7 text-white fill-white ml-0.5" />
+          <div className={cn(
+            "w-16 h-16 rounded-full backdrop-blur-md flex items-center justify-center shadow-lg",
+            contrastMode === "light-text" ? "bg-black/40" : "bg-white/55"
+          )}>
+            <Play className={cn(
+              "h-7 w-7 ml-0.5",
+              contrastMode === "light-text" ? "text-white fill-white" : "text-slate-900 fill-slate-900"
+            )} />
           </div>
         </div>}
 
@@ -499,28 +536,30 @@ export const BookmarkCard = memo(({
         <div className="absolute bottom-0 left-0 right-0 z-40">
           <div className="px-5 pb-5 pt-6 backdrop-blur-md space-y-2"
             style={{
-              background: dominantColor
-                ? `linear-gradient(to top, ${toRgba(dominantColor, 0.40)} 0%, ${toRgba(dominantColor, 0.10)} 70%, transparent 100%)`
+              background: overlayColor
+                ? (
+                  contrastMode === "light-text"
+                    ? `linear-gradient(to top, ${toRgba(overlayColor, 0.40)} 0%, ${toRgba(overlayColor, 0.10)} 70%, transparent 100%)`
+                    : `linear-gradient(to top, ${toRgba(overlayColor, 0.58)} 0%, ${toRgba(overlayColor, 0.24)} 65%, transparent 100%)`
+                )
                 : 'linear-gradient(to top, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.05) 70%, transparent 100%)',
               maskImage: 'linear-gradient(to top, black 55%, transparent 100%)',
               WebkitMaskImage: 'linear-gradient(to top, black 55%, transparent 100%)',
             }}
           >
             {/* Category label */}
-            <span className="text-white/80 text-[10px] font-semibold uppercase tracking-[0.12em] block">
+            <span className={cn("text-[10px] font-semibold uppercase tracking-[0.12em] block", labelClass)}>
               {categoryBadge.label}
             </span>
 
             {/* Title */}
-            <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 drop-shadow-sm"
-              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+            <h3 className={cn("font-bold text-lg leading-tight line-clamp-2", titleClass)} style={{ textShadow }}>
               {title}
             </h3>
 
             {/* Summary/description */}
             {summary && (
-              <p className="text-white/75 text-[13px] leading-relaxed line-clamp-2 font-light"
-                style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+              <p className={cn("text-[13px] leading-relaxed line-clamp-2 font-light", summaryClass)} style={{ textShadow }}>
                 {summary}
               </p>
             )}
@@ -537,7 +576,7 @@ export const BookmarkCard = memo(({
                   />
                 )}
                 {sourceName && (
-                  <span className="text-white/60 text-[11px] font-medium tracking-wide">
+                  <span className={cn("text-[11px] font-medium tracking-wide", sourceClass)}>
                     {sourceName}
                   </span>
                 )}

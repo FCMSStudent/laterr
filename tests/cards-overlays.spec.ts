@@ -78,12 +78,20 @@ test.describe("Card and Overlay Components", () => {
         return;
       }
 
-      const firstCard = cards.first();
+      const mediaCards = cards.filter({ has: page.getByTestId("bookmark-card-overlay") });
+      if ((await mediaCards.count()) === 0) {
+        // Data set can contain note-only cards; layering assertion is media-card specific.
+        await expect(cards.first()).toBeVisible();
+        return;
+      }
+
+      const firstCard = mediaCards.first();
       await expect(firstCard).toBeVisible();
 
       const overlay = firstCard.getByTestId("bookmark-card-overlay");
       await expect(overlay).toBeAttached();
       await expect(overlay).toHaveClass(/z-30/);
+      await expect(overlay).toHaveAttribute("data-contrast-mode", /^(light-text|dark-text)$/);
 
       const image = firstCard.getByTestId("bookmark-card-image");
       if ((await image.count()) > 0) {
