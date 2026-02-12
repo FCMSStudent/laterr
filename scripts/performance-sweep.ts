@@ -200,7 +200,7 @@ function applyFixes(optimizations: OptimizationResult[]) {
                 // Try a very safe useMemo wrap for simple filter/sort/reduce assignments
                 const match = line.match(/(const|let|var)\s+(\w+)\s*=\s*(\w+)\.(filter|sort|reduce)\(([^)]+)\);?$/);
                 if (match && content.includes('useMemo')) {
-                    const [full, decl, varName, sourceVar, op, args] = match;
+                    const [, decl, varName, sourceVar, op, args] = match;
                     if (!line.includes('useMemo')) {
                          lines[lineIdx] = `${decl} ${varName} = useMemo(() => ${sourceVar}.${op}(${args}), [${sourceVar}]);`;
                          fs.writeFileSync(opt.file, lines.join('\n'));
