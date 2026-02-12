@@ -129,23 +129,45 @@ const formatDate = (dateString?: string): string => {
   }
 };
 
-const toRgba = (color: string, alpha: number) => {
-  // rgb(...) -> rgba(...)
-  if (color.startsWith('rgb(')) {
-    return color.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
-  }
-  // hex #rrggbb or #rgb -> rgba(r,g,b,alpha)
+/** Parse an rgb/hex color into [r, g, b] */
+const parseColor = (color: string): [number, number, number] | null => {
+  const rgbMatch = color.match(/rgb\(\s*(\d+),\s*(\d+),\s*(\d+)\s*\)/);
+  if (rgbMatch) return [+rgbMatch[1], +rgbMatch[2], +rgbMatch[3]];
   const hexMatch = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
   if (hexMatch) {
     const hex = hexMatch[1].length === 3
       ? hexMatch[1].split('').map(c => c + c).join('')
       : hexMatch[1];
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
   }
+  return null;
+};
+
+const toRgba = (color: string, alpha: number) => {
+  const parsed = parseColor(color);
+  if (parsed) return `rgba(${parsed[0]}, ${parsed[1]}, ${parsed[2]}, ${alpha})`;
   return color;
+};
+
+/**
+ * Darken a color so its relative luminance is low enough for white text.
+ * Light dominant colors (beige, light grey, pink) get pulled down to a
+ * readable level while preserving hue.
+ */
+const ensureDark = (color: string): string => {
+  const parsed = parseColor(color);
+  if (!parsed) return color;
+  let [r, g, b] = parsed;
+  // Perceived brightness (0-255): quick luminance approximation
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  // Target max brightness ~80 (out of 255) for good contrast with white text
+  if (brightness > 80) {
+    const scale = 80 / brightness;
+    r = Math.round(r * scale);
+    g = Math.round(g * scale);
+    b = Math.round(b * scale);
+  }
+  return `rgb(${r}, ${g}, ${b})`;
 };
 /**
  * BookmarkCard component displays a single bookmark item in a grid layout.
@@ -188,7 +210,8 @@ export const BookmarkCard = memo(({
   const categoryBadge = getCategoryBadge(type, tags, content);
   const isVideo = type === 'video' || type === 'url' && content && isVideoUrl(content);
   const isNoteType = type === 'note';
-  const { color: dominantColor } = useDominantColor(previewImageUrl);
+  const { color: rawDominantColor } = useDominantColor(previewImageUrl);
+  const dominantColor = useMemo(() => rawDominantColor ? ensureDark(rawDominantColor) : null, [rawDominantColor]);
   const dateText = formatDate(createdAt);
   const mediaRatio = useMemo(() => {
     // App Store-style taller cards for richer content display
@@ -422,8 +445,15 @@ export const BookmarkCard = memo(({
           />
         </> :
         // Fallback: gradient background with icon
-        <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-            <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
+        <div
+          className="w-full h-full flex items-center justify-center"
+          style={{
+            background: dominantColor
+              ? `linear-gradient(135deg, ${toRgba(dominantColor, 0.85)} 0%, ${toRgba(dominantColor, 0.60)} 100%)`
+              : 'linear-gradient(135deg, hsl(220 20% 18%) 0%, hsl(220 15% 28%) 100%)',
+          }}
+        >
+            <categoryBadge.icon className="h-16 w-16 text-white/15" />
           </div>}
 
         {/* Gradient-only transition zone – no blur, feathers color upward */}
