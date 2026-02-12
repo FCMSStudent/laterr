@@ -77,9 +77,10 @@ export const notesToPlainText = (data: NotesData): string => {
     switch (block.type) {
       case 'checklist':
         return `[${block.checked ? 'x' : ' '}] ${block.content}`;
-      case 'heading':
+      case 'heading': {
         const prefix = '#'.repeat(block.level || 2);
         return `${prefix} ${block.content}`;
+      }
       case 'bullet':
         return `• ${block.content}`;
       case 'numbered':

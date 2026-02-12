@@ -1,284 +1,85 @@
-# E2E Tests for Laterr
+# Bookmark Reliability Test Runbook
 
-This directory contains end-to-end tests using Playwright to ensure the application's card and overlay components work correctly.
+This runbook documents the bookmark-focused hybrid gate:
+- bookmark-scoped lint
+- bookmark unit/component tests (Vitest + Testing Library)
+- bookmark E2E tests (Playwright)
 
-## Test Files
+## Commands
 
-### `cards-overlays.spec.ts`
-Comprehensive E2E tests for card and overlay components, including:
-
-#### Card Components
-- **BookmarkCard** - Tests z-index fix from PR #204, hover behavior, gradient overlays
-- **Card (UI)** - Base card component styling and display
-- **MeasurementCard** - Card with hover states and dropdown menus
-- **ItemCard** - Item display cards
-
-#### Overlay Components
-- **HoverCard** - Hover tooltips
-- **Dialog** - Modal overlays
-- **Drawer** - Side drawer overlays  
-- **Sheet** - Sheet overlays
-- **Popover** - Popover overlays
-- **DropdownMenu** - Dropdown menu overlays
-- **Tooltip** - Tooltip overlays
-
-#### Test Scenarios
-1. **Visual/Z-Index Testing** - Verifies elements don't disappear on hover, z-index hierarchy is maintained
-2. **Interactive Testing** - Tests click/hover interactions, overlay dismissal
-3. **Guest Login Mode** - Tests all components work in guest mode
-4. **Responsive Testing** - Validates mobile viewport behavior and touch interactions
-
-### `trash-flow.spec.ts`
-Tests for trash/restore functionality with authenticated users.
-
-### `screenshots.spec.ts`
-Generates visual documentation screenshots of UI components.
-
-## Current Test Status
-
-### Passing Tests ✅
-The following test suites are currently verified to work:
-- **UI Card Components** (2 tests)
-  - Component showcase card display
-  - Card styling validation
-- **Component Showcase Visual Tests** (3 tests)
-  - Full page screenshot
-  - Section screenshots
-  - Documentation generation
-
-### Tests Requiring Authentication
-The following tests will skip if guest login is not available:
-- **BookmarkCard Z-Index Tests** - Require access to `/bookmarks` page
-- **MeasurementCard Tests** - Require access to `/health` page
-- **Bookmark-specific Overlay Tests** - Require bookmark data
-
-To run these tests, ensure:
-1. Guest mode is enabled (`GUEST_MODE_ENABLED=true` in AuthPage.tsx), OR
-2. Provide test credentials via `E2E_EMAIL` and `E2E_PASSWORD` environment variables
-
-## Running Tests
-
-### Prerequisites
 ```bash
-# Install Playwright browsers (first time only)
-npm run playwright:install
+# Build baseline
+pnpm build
+
+# Lint only bookmark-relevant scope
+pnpm run lint:bookmarks
+
+# Bookmark unit/component tests
+pnpm run test:bookmarks:unit
+
+# Bookmark unit/component tests with coverage
+pnpm run test:bookmarks:unit -- --coverage
+
+# Bookmark E2E gate (includes cards-overlays + trash-flow)
+pnpm run test:bookmarks:e2e
+
+# Full local bookmark gate
+pnpm run test:bookmarks
 ```
 
-### Run All Tests
-```bash
-# Run all tests in headless mode
-npx playwright test
+## Guest Mode Verification Flow
 
-# Run tests in UI mode (interactive)
-npx playwright test --ui
+`tests/cards-overlays.spec.ts` and `tests/trash-flow.spec.ts` are guest-mode-first.
 
-# Run tests in headed mode (see browser)
-npx playwright test --headed
-```
+1. Navigate to a protected route (`/bookmarks`, `/dashboard`, etc.).
+2. If redirected to `/auth`, test logic looks for a button matching `Continue as Guest`.
+3. On success, tests continue to target routes and validate bookmark/overlay behavior.
+4. If guest sign-in is unavailable, tests fail with an actionable message.
 
-### Run Specific Test Files
-```bash
-# Run card and overlay tests only
-npx playwright test tests/cards-overlays.spec.ts
+## Fixture Expectations
 
-# Run in UI mode
-npx playwright test tests/cards-overlays.spec.ts --ui
+Bookmark E2E uses resilient expectations:
+- `cards-overlays.spec.ts` accepts either:
+  - collection present (`data-testid="bookmarks-collection"`), or
+  - empty state present (`data-testid="bookmarks-empty-state"`).
+- `trash-flow.spec.ts` attempts deterministic fixture creation through the UI.
+  - If guest writes are blocked by policy, the test is skipped/fails explicitly with context.
+  - Write-path correctness is still covered in unit/component tests through mocks.
 
-# Run with specific browser
-npx playwright test tests/cards-overlays.spec.ts --project=chromium
-```
+## Runtime and Env Notes
 
-### Run Specific Test Suites
-```bash
-# Run only BookmarkCard tests
-npx playwright test -g "BookmarkCard"
-
-# Run only overlay component tests
-npx playwright test -g "Overlay Components"
-
-# Run only guest mode tests
-npx playwright test -g "Guest Login Mode"
-
-# Run only responsive tests
-npx playwright test -g "Responsive Testing"
-```
-
-### Generate Screenshots
-```bash
-# Generate component showcase screenshots
-npm run screenshots
-
-# Generate in UI mode
-npm run screenshots:ui
-```
-
-## Test Configuration
-
-Tests are configured in `playwright.config.ts`:
-- **Base URL**: `http://localhost:8080`
-- **Test Directory**: `./tests`
-- **Browser**: Chromium (Desktop Chrome)
-- **Retries**: 2 in CI, 0 locally
-- **Screenshots**: Only on failure
-- **Trace**: On first retry
-- **Web Server**: Automatically starts `npm run dev` before running tests
-
-## Authentication and Guest Login Mode
-
-The tests are designed to work flexibly with authentication:
-
-### Guest Login Available
-If guest login is enabled in the app (`GUEST_MODE_ENABLED` in `AuthPage.tsx`):
-- Tests will use `tryGuestLogin()` to authenticate as a guest user
-- All card and overlay tests will run with full functionality
-- The helper automatically clicks "Continue as Guest (Agent Testing)" button
-
-### Guest Login Not Available  
-If guest login is disabled or authentication is required:
-- **Component Showcase tests** will still pass (no auth required)
-- **Bookmark/Health page tests** will be skipped gracefully
-- Tests won't fail due to authentication issues
-- Appropriate console warnings will be logged
-
-### Using Test Credentials
-To run all tests with a real user account:
-```bash
-# Set environment variables
-export E2E_EMAIL="your-test-email@example.com"
-export E2E_PASSWORD="your-test-password"
-
-# Run tests
-npx playwright test
-```
-
-Then update the `tryGuestLogin()` function to use credentials instead.
-
-## Key Test Cases
-
-### PR #204 Z-Index Fix Validation
-The tests specifically validate the z-index fix from PR #204:
-- Image has `z-20` class and remains visible on hover
-- Gradient overlay has `z-30` class and renders above image
-- Hover interactions don't cause thumbnails to disappear
-
-### Accessibility
-Tests use semantic selectors (roles, labels) to ensure accessibility:
-- `getByRole('button')` for buttons
-- `getByLabel()` for labeled elements
-- `locator('[role="menu"]')` for ARIA roles
-
-### Responsive Design
-Mobile viewport tests use `375x667` (iPhone SE) to verify:
-- Cards display correctly on small screens
-- Touch interactions work
-- Overlays position correctly
-
-## Visual Regression (Optional)
-
-The test suite includes optional visual regression tests that generate baseline screenshots:
-- `screenshots/bookmark-card.png` - Individual card snapshot
-- `screenshots/components-showcase.png` - Full component showcase
-
-These can be used for visual comparison in CI/CD pipelines.
-
-## Debugging Tests
-
-### View Test Reports
-```bash
-# After running tests, view HTML report
-npx playwright show-report
-```
-
-### Debug Mode
-```bash
-# Run in debug mode with Playwright Inspector
-npx playwright test --debug
-
-# Debug specific test
-npx playwright test tests/cards-overlays.spec.ts --debug -g "thumbnail should not disappear"
-```
-
-### Headed Mode
-```bash
-# Run tests with visible browser
-npx playwright test --headed --slowmo=1000
-```
-
-### Trace Viewer
-```bash
-# Run with trace enabled
-npx playwright test --trace on
-
-# View trace
-npx playwright show-trace trace.zip
-```
-
-## CI/CD Integration
-
-The tests are configured to run in CI with:
-- 2 retries for flaky test resilience
-- Single worker to avoid race conditions
-- Screenshots on failure for debugging
-- Trace on first retry for investigation
-
-Set up in your CI pipeline:
-```yaml
-- name: Install dependencies
-  run: npm ci
-
-- name: Install Playwright browsers
-  run: npm run playwright:install
-
-- name: Run E2E tests
-  run: npx playwright test
-
-- name: Upload test results
-  if: always()
-  uses: actions/upload-artifact@v3
-  with:
-    name: playwright-report
-    path: playwright-report/
-```
+- Unit tests run in `jsdom` with setup from `tests/setup/vitest.setup.ts`.
+- Supabase client is test-runtime-safe (`src/lib/supabase/client.ts`) and won’t crash when `import.meta.env` is unavailable.
+- Playwright relies on the local web server configured in `playwright.config.ts`.
 
 ## Troubleshooting
 
-### Tests fail with "Timeout waiting for..."
-- Increase timeout in individual tests: `test.setTimeout(60000)`
-- Check if dev server is running: `npm run dev`
-- Verify base URL in `playwright.config.ts`
+### 1. Redirects stay on `/auth` in E2E
+- Confirm the auth page still renders a guest button matching `Continue as Guest`.
+- Re-run a single spec in headed mode:
+```bash
+pnpm exec playwright test tests/cards-overlays.spec.ts --project=chromium --headed
+```
 
-### Guest login not working
-- Verify Supabase anonymous auth is enabled
-- Check `GUEST_MODE_ENABLED` is true in `AuthPage.tsx`
-- Ensure button text matches selector in `tryGuestLogin()`
+### 2. Unit tests fail with browser API gaps
+- Ensure `tests/setup/vitest.setup.ts` is loaded by `vitest.config.ts`.
+- Check required polyfills/mocks for:
+  - `IntersectionObserver`
+  - `ResizeObserver`
+  - `matchMedia`
+  - clipboard
+  - canvas/media stubs used by thumbnail tests
 
-### Components not found
-- Wait for elements to load: `await page.waitForLoadState('networkidle')`
-- Use conditional checks: `if (await element.count() > 0)`
-- Verify selectors match actual DOM structure
+### 3. Supabase/env mismatch in tests
+- Confirm tests mock Supabase at module boundaries where needed.
+- If a test unexpectedly calls real client code, verify no `vi.mock` hoisting pitfalls.
 
-## Best Practices
+### 4. E2E artifacts for debugging
+After failures:
+- inspect `test-results/`
+- inspect `playwright-report/`
 
-1. **Use semantic selectors**: Prefer `getByRole()`, `getByLabel()` over CSS selectors
-2. **Wait for stability**: Use `waitForLoadState('networkidle')` before assertions
-3. **Handle empty states**: Check for both content and empty state messages
-4. **Conditional testing**: Use `if (await element.count() > 0)` for optional elements
-5. **Clean up**: Close dialogs/modals after testing to avoid state leakage
-6. **Timeouts**: Add small waits for animations: `await page.waitForTimeout(300)`
-
-## Contributing
-
-When adding new tests:
-1. Follow existing test structure and naming conventions
-2. Use the `tryGuestLogin()` helper for authentication
-3. Add descriptive test names that explain what's being tested
-4. Include comments for complex interactions
-5. Handle both success and empty states gracefully
-6. Clean up after tests (close modals, reset state)
-
-## Resources
-
-- [Playwright Documentation](https://playwright.dev/)
-- [Playwright Best Practices](https://playwright.dev/docs/best-practices)
-- [Debugging Tests](https://playwright.dev/docs/debug)
-- [CI/CD Integration](https://playwright.dev/docs/ci)
+Open HTML report:
+```bash
+pnpm exec playwright show-report
+```

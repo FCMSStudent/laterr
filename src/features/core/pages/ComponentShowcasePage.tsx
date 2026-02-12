@@ -545,7 +545,7 @@ const ComponentShowcasePage = () => {
           {/* ====================================== */}
           {/* OVERLAYS & FEEDBACK COMPONENTS */}
           {/* ====================================== */}
-          <section id="overlays-feedback" className="space-y-4">
+          <section id="overlays-feedback" data-testid="showcase-overlays-feedback" className="space-y-4">
             <h2 className="text-2xl font-semibold border-b pb-2">Overlays & Feedback Components</h2>
 
             {/* Dialog */}
@@ -557,7 +557,7 @@ const ComponentShowcasePage = () => {
               <CardContent>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button>Open Dialog</Button>
+                    <Button aria-label="open-dialog-demo">Open Dialog</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
@@ -581,7 +581,7 @@ const ComponentShowcasePage = () => {
               <CardContent>
                 <Drawer>
                   <DrawerTrigger asChild>
-                    <Button variant="outline">Open Drawer</Button>
+                    <Button variant="outline" aria-label="open-drawer-demo">Open Drawer</Button>
                   </DrawerTrigger>
                   <DrawerContent>
                     <DrawerHeader>
@@ -633,7 +633,7 @@ const ComponentShowcasePage = () => {
               <CardContent className="flex gap-4">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline">Open Sheet (Right)</Button>
+                    <Button variant="outline" aria-label="open-sheet-demo">Open Sheet (Right)</Button>
                   </SheetTrigger>
                   <SheetContent>
                     <SheetHeader>
@@ -655,7 +655,7 @@ const ComponentShowcasePage = () => {
               <CardContent>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline">Open Popover</Button>
+                    <Button variant="outline" aria-label="open-popover-demo">Open Popover</Button>
                   </PopoverTrigger>
                   <PopoverContent>
                     <div className="space-y-2">
@@ -678,7 +678,7 @@ const ComponentShowcasePage = () => {
               <CardContent>
                 <HoverCard>
                   <HoverCardTrigger asChild>
-                    <Button variant="link">@username</Button>
+                    <Button variant="link" aria-label="hovercard-trigger">@username</Button>
                   </HoverCardTrigger>
                   <HoverCardContent>
                     <div className="space-y-2">
@@ -702,7 +702,7 @@ const ComponentShowcasePage = () => {
               <CardContent>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline">Hover for Tooltip</Button>
+                    <Button variant="outline" aria-label="tooltip-trigger">Hover for Tooltip</Button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>This is tooltip content</p>

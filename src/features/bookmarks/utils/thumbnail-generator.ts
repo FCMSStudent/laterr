@@ -59,7 +59,11 @@ export async function generatePdfThumbnail(file: File): Promise<Blob> {
   if (!ctx) throw new Error('Failed to get canvas context');
   canvas.width = scaledViewport.width;
   canvas.height = scaledViewport.height;
-  await page.render({ canvasContext: ctx, viewport: scaledViewport } as any).promise;
+  const renderContext: Parameters<typeof page.render>[0] = {
+    canvasContext: ctx,
+    viewport: scaledViewport,
+  };
+  await page.render(renderContext).promise;
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Failed')), 'image/jpeg', THUMBNAIL_QUALITY);
   });

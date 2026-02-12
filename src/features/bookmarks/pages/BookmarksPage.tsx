@@ -35,8 +35,13 @@ type OpenItemEventDetail = {
   id: string;
 };
 
-const OPEN_ITEM_EVENT = "bookmarks:open-item";
-const Index = () => {
+  const OPEN_ITEM_EVENT = "bookmarks:open-item";
+
+  type ItemRow = Omit<Item, "embedding"> & {
+    embedding: string | null;
+  };
+
+  const Index = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -151,7 +156,7 @@ const Index = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      const rawItems = (data ?? []) as any[];
+      const rawItems = (data ?? []) as ItemRow[];
       const normalizedItems: Item[] = rawItems.map(item => ({
         ...item,
         tags: item.tags ?? [],
@@ -159,7 +164,7 @@ const Index = () => {
         summary: item.summary ?? null,
         user_notes: item.user_notes ?? null,
         content: item.content ?? null,
-        embedding: item.embedding ? JSON.parse(item.embedding) : null,
+        embedding: item.embedding ? (JSON.parse(item.embedding) as number[]) : null,
         deleted_at: item.deleted_at ?? null
       }));
       const itemsWithSignedUrls = await generateSignedUrlsForItems(normalizedItems);
@@ -691,7 +696,7 @@ const Index = () => {
               <ItemCardSkeleton />
             </div>
           ))}
-        </div> : filteredItems.length === 0 ? <div className="text-center py-32 space-y-5">
+        </div> : filteredItems.length === 0 ? <div data-testid="bookmarks-empty-state" className="text-center py-32 space-y-5">
           <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/60" aria-hidden="true" />
           <h2 className="text-2xl font-bold text-foreground tracking-tight">
             {isTrashView ? "Trash is empty" : "Your space is empty"}
@@ -707,7 +712,7 @@ const Index = () => {
               Add your first bookmark
             </Button>
           )}
-        </div> : <section aria-label="Items collection">
+        </div> : <section aria-label="Items collection" data-testid="bookmarks-collection">
           {viewMode === 'grid' ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pt-1 pb-12">
             {filteredItems.map(item => (
               <div key={item.id} className="break-inside-avoid mb-5 md:mb-6">

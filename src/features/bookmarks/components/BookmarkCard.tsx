@@ -282,7 +282,7 @@ export const BookmarkCard = memo(({
         <Trash2 className="h-5 w-5 text-destructive-foreground" />
       </div>}
 
-      <div role="article" tabIndex={0} aria-label={`${categoryBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
+      <div role="article" data-testid={`bookmark-card-${id}`} tabIndex={0} aria-label={`${categoryBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
         transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
       }} className={cn("glass-card rounded-xl cursor-pointer group overflow-hidden relative", "hover:shadow-md transition-shadow duration-200", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
         {/* Selection checkbox */}
@@ -356,7 +356,7 @@ export const BookmarkCard = memo(({
       <Trash2 className="h-5 w-5 text-destructive-foreground" />
     </div>}
 
-    <div role="article" tabIndex={0} aria-label={`${categoryBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
+    <div role="article" data-testid={`bookmark-card-${id}`} tabIndex={0} aria-label={`${categoryBadge.label}: ${title}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
       transform: isMobile ? `translateX(-${swipeOffset}px)` : undefined
     }} className={cn("rounded-xl border border-border/20 dark:border-transparent shadow-sm cursor-pointer group overflow-hidden relative", "transition-shadow duration-200 ease-out", "hover:shadow-md", "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none", isSelected && "ring-2 ring-primary", isSelectionMode && !isSelected && "hover:ring-2 hover:ring-primary/50")}>
       {/* Selection checkbox */}
@@ -411,7 +411,8 @@ export const BookmarkCard = memo(({
           {!imageLoaded && <div className="absolute inset-0 z-10">
             <Skeleton className="w-full h-full rounded-xl" />
           </div>}
-          <img 
+          <img
+            data-testid="bookmark-card-image"
             src={previewImageUrl} 
             alt="" 
             className={cn("absolute inset-0 w-full h-full object-cover z-20", imageLoaded ? "opacity-100" : "opacity-0")} 
@@ -427,6 +428,7 @@ export const BookmarkCard = memo(({
 
         {/* Dominant color gradient overlay - 50% coverage */}
         <div
+          data-testid="bookmark-card-overlay"
           className="absolute inset-0 pointer-events-none z-30"
           style={{
             background: dominantColor

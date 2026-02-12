@@ -1,601 +1,184 @@
-import { test, expect, Page } from '@playwright/test';
+import { expect, test, type Page } from "@playwright/test";
 
-/**
- * Comprehensive E2E tests for Card and Overlay Components
- * 
- * Tests the z-index fix from PR #204 and validates all card/overlay components
- * work correctly with proper layering and interactions.
- * 
- * Note: These tests attempt to use guest login if available, but will skip 
- * tests gracefully if guest mode is not enabled.
- */
-
-/**
- * Helper function to login as guest or skip login if already on a page
- * Returns true if we can access the application, false otherwise
- */
-async function tryGuestLogin(page: Page): Promise<boolean> {
-  try {
-    // First, try to go directly to the components showcase (public page)
-    await page.goto('/components', { timeout: 10000, waitUntil: 'domcontentloaded' });
-    
-    // If we can access the components page, we're good
-    if (page.url().includes('/components')) {
-      return true;
-    }
-    
-    // Try bookmarks page
-    await page.goto('/bookmarks', { timeout: 10000, waitUntil: 'domcontentloaded' });
-    
-    // Check if we ended up on bookmarks or got redirected to auth
-    const currentUrl = page.url();
-    
-    // If we're on auth page, try guest login
-    if (currentUrl.includes('/auth')) {
-      const guestButton = page.getByRole('button', { name: /continue as guest/i });
-      const hasGuestButton = await guestButton.count() > 0;
-      
-      if (hasGuestButton) {
-        await guestButton.click();
-        await page.waitForURL(/\/(dashboard|bookmarks|components)/, { timeout: 15000 });
-        return true;
-      } else {
-        // No guest button available
-        console.log('Guest login not available, some tests may be skipped');
-        return false;
-      }
-    }
-    
-    // If we're on bookmarks/dashboard, we're already logged in somehow
-    if (currentUrl.includes('/bookmarks') || currentUrl.includes('/dashboard')) {
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    console.log('Login/navigation failed:', error);
-    return false;
+const openAsGuestIfNeeded = async (page: Page) => {
+  if (!page.url().includes("/auth")) {
+    return;
   }
-}
 
-test.describe('Card and Overlay Components', () => {
-  test.beforeEach(async ({ page }) => {
-    // Try to access the app (with guest login if available)
-    // Tests will handle auth requirements individually
-    await tryGuestLogin(page);
-  });
+  const guestButton = page.getByRole("button", { name: /continue as guest/i });
+  const hasGuestButton = await guestButton
+    .waitFor({ state: "visible", timeout: 10000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!hasGuestButton) {
+    throw new Error("Guest login is not available. Enable guest mode or provide E2E credentials.");
+  }
 
-  test.describe('BookmarkCard - Z-Index Fix from PR #204', () => {
-    test('should navigate to bookmarks page', async ({ page }) => {
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      // Wait for page to load
+  await guestButton.click();
+  await page.waitForURL(/\/(dashboard|bookmarks|components|health)/, { timeout: 15000 });
+};
+
+const openPath = async (page: Page, path: string) => {
+  await page.goto(path, { waitUntil: "domcontentloaded" });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.waitForLoadState("networkidle");
+
+    if (page.url().includes("/auth")) {
+      await openAsGuestIfNeeded(page);
+      continue;
+    }
+
+    if (page.url().includes(path)) {
+      return;
+    }
+
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+  }
+  throw new Error(`Unable to access ${path}. Current URL: ${page.url()}`);
+};
+
+const waitForBookmarksSurface = async (page: Page) => {
+  await expect
+    .poll(
+      async () => {
+        const hasCollection = (await page.getByTestId("bookmarks-collection").count()) > 0;
+        const hasEmptyState = (await page.getByTestId("bookmarks-empty-state").count()) > 0;
+        return hasCollection || hasEmptyState;
+      },
+      { timeout: 15000 },
+    )
+    .toBeTruthy();
+};
+
+test.describe("Card and Overlay Components", () => {
+  test.describe("BookmarkCard", () => {
+    test("should navigate to bookmarks page", async ({ page }) => {
+      await openPath(page, "/bookmarks");
       await expect(page).toHaveURL(/\/bookmarks/);
     });
 
-    test('thumbnail should not disappear on hover', async ({ page }) => {
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      // Find a bookmark card with an image
-      const bookmarkCard = page.locator('[class*="relative"][class*="rounded"]').first();
-      
-      if (await bookmarkCard.count() > 0) {
-        // Get initial image visibility
-        const image = bookmarkCard.locator('img').first();
-        
-        if (await image.count() > 0) {
-          // Verify image is visible before hover
-          await expect(image).toBeVisible();
-          
-          // Hover over the card
-          await bookmarkCard.hover();
-          
-          // Wait a moment for hover effects
-          await page.waitForTimeout(300);
-          
-          // Verify image is still visible after hover (testing z-index fix)
-          await expect(image).toBeVisible();
-          
-          // Verify image has z-20 class (from PR #204)
-          const imageClass = await image.getAttribute('class');
-          expect(imageClass).toContain('z-20');
-        }
+    test("shows either collection or empty state", async ({ page }) => {
+      await openPath(page, "/bookmarks");
+      await waitForBookmarksSurface(page);
+
+      const hasCollection = (await page.getByTestId("bookmarks-collection").count()) > 0;
+      const hasEmptyState = (await page.getByTestId("bookmarks-empty-state").count()) > 0;
+
+      expect(hasCollection || hasEmptyState).toBeTruthy();
+    });
+
+    test("applies expected layering classes when cards are present", async ({ page }) => {
+      await openPath(page, "/bookmarks");
+      await waitForBookmarksSurface(page);
+
+      const cards = page.locator("[data-testid^='bookmark-card-']");
+      if ((await cards.count()) === 0) {
+        await expect(page.getByTestId("bookmarks-empty-state")).toBeVisible();
+        return;
+      }
+
+      const firstCard = cards.first();
+      await expect(firstCard).toBeVisible();
+
+      const overlay = firstCard.getByTestId("bookmark-card-overlay");
+      await expect(overlay).toBeAttached();
+      await expect(overlay).toHaveClass(/z-30/);
+
+      const image = firstCard.getByTestId("bookmark-card-image");
+      if ((await image.count()) > 0) {
+        await expect(image).toBeVisible();
+        await expect(image).toHaveClass(/z-20/);
       }
     });
 
-    test('gradient overlay should have correct z-index (z-30)', async ({ page }) => {
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      // Find a bookmark card
-      const bookmarkCard = page.locator('[class*="relative"][class*="rounded"]').first();
-      
-      if (await bookmarkCard.count() > 0) {
-        // Find the gradient overlay (should have z-30)
-        const overlay = bookmarkCard.locator('[class*="z-30"]').first();
-        
-        if (await overlay.count() > 0) {
-          // Verify overlay is present
-          await expect(overlay).toBeAttached();
-          
-          // Verify z-30 class is present
-          const overlayClass = await overlay.getAttribute('class');
-          expect(overlayClass).toContain('z-30');
-        }
+    test("opens and closes card action menu when available", async ({ page }) => {
+      await openPath(page, "/bookmarks");
+      await waitForBookmarksSurface(page);
+
+      const actionButton = page
+        .getByRole("button", { name: /card actions|row actions/i })
+        .first();
+
+      if ((await actionButton.count()) === 0) {
+        await expect(page.getByTestId("bookmarks-empty-state")).toBeVisible();
+        return;
       }
+
+      await actionButton.click();
+      await expect(page.locator("[role='menu']").first()).toBeVisible();
+      await page.keyboard.press("Escape");
+    });
+  });
+
+  test.describe("Components Showcase", () => {
+    test("loads component showcase page", async ({ page }) => {
+      await openPath(page, "/components");
+      await expect(page.getByRole("heading", { name: "UI Components Showcase" })).toBeVisible();
     });
 
-    test('should work correctly in guest login mode', async ({ page }) => {
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      // Verify we're on the bookmarks page as guest
+    test("opens and closes dialog", async ({ page }) => {
+      await openPath(page, "/components");
+      await page.getByRole("button", { name: "open-dialog-demo" }).click();
+      await expect(page.getByRole("dialog").first()).toBeVisible();
+      await page.keyboard.press("Escape");
+    });
+
+    test("opens and closes drawer", async ({ page }) => {
+      await openPath(page, "/components");
+      await page.getByRole("button", { name: "open-drawer-demo" }).click();
+      await expect(page.getByRole("dialog").first()).toBeVisible();
+      await page.keyboard.press("Escape");
+    });
+
+    test("opens and closes sheet", async ({ page }) => {
+      await openPath(page, "/components");
+      await page.getByRole("button", { name: "open-sheet-demo" }).click();
+      await expect(page.getByRole("dialog").first()).toBeVisible();
+      await page.keyboard.press("Escape");
+    });
+
+    test("opens and closes popover", async ({ page }) => {
+      await openPath(page, "/components");
+      await page.getByRole("button", { name: "open-popover-demo" }).click();
+      await expect(page.getByText("Popover Title")).toBeVisible();
+      await page.keyboard.press("Escape");
+    });
+
+    test("shows hover card content", async ({ page }) => {
+      await openPath(page, "/components");
+      const trigger = page.getByRole("button", { name: "hovercard-trigger" });
+      await trigger.hover();
+      await expect(page.getByText("User bio and information displayed on hover")).toBeVisible();
+    });
+
+    test("shows tooltip content", async ({ page }) => {
+      await openPath(page, "/components");
+      const trigger = page.getByRole("button", { name: "tooltip-trigger" });
+      await trigger.hover();
+      await expect(page.getByRole("tooltip").getByText("This is tooltip content")).toBeVisible();
+    });
+  });
+
+  test.describe("Responsive + Guest Access", () => {
+    test("bookmarks page works on mobile viewport", async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await openPath(page, "/bookmarks");
       await expect(page).toHaveURL(/\/bookmarks/);
-      
-      // Check if there are any bookmark cards or empty state
-      const hasCards = await page.locator('[class*="relative"][class*="rounded"]').count() > 0;
-      const hasEmptyState = await page.locator('text=/no (bookmarks|items)/i').count() > 0;
-      
-      // Either cards or empty state should be present
-      expect(hasCards || hasEmptyState).toBeTruthy();
     });
 
-    test('card interactions should work (click, hover)', async ({ page }) => {
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      const bookmarkCard = page.locator('[class*="relative"][class*="rounded"]').first();
-      
-      if (await bookmarkCard.count() > 0) {
-        // Test hover interaction
-        await bookmarkCard.hover();
-        await page.waitForTimeout(200);
-        
-        // Verify hover doesn't break the card
-        await expect(bookmarkCard).toBeVisible();
-      }
-    });
-  });
-
-  test.describe('UI Card Components', () => {
-    test('should display cards on component showcase page', async ({ page }) => {
-      await page.goto('/components', { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle', { timeout: 15000 });
-      
-      // Verify we're on the components page
-      await expect(page).toHaveURL(/\/components/);
-      
-      // Look for Card components in the showcase
-      const cards = page.locator('[class*="border"][class*="rounded"]');
-      
-      // Should have multiple cards on showcase page
-      const cardCount = await cards.count();
-      expect(cardCount).toBeGreaterThan(0);
-    });
-
-    test('Card component should have proper styling', async ({ page }) => {
-      await page.goto('/components', { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle', { timeout: 15000 });
-      
-      const card = page.locator('[class*="border"][class*="rounded"]').first();
-      
-      if (await card.count() > 0) {
-        // Verify card is visible
-        await expect(card).toBeVisible();
-        
-        // Check that card has border and rounded corners
-        const cardClass = await card.getAttribute('class');
-        expect(cardClass).toMatch(/border|rounded/);
-      }
-    });
-  });
-
-  test.describe('MeasurementCard', () => {
-    test('should navigate to health page', async ({ page }) => {
-      await page.goto('/health');
-      await page.waitForLoadState('networkidle');
-      
-      // Verify we can access health page as guest
-      await expect(page).toHaveURL(/\/health/);
-    });
-
-    test('should display measurement cards or empty state', async ({ page }) => {
-      await page.goto('/health');
-      await page.waitForLoadState('networkidle');
-      
-      // Check for measurement cards or empty state
-      const hasMeasurements = await page.locator('[class*="border-l"]').count() > 0;
-      const hasEmptyState = await page.locator('text=/no measurements/i').count() > 0;
-      
-      // Either measurements or empty state should be present
-      expect(hasMeasurements || hasEmptyState).toBeTruthy();
-    });
-
-    test('dropdown menu should work on measurement cards', async ({ page }) => {
-      await page.goto('/health');
-      await page.waitForLoadState('networkidle');
-      
-      // Look for a dropdown trigger (three dots menu)
-      const dropdownTrigger = page.getByLabel(/more|actions|menu/i).first();
-      
-      if (await dropdownTrigger.count() > 0) {
-        // Click to open dropdown
-        await dropdownTrigger.click();
-        await page.waitForTimeout(300);
-        
-        // Verify dropdown menu appears
-        const dropdownMenu = page.locator('[role="menu"]');
-        await expect(dropdownMenu).toBeVisible();
-      }
-    });
-  });
-
-  test.describe('Overlay Components', () => {
-    test.describe('HoverCard', () => {
-      test('should display hover card on component showcase', async ({ page }) => {
-        await page.goto('/components');
-        await page.waitForLoadState('networkidle');
-        
-        // Scroll to overlays section
-        await page.locator('text=/overlays.*feedback/i').scrollIntoViewIfNeeded();
-        
-        // Find HoverCard trigger
-        const hoverCardTrigger = page.locator('text=/hover over me/i').first();
-        
-        if (await hoverCardTrigger.count() > 0) {
-          // Verify trigger exists
-          await expect(hoverCardTrigger).toBeVisible();
-          
-          // Hover to trigger HoverCard
-          await hoverCardTrigger.hover();
-          await page.waitForTimeout(500);
-          
-          // Note: HoverCard content may or may not be in DOM depending on implementation
-          // This test verifies the trigger is interactive without making assumptions about content
-        }
-      });
-    });
-
-    test.describe('Dialog', () => {
-      test('should open and close dialog', async ({ page }) => {
-        await page.goto('/components');
-        await page.waitForLoadState('networkidle');
-        
-        // Scroll to dialog section
-        await page.locator('text=/overlays.*feedback/i').scrollIntoViewIfNeeded();
-        
-        // Find dialog trigger button
-        const dialogTrigger = page.getByRole('button', { name: /open dialog|show dialog/i }).first();
-        
-        if (await dialogTrigger.count() > 0) {
-          // Click to open dialog
-          await dialogTrigger.click();
-          await page.waitForTimeout(300);
-          
-          // Verify dialog is visible
-          const dialog = page.locator('[role="dialog"]').first();
-          await expect(dialog).toBeVisible();
-          
-          // Close dialog by clicking close button or backdrop
-          const closeButton = page.getByRole('button', { name: /close/i }).first();
-          if (await closeButton.count() > 0) {
-            await closeButton.click();
-          } else {
-            // Try pressing Escape
-            await page.keyboard.press('Escape');
-          }
-          
-          await page.waitForTimeout(300);
-        }
-      });
-
-      test('dialog should have correct z-index layering', async ({ page }) => {
-        await page.goto('/components');
-        await page.waitForLoadState('networkidle');
-        
-        const dialogTrigger = page.getByRole('button', { name: /open dialog|show dialog/i }).first();
-        
-        if (await dialogTrigger.count() > 0) {
-          await dialogTrigger.click();
-          await page.waitForTimeout(300);
-          
-          const dialog = page.locator('[role="dialog"]').first();
-          
-          if (await dialog.isVisible()) {
-            // Verify dialog overlay is on top
-            const dialogOverlay = page.locator('[data-radix-dialog-overlay]').first();
-            if (await dialogOverlay.count() > 0) {
-              await expect(dialogOverlay).toBeVisible();
-            }
-            
-            // Close dialog
-            await page.keyboard.press('Escape');
-          }
-        }
-      });
-
-      test('dialog should work in guest mode', async ({ page }) => {
-        await page.goto('/components');
-        await page.waitForLoadState('networkidle');
-        
-        // Verify page is accessible and functional as guest
-        await expect(page).toHaveURL(/\/components/);
-      });
-    });
-
-    test.describe('Drawer', () => {
-      test('should open and close drawer', async ({ page }) => {
-        await page.goto('/components');
-        await page.waitForLoadState('networkidle');
-        
-        // Find drawer trigger
-        const drawerTrigger = page.getByRole('button', { name: /open drawer|show drawer/i }).first();
-        
-        if (await drawerTrigger.count() > 0) {
-          // Verify trigger exists
-          await expect(drawerTrigger).toBeVisible();
-          
-          // Open drawer
-          await drawerTrigger.click();
-          await page.waitForTimeout(500);
-          
-          // Note: Drawer implementation may vary (Vaul drawer vs dialog)
-          // This test verifies the trigger is interactive
-          
-          // Close drawer
-          await page.keyboard.press('Escape');
-          await page.waitForTimeout(300);
-        }
-      });
-    });
-
-    test.describe('Sheet', () => {
-      test('should open and close sheet', async ({ page }) => {
-        await page.goto('/components');
-        await page.waitForLoadState('networkidle');
-        
-        // Find sheet trigger
-        const sheetTrigger = page.getByRole('button', { name: /open sheet|show sheet/i }).first();
-        
-        if (await sheetTrigger.count() > 0) {
-          // Open sheet
-          await sheetTrigger.click();
-          await page.waitForTimeout(300);
-          
-          // Verify sheet is visible
-          const sheet = page.locator('[role="dialog"]').first();
-          await expect(sheet).toBeVisible();
-          
-          // Close sheet
-          await page.keyboard.press('Escape');
-          await page.waitForTimeout(300);
-        }
-      });
-    });
-
-    test.describe('Popover', () => {
-      test('should open and close popover', async ({ page }) => {
-        await page.goto('/components');
-        await page.waitForLoadState('networkidle');
-        
-        // Find popover trigger
-        const popoverTrigger = page.getByRole('button', { name: /open popover|popover/i }).first();
-        
-        if (await popoverTrigger.count() > 0) {
-          // Open popover
-          await popoverTrigger.click();
-          await page.waitForTimeout(300);
-          
-          // Close popover by clicking outside or escape
-          await page.keyboard.press('Escape');
-          await page.waitForTimeout(200);
-        }
-      });
-    });
-
-    test.describe('DropdownMenu', () => {
-      test('should open and close dropdown menu', async ({ page }) => {
-        await page.goto('/bookmarks');
-        await page.waitForLoadState('networkidle');
-        
-        // Find dropdown menu trigger (card actions)
-        const dropdownTrigger = page.getByLabel(/card actions|more/i).first();
-        
-        if (await dropdownTrigger.count() > 0) {
-          // Open dropdown
-          await dropdownTrigger.click();
-          await page.waitForTimeout(300);
-          
-          // Verify dropdown menu is visible
-          const dropdownMenu = page.locator('[role="menu"]').first();
-          await expect(dropdownMenu).toBeVisible();
-          
-          // Close dropdown
-          await page.keyboard.press('Escape');
-          await page.waitForTimeout(200);
-        }
-      });
-
-      test('dropdown should have proper z-index', async ({ page }) => {
-        await page.goto('/bookmarks');
-        await page.waitForLoadState('networkidle');
-        
-        const dropdownTrigger = page.getByLabel(/card actions|more/i).first();
-        
-        if (await dropdownTrigger.count() > 0) {
-          await dropdownTrigger.click();
-          await page.waitForTimeout(300);
-          
-          const dropdownMenu = page.locator('[role="menu"]').first();
-          
-          if (await dropdownMenu.isVisible()) {
-            // Dropdown should be visible and on top
-            await expect(dropdownMenu).toBeVisible();
-            
-            // Close dropdown
-            await page.keyboard.press('Escape');
-          }
-        }
-      });
-    });
-
-    test.describe('Tooltip', () => {
-      test('should display tooltip on hover', async ({ page }) => {
-        await page.goto('/components');
-        await page.waitForLoadState('networkidle');
-        
-        // Find an element with tooltip
-        const tooltipTrigger = page.locator('[data-radix-tooltip-trigger]').first();
-        
-        if (await tooltipTrigger.count() > 0) {
-          // Verify trigger exists
-          await expect(tooltipTrigger).toBeVisible();
-          
-          // Hover to show tooltip
-          await tooltipTrigger.hover();
-          await page.waitForTimeout(500);
-          
-          // Note: Tooltip visibility depends on implementation and delay settings
-          // This test verifies the trigger is interactive
-        }
-      });
-    });
-  });
-
-  test.describe('Responsive Testing', () => {
-    test('cards should display correctly on mobile', async ({ page }) => {
-      // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
-      
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      // Verify page loads on mobile
-      await expect(page).toHaveURL(/\/bookmarks/);
-      
-      // Check if cards are visible (if any exist)
-      const cards = page.locator('[class*="relative"][class*="rounded"]');
-      const cardCount = await cards.count();
-      
-      // Either cards exist or empty state is shown
-      if (cardCount > 0) {
-        const firstCard = cards.first();
-        await expect(firstCard).toBeVisible();
-      }
-    });
-
-    test('overlays should work on mobile', async ({ page }) => {
-      // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
-      
-      await page.goto('/components');
-      await page.waitForLoadState('networkidle');
-      
-      // Verify page is accessible on mobile
-      await expect(page).toHaveURL(/\/components/);
-    });
-
-    test('touch interactions should work on mobile', async ({ page }) => {
-      // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
-      
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      const card = page.locator('[class*="relative"][class*="rounded"]').first();
-      
-      if (await card.count() > 0) {
-        // Tap the card (mobile touch)
-        await card.tap();
-        await page.waitForTimeout(300);
-        
-        // Card should handle touch interaction
-        await expect(card).toBeVisible();
-      }
-    });
-  });
-
-  test.describe('Guest Login Mode', () => {
-    test('should be able to access all pages as guest', async ({ page }) => {
-      // Dashboard
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+    test("guest can access major routes", async ({ page }) => {
+      await openPath(page, "/dashboard");
       await expect(page).toHaveURL(/\/dashboard/);
-      
-      // Bookmarks
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
+
+      await openPath(page, "/bookmarks");
       await expect(page).toHaveURL(/\/bookmarks/);
-      
-      // Health
-      await page.goto('/health');
-      await page.waitForLoadState('networkidle');
+
+      await openPath(page, "/health");
       await expect(page).toHaveURL(/\/health/);
-      
-      // Components Showcase
-      await page.goto('/components');
-      await page.waitForLoadState('networkidle');
+
+      await openPath(page, "/components");
       await expect(page).toHaveURL(/\/components/);
-    });
-
-    test('guest mode should not break z-index layering', async ({ page }) => {
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      // Verify basic functionality works
-      const cards = page.locator('[class*="relative"][class*="rounded"]');
-      const hasCards = await cards.count() > 0;
-      
-      if (hasCards) {
-        const firstCard = cards.first();
-        
-        // Hover over card
-        await firstCard.hover();
-        await page.waitForTimeout(300);
-        
-        // Card should still be visible
-        await expect(firstCard).toBeVisible();
-      }
-    });
-
-    test('guest permissions should be applied correctly', async ({ page }) => {
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      // Guest users may have limited functionality
-      // But page should still load correctly
-      await expect(page).toHaveURL(/\/bookmarks/);
-    });
-  });
-
-  test.describe('Visual Regression (Optional)', () => {
-    test('bookmark card visual snapshot', async ({ page }) => {
-      await page.goto('/bookmarks');
-      await page.waitForLoadState('networkidle');
-      
-      const card = page.locator('[class*="relative"][class*="rounded"]').first();
-      
-      if (await card.count() > 0) {
-        // Take screenshot for visual regression
-        await card.screenshot({ 
-          path: 'screenshots/bookmark-card.png',
-          animations: 'disabled'
-        });
-      }
-    });
-
-    test('component showcase visual snapshot', async ({ page }) => {
-      await page.goto('/components');
-      await page.waitForLoadState('networkidle');
-      
-      // Take full page screenshot
-      await page.screenshot({ 
-        path: 'screenshots/components-showcase.png',
-        fullPage: true,
-        animations: 'disabled'
-      });
     });
   });
 });

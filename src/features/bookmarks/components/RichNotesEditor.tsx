@@ -374,6 +374,7 @@ export const RichNotesEditor = ({
                 );
 
               case 'numbered':
+              {
                 // Calculate the index for numbered items
                 const numberedIndex = notesData.blocks
                   .slice(0, index)
@@ -392,6 +393,7 @@ export const RichNotesEditor = ({
                     autoFocus={autoFocus}
                   />
                 );
+              }
 
               default:
                 return null;

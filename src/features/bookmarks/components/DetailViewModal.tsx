@@ -49,6 +49,11 @@ interface DetailViewModalProps {
   item: Item | null;
   onUpdate: () => void;
 }
+
+type DetailItemRow = Omit<Item, "embedding"> & {
+  embedding: string | number[] | null;
+};
+
 export const DetailViewModal = ({
   open,
   onOpenChange,
@@ -145,7 +150,7 @@ export const DetailViewModal = ({
   // Fetch related items (same tag, excluding current)
   useEffect(() => {
     const fetchRelated = async () => {
-      if (!open || !item) {
+      if (!open || !itemId) {
         setRelatedItems([]);
         return;
       }
@@ -155,12 +160,12 @@ export const DetailViewModal = ({
         const {
           data,
           error
-        } = await supabase.from(SUPABASE_ITEMS_TABLE).select("*").contains("tags", [primaryTag]).neq("id", item.id).is("deleted_at", null).order("created_at", {
+        } = await supabase.from(SUPABASE_ITEMS_TABLE).select("*").contains("tags", [primaryTag]).neq("id", itemId).is("deleted_at", null).order("created_at", {
           ascending: false
         }).limit(10); // Fetch a few more to filter if needed
 
         if (error) throw error;
-        const rawItems = (data ?? []) as any[];
+        const rawItems = (data ?? []) as DetailItemRow[];
         const normalized: Item[] = rawItems.map(row => ({
           ...row,
           tags: row.tags ?? [],
@@ -168,7 +173,9 @@ export const DetailViewModal = ({
           summary: row.summary ?? null,
           user_notes: row.user_notes ?? null,
           content: row.content ?? null,
-          embedding: typeof row.embedding === "string" ? JSON.parse(row.embedding) : row.embedding ?? null
+          embedding: typeof row.embedding === "string"
+            ? (JSON.parse(row.embedding) as number[])
+            : row.embedding ?? null
         }));
         const withSigned = await generateSignedUrlsForItems(normalized);
         setRelatedItems(withSigned);

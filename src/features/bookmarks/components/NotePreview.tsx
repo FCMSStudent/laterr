@@ -90,6 +90,7 @@ export const NotePreview = memo(({
               );
 
             case 'heading':
+            {
               const HeadingTag = `h${block.level || 2}` as keyof JSX.IntrinsicElements;
               return (
                 <HeadingTag 
@@ -104,6 +105,7 @@ export const NotePreview = memo(({
                   {block.content}
                 </HeadingTag>
               );
+            }
 
             case 'bullet':
               return (

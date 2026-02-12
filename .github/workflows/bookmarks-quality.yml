@@ -1,0 +1,65 @@
+name: Bookmarks Quality
+
+on:
+  pull_request:
+    paths:
+      - "src/features/bookmarks/**"
+      - "src/shared/lib/supabase-utils.ts"
+      - "src/lib/supabase/client.ts"
+      - "tests/bookmarks/**"
+      - "tests/cards-overlays.spec.ts"
+      - "tests/trash-flow.spec.ts"
+      - "tests/setup/**"
+      - "tests/helpers/**"
+      - "vitest.config.ts"
+      - "playwright.config.ts"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+
+jobs:
+  bookmarks-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm build
+
+      - name: Bookmark lint
+        run: pnpm run lint:bookmarks
+
+      - name: Bookmark unit tests with coverage
+        run: pnpm run test:bookmarks:unit -- --coverage
+
+      - name: Bookmark Playwright suite
+        run: pnpm run test:bookmarks:e2e
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            playwright-report
+            test-results
