@@ -197,16 +197,16 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     console.log(`✅ Fixed N+1 storage removal in ${opt.file}`);
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                // Try a very safe useMemo wrap for simple filter/sort/reduce assignments
-                const match = line.match(/(const|let|var)\s+(\w+)\s*=\s*(\w+)\.(filter|sort|reduce)\(([^)]+)\);?$/);
-                if (match && content.includes('useMemo')) {
-                    const [, decl, varName, sourceVar, op, args] = match;
-                    if (!line.includes('useMemo')) {
-                         lines[lineIdx] = `${decl} ${varName} = useMemo(() => ${sourceVar}.${op}(${args}), [${sourceVar}]);`;
-                         fs.writeFileSync(opt.file, lines.join('\n'));
-                         console.log(`✅ Applied useMemo fix for ${varName} in ${opt.file}`);
-                    }
-                }
+                // NOTE: Disabled automated useMemo rewrite.
+                // The previous implementation attempted to wrap simple filter/sort/reduce
+                // assignments in useMemo using a regex-based transform, but this was unsafe:
+                // - it did not ensure useMemo was correctly imported/in scope
+                // - it hard-coded a dependency array that could miss dependencies
+                // To avoid introducing subtle bugs, we only log a message here and expect
+                // developers to apply any useMemo optimizations manually.
+                console.log(
+                    `Skipping automated React useMemo fix in ${opt.file}:${opt.line} - please review and apply useMemo manually if appropriate.`
+                );
             }
         } catch (e) {
             console.error(`Failed to apply fix in ${opt.file}:`, e);
