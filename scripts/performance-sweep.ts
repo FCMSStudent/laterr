@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Performance thresholds
 const API_RESPONSE_THRESHOLD_MS = 500;
+const APPLY_FIXES = process.argv.includes('--apply-fixes');
 
 interface OptimizationResult {
   category: string;
@@ -75,6 +76,22 @@ function scanForN1Queries(): OptimizationResult[] {
       }
     });
 
+    // 4. Supabase queries in map
+    const supabaseInMap = execSync('grep -rnE "\\.map\\(.*supabase\\.from" src/ || true').toString();
+    if (supabaseInMap) {
+      supabaseInMap.split('\n').filter(Boolean).forEach(line => {
+        const [file, lineNum] = line.split(':');
+        results.push({
+          category: 'backend_api',
+          description: 'Detected Supabase query inside .map() (N+1)',
+          impact: 'Executes one query per item in the collection',
+          file,
+          line: lineNum,
+          suggestedFix: 'Use .in() filter to batch the query'
+        });
+      });
+    }
+
   } catch (e) {
     console.error('Error scanning for N+1:', e);
   }
@@ -96,16 +113,24 @@ function scanForMissingMemo(): OptimizationResult[] {
             const lines = content.split('\n');
             const lineIdx = parseInt(lineNum) - 1;
 
-            // Look back up to 5 lines for useMemo
-            let isInsideMemo = false;
-            for (let i = Math.max(0, lineIdx - 5); i <= lineIdx; i++) {
-                if (lines[i].includes('useMemo')) {
-                    isInsideMemo = true;
+            // Look back up to 100 lines for useMemo or useCallback or useEffect or function start
+            let isInsideHookOrFunction = false;
+            for (let i = Math.max(0, lineIdx - 100); i <= lineIdx; i++) {
+                if (i < 0) continue;
+                if (lines[i].includes('useMemo') ||
+                    lines[i].includes('useCallback') ||
+                    lines[i].includes('useEffect') ||
+                    lines[i].includes('.map(') ||
+                    lines[i].includes('.forEach(') ||
+                    lines[i].includes('handle') || // Heuristic for event handlers
+                    lines[i].match(/(const|let|var)\s+\w+\s*=\s*(async\s*)?\([^)]*\)\s*=>/) // Arrow function
+                ) {
+                    isInsideHookOrFunction = true;
                     break;
                 }
             }
 
-            if (!isInsideMemo) {
+            if (!isInsideHookOrFunction) {
                 results.push({
                     category: 'frontend_react',
                     description: `Detected expensive operation (${lines[lineIdx].includes('filter') ? 'filter' : 'sort/reduce'}) outside useMemo`,
@@ -125,6 +150,10 @@ function scanForMissingMemo(): OptimizationResult[] {
         const match = line.match(/<([A-Z][a-zA-Z0-9]*)/);
         if (match && file.endsWith('.tsx')) {
             const componentName = match[1];
+            // Skip common Shadcn UI components that are already fast or don't benefit much from memoization
+            const skipComponents = ['Button', 'Badge', 'Icon', 'Separator', 'Skeleton', 'Avatar'];
+            if (skipComponents.includes(componentName)) return;
+
             results.push({
                 category: 'frontend_react',
                 description: `Component <${componentName}> used in list mapping`,
@@ -140,6 +169,49 @@ function scanForMissingMemo(): OptimizationResult[] {
     console.error('Error scanning for missing memo:', e);
   }
   return results;
+}
+
+/**
+ * Applies automated fixes where safe
+ */
+function applyFixes(optimizations: OptimizationResult[]) {
+    if (!APPLY_FIXES) return;
+
+    console.log('Applying automated fixes...');
+    optimizations.forEach(opt => {
+        if (!opt.file || !opt.line) return;
+
+        try {
+            const content = fs.readFileSync(opt.file, 'utf8');
+            const lines = content.split('\n');
+            const lineIdx = parseInt(opt.line) - 1;
+            const line = lines[lineIdx];
+
+            if (opt.category === 'backend_api' && opt.description.includes('N+1 storage removal')) {
+                // Replace items.map(item => removeItemStorageObjects(item)) with removeMultipleItemsStorageObjects(items)
+                const match = line.match(/(\w+)\.map\(\w+\s*=>\s*removeItemStorageObjects\(\w+\)\)/);
+                if (match) {
+                    const collectionName = match[1];
+                    lines[lineIdx] = line.replace(match[0], `removeMultipleItemsStorageObjects(${collectionName})`);
+                    fs.writeFileSync(opt.file, lines.join('\n'));
+                    console.log(`✅ Fixed N+1 storage removal in ${opt.file}`);
+                }
+            } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
+                // NOTE: Disabled automated useMemo rewrite.
+                // The previous implementation attempted to wrap simple filter/sort/reduce
+                // assignments in useMemo using a regex-based transform, but this was unsafe:
+                // - it did not ensure useMemo was correctly imported/in scope
+                // - it hard-coded a dependency array that could miss dependencies
+                // To avoid introducing subtle bugs, we only log a message here and expect
+                // developers to apply any useMemo optimizations manually.
+                console.log(
+                    `Skipping automated React useMemo fix in ${opt.file}:${opt.line} - please review and apply useMemo manually if appropriate.`
+                );
+            }
+        } catch (e) {
+            console.error(`Failed to apply fix in ${opt.file}:`, e);
+        }
+    });
 }
 
 /**
@@ -335,6 +407,10 @@ async function main() {
   const benchmarks = await runBenchmarks();
 
   logResults(allIssues, benchmarks);
+
+  if (APPLY_FIXES) {
+      applyFixes(allIssues);
+  }
 
   if (process.env.SLACK_WEBHOOK_URL && !process.env.GITHUB_ACTIONS) {
       await sendSlackNotification({

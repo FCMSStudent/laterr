@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui";
 import { Button } from "@/shared/components/ui";
 import { Badge } from "@/shared/components/ui";
@@ -36,10 +37,13 @@ export const MeasurementDetailModal = ({
   );
 
   // Calculate stats
-  const values = allMeasurements.map(m => extractNumericValue(m.value));
-  const average = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-  const min = values.length > 0 ? Math.min(...values) : 0;
-  const max = values.length > 0 ? Math.max(...values) : 0;
+  const { average, min, max } = React.useMemo(() => {
+    const values = allMeasurements.map(m => extractNumericValue(m.value));
+    const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    const mn = values.length > 0 ? Math.min(...values) : 0;
+    const mx = values.length > 0 ? Math.max(...values) : 0;
+    return { average: avg, min: mn, max: mx };
+  }, [allMeasurements]);
 
   // Calculate trend
   const getTrend = () => {
