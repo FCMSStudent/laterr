@@ -426,14 +426,14 @@ export const BookmarkCard = memo(({
             <categoryBadge.icon className="h-16 w-16 text-muted-foreground/30" />
           </div>}
 
-        {/* Dominant color gradient overlay - extended 60% coverage for readability */}
+        {/* Gradient-only transition zone – no blur, feathers color upward */}
         <div
           data-testid="bookmark-card-overlay"
           className="absolute inset-0 pointer-events-none z-30"
           style={{
             background: dominantColor
-              ? `linear-gradient(to top, ${toRgba(dominantColor, 0.97)} 0%, ${toRgba(dominantColor, 0.85)} 18%, ${toRgba(dominantColor, 0.55)} 35%, ${toRgba(dominantColor, 0.25)} 50%, transparent 62%)`
-              : 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 22%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.12) 55%, transparent 65%)',
+              ? `linear-gradient(to top, ${toRgba(dominantColor, 0.95)} 0%, ${toRgba(dominantColor, 0.80)} 12%, ${toRgba(dominantColor, 0.50)} 28%, ${toRgba(dominantColor, 0.20)} 42%, ${toRgba(dominantColor, 0.08)} 55%, transparent 68%)`
+              : 'linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.60) 15%, rgba(0,0,0,0.30) 35%, rgba(0,0,0,0.08) 52%, transparent 68%)',
             willChange: 'opacity'
           }}
         />
@@ -445,13 +445,15 @@ export const BookmarkCard = memo(({
           </div>
         </div>}
 
-        {/* Frosted glass text panel */}
+        {/* Frosted glass text panel – mask fades the blur at top edge */}
         <div className="absolute bottom-0 left-0 right-0 z-40">
-          <div className="px-5 pb-5 pt-4 backdrop-blur-xl space-y-2"
+          <div className="px-5 pb-5 pt-6 backdrop-blur-md space-y-2"
             style={{
               background: dominantColor
-                ? `linear-gradient(to top, ${toRgba(dominantColor, 0.55)} 0%, ${toRgba(dominantColor, 0.15)} 100%)`
-                : 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.08) 100%)',
+                ? `linear-gradient(to top, ${toRgba(dominantColor, 0.40)} 0%, ${toRgba(dominantColor, 0.10)} 70%, transparent 100%)`
+                : 'linear-gradient(to top, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.05) 70%, transparent 100%)',
+              maskImage: 'linear-gradient(to top, black 55%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to top, black 55%, transparent 100%)',
             }}
           >
             {/* Category label */}
