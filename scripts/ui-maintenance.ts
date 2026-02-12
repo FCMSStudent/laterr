@@ -63,8 +63,7 @@ function scanInconsistentButtons(): UIIssue[] {
       const buttonRegex = /<button[\s\S]*?>/g;
       let match;
       while ((match = buttonRegex.exec(content)) !== null) {
-        // Skip if it's in a comment or a string that's clearly not a tag
-        const tag = match[0];
+        // Note: this is a simple text scan and may also flag <button> in comments or string literals.
         const lineNum = content.substring(0, match.index).split('\n').length;
         issues.push({
           type: 'consistency',
