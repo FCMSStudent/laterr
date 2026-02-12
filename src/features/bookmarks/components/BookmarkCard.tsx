@@ -1,5 +1,6 @@
 import { Badge } from "@/shared/components/ui";
 import { Link2, FileText, Image as ImageIcon, MoreVertical, Trash2, Edit, Play, FileType, ArrowUpRight, BookOpen, ShoppingBag, Eye, RotateCcw } from "lucide-react";
+import { NotePreview } from "./NotePreview";
 import type { ItemType } from "@/features/bookmarks/types";
 import { AspectRatio } from "@/shared/components/ui";
 import { Checkbox } from "@/shared/components/ui";
@@ -161,8 +162,8 @@ const ensureDark = (color: string): string => {
   // Perceived brightness (0-255): quick luminance approximation
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
   // Target max brightness ~80 (out of 255) for good contrast with white text
-  if (brightness > 80) {
-    const scale = 80 / brightness;
+   if (brightness > 55) {
+    const scale = 55 / brightness;
     r = Math.round(r * scale);
     g = Math.round(g * scale);
     b = Math.round(b * scale);
@@ -345,9 +346,19 @@ export const BookmarkCard = memo(({
         <div className="p-5 flex flex-col justify-between min-h-[220px]">
           {/* Note content preview */}
           <div className="flex-1 overflow-hidden">
-            <p className="text-foreground/80 text-sm leading-relaxed line-clamp-10">
-              {summary || title}
-            </p>
+            {content ? (
+              <NotePreview
+                content={content}
+                maxLines={6}
+                variant="compact"
+                showProgress={true}
+                className="p-0"
+              />
+            ) : (
+              <p className="text-foreground/80 text-sm leading-relaxed line-clamp-10">
+                {summary || title}
+              </p>
+            )}
           </div>
 
           {/* Bottom section */}
@@ -438,8 +449,17 @@ export const BookmarkCard = memo(({
             data-testid="bookmark-card-image"
             src={previewImageUrl} 
             alt="" 
-            className={cn("absolute inset-0 w-full h-full object-cover z-20", imageLoaded ? "opacity-100" : "opacity-0")} 
-            style={{ willChange: 'opacity' }}
+           className={cn(
+              "absolute inset-0 w-full h-full z-20",
+              imageLoaded ? "opacity-100" : "opacity-0",
+              (type === 'document' || type === 'file') ? "object-contain" : "object-cover"
+            )} 
+            style={{
+              willChange: 'opacity',
+              backgroundColor: (type === 'document' || type === 'file')
+                ? (dominantColor ? toRgba(dominantColor, 0.15) : 'hsl(220 15% 12%)')
+                : undefined
+            }}
             onLoad={() => setImageLoaded(true)} 
             onError={() => setImageError(true)} 
           />
@@ -492,13 +512,15 @@ export const BookmarkCard = memo(({
             </span>
 
             {/* Title */}
-            <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 drop-shadow-sm">
+            <h3 className="font-bold text-white text-lg leading-tight line-clamp-2 drop-shadow-sm"
+              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
               {title}
             </h3>
 
             {/* Summary/description */}
             {summary && (
-              <p className="text-white/75 text-[13px] leading-relaxed line-clamp-2 font-light">
+              <p className="text-white/75 text-[13px] leading-relaxed line-clamp-2 font-light"
+                style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
                 {summary}
               </p>
             )}
