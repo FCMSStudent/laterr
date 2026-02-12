@@ -42,7 +42,9 @@ function scanForN1Queries(): OptimizationResult[] {
     const asyncLoops = execSync('grep -rnE "\\.(map|forEach)\\(async" src/ || true').toString();
     if (asyncLoops) {
       asyncLoops.split('\n').filter(Boolean).forEach(line => {
-        const [file, lineNum] = line.split(':');
+        const parts = line.split(':');
+        if (parts.length < 2) return;
+        const [file, lineNum] = parts;
         if (!file.includes('node_modules') && !file.includes('.test.')) {
           results.push({
             category: 'backend_api',
@@ -53,6 +55,54 @@ function scanForN1Queries(): OptimizationResult[] {
           });
         }
       });
+    }
+
+    // 2b. Await inside for/while loops
+    const awaitInLoops = execSync('grep -rnE "(for|while)\\s*\\(" src/ -A 10 | grep "await" || true').toString();
+    if (awaitInLoops) {
+        // This is a bit noisy due to -A 10, so we strictly parse grep headers (file:line:...)
+        const lines = awaitInLoops.split('\n');
+        lines.forEach(rawLine => {
+            const line = rawLine.trim();
+            if (!line) {
+                return;
+            }
+            // Expect standard grep -n output: filename:lineNumber:matchedText
+            const match = line.match(/^([^:]+):([0-9]+):/);
+            if (!match) {
+                return;
+            }
+            const [, file, lineNum] = match;
+            if (!file.endsWith('.ts') && !file.endsWith('.tsx')) {
+                return;
+            }
+            if (file.includes('node_modules') || file.includes('.test.')) {
+                return;
+            }
+            results.push({
+                category: 'backend_api',
+                description: 'Detected await inside for/while loop (Potential N+1)',
+                impact: 'Sequential execution of async operations; consider batching',
+                file,
+                line: lineNum
+            });
+        });
+    }
+
+    // 2c. createSignedUrl in loops specifically
+    const signedUrlInLoops = execSync('grep -rnE "\\.map\\(.*createSignedUrl" src/ || true').toString();
+    if (signedUrlInLoops) {
+        signedUrlInLoops.split('\n').filter(Boolean).forEach(line => {
+            const [file, lineNum] = line.split(':');
+            results.push({
+                category: 'backend_api',
+                description: 'Detected createSignedUrl inside .map()',
+                impact: 'High network overhead; use createSignedUrls (batched) instead',
+                file,
+                line: lineNum,
+                suggestedFix: 'Use createSignedUrls for batching'
+            });
+        });
     }
 
     // 3. Supabase calls inside loops (Heuristic)
@@ -112,25 +162,30 @@ function scanForMissingMemo(): OptimizationResult[] {
             const content = fs.readFileSync(file, 'utf8');
             const lines = content.split('\n');
             const lineIdx = parseInt(lineNum) - 1;
+            if (isNaN(lineIdx) || lineIdx < 0) return;
 
-            // Look back up to 100 lines for useMemo or useCallback or useEffect or function start
-            let isInsideHookOrFunction = false;
-            for (let i = Math.max(0, lineIdx - 100); i <= lineIdx; i++) {
-                if (i < 0) continue;
-                if (lines[i].includes('useMemo') ||
-                    lines[i].includes('useCallback') ||
-                    lines[i].includes('useEffect') ||
-                    lines[i].includes('.map(') ||
-                    lines[i].includes('.forEach(') ||
-                    lines[i].includes('handle') || // Heuristic for event handlers
-                    lines[i].match(/(const|let|var)\s+\w+\s*=\s*(async\s*)?\([^)]*\)\s*=>/) // Arrow function
-                ) {
-                    isInsideHookOrFunction = true;
+            // Look back up to find if we are inside a hook or the return statement
+            let isInsideHook = false;
+            let isInsideReturn = false;
+
+            for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
+                const l = lines[i];
+
+                if (l.includes('return (') || l.trim().startsWith('return ')) {
+                    isInsideReturn = true;
+                }
+
+                if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
+                    isInsideHook = true;
+                    break;
+                }
+
+                if (l.includes('export const') || l.includes('function ')) {
                     break;
                 }
             }
 
-            if (!isInsideHookOrFunction) {
+            if (!isInsideHook) {
                 results.push({
                     category: 'frontend_react',
                     description: `Detected expensive operation (${lines[lineIdx].includes('filter') ? 'filter' : 'sort/reduce'}) outside useMemo`,
@@ -150,17 +205,72 @@ function scanForMissingMemo(): OptimizationResult[] {
         const match = line.match(/<([A-Z][a-zA-Z0-9]*)/);
         if (match && file.endsWith('.tsx')) {
             const componentName = match[1];
-            // Skip common Shadcn UI components that are already fast or don't benefit much from memoization
-            const skipComponents = ['Button', 'Badge', 'Icon', 'Separator', 'Skeleton', 'Avatar'];
+            // Skip common components that are already fast or don't benefit much from memoization
+            const skipComponents = [
+                'Button', 'Badge', 'Icon', 'Separator', 'Skeleton', 'Avatar',
+                'ItemCardSkeleton', 'SkeletonCard', 'CardSkeleton', 'Loader2'
+            ];
+            if (skipComponents.includes(componentName)) return;
+
+            // Check if component is likely memoized by searching for memo( in its source file
+            // First we need to find the file where it's defined. This is hard with grep,
+            // so we'll just check if it's imported from a local file and then check that file.
+            let isMemoized = false;
+            try {
+                const importLine = execSync(`grep -rnE "import.*${componentName}.*from" ${file} || true`).toString();
+                if (importLine) {
+                    const pathMatch = importLine.match(/from\s+["'](.+)["']/);
+                    if (pathMatch) {
+                        const importPath = pathMatch[1];
+                        let resolvedPath: string | null = null;
+                        if (importPath.startsWith('@/')) {
+                            resolvedPath = importPath.replace('@/', 'src/') + '.tsx';
+                        } else if (importPath.startsWith('.')) {
+                            resolvedPath = path.join(path.dirname(file), importPath) + '.tsx';
+                        }
+
+                        if (resolvedPath && fs.existsSync(resolvedPath)) {
+                            const def = fs.readFileSync(resolvedPath, 'utf8');
+                            if (def.includes('memo(') || def.includes('React.memo(')) {
+                                isMemoized = true;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignore errors during local file check
+            }
+
+            if (!isMemoized) {
+                results.push({
+                    category: 'frontend_react',
+                    description: `Component <${componentName}> used in list mapping`,
+                    impact: 'May cause redundant re-renders if not memoized',
+                    file,
+                    line: lineNum,
+                    suggestedFix: `Check if <${componentName}> is memoized`
+                });
+            }
+        }
+    });
+
+    // 3. Arrow functions passed as props to components (Unnecessary re-renders)
+    const arrowProps = execSync('grep -rnE "<[A-Z][a-zA-Z0-9]*[^>]*\\w+\\s*=\\s*\\{\\s*\\([^)]*\\)\\s*=>" src/ || true').toString();
+    arrowProps.split('\n').filter(Boolean).forEach(line => {
+        const [file, lineNum] = line.split(':');
+        const match = line.match(/<([A-Z][a-zA-Z0-9]*)/);
+        if (match && file.endsWith('.tsx') && !file.includes('.test.')) {
+            const componentName = match[1];
+            const skipComponents = ['Button', 'Badge', 'Icon', 'Separator', 'Skeleton', 'Avatar', 'Loader2', 'TabsTrigger', 'TabsList'];
             if (skipComponents.includes(componentName)) return;
 
             results.push({
                 category: 'frontend_react',
-                description: `Component <${componentName}> used in list mapping`,
-                impact: 'May cause redundant re-renders if not memoized',
+                description: `Detected inline arrow function passed to <${componentName}>`,
+                impact: 'Causes re-render even if component is memoized',
                 file,
                 line: lineNum,
-                suggestedFix: `Check if <${componentName}> is memoized`
+                suggestedFix: 'Wrap in useCallback'
             });
         }
     });
@@ -197,15 +307,12 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     console.log(`✅ Fixed N+1 storage removal in ${opt.file}`);
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                // NOTE: Disabled automated useMemo rewrite.
-                // The previous implementation attempted to wrap simple filter/sort/reduce
-                // assignments in useMemo using a regex-based transform, but this was unsafe:
-                // - it did not ensure useMemo was correctly imported/in scope
-                // - it hard-coded a dependency array that could miss dependencies
-                // To avoid introducing subtle bugs, we only log a message here and expect
-                // developers to apply any useMemo optimizations manually.
+                // NOTE: Automated useMemo rewrite is intentionally disabled for safety.
+                // Wrapping filter/sort/reduce in useMemo requires accurate dependency tracking.
+                // Heuristic-based dependency arrays can easily lead to stale closure bugs.
+                // We provide the recommendation, but require manual developer implementation.
                 console.log(
-                    `Skipping automated React useMemo fix in ${opt.file}:${opt.line} - please review and apply useMemo manually if appropriate.`
+                    `Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`
                 );
             }
         } catch (e) {
@@ -220,20 +327,24 @@ function applyFixes(optimizations: OptimizationResult[]) {
 function reviewRecentMerges(): OptimizationResult[] {
     const results: OptimizationResult[] = [];
     try {
-        const merges = execSync('git log --merges --since="24 hours ago" --pretty=format:"%h %s" || true').toString();
+        const lookback = process.env.GITHUB_ACTIONS ? "24 hours ago" : "7 days ago";
+        const merges = execSync(`git log --merges --since="${lookback}" --pretty=format:"%h %s" || true`).toString();
         if (merges) {
             merges.split('\n').filter(Boolean).forEach(merge => {
-                const [hash, ...msgParts] = merge.split(' ');
-                const msg = msgParts.join(' ');
+                const parts = merge.split(' ');
+                if (parts.length < 2) return;
+                const hash = parts[0];
+                const msg = parts.slice(1).join(' ');
 
                 // Scan the diff for performance-related changes
                 const diff = execSync(`git diff ${hash}^..${hash} || true`).toString();
                 if (diff.includes('useEffect') || diff.includes('supabase') || diff.includes('.map') ||
+                    diff.includes('useState') || diff.includes('useCallback') ||
                     msg.toLowerCase().includes('perf') || msg.toLowerCase().includes('fix')) {
                     results.push({
                         category: 'process',
                         description: `Recent merge "${msg}" contains potential performance impact`,
-                        impact: 'Changes in useEffect or API patterns should be reviewed',
+                        impact: 'Changes in hooks or API patterns should be reviewed',
                         file: hash
                     });
                 }
@@ -258,17 +369,29 @@ async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: 
 
     try {
         const supabase = createClient(url, key);
-        const start = Date.now();
-        // Perform a very simple query to measure latency
-        const { error } = await supabase.from('items').select('id').limit(1);
-        const end = Date.now();
+        const tables = ['items', 'subscriptions', 'health_measurements'];
+        let totalLatency = 0;
+        let successCount = 0;
 
-        if (error) {
-            console.warn('Benchmark query failed:', error.message);
+        for (const table of tables) {
+            const start = Date.now();
+            const { error } = await supabase.from(table).select('id').limit(1);
+            const end = Date.now();
+
+            if (!error) {
+                totalLatency += (end - start);
+                successCount++;
+            }
+        }
+
+        if (successCount === 0) {
             return { apiResponseTimeMs: 0, status: 'failed' };
         }
 
-        return { apiResponseTimeMs: end - start, status: 'success' };
+        return {
+            apiResponseTimeMs: Math.round(totalLatency / successCount),
+            status: 'success'
+        };
     } catch (e) {
         console.error('Benchmark error:', e);
         return { apiResponseTimeMs: 0, status: 'error' };
