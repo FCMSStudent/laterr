@@ -2,6 +2,14 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+const COLOR_FIX_MAP: Record<string, string> = {
+  '#3b82f6': 'hsl(var(--primary))',
+  '#ef4444': 'hsl(var(--destructive))',
+  '#10b981': 'hsl(var(--success))',
+  '#f59e0b': 'hsl(var(--warning))',
+  '#3b82f7': 'hsl(var(--primary))', // Common slight variation
+};
+
 interface UIIssue {
   type: 'accessibility' | 'styling' | 'consistency';
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -44,6 +52,79 @@ function scanMissingAlt(): UIIssue[] {
 }
 
 /**
+ * Scans for raw <button> tags instead of using the standard Button component
+ */
+function scanInconsistentButtons(): UIIssue[] {
+  const issues: UIIssue[] = [];
+  try {
+    const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+      const buttonRegex = /<button[\s\S]*?>/g;
+      let match;
+      while ((match = buttonRegex.exec(content)) !== null) {
+        // Note: this is a simple text scan and may also flag <button> in comments or string literals.
+        const lineNum = content.substring(0, match.index).split('\n').length;
+        issues.push({
+          type: 'consistency',
+          severity: 'low',
+          description: 'Raw <button> tag used; consider using the standard Button component',
+          file,
+          line: lineNum,
+          autoFixable: false
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Error scanning for inconsistent buttons:', e);
+  }
+  return issues;
+}
+
+/**
+ * Scans for hardcoded pixel values or fonts in Tailwind classes
+ */
+function scanInconsistentStyles(): UIIssue[] {
+  const issues: UIIssue[] = [];
+  try {
+    // Detect hardcoded pixel values in tailwind classes like px-[13px]
+    const pixelOutput = execSync('grep -rn "\\[[0-9]\\+px\\]" src/ --include="*.tsx" || true').toString();
+    if (pixelOutput) {
+      pixelOutput.split('\n').filter(Boolean).forEach(line => {
+        const [file, lineNum, ...rest] = line.split(':');
+        issues.push({
+          type: 'styling',
+          severity: 'low',
+          description: `Hardcoded pixel value found in Tailwind class: ${rest.join(':').trim()}`,
+          file,
+          line: parseInt(lineNum),
+          autoFixable: false
+        });
+      });
+    }
+
+    // Detect hardcoded fonts
+    const fontOutput = execSync('grep -rn "font-\\[" src/ --include="*.tsx" || true').toString();
+    if (fontOutput) {
+      fontOutput.split('\n').filter(Boolean).forEach(line => {
+        const [file, lineNum, ...rest] = line.split(':');
+        issues.push({
+          type: 'styling',
+          severity: 'low',
+          description: `Hardcoded font found: ${rest.join(':').trim()}`,
+          file,
+          line: parseInt(lineNum),
+          autoFixable: false
+        });
+      });
+    }
+  } catch (e) {
+    console.error('Error scanning for inconsistent styles:', e);
+  }
+  return issues;
+}
+
+/**
  * Scans for hardcoded hex colors that should potentially be theme variables
  */
 function scanHardcodedColors(): UIIssue[] {
@@ -53,16 +134,27 @@ function scanHardcodedColors(): UIIssue[] {
     const output = execSync('grep -rn "#[0-9a-fA-F]\\{6\\}" src/ --include="*.tsx" | grep -v "var(" || true').toString();
     if (output) {
       output.split('\n').filter(Boolean).forEach(line => {
-        const [file, lineNum] = line.split(':');
+        const [file, lineNum, ...rest] = line.split(':');
+        const content = rest.join(':').trim();
         // Filter out some common false positives or intentional ones if needed
         if (!file.includes('constants.ts') && !file.includes('utils.ts')) {
+          let canFix = false;
+          let hexFound = '';
+          for (const hex of Object.keys(COLOR_FIX_MAP)) {
+            if (content.toLowerCase().includes(hex)) {
+              canFix = true;
+              hexFound = hex;
+              break;
+            }
+          }
+
           issues.push({
             type: 'styling',
-            severity: 'low',
-            description: 'Hardcoded hex color found; consider using Tailwind theme colors',
+            severity: 'medium',
+            description: `Hardcoded hex color found: ${content}${canFix ? ` (auto-fix available for ${hexFound})` : ''}`,
             file,
             line: parseInt(lineNum),
-            autoFixable: false // Set to false initially, can be complex to auto-fix reliably
+            autoFixable: canFix
           });
         }
       });
@@ -86,21 +178,29 @@ function runRuntimeAudit(): UIIssue[] {
 
     if (fs.existsSync(resultsPath)) {
       const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
-      // Parse Playwright JSON results and convert to UIIssue format
-      // This is a simplified parsing, would need to be more robust
-      for (const suite of results.suites || []) {
-        for (const test of suite.specs || []) {
-          for (const result of test.tests?.[0]?.results || []) {
-            if (result.status === 'failed') {
-              issues.push({
-                type: 'accessibility',
-                severity: 'high',
-                description: `Runtime audit failure: ${test.title}`,
-                autoFixable: false
-              });
+
+      const processSuite = (suite: any) => {
+        for (const spec of suite.specs || []) {
+          for (const test of spec.tests || []) {
+            for (const result of test.results || []) {
+              if (result.status === 'failed') {
+                issues.push({
+                  type: 'accessibility',
+                  severity: 'high',
+                  description: `Runtime audit failure: ${spec.title}`,
+                  autoFixable: false
+                });
+              }
             }
           }
         }
+        for (const childSuite of suite.suites || []) {
+          processSuite(childSuite);
+        }
+      };
+
+      for (const suite of results.suites || []) {
+        processSuite(suite);
       }
     }
   } catch (e) {
@@ -130,19 +230,44 @@ function applyAutoFixes(issues: UIIssue[]) {
       let content = fs.readFileSync(file, 'utf8');
       let modified = false;
 
-      for (const issue of fileIssues) {
+      // Sort issues by line number in reverse to avoid offset issues when modifying
+      const sortedIssues = [...fileIssues].sort((a, b) => (b.line || 0) - (a.line || 0));
+
+      for (const issue of sortedIssues) {
         if (issue.description.includes('Missing alt attribute')) {
-          // Re-verify the missing alt in the content at the given line
           const lines = content.split('\n');
           const lineIndex = issue.line! - 1;
-          const tagStart = lines.slice(lineIndex).join('\n');
-          const imgMatch = tagStart.match(/<img[\s\S]*?>/);
+
+          const lookAhead = lines.slice(lineIndex, lineIndex + 10).join('\n');
+          const imgMatch = lookAhead.match(/<img[\s\S]*?>/);
 
           if (imgMatch && !imgMatch[0].includes('alt=')) {
             const fixedTag = imgMatch[0].replace('<img', '<img alt=""');
-            content = content.replace(imgMatch[0], fixedTag);
+
+            const linesBefore = lines.slice(0, lineIndex);
+            const linesAfter = lines.slice(lineIndex);
+            const joinedAfter = linesAfter.join('\n');
+            const newJoinedAfter = joinedAfter.replace(imgMatch[0], fixedTag);
+
+            content = [...linesBefore, newJoinedAfter].join('\n');
             modified = true;
             console.log(`Fixed missing alt in ${file}:${issue.line}`);
+          }
+        } else if (issue.description.includes('Hardcoded hex color found')) {
+          const lines = content.split('\n');
+          const lineIndex = issue.line! - 1;
+          let lineContent = lines[lineIndex];
+
+          for (const [hex, replacement] of Object.entries(COLOR_FIX_MAP)) {
+            if (lineContent.toLowerCase().includes(hex)) {
+              // Be careful with case sensitivity when replacing
+              const regex = new RegExp(hex, 'gi');
+              lineContent = lineContent.replace(regex, replacement);
+              lines[lineIndex] = lineContent;
+              content = lines.join('\n');
+              modified = true;
+              console.log(`Fixed hardcoded hex color ${hex} in ${file}:${issue.line}`);
+            }
           }
         }
       }
@@ -169,18 +294,24 @@ async function sendSlackNotification(issues: UIIssue[]) {
   }
 
   const criticalIssues = issues.filter(i => i.severity === 'critical' || i.severity === 'high');
-  const mentionLeads = criticalIssues.length > 0 ? '\n<!here> CC: Design and QA leads - Critical UI issues detected!' : '';
-  const prText = prUrl ? `\n\n*Pull Request:* ${prUrl}` : '';
+  const fixableCount = issues.filter(i => i.autoFixable).length;
+
+  // Tag Design and QA leads for critical issues
+  const mentionLeads = criticalIssues.length > 0
+    ? '\n<!channel> 🚨 *Attention needed:* @Design-Lead @QA-Lead - Critical UI/Accessibility issues detected!'
+    : '';
+
+  const prText = prUrl ? `\n\n*View Pull Request:* ${prUrl}` : '\n\n_Note: No automated PR was created for this run._';
 
   const message = {
-    text: `🖌️ *UI/UX Maintenance Audit Report* - ${new Date().toLocaleDateString()}`,
+    text: `🖌️ *Daily UI/UX Quality Audit Report* - ${new Date().toLocaleDateString()}`,
     attachments: [
       {
-        color: issues.length > 0 ? '#3b82f6' : '#10b981',
+        color: criticalIssues.length > 0 ? '#ef4444' : (issues.length > 0 ? '#3b82f6' : '#10b981'),
         title: 'Audit Summary',
         text: issues.length > 0
-          ? `Found ${issues.length} UI/UX inconsistencies.${mentionLeads}\n${issues.slice(0, 10).map(i => `• [${i.type}] ${i.description} in ${i.file || 'runtime'}`).join('\n')}${issues.length > 10 ? `\n...and ${issues.length - 10} more.` : ''}${prText}`
-          : `No UI/UX inconsistencies detected. Design system is well-maintained.${prText}`
+          ? `*Total Issues:* ${issues.length}\n*Auto-fixable:* ${fixableCount}\n*Non-auto-fixable:* ${issues.length - fixableCount}${mentionLeads}\n\n*Top Issues:*\n${issues.slice(0, 10).map(i => `• [${i.severity.toUpperCase()}] ${i.description} in \`${i.file || 'runtime'}\``).join('\n')}${issues.length > 10 ? `\n...and ${issues.length - 10} more.` : ''}${prText}`
+          : `No UI/UX inconsistencies detected. The design system is in excellent shape! 🌟${prText}`
       }
     ]
   };
@@ -205,8 +336,10 @@ async function main() {
 
   const altIssues = scanMissingAlt();
   const colorIssues = scanHardcodedColors();
+  const buttonIssues = scanInconsistentButtons();
+  const styleIssues = scanInconsistentStyles();
 
-  let allIssues = [...altIssues, ...colorIssues];
+  let allIssues = [...altIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
@@ -222,8 +355,22 @@ async function main() {
 
   // Save report
   const reportPath = path.join(process.cwd(), 'ui-maintenance-report.json');
+  const fixableIssues = allIssues.filter(i => i.autoFixable);
+  const unfixableIssues = allIssues.filter(i => !i.autoFixable);
+
   fs.writeFileSync(reportPath, JSON.stringify({
     timestamp: new Date().toISOString(),
+    summary: {
+      total: allIssues.length,
+      fixable: fixableIssues.length,
+      unfixable: unfixableIssues.length,
+      severities: {
+        critical: allIssues.filter(i => i.severity === 'critical').length,
+        high: allIssues.filter(i => i.severity === 'high').length,
+        medium: allIssues.filter(i => i.severity === 'medium').length,
+        low: allIssues.filter(i => i.severity === 'low').length,
+      }
+    },
     issues: allIssues
   }, null, 2));
 
