@@ -446,7 +446,7 @@ export const BookmarkCard = memo(({
         </div>}
 
         {/* Text overlay - Premium App Store style with category, title, summary, and optional source */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 z-10 space-y-1.5">
+        <div className="absolute bottom-0 left-0 right-0 p-5 z-40 space-y-1.5">
           {/* Category label */}
           <span className="text-white/90 text-[10px] font-bold uppercase tracking-wider block">
             {categoryBadge.label}
