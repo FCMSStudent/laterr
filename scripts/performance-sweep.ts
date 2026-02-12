@@ -60,24 +60,32 @@ function scanForN1Queries(): OptimizationResult[] {
     // 2b. Await inside for/while loops
     const awaitInLoops = execSync('grep -rnE "(for|while)\\s*\\(" src/ -A 10 | grep "await" || true').toString();
     if (awaitInLoops) {
-        // This is a bit noisy due to -A 10, so we filter it
+        // This is a bit noisy due to -A 10, so we strictly parse grep headers (file:line:...)
         const lines = awaitInLoops.split('\n');
-        lines.forEach(line => {
-            if (line.includes('.ts') || line.includes('.tsx')) {
-                const match = line.match(/^([^:-]+)[:-]([0-9]+)/);
-                if (match) {
-                    const [_, file, lineNum] = match;
-                    if (!file.includes('node_modules') && !file.includes('.test.')) {
-                        results.push({
-                            category: 'backend_api',
-                            description: 'Detected await inside for/while loop (Potential N+1)',
-                            impact: 'Sequential execution of async operations; consider batching',
-                            file,
-                            line: lineNum
-                        });
-                    }
-                }
+        lines.forEach(rawLine => {
+            const line = rawLine.trim();
+            if (!line) {
+                return;
             }
+            // Expect standard grep -n output: filename:lineNumber:matchedText
+            const match = line.match(/^([^:]+):([0-9]+):/);
+            if (!match) {
+                return;
+            }
+            const [, file, lineNum] = match;
+            if (!file.endsWith('.ts') && !file.endsWith('.tsx')) {
+                return;
+            }
+            if (file.includes('node_modules') || file.includes('.test.')) {
+                return;
+            }
+            results.push({
+                category: 'backend_api',
+                description: 'Detected await inside for/while loop (Potential N+1)',
+                impact: 'Sequential execution of async operations; consider batching',
+                file,
+                line: lineNum
+            });
         });
     }
 
