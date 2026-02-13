@@ -10,7 +10,22 @@ test.describe('UI Accessibility Audit', () => {
   ];
 
   for (const pageInfo of pages) {
-    test(`Accessibility audit for ${pageInfo.name}`, async ({ page }) => {
+    test(`Full audit for ${pageInfo.name}`, async ({ page }) => {
+      const errors: string[] = [];
+      const failedRequests: string[] = [];
+
+      // Monitor console errors
+      page.on('console', msg => {
+        if (msg.type() === 'error') {
+          errors.push(msg.text());
+        }
+      });
+
+      // Monitor failed requests
+      page.on('requestfailed', request => {
+        failedRequests.push(`${request.url()}: ${request.failure()?.errorText}`);
+      });
+
       // Navigate to the page
       await page.goto(pageInfo.path);
       await page.waitForLoadState('networkidle');
@@ -19,21 +34,31 @@ test.describe('UI Accessibility Audit', () => {
       await injectAxe(page);
 
       // Run accessibility check
-      await checkA11y(page, undefined, {
-        detailedReport: true,
-        detailedReportOptions: { html: true },
-      });
+      try {
+        await checkA11y(page, undefined, {
+          detailedReport: true,
+          detailedReportOptions: { html: true },
+        });
+      } catch (e) {
+        console.error(`Accessibility issues found on ${pageInfo.name}`);
+        throw e;
+      }
+
+      // Check for console errors
+      expect(errors, `Found ${errors.length} console errors on ${pageInfo.name}`).toHaveLength(0);
+
+      // Check for failed requests
+      expect(failedRequests, `Found ${failedRequests.length} failed network requests on ${pageInfo.name}`).toHaveLength(0);
     });
   }
 
-  test('Check for overlapping elements', async ({ page }) => {
+  test('Check for overlapping and misaligned elements', async ({ page }) => {
     await page.goto('/components');
     await page.waitForLoadState('networkidle');
 
     // Filter for visible elements only
-    const elements = await page.locator('button:visible, a:visible, input:visible').all();
+    const elements = await page.locator('button:visible, a:visible, input:visible, [role="button"]:visible').all();
 
-    // Check for extreme overlaps (elements with same position)
     const bboxes = [];
     for (const el of elements) {
       const box = await el.boundingBox();
@@ -42,17 +67,17 @@ test.describe('UI Accessibility Audit', () => {
       }
     }
 
-    // Basic check for exact same position which often indicates a layout bug
-    // Also check for target size (WCAG 2.1 Success Criterion 2.5.5)
     for (let i = 0; i < bboxes.length; i++) {
       const b1 = bboxes[i].box;
       const el1 = bboxes[i].el;
+      const tagName1 = await el1.evaluate(node => node.tagName.toLowerCase());
+      const text1 = (await el1.innerText()).substring(0, 20);
 
       // Check for small touch targets (less than 44x44)
       if (b1.width < 44 || b1.height < 44) {
-        const tagName = await el1.evaluate(node => node.tagName.toLowerCase());
-        const innerText = await el1.innerText();
-        console.warn(`Small touch target detected: <${tagName}> "${innerText.substring(0, 20)}" is ${b1.width}x${b1.height} at (${b1.x}, ${b1.y})`);
+        const msg = `Small touch target detected: <${tagName1}> "${text1}" is ${b1.width}x${b1.height} at (${b1.x}, ${b1.y})`;
+        expect.soft(b1.width, msg).toBeGreaterThanOrEqual(44);
+        expect.soft(b1.height, msg).toBeGreaterThanOrEqual(44);
       }
 
       // Check for text overflow
@@ -61,20 +86,17 @@ test.describe('UI Accessibility Audit', () => {
         return el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight;
       });
       if (hasOverflow) {
-        const tagName = await el1.evaluate(node => node.tagName.toLowerCase());
-        const text = await el1.innerText();
-        console.warn(`Potential text overflow in <${tagName}>: "${text.substring(0, 20)}..."`);
+        const msg = `Potential text overflow in <${tagName1}>: "${text1}..."`;
+        expect.soft(hasOverflow, msg).toBeFalsy();
       }
 
       for (let j = i + 1; j < bboxes.length; j++) {
         const b2 = bboxes[j].box;
+        const el2 = bboxes[j].el;
+        const tagName2 = await el2.evaluate(node => node.tagName.toLowerCase());
+        const text2 = (await el2.innerText()).substring(0, 20);
 
-        // Exact overlap
-        if (b1.x === b2.x && b1.y === b2.y && b1.width === b2.width && b1.height === b2.height) {
-          console.log(`Potential overlapping elements at (${b1.x}, ${b1.y})`);
-        }
-
-        // Significant intersection (could indicate layout failure)
+        // Intersection Check
         const intersectionX = Math.max(0, Math.min(b1.x + b1.width, b2.x + b2.width) - Math.max(b1.x, b2.x));
         const intersectionY = Math.max(0, Math.min(b1.y + b1.height, b2.y + b2.height) - Math.max(b1.y, b2.y));
         const intersectionArea = intersectionX * intersectionY;
@@ -84,9 +106,19 @@ test.describe('UI Accessibility Audit', () => {
           const area2 = b2.width * b2.height;
           const overlapPercent = intersectionArea / Math.min(area1, area2);
 
-          if (overlapPercent > 0.8) { // If 80% of the smaller element is covered
-             console.warn(`High element overlap detected (${Math.round(overlapPercent * 100)}%) between elements at (${b1.x}, ${b1.y}) and (${b2.x}, ${b2.y})`);
+          if (overlapPercent > 0.5) { // If 50% of the smaller element is covered
+             const msg = `Significant element overlap detected (${Math.round(overlapPercent * 100)}%) between <${tagName1}> "${text1}" and <${tagName2}> "${text2}"`;
+             expect.soft(overlapPercent, msg).toBeLessThanOrEqual(0.5);
           }
+        }
+
+        // Misalignment check (elements close horizontally but slightly offset vertically)
+        const verticalDiff = Math.abs(b1.y - b2.y);
+        const horizontalGap = b1.x < b2.x ? b2.x - (b1.x + b1.width) : b1.x - (b2.x + b2.width);
+
+        if (horizontalGap < 50 && verticalDiff > 0 && verticalDiff < 5) {
+           const msg = `Potential misalignment: <${tagName1}> and <${tagName2}> are vertically offset by ${verticalDiff}px`;
+           expect.soft(verticalDiff, msg).toBe(0);
         }
       }
     }

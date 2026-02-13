@@ -7,7 +7,9 @@ const COLOR_FIX_MAP: Record<string, string> = {
   '#ef4444': 'hsl(var(--destructive))',
   '#10b981': 'hsl(var(--success))',
   '#f59e0b': 'hsl(var(--warning))',
-  '#3b82f7': 'hsl(var(--primary))', // Common slight variation
+  '#3b82f7': 'hsl(var(--primary))',
+  '#ffffff': 'hsl(var(--background))',
+  '#000000': 'hsl(var(--foreground))',
 };
 
 interface UIIssue {
@@ -17,6 +19,8 @@ interface UIIssue {
   file?: string;
   line?: number;
   autoFixable: boolean;
+  offset?: number;
+  originalText?: string;
 }
 
 /**
@@ -40,13 +44,56 @@ function scanMissingAlt(): UIIssue[] {
             description: 'Missing alt attribute on <img> tag',
             file,
             line: lineNum,
-            autoFixable: true
+            autoFixable: true,
+            offset: match.index,
+            originalText: tag
           });
         }
       }
     }
   } catch (e) {
     console.error('Error scanning for missing alt:', e);
+  }
+  return issues;
+}
+
+/**
+ * Scans for missing aria-labels on icon-only buttons
+ */
+function scanMissingAriaLabels(): UIIssue[] {
+  const issues: UIIssue[] = [];
+  try {
+    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+      // Look for Button or button tags
+      const buttonRegex = /<(Button|button)([^>]*?)>([\s\S]*?)<\/\1>/g;
+      let match;
+      while ((match = buttonRegex.exec(content)) !== null) {
+        const attributes = match[2];
+        const children = match[3];
+
+        if (!attributes.includes('aria-label') && !attributes.includes('aria-labelledby')) {
+          // Check if children contain an icon (Lucide common icons) but no obvious text
+          const hasIcon = children.includes('Icon') || /<[A-Z][a-zA-Z]+/.test(children);
+          const textContent = children.replace(/<[^>]*>?/gm, '').trim();
+
+          if (hasIcon && !textContent) {
+            const lineNum = content.substring(0, match.index).split('\n').length;
+            issues.push({
+              type: 'accessibility',
+              severity: 'high',
+              description: 'Icon-only button missing aria-label',
+              file,
+              line: lineNum,
+              autoFixable: false
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error scanning for missing aria-labels:', e);
   }
   return issues;
 }
@@ -63,7 +110,6 @@ function scanInconsistentButtons(): UIIssue[] {
       const buttonRegex = /<button[\s\S]*?>/g;
       let match;
       while ((match = buttonRegex.exec(content)) !== null) {
-        // Note: this is a simple text scan and may also flag <button> in comments or string literals.
         const lineNum = content.substring(0, match.index).split('\n').length;
         issues.push({
           type: 'consistency',
@@ -87,15 +133,15 @@ function scanInconsistentButtons(): UIIssue[] {
 function scanInconsistentStyles(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
-    // Detect hardcoded pixel values in tailwind classes like px-[13px]
     const pixelOutput = execSync('grep -rn "\\[[0-9]\\+px\\]" src/ --include="*.tsx" || true').toString();
     if (pixelOutput) {
       pixelOutput.split('\n').filter(Boolean).forEach(line => {
         const [file, lineNum, ...rest] = line.split(':');
+        const description = rest.join(':').trim();
         issues.push({
           type: 'styling',
           severity: 'low',
-          description: `Hardcoded pixel value found in Tailwind class: ${rest.join(':').trim()}`,
+          description: `Hardcoded pixel value found in Tailwind class: ${description}`,
           file,
           line: parseInt(lineNum),
           autoFixable: false
@@ -103,7 +149,6 @@ function scanInconsistentStyles(): UIIssue[] {
       });
     }
 
-    // Detect hardcoded fonts
     const fontOutput = execSync('grep -rn "font-\\[" src/ --include="*.tsx" || true').toString();
     if (fontOutput) {
       fontOutput.split('\n').filter(Boolean).forEach(line => {
@@ -130,34 +175,37 @@ function scanInconsistentStyles(): UIIssue[] {
 function scanHardcodedColors(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
-    // Look for hex colors in TSX files that aren't in constants or utils
-    const output = execSync('grep -rn "#[0-9a-fA-F]\\{6\\}" src/ --include="*.tsx" | grep -v "var(" || true').toString();
-    if (output) {
-      output.split('\n').filter(Boolean).forEach(line => {
-        const [file, lineNum, ...rest] = line.split(':');
-        const content = rest.join(':').trim();
-        // Filter out some common false positives or intentional ones if needed
-        if (!file.includes('constants.ts') && !file.includes('utils.ts')) {
-          let canFix = false;
-          let hexFound = '';
-          for (const hex of Object.keys(COLOR_FIX_MAP)) {
-            if (content.toLowerCase().includes(hex)) {
-              canFix = true;
-              hexFound = hex;
-              break;
-            }
-          }
+    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      if (file.includes('constants.ts') || file.includes('utils.ts')) continue;
 
-          issues.push({
-            type: 'styling',
-            severity: 'medium',
-            description: `Hardcoded hex color found: ${content}${canFix ? ` (auto-fix available for ${hexFound})` : ''}`,
-            file,
-            line: parseInt(lineNum),
-            autoFixable: canFix
-          });
+      const content = fs.readFileSync(file, 'utf8');
+      const hexRegex = /#[0-9a-fA-F]{6}/g;
+      let match;
+      while ((match = hexRegex.exec(content)) !== null) {
+        const hex = match[0];
+        const lineNum = content.substring(0, match.index).split('\n').length;
+
+        // Skip if it's already a theme variable
+        const lineContent = content.split('\n')[lineNum - 1];
+        if (lineContent.includes('var(')) continue;
+
+        let canFix = false;
+        if (COLOR_FIX_MAP[hex.toLowerCase()]) {
+          canFix = true;
         }
-      });
+
+        issues.push({
+          type: 'styling',
+          severity: 'medium',
+          description: `Hardcoded hex color found: ${hex}${canFix ? ` (auto-fix available)` : ''}`,
+          file,
+          line: lineNum,
+          autoFixable: canFix,
+          offset: match.index,
+          originalText: hex
+        });
+      }
     }
   } catch (e) {
     console.error('Error scanning for hardcoded colors:', e);
@@ -184,12 +232,16 @@ function runRuntimeAudit(): UIIssue[] {
           for (const test of spec.tests || []) {
             for (const result of test.results || []) {
               if (result.status === 'failed') {
-                issues.push({
-                  type: 'accessibility',
-                  severity: 'high',
-                  description: `Runtime audit failure: ${spec.title}`,
-                  autoFixable: false
-                });
+                const failures = result.errors || [];
+                for (const fail of failures) {
+                  const failureMessage = fail.message || 'Unknown failure';
+                  issues.push({
+                    type: 'accessibility',
+                    severity: failureMessage.toLowerCase().includes('accessibility') ? 'high' : 'critical',
+                    description: `Runtime audit failure in "${spec.title}": ${failureMessage.split('\n')[0]}`,
+                    autoFixable: false
+                  });
+                }
               }
             }
           }
@@ -214,9 +266,8 @@ function runRuntimeAudit(): UIIssue[] {
  */
 function applyAutoFixes(issues: UIIssue[]) {
   console.log('Applying auto-fixes...');
-  const fixableIssues = issues.filter(i => i.autoFixable);
+  const fixableIssues = issues.filter(i => i.autoFixable && i.offset !== undefined);
 
-  // Group by file to avoid multiple writes
   const fileGroups: Record<string, UIIssue[]> = {};
   for (const issue of fixableIssues) {
     if (issue.file) {
@@ -230,44 +281,24 @@ function applyAutoFixes(issues: UIIssue[]) {
       let content = fs.readFileSync(file, 'utf8');
       let modified = false;
 
-      // Sort issues by line number in reverse to avoid offset issues when modifying
-      const sortedIssues = [...fileIssues].sort((a, b) => (b.line || 0) - (a.line || 0));
+      const sortedIssues = [...fileIssues].sort((a, b) => (b.offset || 0) - (a.offset || 0));
 
       for (const issue of sortedIssues) {
-        if (issue.description.includes('Missing alt attribute')) {
-          const lines = content.split('\n');
-          const lineIndex = issue.line! - 1;
+        const offset = issue.offset!;
+        const originalText = issue.originalText!;
 
-          const lookAhead = lines.slice(lineIndex, lineIndex + 10).join('\n');
-          const imgMatch = lookAhead.match(/<img[\s\S]*?>/);
-
-          if (imgMatch && !imgMatch[0].includes('alt=')) {
-            const fixedTag = imgMatch[0].replace('<img', '<img alt=""');
-
-            const linesBefore = lines.slice(0, lineIndex);
-            const linesAfter = lines.slice(lineIndex);
-            const joinedAfter = linesAfter.join('\n');
-            const newJoinedAfter = joinedAfter.replace(imgMatch[0], fixedTag);
-
-            content = [...linesBefore, newJoinedAfter].join('\n');
-            modified = true;
-            console.log(`Fixed missing alt in ${file}:${issue.line}`);
+        if (content.substring(offset, offset + originalText.length) === originalText) {
+          let replacement = '';
+          if (issue.description.includes('Missing alt attribute')) {
+            replacement = originalText.replace('<img', '<img alt=""');
+          } else if (issue.description.includes('Hardcoded hex color found')) {
+            replacement = COLOR_FIX_MAP[originalText.toLowerCase()] || originalText;
           }
-        } else if (issue.description.includes('Hardcoded hex color found')) {
-          const lines = content.split('\n');
-          const lineIndex = issue.line! - 1;
-          let lineContent = lines[lineIndex];
 
-          for (const [hex, replacement] of Object.entries(COLOR_FIX_MAP)) {
-            if (lineContent.toLowerCase().includes(hex)) {
-              // Be careful with case sensitivity when replacing
-              const regex = new RegExp(hex, 'gi');
-              lineContent = lineContent.replace(regex, replacement);
-              lines[lineIndex] = lineContent;
-              content = lines.join('\n');
-              modified = true;
-              console.log(`Fixed hardcoded hex color ${hex} in ${file}:${issue.line}`);
-            }
+          if (replacement && replacement !== originalText) {
+            content = content.substring(0, offset) + replacement + content.substring(offset + originalText.length);
+            modified = true;
+            console.log(`Fixed issue at ${file}:${issue.line}`);
           }
         }
       }
@@ -296,7 +327,6 @@ async function sendSlackNotification(issues: UIIssue[]) {
   const criticalIssues = issues.filter(i => i.severity === 'critical' || i.severity === 'high');
   const fixableCount = issues.filter(i => i.autoFixable).length;
 
-  // Tag Design and QA leads for critical issues
   const mentionLeads = criticalIssues.length > 0
     ? '\n<!channel> 🚨 *Attention needed:* @Design-Lead @QA-Lead - Critical UI/Accessibility issues detected!'
     : '';
@@ -335,17 +365,17 @@ async function main() {
   console.log('Starting UI/UX maintenance audit...');
 
   const altIssues = scanMissingAlt();
+  const ariaIssues = scanMissingAriaLabels();
   const colorIssues = scanHardcodedColors();
   const buttonIssues = scanInconsistentButtons();
   const styleIssues = scanInconsistentStyles();
 
-  let allIssues = [...altIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
+  let allIssues = [...altIssues, ...ariaIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
   }
 
-  // Run runtime audit and collect issues
   if (process.argv.includes('--runtime')) {
     const runtimeIssues = runRuntimeAudit();
     allIssues = [...allIssues, ...runtimeIssues];
@@ -353,17 +383,13 @@ async function main() {
 
   console.log(`Total issues identified: ${allIssues.length}`);
 
-  // Save report
   const reportPath = path.join(process.cwd(), 'ui-maintenance-report.json');
-  const fixableIssues = allIssues.filter(i => i.autoFixable);
-  const unfixableIssues = allIssues.filter(i => !i.autoFixable);
-
   fs.writeFileSync(reportPath, JSON.stringify({
     timestamp: new Date().toISOString(),
     summary: {
       total: allIssues.length,
-      fixable: fixableIssues.length,
-      unfixable: unfixableIssues.length,
+      fixable: allIssues.filter(i => i.autoFixable).length,
+      unfixable: allIssues.filter(i => !i.autoFixable).length,
       severities: {
         critical: allIssues.filter(i => i.severity === 'critical').length,
         high: allIssues.filter(i => i.severity === 'high').length,
@@ -371,10 +397,9 @@ async function main() {
         low: allIssues.filter(i => i.severity === 'low').length,
       }
     },
-    issues: allIssues
+    issues: allIssues.map(i => ({ ...i, offset: undefined, originalText: undefined })) // Strip internal fields for report
   }, null, 2));
 
-  // If notify flag is set, send the notification (used in post-PR step)
   if (process.argv.includes('--notify')) {
     await sendSlackNotification(allIssues);
   }
