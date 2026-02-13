@@ -87,7 +87,7 @@ export const MeasurementCard = ({
       {/* Actions menu */}
       <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 premium-transition">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuTrigger asChild onClick={(e) => /* @perf-check */ e.stopPropagation()}>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full glass-light hover:shadow-md">
               <MoreVertical className="h-4 w-4" />
             </Button>

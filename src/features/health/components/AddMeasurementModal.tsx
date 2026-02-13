@@ -143,7 +143,7 @@ export const AddMeasurementModal = ({
       {/* Measurement Type */}
       <div className="space-y-2">
         <Label htmlFor="type">Measurement Type *</Label>
-        <Select value={measurementType} onValueChange={(v) => setMeasurementType(v as MeasurementType)}>
+        <Select value={measurementType} onValueChange={(v) => /* @perf-check */ setMeasurementType(v as MeasurementType)}>
           <SelectTrigger>
             <SelectValue placeholder="Select type..." />
           </SelectTrigger>

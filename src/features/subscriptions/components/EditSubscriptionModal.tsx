@@ -250,7 +250,7 @@ export const EditSubscriptionModal = ({
           {/* Billing Cycle */}
           <div className="space-y-2">
             <Label htmlFor="edit-billing-cycle">Billing Cycle *</Label>
-            <Select value={billingCycle} onValueChange={(v) => setBillingCycle(v as SubscriptionBillingCycle)}>
+            <Select value={billingCycle} onValueChange={(v) => /* @perf-check */ setBillingCycle(v as SubscriptionBillingCycle)}>
               <SelectTrigger className="glass-input border-0">
                 <SelectValue />
               </SelectTrigger>

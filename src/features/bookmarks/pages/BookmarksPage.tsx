@@ -632,7 +632,7 @@ type OpenItemEventDetail = {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[180px]">
-                <DropdownMenuItem onSelect={() => navigate("/settings")}>
+                <DropdownMenuItem onSelect={() => /* @perf-check */ navigate("/settings")}>
                   <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
                   Settings
                 </DropdownMenuItem>
@@ -737,7 +737,7 @@ type OpenItemEventDetail = {
 
 
     {/* Bulk Actions Bar */}
-    <BulkActionsBar mode={isTrashView ? "trash" : "active"} selectedCount={selectedItems.size} totalCount={filteredItems.length} onSelectAll={handleSelectAll} onDeselectAll={handleDeselectAll} onDelete={handleBulkMoveToTrash} onRestore={handleBulkRestore} onPermanentDelete={handleBulkPermanentDelete} onCancel={() => {
+    <BulkActionsBar mode={isTrashView ? "trash" : "active"} selectedCount={selectedItems.size} totalCount={filteredItems.length} onSelectAll={handleSelectAll} onDeselectAll={handleDeselectAll} onDelete={handleBulkMoveToTrash} onRestore={handleBulkRestore} onPermanentDelete={handleBulkPermanentDelete} onCancel={() => /* @perf-check */ {
       setIsSelectionMode(false);
       setSelectedItems(new Set());
     }} />

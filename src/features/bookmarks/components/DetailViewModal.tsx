@@ -552,7 +552,7 @@ export const DetailViewModal = ({
       </div>
 
       {/* RIGHT COLUMN: Sidebar - Unified CardDetailRightPanel */}
-      <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
+      <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => /* @perf-check */ setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
       setIsAddingTag(false);
       setNewTagInput("");
     }} onEditTagStart={handleStartEditTag} onEditTagChange={setEditingTagValue} onEditTagCommit={handleCommitEditTag} onEditTagCancel={handleCancelEditTag} onRemoveTag={handleRemoveTag} onCopyLink={() => {

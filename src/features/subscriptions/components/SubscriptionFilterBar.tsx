@@ -227,7 +227,7 @@ export const SubscriptionFilterBar = memo(({
         <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuLabel>Category</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onCategoryChange(null)}>
+          <DropdownMenuItem onClick={() => /* @perf-check */ onCategoryChange(null)}>
             All Categories
           </DropdownMenuItem>
           {DEFAULT_CATEGORIES.map(category => (
@@ -289,30 +289,30 @@ export const SubscriptionFilterBar = memo(({
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>Sort By</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onSortChange("date-asc")}>
+          <DropdownMenuItem onClick={() => /* @perf-check */ onSortChange("date-asc")}>
             Next Billing (Soonest)
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onSortChange("date-desc")}>
+          <DropdownMenuItem onClick={() => /* @perf-check */ onSortChange("date-desc")}>
             Next Billing (Latest)
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onSortChange("amount-desc")}>
+          <DropdownMenuItem onClick={() => /* @perf-check */ onSortChange("amount-desc")}>
             <DollarSign className="h-4 w-4 mr-2" />
             Amount (High to Low)
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onSortChange("amount-asc")}>
+          <DropdownMenuItem onClick={() => /* @perf-check */ onSortChange("amount-asc")}>
             <DollarSign className="h-4 w-4 mr-2" />
             Amount (Low to High)
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onSortChange("name-asc")}>
+          <DropdownMenuItem onClick={() => /* @perf-check */ onSortChange("name-asc")}>
             Name (A-Z)
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onSortChange("name-desc")}>
+          <DropdownMenuItem onClick={() => /* @perf-check */ onSortChange("name-desc")}>
             Name (Z-A)
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onSortChange("status")}>
+          <DropdownMenuItem onClick={() => /* @perf-check */ onSortChange("status")}>
             By Status
           </DropdownMenuItem>
         </DropdownMenuContent>
