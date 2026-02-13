@@ -13,7 +13,6 @@ import { useIsMobile } from "@/shared/hooks/useMobile";
 import { useDominantColor } from "@/shared/hooks/useDominantColor";
 import { cn } from "@/shared/lib/utils";
 import { format } from "date-fns";
-import { NotePreview } from "./NotePreview";
 interface BookmarkCardProps {
   id: string;
   type: ItemType;
