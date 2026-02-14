@@ -1,29 +1,54 @@
 
 
-# Fix: Blank Page Caused by Duplicate Import
+# Fix: Production Build Failing Due to Duplicate `Toaster` Export
 
 ## Root Cause
 
-The app fails to build due to a **duplicate import** in `src/features/bookmarks/components/BookmarkCard.tsx`:
+The published site at `laterr.lovable.app` is completely blank because the **production build fails silently**. The Lovable preview works fine because the dev server is more forgiving.
 
-- **Line 3**: `import { NotePreview } from "./NotePreview";`
-- **Line 16**: `import { NotePreview } from "./NotePreview";` (identical duplicate)
+The build error is caused by a **duplicate export name collision**:
 
-This TypeScript error (`TS2300: Duplicate identifier 'NotePreview'`) prevents the production build from succeeding, so the published site at `laterr.lovable.app` serves an old or empty HTML shell — resulting in a blank page on all devices.
+- `src/shared/components/ui/feedback/index.ts` line 3 exports `Toaster` from `./toaster`
+- Line 5 does `export * from './sonner'`, which **also** exports a component named `Toaster`
+- Rollup (used for production builds) rejects this ambiguity
 
-The Lovable preview still works because it uses a dev server with hot module replacement that is more lenient with these errors.
+Additionally, `src/app/providers.tsx` imports `Toaster` twice from the same barrel path, so the Sonner toast component was never actually being used in production anyway.
 
-## Fix
+## Fix (2 files)
 
-**File:** `src/features/bookmarks/components/BookmarkCard.tsx`
+### 1. `src/shared/components/ui/feedback/sonner.tsx`
+Rename the export from `Toaster` to `SonnerToaster` to eliminate the name collision:
+```tsx
+export { Toaster as SonnerToaster };
+```
 
-Remove line 16 (the duplicate `import { NotePreview } from "./NotePreview";`). The import on line 3 is sufficient.
+### 2. `src/shared/components/ui/feedback/index.ts`
+Export the Sonner toaster under its distinct name:
+```ts
+export * from './alert';
+export * from './toast';
+export { Toaster } from './toaster';
+export * from './progress';
+export { SonnerToaster } from './sonner';
+```
+
+### 3. `src/app/providers.tsx`
+Update the import to use the renamed export:
+```tsx
+import { Toaster, SonnerToaster } from "@/shared/components/ui";
+```
+And use `<SonnerToaster />` instead of `<Sonner />` in the JSX.
+
+### 4. Any other files importing Sonner's Toaster
+Search for and update any other imports of the Sonner Toaster throughout the codebase.
 
 ## After the Fix
 
-Once this one-line fix is applied, the build will succeed and you can click **Publish > Update** to push the working version to `laterr.lovable.app`.
+Click **Publish > Update** to deploy the fixed build. The site should load correctly on all devices.
 
-## Additional Note
+## Technical Details
 
-Your project is missing a lock file (`pnpm-lock.yaml` is present but the system flagged a missing `package-lock.json` or `bun.lockb`). This is not causing the blank page, but could lead to inconsistent dependency versions. You may want to ensure the correct lock file is committed.
+- Vite's dev server uses ESM with hot module replacement, which resolves duplicate exports by last-write-wins -- so the preview works
+- Rollup (production bundler) treats duplicate named exports as an error, causing the build to produce an empty output
+- This is the same class of issue as the previous duplicate `NotePreview` import, but at the export/barrel level
 
