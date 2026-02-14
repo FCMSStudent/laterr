@@ -14,7 +14,7 @@ import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, 
 import { Badge } from "@/shared/components/ui";
 import { Input, Textarea } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/useMobile";
 import { DEFAULT_ITEM_TAG, SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";

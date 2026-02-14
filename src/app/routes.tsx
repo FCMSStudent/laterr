@@ -30,7 +30,7 @@ export const AppRoutes = () => {
         <Route path="/settings" element={<Settings />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/landing" element={<Landing />} />
-        {process.env.NODE_ENV === "development" && (
+        {import.meta.env.DEV && (
           <Route path="/viewer-loading-test" element={<ViewerLoadingTestPage />} />
         )}
         <Route path="/components" element={<ComponentShowcasePage />} />

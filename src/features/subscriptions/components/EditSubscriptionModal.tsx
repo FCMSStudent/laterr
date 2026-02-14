@@ -13,7 +13,7 @@ import { Calendar } from "@/shared/components/ui";
 import { CalendarIcon, X, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/shared/lib/utils";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SUBSCRIPTION_TABLES, DEFAULT_CATEGORIES, CURRENCY_OPTIONS, BILLING_CYCLES } from "@/features/subscriptions/constants";
 import type { Subscription, SubscriptionBillingCycle } from "@/features/subscriptions/types";

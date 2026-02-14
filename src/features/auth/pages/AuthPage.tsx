@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { EnhancedInput } from "@/shared/components/ui";
 import { LoadingButton } from "@/shared/components/ui";
 import { useToast } from '@/shared/hooks/useToast';

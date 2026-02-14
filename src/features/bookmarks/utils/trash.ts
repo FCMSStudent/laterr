@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import type { Item } from "@/features/bookmarks/types";
 import {
   SUPABASE_STORAGE_BUCKET_ITEM_IMAGES,
