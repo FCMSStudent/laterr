@@ -5,7 +5,7 @@ on:
     paths:
       - "src/features/bookmarks/**"
       - "src/shared/lib/supabase-utils.ts"
-      - "src/lib/supabase/client.ts"
+      - "src/integrations/supabase/client.ts"
       - "tests/bookmarks/**"
       - "tests/cards-overlays.spec.ts"
       - "tests/trash-flow.spec.ts"

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from "@/shared/components/ui";
 import { ChecklistItem } from './ChecklistItem';
 import { BulletItem } from './BulletItem';
@@ -190,7 +190,7 @@ export const RichNotesEditor = ({
   }, [activeBlockId, notesData, emitChange]);
 
   // Command palette commands
-  const commands = [
+  const commands = useMemo(() => [
     { id: 'text', label: 'Text', icon: Type, action: () => handleConvertBlock('text') },
     { id: 'h1', label: 'Heading 1', icon: Heading1, action: () => handleConvertBlock('heading', 1) },
     { id: 'h2', label: 'Heading 2', icon: Heading2, action: () => handleConvertBlock('heading', 2) },
@@ -198,11 +198,24 @@ export const RichNotesEditor = ({
     { id: 'checklist', label: 'Checklist', icon: CheckSquare, action: () => handleConvertBlock('checklist') },
     { id: 'bullet', label: 'Bullet List', icon: List, action: () => handleConvertBlock('bullet') },
     { id: 'numbered', label: 'Numbered List', icon: ListOrdered, action: () => handleConvertBlock('numbered') },
-  ];
+  ], [handleConvertBlock]);
 
-  const filteredCommands = commands.filter(cmd =>
+  const filteredCommands = useMemo(() => commands.filter(cmd =>
     cmd.label.toLowerCase().includes(commandSearch.toLowerCase())
-  );
+  ), [commands, commandSearch]);
+
+  // Optimized numbered list indexing to avoid O(n^2) in render
+  const numberedIndices = useMemo(() => {
+    const indices: Record<string, number> = {};
+    let currentCount = 0;
+    notesData.blocks.forEach(block => {
+      if (block.type === 'numbered') {
+        currentCount++;
+        indices[block.id] = currentCount;
+      }
+    });
+    return indices;
+  }, [notesData.blocks]);
 
   // Calculate total length
   const totalLength = serializeNotes(notesData).length;
@@ -375,11 +388,7 @@ export const RichNotesEditor = ({
 
               case 'numbered':
               {
-                // Calculate the index for numbered items
-                const numberedIndex = notesData.blocks
-                  .slice(0, index)
-                  .filter(b => b.type === 'numbered')
-                  .length + 1;
+                const numberedIndex = numberedIndices[block.id] || 0;
 
                 return (
                   <NumberedItem

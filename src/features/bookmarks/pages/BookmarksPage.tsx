@@ -433,6 +433,10 @@ type OpenItemEventDetail = {
       return !prev;
     });
   }, []);
+  const handleCancelSelection = useCallback(() => {
+    setIsSelectionMode(false);
+    setSelectedItems(new Set());
+  }, []);
   useEffect(() => {
     supabase.auth.getSession().then(({
       data: {
@@ -739,10 +743,7 @@ type OpenItemEventDetail = {
 
 
     {/* Bulk Actions Bar */}
-    <BulkActionsBar mode={isTrashView ? "trash" : "active"} selectedCount={selectedItems.size} totalCount={filteredItems.length} onSelectAll={handleSelectAll} onDeselectAll={handleDeselectAll} onDelete={handleBulkMoveToTrash} onRestore={handleBulkRestore} onPermanentDelete={handleBulkPermanentDelete} onCancel={() => /* @perf-check */ {
-      setIsSelectionMode(false);
-      setSelectedItems(new Set());
-    }} />
+    <BulkActionsBar mode={isTrashView ? "trash" : "active"} selectedCount={selectedItems.size} totalCount={filteredItems.length} onSelectAll={handleSelectAll} onDeselectAll={handleDeselectAll} onDelete={handleBulkMoveToTrash} onRestore={handleBulkRestore} onPermanentDelete={handleBulkPermanentDelete} onCancel={handleCancelSelection} />
 
     {/* Lazy-loaded modals wrapped in Suspense for code splitting */}
     <Suspense fallback={null}>
