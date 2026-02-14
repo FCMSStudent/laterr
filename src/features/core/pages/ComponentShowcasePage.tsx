@@ -71,7 +71,7 @@ import {
   Separator,
   Toaster,
 } from "@/shared/components/ui";
-import { Toaster as SonnerToaster } from "@/shared/components/ui/feedback/sonner";
+import { SonnerToaster } from "@/shared/components/ui/feedback/sonner";
 import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
 import { ModuleNavigationCard } from "@/shared/components/ModuleNavigationCard";
