@@ -14,7 +14,7 @@ import { Calendar } from "@/shared/components/ui";
 import { CalendarIcon, X, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/shared/lib/utils";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useIsMobile } from "@/shared/hooks/useMobile";

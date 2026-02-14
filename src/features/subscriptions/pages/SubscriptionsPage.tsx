@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionCard } from "@/features/subscriptions/components/SubscriptionCard";
 import { SubscriptionListRow } from "@/features/subscriptions/components/SubscriptionListRow";
 import { CollapsibleStatsSummary } from "@/features/subscriptions/components/CollapsibleStatsSummary";

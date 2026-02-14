@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { EMBEDDING_DIMENSION, isValidEmbedding } from '@/features/bookmarks/constants';
 import { getGenerateEmbeddingErrorMessage } from '@/shared/lib/error-messages';
 

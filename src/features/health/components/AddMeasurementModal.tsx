@@ -9,7 +9,7 @@ import { Textarea } from "@/shared/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui";
 import { Badge } from "@/shared/components/ui";
 import { Calendar, Clock, X } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useIsMobile } from "@/shared/hooks/useMobile";

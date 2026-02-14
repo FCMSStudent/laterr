@@ -7,7 +7,7 @@ import { EnhancedInput } from "@/shared/components/ui";
 import { EnhancedTextarea } from "@/shared/components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui";
 import { Link2, FileText, File } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useIsMobile } from "@/shared/hooks/useMobile";

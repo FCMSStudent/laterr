@@ -7,7 +7,7 @@ import { RichNotesEditor } from './RichNotesEditor';
 import { Input } from "@/shared/components/ui";
 import { Trash2, Save } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/components/ui";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/shared/hooks/useMobile";
 import { SUPABASE_ITEMS_TABLE } from "@/features/bookmarks/constants";
