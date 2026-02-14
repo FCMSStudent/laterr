@@ -224,12 +224,21 @@ function scanForMissingMemo(): OptimizationResult[] {
         }
 
         if (!isInsideHook) {
+            // Check if it's an assignment
+            let actualLineIdx = lineIdx;
+            let varName = '';
+            if (!lines[lineIdx].includes('const ') && lineIdx > 0 && lines[lineIdx-1].includes('const ')) {
+                actualLineIdx = lineIdx - 1;
+            }
+            const match = lines[actualLineIdx].match(/const\s+(\w+)/);
+            if (match) varName = match[1];
+
             results.push({
                 category: 'frontend_react',
-                description: `Detected expensive operation (${lines[lineIdx].includes('filter') ? 'filter' : 'sort/reduce'}) outside useMemo`,
+                description: `Detected expensive operation (${lines[lineIdx].includes('filter') ? 'filter' : 'sort/reduce'}) outside useMemo${varName ? ` for "${varName}"` : ''}`,
                 impact: 'Calculation runs on every render',
                 file,
-                line: lineNum,
+                line: (actualLineIdx + 1).toString(),
                 suggestedFix: 'Wrap in useMemo'
             });
         }
@@ -340,7 +349,43 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     console.log(`✅ Fixed N+1 storage removal in ${opt.file}`);
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+                // Automated useMemo for simple filters
+                const filterMatch = line.match(/\bconst\s+(\w+)\s*=\s*(.+)\.filter\(/);
+                if (filterMatch) {
+                    const [, varName, expr] = filterMatch;
+                    const dependency = expr.split('.')[0]; // Heuristic for dependency
+                    if (!line.includes('useMemo')) {
+                        // 1. Add useMemo import if missing
+                        let fileContent = fs.readFileSync(opt.file, 'utf8');
+                        if (!fileContent.includes('useMemo') && fileContent.includes('from \'react\'')) {
+                            fileContent = fileContent.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => {
+                                if (p1.includes('useMemo')) return m;
+                                return `import { ${p1.trim()}, useMemo } from 'react'`;
+                            });
+                            fs.writeFileSync(opt.file, fileContent);
+                        }
+
+                        // Re-read after potential import update
+                        const currentLines = fs.readFileSync(opt.file, 'utf8').split('\n');
+                        const currentLine = currentLines[lineIdx];
+
+                        // Use a more robust replacement that handles indentation
+                        const filterRegex = new RegExp(`(const\\s+${varName}\\s*=\\s*)(.+\\.filter\\()`);
+                        if (filterRegex.test(currentLine)) {
+                            currentLines[lineIdx] = currentLine.replace(filterRegex, `$1useMemo(() => $2`);
+
+                            // Add closing bracket and dependency array - assuming one line for simplicity in auto-fix
+                            if (currentLines[lineIdx].trim().endsWith(');')) {
+                                const lastIndex = currentLines[lineIdx].lastIndexOf(');');
+                                currentLines[lineIdx] = currentLines[lineIdx].slice(0, lastIndex) + `), [${dependency}]);`;
+                                fs.writeFileSync(opt.file, currentLines.join('\n'));
+                                console.log(`✅ Applied useMemo to ${varName} in ${opt.file}`);
+                            }
+                        }
+                    }
+                } else {
+                    console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+                }
             } else if (opt.category === 'database' && opt.description.includes('Potential missing index')) {
                 const columnMatch = opt.description.match(/column "([^"]+)"/);
                 const tableMatch = opt.description.match(/table "([^"]+)"/);
@@ -349,17 +394,104 @@ function applyFixes(optimizations: OptimizationResult[]) {
 
                 if (column) {
                     const sqlFile = 'supabase/migrations/performance_indexes_suggestion.sql';
-                    const sql = `-- Suggested index for performance optimization\n-- File: ${opt.file}\n-- Context: Found filter on "${column}" in table "${tableName}"\nCREATE INDEX IF NOT EXISTS idx_${tableName}_${column} ON ${tableName} (${column});\n\n`;
+                    const indexName = `idx_${tableName}_${column}`;
+                    const sqlStatement = `CREATE INDEX IF NOT EXISTS ${indexName} ON ${tableName} (${column});`;
+                    const sql = `-- Suggested index for performance optimization\n-- File: ${opt.file}\n-- Context: Found filter on "${column}" in table "${tableName}"\n${sqlStatement}\n\n`;
+
                     if (!fs.existsSync(path.dirname(sqlFile))) {
                         fs.mkdirSync(path.dirname(sqlFile), { recursive: true });
                     }
-                    fs.appendFileSync(sqlFile, sql);
-                    console.log(`✅ Generated index suggestion for "${column}" in ${sqlFile}`);
+
+                    let existingSql = '';
+                    if (fs.existsSync(sqlFile)) {
+                        existingSql = fs.readFileSync(sqlFile, 'utf8');
+                    }
+
+                    if (!existingSql.includes(sqlStatement)) {
+                        fs.appendFileSync(sqlFile, sql);
+                        console.log(`✅ Generated index suggestion for "${column}" in ${sqlFile}`);
+                    }
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('used in list mapping')) {
-                console.log(`Recommendation: Wrap component <${opt.description.match(/<(\w+)>/)?.[1]}> in memo() in ${opt.file}`);
+                // Automated memo() wrapping for components
+                const componentName = opt.description.match(/<(\w+)>/)?.[1];
+                if (componentName) {
+                    // Try to find the component definition file
+                    const importLine = execSync(`grep -rnE "import.*${componentName}.*from" ${opt.file} || true`).toString();
+                    const pathMatch = importLine.match(/from\s+["'](.+)["']/);
+                    if (pathMatch) {
+                        const importPath = pathMatch[1];
+                        let resolvedPath: string | null = null;
+                        if (importPath.startsWith('@/')) resolvedPath = importPath.replace('@/', 'src/') + '.tsx';
+                        else if (importPath.startsWith('.')) resolvedPath = path.join(path.dirname(opt.file), importPath) + '.tsx';
+
+                        if (resolvedPath && fs.existsSync(resolvedPath)) {
+                            let def = fs.readFileSync(resolvedPath, 'utf8');
+                            if (!def.includes('memo(') && !def.includes('React.memo(')) {
+                                // 1. Add import if missing
+                                if (!def.includes('import {') || !def.includes('react')) {
+                                     def = `import { memo } from 'react';\n` + def;
+                                } else if (!def.includes('memo')) {
+                                     def = def.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, memo } from 'react'`);
+                                }
+
+                                // 2. Wrap definition
+                                const exportMatch = def.match(/export const (\w+)\s*=\s*\(([^)]*)\)\s*=>\s*\{/);
+                                if (exportMatch && exportMatch[1] === componentName) {
+                                    const lines = def.split('\n');
+                                    let endIdx = -1;
+                                    // Heuristic: find the last }; or the one that likely closes the component
+                                    for (let i = lines.length - 1; i >= 0; i--) {
+                                        if (lines[i].trim() === '};' || lines[i].trim() === '})' || lines[i].trim() === '};') {
+                                            endIdx = i;
+                                            break;
+                                        }
+                                    }
+
+                                    if (endIdx !== -1) {
+                                        def = def.replace(`export const ${componentName} = (`, `export const ${componentName} = memo((`);
+                                        const newLines = def.split('\n');
+                                        // Find where the definition started in the new string to be safe
+                                        const startIdx = newLines.findIndex(l => l.includes(`export const ${componentName} = memo(`));
+                                        if (startIdx !== -1) {
+                                            // Re-verify endIdx in newLines
+                                            let currentEndIdx = -1;
+                                            for (let i = newLines.length - 1; i >= startIdx; i--) {
+                                                if (newLines[i].trim().startsWith('};')) {
+                                                    currentEndIdx = i;
+                                                    break;
+                                                }
+                                            }
+                                            if (currentEndIdx !== -1) {
+                                                newLines[currentEndIdx] = newLines[currentEndIdx].replace('};', '});');
+                                                def = newLines.join('\n');
+
+                                                if (!def.includes(`${componentName}.displayName`)) {
+                                                    def += `\n\n${componentName}.displayName = "${componentName}";\n`;
+                                                }
+                                                console.log(`✅ Automatically wrapping ${componentName} in memo() in ${resolvedPath}`);
+                                                fs.writeFileSync(resolvedPath, def);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             } else if (opt.category === 'frontend_react' && opt.description.includes('inline arrow function')) {
-                console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
+                // Automated useCallback for simple setter patterns: onClick={() => setOpen(false)}
+                const setterMatch = line.match(/(\w+)\s*=\s*\{\(\)\s*=>\s*(\w+)\(([^)]*)\)\}/);
+                if (setterMatch) {
+                    const [fullMatch, propName, setterName, setterVal] = setterMatch;
+                    const handlerName = `handle${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
+
+                    // This requires inserting a useCallback hook in the component body
+                    // Too complex for simple regex without knowing component structure
+                    console.log(`Recommendation: Move ${fullMatch} to a useCallback named ${handlerName} in ${opt.file}`);
+                } else {
+                    console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
+                }
             }
         } catch (e) {
             console.error(`Failed to apply fix in ${opt.file}:`, e);
@@ -498,7 +630,8 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
   };
 
   logs.unshift(summary);
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
+  // Keep only the last 2 runs to avoid bloat in the repository
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 2), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
@@ -562,6 +695,65 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
   }
 }
 
+/**
+ * Scans for potential nested loops
+ */
+function scanForNestedLoops(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    try {
+        const output = execSync('grep -rnE "(\\.map|\\.forEach|for\\s*\\(|while\\s*\\()" src/ || true').toString();
+        const lines = output.split('\n').filter(Boolean);
+        const fileMap: Record<string, number[]> = {};
+
+        lines.forEach(line => {
+            const parts = line.split(':');
+            if (parts.length < 2) return;
+            const file = parts[0];
+            const lineNum = parts[1];
+            if (!fileMap[file]) fileMap[file] = [];
+            fileMap[file].push(parseInt(lineNum));
+        });
+
+        const contentMap: Record<string, string[]> = {};
+
+        Object.entries(fileMap).forEach(([file, lineNums]) => {
+            if ((!file.endsWith('.ts') && !file.endsWith('.tsx')) || file.includes('.test.') || file.includes('node_modules')) return;
+
+            if (!contentMap[file]) {
+                contentMap[file] = fs.readFileSync(file, 'utf8').split('\n');
+            }
+            const fileLines = contentMap[file];
+
+            for (let i = 0; i < lineNums.length - 1; i++) {
+                const lineA = lineNums[i];
+                const lineB = lineNums[i+1];
+
+                // If two loops are within 8 lines of each other
+                if (lineB - lineA < 8) {
+                    const contentA = fileLines[lineA - 1];
+                    const contentB = fileLines[lineB - 1];
+                    const indentA = contentA.search(/\S/);
+                    const indentB = contentB.search(/\S/);
+
+                    // If the second loop is more indented than the first, it's likely nested
+                    if (indentB > indentA) {
+                        results.push({
+                            category: 'logic',
+                            description: 'Potential nested loop detected',
+                            impact: 'May lead to O(n^2) complexity',
+                            file,
+                            line: lineA.toString()
+                        });
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error scanning for nested loops:', e);
+    }
+    return results;
+}
+
 async function main() {
   if (process.env.SEND_NOTIFICATION_ONLY) {
     if (!fs.existsSync('performance-summary.json')) return;
@@ -576,8 +768,9 @@ async function main() {
   const indexIssues = scanForMissingIndexes();
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
+  const logicIssues = scanForNestedLoops();
 
-  const allIssues = [...n1Issues, ...indexIssues, ...memoIssues, ...mergeIssues];
+  const allIssues = [...n1Issues, ...indexIssues, ...memoIssues, ...mergeIssues, ...logicIssues];
 
   const beforeBenchmarks = await runBenchmarks();
 
