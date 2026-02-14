@@ -75,41 +75,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Split vendor libraries into separate chunks for better caching
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-label',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-tooltip',
-          ],
-          'supabase-vendor': ['@supabase/supabase-js', '@tanstack/react-query'],
-          'utils-vendor': ['clsx', 'tailwind-merge', 'class-variance-authority', 'zod'],
-          // Split large feature modules for better code splitting
-          'bookmarks-feature': [
-            './src/features/bookmarks/components/BookmarkCard',
-            './src/features/bookmarks/components/ItemCard',
-          ],
-          'charts-vendor': ['recharts'],
-        },
-      },
-    },
     // Increase chunk size warning limit for vendor bundles
     chunkSizeWarningLimit: 600,
-    // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: mode === 'production',
-      },
-    },
+    // Use esbuild for faster minification (default in Vite)
+    minify: 'esbuild',
   },
 }));
