@@ -1,8 +1,7 @@
 import { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
-import { Toaster } from "@/shared/components/ui";
-import { Toaster as Sonner } from "@/shared/components/ui";
+import { Toaster, SonnerToaster } from "@/shared/components/ui";
 import { TooltipProvider } from "@/shared/components/ui";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import { DynamicBackground } from "@/shared/components/DynamicBackground";
@@ -19,7 +18,7 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
+          <SonnerToaster />
           <BrowserRouter>
             <DynamicBackground />
             {children}
