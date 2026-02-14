@@ -479,6 +479,7 @@ export const BookmarkCard = memo(({
             data-testid="bookmark-card-image"
             src={previewImageUrl} 
             alt="" 
+            loading="lazy"
             className={cn(
               "absolute inset-0 w-full h-full z-20",
               isDocumentLike ? "object-contain" : "object-cover",
@@ -570,6 +571,7 @@ export const BookmarkCard = memo(({
                   <img
                     src={sourceFavicon}
                     alt={sourceName ? `${sourceName} icon` : "Source icon"}
+                    loading="lazy"
                     className="w-3.5 h-3.5 rounded-sm object-cover opacity-80"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />

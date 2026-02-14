@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { MeasurementCard } from "@/features/health/components/MeasurementCard";
@@ -24,10 +24,11 @@ import { useHealthDocuments } from "@/features/health/hooks/useHealthDocuments";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui";
 import { AlertCircle } from "lucide-react";
 
-import { AddMeasurementModal } from "@/features/health/components/AddMeasurementModal";
-import { MeasurementDetailModal } from "@/features/health/components/MeasurementDetailModal";
-import { AddHealthDocumentModal } from "@/features/health/components/AddHealthDocumentModal";
-import { HealthDocumentDetailModal } from "@/features/health/components/HealthDocumentDetailModal";
+// Lazy load modal components for better code splitting
+const AddMeasurementModal = lazy(() => import("@/features/health/components/AddMeasurementModal").then(m => ({ default: m.AddMeasurementModal })));
+const MeasurementDetailModal = lazy(() => import("@/features/health/components/MeasurementDetailModal").then(m => ({ default: m.MeasurementDetailModal })));
+const AddHealthDocumentModal = lazy(() => import("@/features/health/components/AddHealthDocumentModal").then(m => ({ default: m.AddHealthDocumentModal })));
+const HealthDocumentDetailModal = lazy(() => import("@/features/health/components/HealthDocumentDetailModal").then(m => ({ default: m.HealthDocumentDetailModal })));
 
 const Health = () => {
   const [activeTab, setActiveTab] = useState("measurements");
@@ -318,37 +319,46 @@ const Health = () => {
       {/* Floating AI Chat Button */}
       <FloatingAIChatButton />
 
-      <AddMeasurementModal
-        open={showAddMeasurementModal}
-        onOpenChange={setShowAddMeasurementModal}
-        onMeasurementAdded={fetchMeasurements}
-      />
+      {/* Lazy-loaded modals wrapped in Suspense for code splitting */}
+      <Suspense fallback={null}>
+        <AddMeasurementModal
+          open={showAddMeasurementModal}
+          onOpenChange={setShowAddMeasurementModal}
+          onMeasurementAdded={fetchMeasurements}
+        />
+      </Suspense>
 
       {selectedMeasurement && (
-        <MeasurementDetailModal
-          open={showMeasurementDetailModal}
-          onOpenChange={setShowMeasurementDetailModal}
-          measurement={selectedMeasurement}
-          allMeasurements={measurements.filter(m => m.measurement_type === selectedMeasurement.measurement_type)}
-          onUpdate={fetchMeasurements}
-          onDelete={handleDeleteMeasurement}
-        />
+        <Suspense fallback={null}>
+          <MeasurementDetailModal
+            open={showMeasurementDetailModal}
+            onOpenChange={setShowMeasurementDetailModal}
+            measurement={selectedMeasurement}
+            allMeasurements={measurements.filter(m => m.measurement_type === selectedMeasurement.measurement_type)}
+            onUpdate={fetchMeasurements}
+            onDelete={handleDeleteMeasurement}
+          />
+        </Suspense>
       )}
 
-      <AddHealthDocumentModal
-        open={showAddDocumentModal}
-        onOpenChange={setShowAddDocumentModal}
-        onDocumentAdded={fetchDocuments}
-      />
+      <Suspense fallback={null}>
+        <AddHealthDocumentModal
+          open={showAddDocumentModal}
+          onOpenChange={setShowAddDocumentModal}
+          onDocumentAdded={fetchDocuments}
+        />
+      </Suspense>
 
       {selectedDocument && (
-        <HealthDocumentDetailModal
-          open={showDocumentDetailModal}
-          onOpenChange={setShowDocumentDetailModal}
-          document={selectedDocument}
-          onUpdate={fetchDocuments}
-          onDelete={handleDeleteDocument}
-        />
+        <Suspense fallback={null}>
+          <HealthDocumentDetailModal
+            open={showDocumentDetailModal}
+            onOpenChange={setShowDocumentDetailModal}
+            document={selectedDocument}
+            onUpdate={fetchDocuments}
+            onDelete={handleDeleteDocument}
+          />
+        </Suspense>
       )}
     </div>
   );

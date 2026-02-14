@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { SubscriptionCard } from "@/features/subscriptions/components/SubscriptionCard";
@@ -20,9 +20,10 @@ import { toTypedError } from "@/shared/types/errors";
 import { differenceInDays } from "date-fns";
 import { parseSubscriptionDate } from "@/features/subscriptions/utils/date-utils";
 
-import { AddSubscriptionModal } from "@/features/subscriptions/components/AddSubscriptionModal";
-import { SubscriptionDetailModal } from "@/features/subscriptions/components/SubscriptionDetailModal";
-import { EditSubscriptionModal } from "@/features/subscriptions/components/EditSubscriptionModal";
+// Lazy load modal components for better code splitting
+const AddSubscriptionModal = lazy(() => import("@/features/subscriptions/components/AddSubscriptionModal").then(m => ({ default: m.AddSubscriptionModal })));
+const SubscriptionDetailModal = lazy(() => import("@/features/subscriptions/components/SubscriptionDetailModal").then(m => ({ default: m.SubscriptionDetailModal })));
+const EditSubscriptionModal = lazy(() => import("@/features/subscriptions/components/EditSubscriptionModal").then(m => ({ default: m.EditSubscriptionModal })));
 
 type User = { id: string; email?: string };
 
@@ -376,14 +377,17 @@ const Subscriptions = () => {
         </Button>
       )}
 
-      <AddSubscriptionModal
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
-        onSubscriptionAdded={fetchSubscriptions}
-      />
+      {/* Lazy-loaded modals wrapped in Suspense for code splitting */}
+      <Suspense fallback={null}>
+        <AddSubscriptionModal
+          open={showAddModal}
+          onOpenChange={setShowAddModal}
+          onSubscriptionAdded={fetchSubscriptions}
+        />
+      </Suspense>
 
       {selectedSubscription && (
-        <>
+        <Suspense fallback={null}>
           <SubscriptionDetailModal
             open={showDetailModal}
             onOpenChange={setShowDetailModal}
@@ -397,7 +401,7 @@ const Subscriptions = () => {
             subscription={selectedSubscription}
             onSubscriptionUpdated={fetchSubscriptions}
           />
-        </>
+        </Suspense>
       )}
     </div>
   );

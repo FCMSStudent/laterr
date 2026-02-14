@@ -93,7 +93,22 @@ export default defineConfig(({ mode }) => ({
           ],
           'supabase-vendor': ['@supabase/supabase-js', '@tanstack/react-query'],
           'utils-vendor': ['clsx', 'tailwind-merge', 'class-variance-authority', 'zod'],
+          // Split large feature modules for better code splitting
+          'bookmarks-feature': [
+            './src/features/bookmarks/components/BookmarkCard',
+            './src/features/bookmarks/components/ItemCard',
+          ],
+          'charts-vendor': ['recharts'],
         },
+      },
+    },
+    // Increase chunk size warning limit for vendor bundles
+    chunkSizeWarningLimit: 600,
+    // Enable minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: mode === 'production',
       },
     },
   },

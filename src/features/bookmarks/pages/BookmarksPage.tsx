@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
@@ -23,11 +23,13 @@ import type { Item, User, ItemType } from "@/features/bookmarks/types";
 import { generateSignedUrlsForItems } from "@/shared/lib/supabase-utils";
 import { NetworkError, toTypedError } from "@/shared/types/errors";
 import { getNetworkErrorMessage } from "@/shared/lib/error-messages";
-import { AddItemModal } from "@/features/bookmarks/components/AddItemModal";
-import { DetailViewModal } from "@/features/bookmarks/components/DetailViewModal";
-import { EditItemModal } from "@/features/bookmarks/components/EditItemModal";
-import { NoteEditorModal } from "@/features/bookmarks/components/NoteEditorModal";
 import { removeItemStorageObjects, removeMultipleItemsStorageObjects } from "@/features/bookmarks/utils/trash";
+
+// Lazy load modal components for better code splitting and performance
+const AddItemModal = lazy(() => import("@/features/bookmarks/components/AddItemModal").then(m => ({ default: m.AddItemModal })));
+const DetailViewModal = lazy(() => import("@/features/bookmarks/components/DetailViewModal").then(m => ({ default: m.DetailViewModal })));
+const EditItemModal = lazy(() => import("@/features/bookmarks/components/EditItemModal").then(m => ({ default: m.EditItemModal })));
+const NoteEditorModal = lazy(() => import("@/features/bookmarks/components/NoteEditorModal").then(m => ({ default: m.NoteEditorModal })));
 
 const PAGE_SIZE = 20;
 
@@ -742,13 +744,18 @@ type OpenItemEventDetail = {
       setSelectedItems(new Set());
     }} />
 
-    <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={handleRefresh} />
+    {/* Lazy-loaded modals wrapped in Suspense for code splitting */}
+    <Suspense fallback={null}>
+      <AddItemModal open={showAddModal} onOpenChange={setShowAddModal} onItemAdded={handleRefresh} />
+    </Suspense>
 
-    {selectedItem && <>
-      <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={handleRefresh} />
-      <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={handleRefresh} />
-      <NoteEditorModal open={showNoteEditor} onOpenChange={setShowNoteEditor} item={selectedItem} onUpdate={handleRefresh} />
-    </>}
+    {selectedItem && (
+      <Suspense fallback={null}>
+        <DetailViewModal open={showDetailModal} onOpenChange={setShowDetailModal} item={selectedItem} onUpdate={handleRefresh} />
+        <EditItemModal open={showEditModal} onOpenChange={setShowEditModal} item={selectedItem} onItemUpdated={handleRefresh} />
+        <NoteEditorModal open={showNoteEditor} onOpenChange={setShowNoteEditor} item={selectedItem} onUpdate={handleRefresh} />
+      </Suspense>
+    )}
   </div>;
 };
 export default Index;
