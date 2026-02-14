@@ -3,9 +3,13 @@ import { injectAxe, checkA11y } from 'axe-playwright';
 
 test.describe('UI Accessibility Audit', () => {
   const pages = [
+    { name: 'Landing', path: '/' },
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Bookmarks', path: '/bookmarks' },
+    { name: 'Subscriptions', path: '/subscriptions' },
     { name: 'Health', path: '/health' },
+    { name: 'Settings', path: '/settings' },
+    { name: 'Auth', path: '/auth' },
     { name: 'Components Showcase', path: '/components' },
   ];
 
@@ -85,7 +89,12 @@ test.describe('UI Accessibility Audit', () => {
           const overlapPercent = intersectionArea / Math.min(area1, area2);
 
           if (overlapPercent > 0.8) { // If 80% of the smaller element is covered
-             console.warn(`High element overlap detected (${Math.round(overlapPercent * 100)}%) between elements at (${b1.x}, ${b1.y}) and (${b2.x}, ${b2.y})`);
+             const text1 = (await el1.innerText()).substring(0, 20);
+             const tag1 = await el1.evaluate(node => node.tagName.toLowerCase());
+             const text2 = (await bboxes[j].el.innerText()).substring(0, 20);
+             const tag2 = await bboxes[j].el.evaluate(node => node.tagName.toLowerCase());
+
+             console.warn(`High element overlap detected (${Math.round(overlapPercent * 100)}%) between <${tag1}> "${text1}" and <${tag2}> "${text2}" at (${b1.x}, ${b1.y})`);
           }
         }
       }

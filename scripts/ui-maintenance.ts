@@ -8,6 +8,10 @@ const COLOR_FIX_MAP: Record<string, string> = {
   '#10b981': 'hsl(var(--success))',
   '#f59e0b': 'hsl(var(--warning))',
   '#3b82f7': 'hsl(var(--primary))', // Common slight variation
+  '#ffffff': 'white',
+  '#000000': 'black',
+  '#fff': 'white',
+  '#000': 'black',
 };
 
 interface UIIssue {
@@ -131,13 +135,15 @@ function scanHardcodedColors(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
     // Look for hex colors in TSX files that aren't in constants or utils
-    const output = execSync('grep -rn "#[0-9a-fA-F]\\{6\\}" src/ --include="*.tsx" | grep -v "var(" || true').toString();
+    // Using -E for extended regex to catch 3 and 6 digit hex
+    const output = execSync('grep -rnE "#[0-9a-fA-F]{3,6}" src/ --include="*.tsx" | grep -v "var(" || true').toString();
     if (output) {
       output.split('\n').filter(Boolean).forEach(line => {
         const [file, lineNum, ...rest] = line.split(':');
         const content = rest.join(':').trim();
-        // Filter out some common false positives or intentional ones if needed
-        if (!file.includes('constants.ts') && !file.includes('utils.ts')) {
+
+        // Filter out false positives like CSS color functions or theme variables
+        if (!file.includes('constants.ts') && !file.includes('utils.ts') && !content.includes('hsl(')) {
           let canFix = false;
           let hexFound = '';
           for (const hex of Object.keys(COLOR_FIX_MAP)) {
@@ -166,6 +172,63 @@ function scanHardcodedColors(): UIIssue[] {
 }
 
 /**
+ * Scans for missing accessible labels on form elements and icon buttons
+ */
+function scanMissingLabels(): UIIssue[] {
+  const issues: UIIssue[] = [];
+  try {
+    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+
+      // Check for inputs without labels/aria-label
+      const inputRegex = /<(input|textarea|select)[\s\S]*?>/g;
+      let match;
+      while ((match = inputRegex.exec(content)) !== null) {
+        const tag = match[0];
+        // If it's a hidden input, it doesn't need a label
+        if (tag.includes('type="hidden"') || tag.includes("type='hidden'")) continue;
+
+        // Static heuristic: missing all common labeling methods
+        // Note: this may flag inputs that are correctly labeled by a parent <label> without 'id/for'
+        if (!tag.includes('aria-label') && !tag.includes('aria-labelledby') && !tag.includes('id=')) {
+           const lineNum = content.substring(0, match.index).split('\n').length;
+           issues.push({
+             type: 'accessibility',
+             severity: 'medium',
+             description: `<${match[1]}> element might be missing an accessible label (aria-label, aria-labelledby, or associated <label>)`,
+             file,
+             line: lineNum,
+             autoFixable: false
+           });
+        }
+      }
+
+      // Check for icon-only buttons
+      // We look for Button components with size="icon" and no aria-label
+      const buttonRegex = /<Button[\s\S]*?size="icon"[\s\S]*?>/g;
+      while ((match = buttonRegex.exec(content)) !== null) {
+        const tag = match[0];
+        if (!tag.includes('aria-label') && !tag.includes('aria-labelledby')) {
+          const lineNum = content.substring(0, match.index).split('\n').length;
+          issues.push({
+            type: 'accessibility',
+            severity: 'high',
+            description: 'Icon-only Button is missing an aria-label attribute',
+            file,
+            line: lineNum,
+            autoFixable: false
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error scanning for missing labels:', e);
+  }
+  return issues;
+}
+
+/**
  * Runs the Playwright UI audit and returns issues found
  */
 function runRuntimeAudit(): UIIssue[] {
@@ -179,7 +242,22 @@ function runRuntimeAudit(): UIIssue[] {
     if (fs.existsSync(resultsPath)) {
       const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
 
-      const processSuite = (suite: any) => {
+      interface PlaywrightSpec {
+        title: string;
+        tests: Array<{
+          results: Array<{
+            status: string;
+          }>;
+        }>;
+      }
+
+      interface PlaywrightSuite {
+        title: string;
+        specs?: PlaywrightSpec[];
+        suites?: PlaywrightSuite[];
+      }
+
+      const processSuite = (suite: PlaywrightSuite) => {
         for (const spec of suite.specs || []) {
           for (const test of spec.tests || []) {
             for (const result of test.results || []) {
@@ -199,7 +277,7 @@ function runRuntimeAudit(): UIIssue[] {
         }
       };
 
-      for (const suite of results.suites || []) {
+      for (const suite of (results.suites as PlaywrightSuite[]) || []) {
         processSuite(suite);
       }
     }
@@ -338,8 +416,9 @@ async function main() {
   const colorIssues = scanHardcodedColors();
   const buttonIssues = scanInconsistentButtons();
   const styleIssues = scanInconsistentStyles();
+  const labelIssues = scanMissingLabels();
 
-  let allIssues = [...altIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
+  let allIssues = [...altIssues, ...colorIssues, ...buttonIssues, ...styleIssues, ...labelIssues];
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
