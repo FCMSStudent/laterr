@@ -1,54 +1,61 @@
 
+# Fix: Production Build Failures Causing Blank Page
 
-# Fix: Production Build Failing Due to Duplicate `Toaster` Export
+## Problems Found
 
-## Root Cause
+The `agentation` package is already removed from `App.tsx` — that's not the issue. After deeper investigation, here are the **actual remaining problems**:
 
-The published site at `laterr.lovable.app` is completely blank because the **production build fails silently**. The Lovable preview works fine because the dev server is more forgiving.
+### Problem 1: `process.env.NODE_ENV` in Vite project
+**File:** `src/app/routes.tsx` (line 33)
 
-The build error is caused by a **duplicate export name collision**:
-
-- `src/shared/components/ui/feedback/index.ts` line 3 exports `Toaster` from `./toaster`
-- Line 5 does `export * from './sonner'`, which **also** exports a component named `Toaster`
-- Rollup (used for production builds) rejects this ambiguity
-
-Additionally, `src/app/providers.tsx` imports `Toaster` twice from the same barrel path, so the Sonner toast component was never actually being used in production anyway.
-
-## Fix (2 files)
-
-### 1. `src/shared/components/ui/feedback/sonner.tsx`
-Rename the export from `Toaster` to `SonnerToaster` to eliminate the name collision:
 ```tsx
-export { Toaster as SonnerToaster };
+{process.env.NODE_ENV === "development" && (
+  <Route path="/viewer-loading-test" element={<ViewerLoadingTestPage />} />
+)}
 ```
 
-### 2. `src/shared/components/ui/feedback/index.ts`
-Export the Sonner toaster under its distinct name:
-```ts
-export * from './alert';
-export * from './toast';
-export { Toaster } from './toaster';
-export * from './progress';
-export { SonnerToaster } from './sonner';
-```
+Vite does **not** define `process.env` in production builds. This will throw a `ReferenceError: process is not defined` at runtime, crashing the entire app before it renders anything.
 
-### 3. `src/app/providers.tsx`
-Update the import to use the renamed export:
+**Fix:** Replace with Vite's equivalent:
 ```tsx
-import { Toaster, SonnerToaster } from "@/shared/components/ui";
+{import.meta.env.DEV && (
+  <Route path="/viewer-loading-test" element={<ViewerLoadingTestPage />} />
+)}
 ```
-And use `<SonnerToaster />` instead of `<Sonner />` in the JSX.
 
-### 4. Any other files importing Sonner's Toaster
-Search for and update any other imports of the Sonner Toaster throughout the codebase.
+### Problem 2: Duplicate Supabase client with `process.env` references
+**File:** `src/lib/supabase/client.ts`
+
+This is a **manually created duplicate** of the auto-generated `src/integrations/supabase/client.ts`. It references `process.env` (lines 14-16), which will also crash in Vite production builds. Worse, **28 files** import from this duplicate instead of the official auto-generated client.
+
+**Fix (two parts):**
+1. **Delete** `src/lib/supabase/client.ts` and `src/lib/supabase/types.ts`
+2. **Update all 28 files** that import from `@/lib/supabase/client` to import from `@/integrations/supabase/client` instead
+
+Affected files include:
+- `src/features/bookmarks/pages/BookmarksPage.tsx`
+- `src/features/bookmarks/components/AddItemModal.tsx`
+- `src/features/dashboard/pages/DashboardPage.tsx`
+- `src/features/health/pages/HealthPage.tsx`
+- `src/features/settings/pages/SettingsPage.tsx`
+- `src/features/subscriptions/components/EditSubscriptionModal.tsx`
+- `src/shared/hooks/useDashboardStats.ts`
+- `src/shared/lib/supabase-utils.ts`
+- ...and ~20 more files
+
+### Problem 3: `agentation` package still in `package.json`
+Even though it's no longer imported, the `agentation` package (v1.3.2) is still listed as a dependency. It should be removed from `package.json` to keep the bundle clean and avoid any side-effect issues during tree-shaking.
+
+## Summary of Changes
+
+| File | Action |
+|------|--------|
+| `src/app/routes.tsx` | Replace `process.env.NODE_ENV` with `import.meta.env.DEV` |
+| `src/lib/supabase/client.ts` | Delete |
+| `src/lib/supabase/types.ts` | Delete |
+| 28 source files | Change import path from `@/lib/supabase/client` to `@/integrations/supabase/client` |
+| `package.json` | Remove `agentation` dependency |
 
 ## After the Fix
 
-Click **Publish > Update** to deploy the fixed build. The site should load correctly on all devices.
-
-## Technical Details
-
-- Vite's dev server uses ESM with hot module replacement, which resolves duplicate exports by last-write-wins -- so the preview works
-- Rollup (production bundler) treats duplicate named exports as an error, causing the build to produce an empty output
-- This is the same class of issue as the previous duplicate `NotePreview` import, but at the export/barrel level
-
+Click **Publish > Update** to deploy. The site should load correctly on all devices.
