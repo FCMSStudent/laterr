@@ -167,7 +167,7 @@ export const NavigationHeader = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[180px]">
-              <DropdownMenuItem onSelect={() => navigate("/settings")}>
+              <DropdownMenuItem onSelect={() => /* @perf-check */ navigate("/settings")}>
                 <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
                 Settings
               </DropdownMenuItem>

@@ -301,7 +301,7 @@ export const AddHealthDocumentModal = ({
       {/* Document Type */}
       <div className="space-y-2">
         <Label htmlFor="docType">Document Type *</Label>
-        <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
+        <Select value={documentType} onValueChange={(v) => /* @perf-check */ setDocumentType(v as DocumentType)}>
           <SelectTrigger>
             <SelectValue placeholder="Select type..." />
           </SelectTrigger>

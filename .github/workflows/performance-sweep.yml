@@ -38,8 +38,10 @@ jobs:
         if: success()
         run: |
           if [ -f performance-summary.json ]; then
-            LATENCY=$(jq -r '.benchmarks.apiLatencyMs' performance-summary.json)
-            BSIZE=$(jq -r '.benchmarks.bundleSizeKB' performance-summary.json)
+            LATENCY_BEFORE=$(jq -r '.benchmarks.before.apiLatencyMs // .benchmarks.apiLatencyMs' performance-summary.json)
+            LATENCY_AFTER=$(jq -r '.benchmarks.after.apiLatencyMs // .benchmarks.apiLatencyMs' performance-summary.json)
+            BSIZE_BEFORE=$(jq -r '.benchmarks.before.bundleSizeKB // .benchmarks.bundleSizeKB' performance-summary.json)
+            BSIZE_AFTER=$(jq -r '.benchmarks.after.bundleSizeKB // .benchmarks.bundleSizeKB' performance-summary.json)
             OPTIMIZATIONS=$(jq -r '.optimizations | length' performance-summary.json)
 
             echo "body<<EOF" >> $GITHUB_OUTPUT
@@ -47,9 +49,22 @@ jobs:
             echo "" >> $GITHUB_OUTPUT
             echo "Automated performance optimizations found and applied." >> $GITHUB_OUTPUT
             echo "" >> $GITHUB_OUTPUT
-            echo "### 📊 Metrics" >> $GITHUB_OUTPUT
-            echo "- **API Latency:** ${LATENCY}ms" >> $GITHUB_OUTPUT
-            echo "- **Bundle Size:** ${BSIZE}KB" >> $GITHUB_OUTPUT
+            echo "### 📊 Metrics Comparison" >> $GITHUB_OUTPUT
+            echo "| Metric | Before | After | Delta |" >> $GITHUB_OUTPUT
+            echo "| --- | --- | --- | --- |" >> $GITHUB_OUTPUT
+
+            # Handle potential nulls or missing values
+            LATENCY_BEFORE=${LATENCY_BEFORE:-0}
+            LATENCY_AFTER=${LATENCY_AFTER:-0}
+            BSIZE_BEFORE=${BSIZE_BEFORE:-0}
+            BSIZE_AFTER=${BSIZE_AFTER:-0}
+
+            DELTA_LATENCY=$((LATENCY_AFTER - LATENCY_BEFORE))
+            DELTA_BSIZE=$((BSIZE_AFTER - BSIZE_BEFORE))
+
+            echo "| API Latency | ${LATENCY_BEFORE}ms | ${LATENCY_AFTER}ms | ${DELTA_LATENCY}ms |" >> $GITHUB_OUTPUT
+            echo "| Bundle Size | ${BSIZE_BEFORE}KB | ${BSIZE_AFTER}KB | ${DELTA_BSIZE}KB |" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
             echo "- **Optimizations Applied:** ${OPTIMIZATIONS}" >> $GITHUB_OUTPUT
             echo "" >> $GITHUB_OUTPUT
             echo "Check \`performance-logs.json\` for a full breakdown of changes." >> $GITHUB_OUTPUT

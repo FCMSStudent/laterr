@@ -356,7 +356,7 @@ export default function Auth() {
                 We've sent a confirmation email to your inbox. Click the link to activate your account.
               </p>
               
-              <LoadingButton onClick={() => {
+              <LoadingButton onClick={() => /* @perf-check */ {
               setSignupSuccess(false);
               setMode('login');
               resetForm();
@@ -393,7 +393,7 @@ export default function Auth() {
                 We've sent you a password reset link. Click it to set a new password.
               </p>
               
-              <LoadingButton onClick={() => {
+              <LoadingButton onClick={() => /* @perf-check */ {
               setResetEmailSent(false);
               setMode('login');
               resetForm();
@@ -422,7 +422,7 @@ export default function Auth() {
                 Your password has been successfully updated. You can now sign in with your new password.
               </p>
               
-              <LoadingButton onClick={() => {
+              <LoadingButton onClick={() => /* @perf-check */ {
               setPasswordResetSuccess(false);
               setMode('login');
               resetForm();

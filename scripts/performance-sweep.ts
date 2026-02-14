@@ -17,68 +17,68 @@ interface OptimizationResult {
 }
 
 /**
+ * Helper to run grep and filter for logic files only
+ */
+function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
+  try {
+    const output = execSync(`grep -rnE "${pattern}" ${searchPath} || true`).toString();
+    return output.split('\n').filter(Boolean).filter(line => {
+      const file = line.split(':')[0];
+      return (file.endsWith('.ts') || file.endsWith('.tsx')) &&
+             !file.includes('node_modules') &&
+             !file.includes('.test.');
+    });
+  } catch (e) {
+    console.error(`Grep error for pattern ${pattern}:`, e);
+    return [];
+  }
+}
+
+/**
  * Scans for N+1 queries (async calls in loops)
  */
 function scanForN1Queries(): OptimizationResult[] {
   const results: OptimizationResult[] = [];
   try {
     // 1. Storage removals in map
-    const storageMap = execSync('grep -rnE "\\.map\\(.*removeItemStorageObjects" src/ || true').toString();
-    if (storageMap) {
-      storageMap.split('\n').filter(Boolean).forEach(line => {
-        const [file, lineNum] = line.split(':');
-        results.push({
-          category: 'backend_api',
-          description: 'Detected potential N+1 storage removal pattern',
-          impact: 'Multiple storage API calls in a loop',
-          file,
-          line: lineNum,
-          suggestedFix: 'Use removeMultipleItemsStorageObjects instead'
-        });
+    runGrep("\\.map\\(.*removeItemStorageObjects").forEach(line => {
+      const [file, lineNum] = line.split(':');
+      results.push({
+        category: 'backend_api',
+        description: 'Detected potential N+1 storage removal pattern',
+        impact: 'Multiple storage API calls in a loop',
+        file,
+        line: lineNum,
+        suggestedFix: 'Use removeMultipleItemsStorageObjects instead'
       });
-    }
+    });
 
     // 2. Generic async calls in loops (map/forEach with await)
-    const asyncLoops = execSync('grep -rnE "\\.(map|forEach)\\(async" src/ || true').toString();
-    if (asyncLoops) {
-      asyncLoops.split('\n').filter(Boolean).forEach(line => {
-        const parts = line.split(':');
-        if (parts.length < 2) return;
-        const [file, lineNum] = parts;
-        if (!file.includes('node_modules') && !file.includes('.test.')) {
-          results.push({
-            category: 'backend_api',
-            description: 'Detected async operation inside loop (Potential N+1)',
-            impact: 'Serial or parallel individual API calls instead of batching',
-            file,
-            line: lineNum
-          });
-        }
+    runGrep("\\.(map|forEach)\\(async").forEach(line => {
+      const parts = line.split(':');
+      if (parts.length < 2) return;
+      const [file, lineNum] = parts;
+      results.push({
+        category: 'backend_api',
+        description: 'Detected async operation inside loop (Potential N+1)',
+        impact: 'Serial or parallel individual API calls instead of batching',
+        file,
+        line: lineNum
       });
-    }
+    });
 
     // 2b. Await inside for/while loops
     const awaitInLoops = execSync('grep -rnE "(for|while)\\s*\\(" src/ -A 10 | grep "await" || true').toString();
     if (awaitInLoops) {
-        // This is a bit noisy due to -A 10, so we strictly parse grep headers (file:line:...)
         const lines = awaitInLoops.split('\n');
         lines.forEach(rawLine => {
             const line = rawLine.trim();
-            if (!line) {
-                return;
-            }
-            // Expect standard grep -n output: filename:lineNumber:matchedText
+            if (!line) return;
             const match = line.match(/^([^:]+):([0-9]+):/);
-            if (!match) {
-                return;
-            }
+            if (!match) return;
             const [, file, lineNum] = match;
-            if (!file.endsWith('.ts') && !file.endsWith('.tsx')) {
-                return;
-            }
-            if (file.includes('node_modules') || file.includes('.test.')) {
-                return;
-            }
+            if ((!file.endsWith('.ts') && !file.endsWith('.tsx')) || file.includes('node_modules') || file.includes('.test.')) return;
+
             results.push({
                 category: 'backend_api',
                 description: 'Detected await inside for/while loop (Potential N+1)',
@@ -90,29 +90,23 @@ function scanForN1Queries(): OptimizationResult[] {
     }
 
     // 2c. createSignedUrl in loops specifically
-    const signedUrlInLoops = execSync('grep -rnE "\\.map\\(.*createSignedUrl" src/ || true').toString();
-    if (signedUrlInLoops) {
-        signedUrlInLoops.split('\n').filter(Boolean).forEach(line => {
-            const [file, lineNum] = line.split(':');
-            results.push({
-                category: 'backend_api',
-                description: 'Detected createSignedUrl inside .map()',
-                impact: 'High network overhead; use createSignedUrls (batched) instead',
-                file,
-                line: lineNum,
-                suggestedFix: 'Use createSignedUrls for batching'
-            });
+    runGrep("\\.map\\(.*createSignedUrl").forEach(line => {
+        const [file, lineNum] = line.split(':');
+        results.push({
+            category: 'backend_api',
+            description: 'Detected createSignedUrl inside .map()',
+            impact: 'High network overhead; use createSignedUrls (batched) instead',
+            file,
+            line: lineNum,
+            suggestedFix: 'Use createSignedUrls for batching'
         });
-    }
+    });
 
     // 3. Supabase calls inside loops (Heuristic)
-    const supabaseInLoops = execSync('grep -rnE "\\b(supabase|from)\\(" src/ || true').toString();
     const supabaseUsage: Record<string, number> = {};
-    supabaseInLoops.split('\n').filter(Boolean).forEach(line => {
+    runGrep("\\b(supabase|from)\\(").forEach(line => {
       const file = line.split(':')[0];
-      if (!file.includes('node_modules') && !file.includes('.test.')) {
-        supabaseUsage[file] = (supabaseUsage[file] || 0) + 1;
-      }
+      supabaseUsage[file] = (supabaseUsage[file] || 0) + 1;
     });
 
     Object.entries(supabaseUsage).forEach(([file, count]) => {
@@ -127,9 +121,7 @@ function scanForN1Queries(): OptimizationResult[] {
     });
 
     // 4. Supabase queries in map
-    const supabaseInMap = execSync('grep -rnE "\\.map\\(.*supabase\\.from" src/ || true').toString();
-    if (supabaseInMap) {
-      supabaseInMap.split('\n').filter(Boolean).forEach(line => {
+    runGrep("\\.map\\(.*supabase\\.(from|upsert|delete)").forEach(line => {
         const [file, lineNum] = line.split(':');
         results.push({
           category: 'backend_api',
@@ -137,15 +129,61 @@ function scanForN1Queries(): OptimizationResult[] {
           impact: 'Executes one query per item in the collection',
           file,
           line: lineNum,
-          suggestedFix: 'Use .in() filter to batch the query'
+          suggestedFix: 'Use batch operations if possible'
         });
-      });
-    }
+    });
 
   } catch (e) {
     console.error('Error scanning for N+1:', e);
   }
   return results;
+}
+
+/**
+ * Scans for Supabase queries that might need database indexes
+ */
+function scanForMissingIndexes(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    const knownIndexedColumns = ['id', 'created_at', 'user_id', 'updated_at', 'email', 'slug', 'status', 'active', 'type', 'role', 'name'];
+
+    try {
+        // Look for .eq('column', ...), .in('column', ...), etc.
+        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\(\'[a-zA-Z0-9_]+\'").forEach(line => {
+            // regex to extract file, line and column name
+            const match = line.match(/^([^:]+):([0-9]+):.*?\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\('([a-zA-Z0-9_]+)'/);
+            if (match) {
+                const [, file, lineNum, , column] = match;
+                if (knownIndexedColumns.includes(column) || column.endsWith('_id')) return;
+
+                // Attempt to find table name by looking back in the file
+                let tableName = 'table_name_here';
+                try {
+                     const content = fs.readFileSync(file, 'utf8');
+                     const lines = content.split('\n');
+                     const lineIdx = parseInt(lineNum) - 1;
+                     for (let i = lineIdx; i >= Math.max(0, lineIdx - 10); i--) {
+                         const fromMatch = lines[i].match(/\.from\(['"]([^'"]+)['"]\)/);
+                         if (fromMatch) {
+                             tableName = fromMatch[1];
+                             break;
+                         }
+                     }
+                } catch (e) {}
+
+                results.push({
+                    category: 'database',
+                    description: `Potential missing index for column "${column}" in table "${tableName}"`,
+                    impact: 'Queries on this column may cause full table scans',
+                    file,
+                    line: lineNum,
+                    suggestedFix: `CREATE INDEX IF NOT EXISTS idx_${tableName}_${column} ON ${tableName} (${column});`
+                });
+            }
+        });
+    } catch (e) {
+        console.error('Error scanning for missing indexes:', e);
+    }
+    return results;
 }
 
 /**
@@ -155,55 +193,55 @@ function scanForMissingMemo(): OptimizationResult[] {
   const results: OptimizationResult[] = [];
   try {
     // 1. Complex filtering/sorting in component body (not wrapped in useMemo)
-    const expensiveOps = execSync('grep -rnE "\\.(filter|sort|reduce)\\(" src/ || true').toString();
-    expensiveOps.split('\n').filter(Boolean).forEach(line => {
+    runGrep("\\.(filter|sort|reduce)\\(").forEach(line => {
         const [file, lineNum] = line.split(':');
-        if (file.endsWith('.tsx') && !file.includes('.test.')) {
-            const content = fs.readFileSync(file, 'utf8');
-            const lines = content.split('\n');
-            const lineIdx = parseInt(lineNum) - 1;
-            if (isNaN(lineIdx) || lineIdx < 0) return;
+        if (!file.endsWith('.tsx')) return;
 
-            // Look back up to find if we are inside a hook or the return statement
-            let isInsideHook = false;
-            let isInsideReturn = false;
+        const content = fs.readFileSync(file, 'utf8');
+        const lines = content.split('\n');
+        const lineIdx = parseInt(lineNum) - 1;
+        if (isNaN(lineIdx) || lineIdx < 0) return;
 
-            for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
-                const l = lines[i];
+        // Look back up to find if we are inside a hook or the return statement
+        let isInsideHook = false;
+        let isInsideReturn = false;
 
-                if (l.includes('return (') || l.trim().startsWith('return ')) {
-                    isInsideReturn = true;
-                }
+        for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
+            const l = lines[i];
 
-                if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
-                    isInsideHook = true;
-                    break;
-                }
-
-                if (l.includes('export const') || l.includes('function ')) {
-                    break;
-                }
+            if (l.includes('return (') || l.trim().startsWith('return ')) {
+                isInsideReturn = true;
             }
 
-            if (!isInsideHook) {
-                results.push({
-                    category: 'frontend_react',
-                    description: `Detected expensive operation (${lines[lineIdx].includes('filter') ? 'filter' : 'sort/reduce'}) outside useMemo`,
-                    impact: 'Calculation runs on every render',
-                    file,
-                    line: lineNum,
-                    suggestedFix: 'Wrap in useMemo'
-                });
+            if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
+                isInsideHook = true;
+                break;
             }
+
+            if (l.includes('export const') || l.includes('function ')) {
+                break;
+            }
+        }
+
+        if (!isInsideHook) {
+            results.push({
+                category: 'frontend_react',
+                description: `Detected expensive operation (${lines[lineIdx].includes('filter') ? 'filter' : 'sort/reduce'}) outside useMemo`,
+                impact: 'Calculation runs on every render',
+                file,
+                line: lineNum,
+                suggestedFix: 'Wrap in useMemo'
+            });
         }
     });
 
     // 2. Components used in lists that might need memoization
-    const listComponents = execSync('grep -rnE "\\.map\\(.*=>.*<[A-Z]" src/ || true').toString();
-    listComponents.split('\n').filter(Boolean).forEach(line => {
+    runGrep("\\.map\\(.*=>.*<[A-Z]").forEach(line => {
         const [file, lineNum] = line.split(':');
+        if (!file.endsWith('.tsx')) return;
+
         const match = line.match(/<([A-Z][a-zA-Z0-9]*)/);
-        if (match && file.endsWith('.tsx')) {
+        if (match) {
             const componentName = match[1];
             // Skip common components that are already fast or don't benefit much from memoization
             const skipComponents = [
@@ -212,9 +250,6 @@ function scanForMissingMemo(): OptimizationResult[] {
             ];
             if (skipComponents.includes(componentName)) return;
 
-            // Check if component is likely memoized by searching for memo( in its source file
-            // First we need to find the file where it's defined. This is hard with grep,
-            // so we'll just check if it's imported from a local file and then check that file.
             let isMemoized = false;
             try {
                 const importLine = execSync(`grep -rnE "import.*${componentName}.*from" ${file} || true`).toString();
@@ -237,9 +272,7 @@ function scanForMissingMemo(): OptimizationResult[] {
                         }
                     }
                 }
-            } catch (e) {
-                // Ignore errors during local file check
-            }
+            } catch (e) {}
 
             if (!isMemoized) {
                 results.push({
@@ -255,11 +288,12 @@ function scanForMissingMemo(): OptimizationResult[] {
     });
 
     // 3. Arrow functions passed as props to components (Unnecessary re-renders)
-    const arrowProps = execSync('grep -rnE "<[A-Z][a-zA-Z0-9]*[^>]*\\w+\\s*=\\s*\\{\\s*\\([^)]*\\)\\s*=>" src/ || true').toString();
-    arrowProps.split('\n').filter(Boolean).forEach(line => {
+    runGrep("<[A-Z][a-zA-Z0-9]*[^>]*\\w+\\s*=\\s*\\{\\s*\\([^)]*\\)\\s*=>").forEach(line => {
         const [file, lineNum] = line.split(':');
+        if (!file.endsWith('.tsx')) return;
+
         const match = line.match(/<([A-Z][a-zA-Z0-9]*)/);
-        if (match && file.endsWith('.tsx') && !file.includes('.test.')) {
+        if (match) {
             const componentName = match[1];
             const skipComponents = ['Button', 'Badge', 'Icon', 'Separator', 'Skeleton', 'Avatar', 'Loader2', 'TabsTrigger', 'TabsList'];
             if (skipComponents.includes(componentName)) return;
@@ -298,7 +332,6 @@ function applyFixes(optimizations: OptimizationResult[]) {
             const line = lines[lineIdx];
 
             if (opt.category === 'backend_api' && opt.description.includes('N+1 storage removal')) {
-                // Replace items.map(item => removeItemStorageObjects(item)) with removeMultipleItemsStorageObjects(items)
                 const match = line.match(/(\w+)\.map\(\w+\s*=>\s*removeItemStorageObjects\(\w+\)\)/);
                 if (match) {
                     const collectionName = match[1];
@@ -307,13 +340,26 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     console.log(`✅ Fixed N+1 storage removal in ${opt.file}`);
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                // NOTE: Automated useMemo rewrite is intentionally disabled for safety.
-                // Wrapping filter/sort/reduce in useMemo requires accurate dependency tracking.
-                // Heuristic-based dependency arrays can easily lead to stale closure bugs.
-                // We provide the recommendation, but require manual developer implementation.
-                console.log(
-                    `Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`
-                );
+                console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+            } else if (opt.category === 'database' && opt.description.includes('Potential missing index')) {
+                const columnMatch = opt.description.match(/column "([^"]+)"/);
+                const tableMatch = opt.description.match(/table "([^"]+)"/);
+                const column = columnMatch ? columnMatch[1] : null;
+                const tableName = tableMatch ? tableMatch[1] : 'table_name_here';
+
+                if (column) {
+                    const sqlFile = 'supabase/migrations/performance_indexes_suggestion.sql';
+                    const sql = `-- Suggested index for performance optimization\n-- File: ${opt.file}\n-- Context: Found filter on "${column}" in table "${tableName}"\nCREATE INDEX IF NOT EXISTS idx_${tableName}_${column} ON ${tableName} (${column});\n\n`;
+                    if (!fs.existsSync(path.dirname(sqlFile))) {
+                        fs.mkdirSync(path.dirname(sqlFile), { recursive: true });
+                    }
+                    fs.appendFileSync(sqlFile, sql);
+                    console.log(`✅ Generated index suggestion for "${column}" in ${sqlFile}`);
+                }
+            } else if (opt.category === 'frontend_react' && opt.description.includes('used in list mapping')) {
+                console.log(`Recommendation: Wrap component <${opt.description.match(/<(\w+)>/)?.[1]}> in memo() in ${opt.file}`);
+            } else if (opt.category === 'frontend_react' && opt.description.includes('inline arrow function')) {
+                console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
             }
         } catch (e) {
             console.error(`Failed to apply fix in ${opt.file}:`, e);
@@ -336,7 +382,6 @@ function reviewRecentMerges(): OptimizationResult[] {
                 const hash = parts[0];
                 const msg = parts.slice(1).join(' ');
 
-                // Scan the diff for performance-related changes
                 const diff = execSync(`git diff ${hash}^..${hash} || true`).toString();
                 if (diff.includes('useEffect') || diff.includes('supabase') || diff.includes('.map') ||
                     diff.includes('useState') || diff.includes('useCallback') ||
@@ -453,7 +498,6 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
   };
 
   logs.unshift(summary);
-  // Keep only last 20 runs
   fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
@@ -461,7 +505,7 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
 /**
  * Sends Slack notification via webhook
  */
-async function sendSlackNotification(summary: { optimizations: OptimizationResult[]; benchmarks: { apiLatencyMs: number } }, prUrl?: string) {
+async function sendSlackNotification(summary: { optimizations: OptimizationResult[]; benchmarks: { apiLatencyMs: number; beforeLatencyMs?: number } }, prUrl?: string) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) {
     console.warn('SLACK_WEBHOOK_URL not set, skipping notification.');
@@ -474,6 +518,12 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
   const backendLeadTag = "<@backend-lead>";
 
   let text = `🚀 *Nightly Performance Sweep Report* - ${new Date().toLocaleDateString()}\n`;
+  if (summary.benchmarks.beforeLatencyMs) {
+      const delta = summary.benchmarks.apiLatencyMs - summary.benchmarks.beforeLatencyMs;
+      text += `⏱️ *Latency Delta:* ${summary.benchmarks.beforeLatencyMs}ms → ${summary.benchmarks.apiLatencyMs}ms (${delta >= 0 ? '+' : ''}${delta}ms)\n`;
+  } else {
+      text += `⏱️ *Current Latency:* ${summary.benchmarks.apiLatencyMs}ms\n`;
+  }
   if (prUrl) {
       text += `📦 *Pull Request:* ${prUrl}\n`;
   }
@@ -523,26 +573,41 @@ async function main() {
   console.log('Starting nightly performance sweep...');
 
   const n1Issues = scanForN1Queries();
+  const indexIssues = scanForMissingIndexes();
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
 
-  const allIssues = [...n1Issues, ...memoIssues, ...mergeIssues];
-  const benchmarks = await runBenchmarks();
+  const allIssues = [...n1Issues, ...indexIssues, ...memoIssues, ...mergeIssues];
 
-  logResults(allIssues, benchmarks);
+  const beforeBenchmarks = await runBenchmarks();
 
-  if (APPLY_FIXES) {
+  if (APPLY_FIXES && allIssues.length > 0) {
       applyFixes(allIssues);
-  }
+      const afterBenchmarks = await runBenchmarks();
 
-  if (process.env.SLACK_WEBHOOK_URL && !process.env.GITHUB_ACTIONS) {
-      await sendSlackNotification({
-        optimizations: allIssues,
-        benchmarks: { apiLatencyMs: benchmarks.apiLatencyMs }
-      });
-  }
+      logResults(allIssues, { before: beforeBenchmarks, after: afterBenchmarks });
 
-  console.log('Performance sweep completed.', { benchmarks });
+      if (process.env.SLACK_WEBHOOK_URL && !process.env.GITHUB_ACTIONS) {
+          await sendSlackNotification({
+            optimizations: allIssues,
+            benchmarks: {
+                apiLatencyMs: afterBenchmarks.apiLatencyMs,
+                beforeLatencyMs: beforeBenchmarks.apiLatencyMs
+            }
+          });
+      }
+      console.log('Performance sweep completed with auto-fixes.', { before: beforeBenchmarks, after: afterBenchmarks });
+  } else {
+      logResults(allIssues, beforeBenchmarks);
+
+      if (process.env.SLACK_WEBHOOK_URL && !process.env.GITHUB_ACTIONS) {
+          await sendSlackNotification({
+            optimizations: allIssues,
+            benchmarks: { apiLatencyMs: beforeBenchmarks.apiLatencyMs }
+          });
+      }
+      console.log('Performance sweep completed.', { benchmarks: beforeBenchmarks });
+  }
 }
 
 main().catch(console.error);
