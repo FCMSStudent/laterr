@@ -217,6 +217,7 @@ export const HealthDocumentDetailModal = ({
                 <img
                   src={document.file_url}
                   alt={document.title}
+                  loading="lazy"
                   className="w-full max-h-[500px] object-contain"
                 />
               )}
