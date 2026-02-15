@@ -4,6 +4,7 @@ import { cleanMetadataFields, validateAndParseAiJson } from "../_shared/metadata
 import { parseHTML } from "https://esm.sh/linkedom@0.18.5";
 import { Readability } from "https://esm.sh/@mozilla/readability@0.5.0";
 import { createLogger } from "../_shared/logger.ts";
+// Mercury Parser cannot run in Deno (github deps). Using enhanced Readability instead.
 
 // Configuration constants
 const AI_TEMPERATURE = 0.3; // Lower temperature for consistent results
@@ -324,19 +325,27 @@ serve(async (req) => {
       throw new HttpError(403, 'url_blocked', 'Access to private IP ranges is not allowed');
     }
 
-    // Helper function to detect video platform
-    const detectVideoPlatform = (url: string): 'youtube' | 'vimeo' | 'tiktok' | null => {
+    // Helper function to detect platform with oEmbed support
+    type OEmbedPlatform = 'youtube' | 'vimeo' | 'tiktok' | 'twitter' | 'github' | 'spotify' | 'soundcloud' | 'reddit' | 'codepen';
+    
+    const detectPlatform = (url: string): OEmbedPlatform | null => {
       const hostname = url.toLowerCase();
-      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
-        return 'youtube';
-      }
-      if (hostname.includes('vimeo.com')) {
-        return 'vimeo';
-      }
-      if (hostname.includes('tiktok.com')) {
-        return 'tiktok';
-      }
+      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) return 'youtube';
+      if (hostname.includes('vimeo.com')) return 'vimeo';
+      if (hostname.includes('tiktok.com')) return 'tiktok';
+      if (hostname.includes('twitter.com') || hostname.includes('x.com')) return 'twitter';
+      if (hostname.includes('github.com')) return 'github';
+      if (hostname.includes('open.spotify.com')) return 'spotify';
+      if (hostname.includes('soundcloud.com')) return 'soundcloud';
+      if (hostname.includes('reddit.com/r/')) return 'reddit';
+      if (hostname.includes('codepen.io')) return 'codepen';
       return null;
+    };
+    
+    const VIDEO_PLATFORMS: OEmbedPlatform[] = ['youtube', 'vimeo', 'tiktok'];
+    const detectVideoPlatform = (url: string): OEmbedPlatform | null => {
+      const p = detectPlatform(url);
+      return p && VIDEO_PLATFORMS.includes(p) ? p : null;
     };
 
     // Helper function to extract YouTube video ID
@@ -354,12 +363,18 @@ serve(async (req) => {
       return null;
     };
 
-    // Helper function to fetch oEmbed data
+    // Helper function to fetch oEmbed data (extended with Twitter, GitHub, etc.)
     const fetchOembedData = async (url: string, platform: string) => {
       const oembedUrls: Record<string, string> = {
         youtube: `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`,
         vimeo: `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`,
-        tiktok: `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`
+        tiktok: `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`,
+        twitter: `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&format=json`,
+        github: `https://github.com/oembed?url=${encodeURIComponent(url)}&format=json`,
+        spotify: `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`,
+        soundcloud: `https://soundcloud.com/oembed?url=${encodeURIComponent(url)}&format=json`,
+        reddit: `https://www.reddit.com/oembed?url=${encodeURIComponent(url)}&format=json`,
+        codepen: `https://codepen.io/api/oembed?url=${encodeURIComponent(url)}&format=json`,
       };
       
       const oembedUrl = oembedUrls[platform];
@@ -438,23 +453,29 @@ serve(async (req) => {
 
     console.log('Fetching URL:', url);
 
-    // Detect video platform
-    const platform = detectVideoPlatform(url);
+    // Detect platforms (video + rich embed)
+    const videoPlatform = detectVideoPlatform(url);
+    const richPlatform = detectPlatform(url);
+    const platform = videoPlatform || richPlatform;
     let pageTitle = '';
     let previewImageUrl: string | null = null;
     let metaDescription = '';
     let authorName = '';
     let shouldFetchHtml = true;
+    let oembedHtml: string | null = null;
+    let oembedProviderName: string | null = null;
 
-    // Try oEmbed for video platforms
+    // Try oEmbed for any supported platform
     if (platform) {
-      console.log(`Detected ${platform} video, trying oEmbed...`);
+      console.log(`Detected ${platform} content, trying oEmbed...`);
       const oembedData = await fetchOembedData(url, platform);
       
       if (oembedData) {
         pageTitle = oembedData.title || '';
         previewImageUrl = oembedData.thumbnail_url || null;
         authorName = oembedData.author_name || '';
+        oembedHtml = oembedData.html || null;
+        oembedProviderName = oembedData.provider_name || platform;
         
         // For YouTube, try to get maxresdefault thumbnail for better quality
         if (platform === 'youtube' && previewImageUrl) {
@@ -464,7 +485,10 @@ serve(async (req) => {
           }
         }
         
-        shouldFetchHtml = false; // Skip HTML fetching since we have good data
+        // Skip HTML fetch for video platforms with good oEmbed data
+        if (videoPlatform) {
+          shouldFetchHtml = false;
+        }
         console.log('oEmbed data retrieved successfully');
       } else {
         console.log('oEmbed failed, falling back to HTML scraping');
@@ -510,26 +534,25 @@ serve(async (req) => {
         previewImageUrl = previewImageUrl || extractedMetadata.image || null;
         authorName = authorName || extractedMetadata.author || '';
         
-        // Use Readability to extract main article content
+        // Enhanced Readability extraction with better metadata fallbacks
         try {
           const parsed: any = parseHTML(html);
           const doc = parsed.document || parsed;
-          const reader = new Readability(doc, { 
-            keepClasses: false 
-          });
+          const reader = new Readability(doc, { keepClasses: false });
           const article = reader.parse();
           
           if (article && article.textContent) {
-            // Use the extracted article text content (already cleaned by Readability)
             cleanText = article.textContent.trim().replace(/\s+/g, ' ').substring(0, 3000);
+            // Use Readability's extracted metadata as additional fallbacks
+            pageTitle = pageTitle || article.title || 'Untitled';
+            authorName = authorName || article.byline || '';
+            metaDescription = metaDescription || article.excerpt || '';
             console.log('✅ Successfully extracted article content using Readability');
           } else {
-            // Fallback to simple HTML stripping if Readability fails
             cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
             console.log('⚠️ Readability extraction failed, using fallback HTML stripping');
           }
         } catch (error) {
-          // Fallback to simple HTML stripping on error
           console.error('⚠️ Error using Readability:', error);
           cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').substring(0, 3000);
         }
@@ -708,10 +731,11 @@ Provide comprehensive metadata in JSON format.`;
         previewImageUrl: previewImageUrl,
         author: authorName || extractedMetadata.author || undefined,
         platform: platform || undefined,
-        contentType: result.contentType || (platform ? 'video' : 'article'),
-        siteName: extractedMetadata.siteName || undefined,
+        contentType: result.contentType || (videoPlatform ? 'video' : 'article'),
+        siteName: extractedMetadata.siteName || oembedProviderName || undefined,
         publishedTime: extractedMetadata.publishedTime || undefined,
         confidence: result.confidence || undefined,
+        oembedHtml: oembedHtml || undefined,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId } }
     );
