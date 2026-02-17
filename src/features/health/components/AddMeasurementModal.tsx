@@ -332,7 +332,7 @@ export const AddMeasurementModal = ({
           </DialogTitle>
           <DialogDescription>
             Record a new health measurement
-          </DrawerDescription>
+          </DialogDescription>
         </DialogHeader>
         {formContentMarkup}
       </DialogContent>
