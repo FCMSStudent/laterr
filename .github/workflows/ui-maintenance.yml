@@ -11,25 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
 
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Run UI maintenance audit and auto-fix
-        run: pnpm exec tsx scripts/ui-maintenance.ts --fix --runtime
+        run: npx tsx scripts/ui-maintenance.ts --fix --runtime
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
@@ -52,7 +47,7 @@ jobs:
 
       - name: Send Slack Notification
         if: always()
-        run: pnpm exec tsx scripts/ui-maintenance.ts --notify
+        run: npx tsx scripts/ui-maintenance.ts --notify
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           PULL_REQUEST_URL: ${{ steps.cpr.outputs.pull-request-url }}

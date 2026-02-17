@@ -1,5 +1,228 @@
 [
   {
+    "timestamp": "2026-02-17T22:28:08.382Z",
+    "type": "nightly_sweep",
+    "optimizations": [
+      {
+        "category": "database",
+        "description": "Potential missing index for column \"measured_at\" in table \"health_measurements\"",
+        "impact": "Queries on this column may cause full table scans",
+        "file": "src/shared/hooks/useDashboardStats.ts",
+        "line": "55",
+        "suggestedFix": "CREATE INDEX IF NOT EXISTS idx_health_measurements_measured_at ON health_measurements (measured_at);"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected expensive operation (filter) outside useMemo",
+        "impact": "Calculation runs on every render",
+        "file": "src/features/health/components/ExtractedHealthDataDisplay.tsx",
+        "line": "239",
+        "suggestedFix": "Wrap in useMemo"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected expensive operation (filter) outside useMemo",
+        "impact": "Calculation runs on every render",
+        "file": "src/features/health/pages/HealthPage.tsx",
+        "line": "337",
+        "suggestedFix": "Wrap in useMemo"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected expensive operation (filter) outside useMemo",
+        "impact": "Calculation runs on every render",
+        "file": "src/features/subscriptions/components/AddSubscriptionModal.tsx",
+        "line": "110",
+        "suggestedFix": "Wrap in useMemo"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected expensive operation (filter) outside useMemo",
+        "impact": "Calculation runs on every render",
+        "file": "src/shared/components/ui/advanced/chart.tsx",
+        "line": "62",
+        "suggestedFix": "Wrap in useMemo"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <LoadingButton>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/auth/pages/AuthPage.tsx",
+        "line": "454",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <Tabs>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/bookmarks/components/AddItemModal.tsx",
+        "line": "546",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <CardDetailRightPanel>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/bookmarks/components/DetailViewModal.tsx",
+        "line": "555",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/bookmarks/pages/BookmarksPage.tsx",
+        "line": "637",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <BulkActionsBar>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/bookmarks/pages/BookmarksPage.tsx",
+        "line": "742",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <Select>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/health/components/AddHealthDocumentModal.tsx",
+        "line": "304",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <Select>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/health/components/AddMeasurementModal.tsx",
+        "line": "159",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuTrigger>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/health/components/HealthDocumentCard.tsx",
+        "line": "60",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuTrigger>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/health/components/MeasurementCard.tsx",
+        "line": "90",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <Select>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/EditSubscriptionModal.tsx",
+        "line": "253",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/SubscriptionFilterBar.tsx",
+        "line": "230",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/SubscriptionFilterBar.tsx",
+        "line": "292",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/SubscriptionFilterBar.tsx",
+        "line": "295",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/SubscriptionFilterBar.tsx",
+        "line": "299",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/SubscriptionFilterBar.tsx",
+        "line": "303",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/SubscriptionFilterBar.tsx",
+        "line": "308",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/SubscriptionFilterBar.tsx",
+        "line": "311",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/SubscriptionFilterBar.tsx",
+        "line": "315",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <Select>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/features/subscriptions/components/AddSubscriptionModal.tsx",
+        "line": "298",
+        "suggestedFix": "Wrap in useCallback"
+      },
+      {
+        "category": "frontend_react",
+        "description": "Detected inline arrow function passed to <DropdownMenuItem>",
+        "impact": "Causes re-render even if component is memoized",
+        "file": "src/shared/components/NavigationHeader.tsx",
+        "line": "170",
+        "suggestedFix": "Wrap in useCallback"
+      }
+    ],
+    "benchmarks": {
+      "before": {
+        "bundleSizeKB": 0,
+        "largeFilesCount": 0,
+        "timestamp": "2026-02-17T22:28:07.728Z",
+        "apiLatencyMs": 376,
+        "apiStatus": "success"
+      },
+      "after": {
+        "bundleSizeKB": 0,
+        "largeFilesCount": 0,
+        "timestamp": "2026-02-17T22:28:08.378Z",
+        "apiLatencyMs": 215,
+        "apiStatus": "success"
+      }
+    },
+    "status": "optimizations_found"
+  },
+  {
     "timestamp": "2026-02-17T22:21:36.639Z",
     "type": "nightly_sweep",
     "optimizations": [

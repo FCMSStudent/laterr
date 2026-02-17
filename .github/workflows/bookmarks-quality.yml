@@ -26,34 +26,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Build
-        run: pnpm build
+        run: npm run build
 
       - name: Bookmark lint
-        run: pnpm run lint:bookmarks
+        run: npm run lint:bookmarks
 
       - name: Bookmark unit tests with coverage
-        run: pnpm run test:bookmarks:unit -- --coverage
+        run: npm run test:bookmarks:unit -- --coverage
 
       - name: Bookmark Playwright suite
-        run: pnpm run test:bookmarks:e2e
+        run: npm run test:bookmarks:e2e
 
       - name: Upload Playwright artifacts
         if: failure()
