@@ -117,7 +117,7 @@ export default function Auth() {
   useEffect(() => {
     validateConfirmPassword(confirmPassword);
   }, [confirmPassword, validateConfirmPassword]);
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setEmail('');
     setPassword('');
     setConfirmPassword('');
@@ -129,7 +129,44 @@ export default function Auth() {
       password: false,
       confirmPassword: false
     });
-  };
+  }, []);
+
+  const switchToLogin = useCallback(() => {
+    setSignupSuccess(false);
+    setResetEmailSent(false);
+    setPasswordResetSuccess(false);
+    setMode('login');
+    resetForm();
+  }, [resetForm]);
+
+  const switchToForgotPassword = useCallback(() => {
+    setMode('forgot-password');
+    setPassword('');
+    setPasswordError(undefined);
+    setTouched(prev => ({
+      ...prev,
+      password: false
+    }));
+  }, []);
+
+  const toggleAuthMode = useCallback(() => {
+    setMode(prev => prev === 'login' ? 'signup' : 'login');
+    resetForm();
+  }, [resetForm]);
+
+  const clearEmail = useCallback(() => setEmail(''), []);
+  const onEmailBlur = useCallback(() => setTouched(prev => ({
+    ...prev,
+    email: true
+  })), []);
+  const onPasswordBlur = useCallback(() => setTouched(prev => ({
+    ...prev,
+    password: true
+  })), []);
+  const onConfirmPasswordBlur = useCallback(() => setTouched(prev => ({
+    ...prev,
+    confirmPassword: true
+  })), []);
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -356,11 +393,7 @@ export default function Auth() {
                 We've sent a confirmation email to your inbox. Click the link to activate your account.
               </p>
               
-              <LoadingButton onClick={() => /* @perf-check */ {
-              setSignupSuccess(false);
-              setMode('login');
-              resetForm();
-            }} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
+              <LoadingButton onClick={switchToLogin} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
                 Continue to Sign In
               </LoadingButton>
               
@@ -393,11 +426,7 @@ export default function Auth() {
                 We've sent you a password reset link. Click it to set a new password.
               </p>
               
-              <LoadingButton onClick={() => /* @perf-check */ {
-              setResetEmailSent(false);
-              setMode('login');
-              resetForm();
-            }} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
+              <LoadingButton onClick={switchToLogin} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
                 Back to Sign In
               </LoadingButton>
             </div>
@@ -422,10 +451,8 @@ export default function Auth() {
                 Your password has been successfully updated. You can now sign in with your new password.
               </p>
               
-              <LoadingButton onClick={() => /* @perf-check */ {
-              setPasswordResetSuccess(false);
-              setMode('login');
-              resetForm();
+              <LoadingButton onClick={() => {
+              switchToLogin();
               navigate('/auth');
             }} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
                 Continue to Sign In
@@ -452,10 +479,7 @@ export default function Auth() {
             </div>
 
             <form onSubmit={handleForgotPassword} className="space-y-5">
-              <EnhancedInput id="email" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} onBlur={() => setTouched({
-              ...touched,
-              email: true
-            })} required maxLength={255} className="glass-input h-12 text-base" prefixIcon="email" error={emailError} success={!emailError && email.length > 0 && touched.email} showClearButton={true} onClear={() => setEmail('')} autoComplete="email" aria-label="Email address" />
+              <EnhancedInput id="email" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} onBlur={onEmailBlur} required maxLength={255} className="glass-input h-12 text-base" prefixIcon="email" error={emailError} success={!emailError && email.length > 0 && touched.email} showClearButton={true} onClear={clearEmail} autoComplete="email" aria-label="Email address" />
 
               <LoadingButton type="submit" loading={loading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
                 Send Reset Link
@@ -463,10 +487,7 @@ export default function Auth() {
             </form>
 
             <div className="mt-6 text-center">
-              <button onClick={() => {
-              setMode('login');
-              resetForm();
-            }} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 text-sm font-medium smooth-transition hover:underline">
+              <button onClick={switchToLogin} className="inline-flex items-center gap-2 text-primary hover:text-primary/80 text-sm font-medium smooth-transition hover:underline">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Sign In
               </button>
@@ -492,15 +513,9 @@ export default function Auth() {
             </div>
 
             <form onSubmit={handleResetPassword} className="space-y-5">
-              <EnhancedInput id="password" type="password" placeholder="New Password" value={password} onChange={e => setPassword(e.target.value)} onBlur={() => setTouched({
-              ...touched,
-              password: true
-            })} required maxLength={72} className="glass-input h-12 text-base" prefixIcon="password" error={passwordError} success={!passwordError && password.length > 0 && touched.password} showPasswordToggle={true} autoComplete="new-password" aria-label="New password" />
+              <EnhancedInput id="password" type="password" placeholder="New Password" value={password} onChange={e => setPassword(e.target.value)} onBlur={onPasswordBlur} required maxLength={72} className="glass-input h-12 text-base" prefixIcon="password" error={passwordError} success={!passwordError && password.length > 0 && touched.password} showPasswordToggle={true} autoComplete="new-password" aria-label="New password" />
               
-              <EnhancedInput id="confirmPassword" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} onBlur={() => setTouched({
-              ...touched,
-              confirmPassword: true
-            })} required maxLength={72} className="glass-input h-12 text-base" prefixIcon="password" error={confirmPasswordError} success={!confirmPasswordError && confirmPassword.length > 0 && touched.confirmPassword && password === confirmPassword} showPasswordToggle={true} autoComplete="new-password" aria-label="Confirm new password" />
+              <EnhancedInput id="confirmPassword" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} onBlur={onConfirmPasswordBlur} required maxLength={72} className="glass-input h-12 text-base" prefixIcon="password" error={confirmPasswordError} success={!confirmPasswordError && confirmPassword.length > 0 && touched.confirmPassword && password === confirmPassword} showPasswordToggle={true} autoComplete="new-password" aria-label="Confirm new password" />
 
               <LoadingButton type="submit" loading={loading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
                 Update Password
@@ -526,27 +541,13 @@ export default function Auth() {
           </div>
 
           <form onSubmit={handleAuth} className="space-y-5">
-            <EnhancedInput id="email" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} onBlur={() => setTouched({
-            ...touched,
-            email: true
-          })} required maxLength={255} className="glass-input h-12 text-base" prefixIcon="email" error={emailError} success={!emailError && email.length > 0 && touched.email} showClearButton={true} onClear={() => setEmail('')} autoComplete="email" aria-label="Email address" />
+            <EnhancedInput id="email" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} onBlur={onEmailBlur} required maxLength={255} className="glass-input h-12 text-base" prefixIcon="email" error={emailError} success={!emailError && email.length > 0 && touched.email} showClearButton={true} onClear={clearEmail} autoComplete="email" aria-label="Email address" />
             
             <div className="space-y-2">
-              <EnhancedInput id="password" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} onBlur={() => setTouched({
-              ...touched,
-              password: true
-            })} required maxLength={72} className="glass-input h-12 text-base" prefixIcon="password" error={passwordError} success={!passwordError && password.length > 0 && touched.password} showPasswordToggle={true} autoComplete={mode === 'login' ? "current-password" : "new-password"} aria-label="Password" />
+              <EnhancedInput id="password" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} onBlur={onPasswordBlur} required maxLength={72} className="glass-input h-12 text-base" prefixIcon="password" error={passwordError} success={!passwordError && password.length > 0 && touched.password} showPasswordToggle={true} autoComplete={mode === 'login' ? "current-password" : "new-password"} aria-label="Password" />
               
               {mode === 'login' && <div className="text-left">
-                  <button type="button" onClick={() => {
-                setMode('forgot-password');
-                setPassword('');
-                setPasswordError(undefined);
-                setTouched({
-                  ...touched,
-                  password: false
-                });
-              }} className="text-xs text-muted-foreground hover:text-primary smooth-transition">
+                  <button type="button" onClick={switchToForgotPassword} className="text-xs text-muted-foreground hover:text-primary smooth-transition">
                     Forgot password?
                   </button>
                 </div>}
@@ -570,10 +571,7 @@ export default function Auth() {
             </div>}
 
           <div className="mt-8 text-left">
-            <button onClick={() => {
-            setMode(mode === 'login' ? 'signup' : 'login');
-            resetForm();
-          }} className="text-primary hover:text-primary/80 text-sm font-medium smooth-transition hover:underline">
+            <button onClick={toggleAuthMode} className="text-primary hover:text-primary/80 text-sm font-medium smooth-transition hover:underline">
               {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </button>
           </div>

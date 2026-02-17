@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui";
 import { Button } from "@/shared/components/ui";
@@ -50,10 +50,10 @@ export const AddMeasurementModal = ({
   const [tags, setTags] = useState<string[]>([]);
   const isMobile = useIsMobile();
 
-  const selectedTypeInfo = measurementType ? MEASUREMENT_TYPES[measurementType] : null;
+  const selectedTypeInfo = useMemo(() => measurementType ? MEASUREMENT_TYPES[measurementType] : null, [measurementType]);
   const isBloodPressure = measurementType === 'blood_pressure';
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setMeasurementType("");
     setValue("");
     setSystolic("");
@@ -62,29 +62,29 @@ export const AddMeasurementModal = ({
     setNotes("");
     setTags([]);
     setTagInput("");
-  };
+  }, []);
 
-  const handleAddTag = () => {
+  const handleAddTag = useCallback(() => {
     const trimmedTag = tagInput.trim().toLowerCase();
     if (trimmedTag && !tags.includes(trimmedTag)) {
-      setTags([...tags, trimmedTag]);
+      setTags(prev => [...prev, trimmedTag]);
       setTagInput("");
     }
-  };
+  }, [tagInput, tags]);
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(t => t !== tagToRemove));
-  };
+  const handleRemoveTag = useCallback((tagToRemove: string) => {
+    setTags(prev => prev.filter(t => t !== tagToRemove));
+  }, []);
 
-  const handleQuickTime = (type: 'now' | 'yesterday') => {
+  const handleQuickTime = useCallback((type: 'now' | 'yesterday') => {
     if (type === 'now') {
       setMeasuredAt(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     } else {
       setMeasuredAt(format(subDays(new Date(), 1), "yyyy-MM-dd'T'HH:mm"));
     }
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!measurementType) {
       toast.error("Please select a measurement type");
       return;
@@ -136,14 +136,27 @@ export const AddMeasurementModal = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    measurementType,
+    isBloodPressure,
+    systolic,
+    diastolic,
+    value,
+    selectedTypeInfo,
+    measuredAt,
+    notes,
+    tags,
+    onOpenChange,
+    onMeasurementAdded,
+    resetForm
+  ]);
 
-  const FormContent = () => (
+  const formContentMarkup = (
     <div className="space-y-4 mt-4">
       {/* Measurement Type */}
       <div className="space-y-2">
         <Label htmlFor="type">Measurement Type *</Label>
-        <Select value={measurementType} onValueChange={(v) => /* @perf-check */ setMeasurementType(v as MeasurementType)}>
+        <Select value={measurementType} onValueChange={(v) => setMeasurementType(v as MeasurementType)}>
           <SelectTrigger>
             <SelectValue placeholder="Select type..." />
           </SelectTrigger>
@@ -292,7 +305,7 @@ export const AddMeasurementModal = ({
             Log Measurement
           </LoadingButton>
         </div>
-      );
+  );
 
   return isMobile ? (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -306,7 +319,7 @@ export const AddMeasurementModal = ({
           </DrawerDescription>
         </DrawerHeader>
         <div className="overflow-y-auto px-4 pb-4">
-          <FormContent />
+          {formContentMarkup}
         </div>
       </DrawerContent>
     </Drawer>
@@ -319,9 +332,9 @@ export const AddMeasurementModal = ({
           </DialogTitle>
           <DialogDescription>
             Record a new health measurement
-          </DialogDescription>
+          </DrawerDescription>
         </DialogHeader>
-        <FormContent />
+        {formContentMarkup}
       </DialogContent>
     </Dialog>
   );

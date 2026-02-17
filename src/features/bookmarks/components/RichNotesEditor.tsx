@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from "@/shared/components/ui";
 import { ChecklistItem } from './ChecklistItem';
 import { BulletItem } from './BulletItem';
@@ -46,6 +46,19 @@ export const RichNotesEditor = ({
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [commandSearch, setCommandSearch] = useState('');
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+
+  // Calculate the index for numbered items efficiently
+  const numberedIndices = useMemo(() => {
+    const indices: Record<string, number> = {};
+    let count = 0;
+    notesData.blocks.forEach(block => {
+      if (block.type === 'numbered') {
+        count++;
+        indices[block.id] = count;
+      }
+    });
+    return indices;
+  }, [notesData.blocks]);
 
   // Sync with external value changes
   useEffect(() => {
@@ -375,11 +388,7 @@ export const RichNotesEditor = ({
 
               case 'numbered':
               {
-                // Calculate the index for numbered items
-                const numberedIndex = notesData.blocks
-                  .slice(0, index)
-                  .filter(b => b.type === 'numbered')
-                  .length + 1;
+                const numberedIndex = numberedIndices[block.id];
 
                 return (
                   <NumberedItem

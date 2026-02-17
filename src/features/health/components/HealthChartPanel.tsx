@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Button } from "@/shared/components/ui";
 import { format, subDays, subMonths, subYears, isAfter } from "date-fns";
@@ -22,7 +22,7 @@ export const HealthChartPanel = ({
   const [dateRange, setDateRange] = useState<DateRange>(initialRange);
 
   // Filter data by date range
-  const getStartDate = () => {
+  const startDate = useMemo(() => {
     const now = new Date();
     switch (dateRange) {
       case '7d': return subDays(now, 7);
@@ -31,15 +31,15 @@ export const HealthChartPanel = ({
       case '1y': return subYears(now, 1);
       default: return subDays(now, 30);
     }
-  };
+  }, [dateRange]);
 
-  const startDate = getStartDate();
-  const filteredData = data
+  const filteredData = useMemo(() => data
     .filter(m => isAfter(new Date(m.measured_at), startDate))
-    .sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime());
+    .sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime()),
+  [data, startDate]);
 
   // Transform data for chart
-  const chartData = filteredData.map(m => ({
+  const chartData = useMemo(() => filteredData.map(m => ({
     date: format(new Date(m.measured_at), 'MMM d'),
     fullDate: m.measured_at,
     value: extractNumericValue(m.value),
@@ -48,7 +48,7 @@ export const HealthChartPanel = ({
       systolic: m.value.systolic as number,
       diastolic: m.value.diastolic as number,
     } : {}),
-  }));
+  })), [filteredData, measurementType]);
 
   // Get normal ranges for reference lines
   const normalRange = NORMAL_RANGES[measurementType as keyof typeof NORMAL_RANGES];
