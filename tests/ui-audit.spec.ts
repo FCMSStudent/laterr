@@ -41,6 +41,8 @@ test.describe('UI Accessibility Audit', () => {
         });
       } catch (e) {
         console.error(`Accessibility issues found on ${pageInfo.name}`);
+        // We catch and log but don't necessarily fail here if we want to continue,
+        // but standard test behavior is to throw.
         throw e;
       }
 
@@ -52,75 +54,87 @@ test.describe('UI Accessibility Audit', () => {
     });
   }
 
-  test('Check for overlapping and misaligned elements', async ({ page }) => {
-    await page.goto('/components');
-    await page.waitForLoadState('networkidle');
+  test('Check for overlapping and misaligned elements across all pages', async ({ page }) => {
+    for (const pageInfo of pages) {
+      await test.step(`Checking ${pageInfo.name}`, async () => {
+        await page.goto(pageInfo.path);
+        await page.waitForLoadState('networkidle');
 
-    // Filter for visible elements only
-    const elements = await page.locator('button:visible, a:visible, input:visible, [role="button"]:visible').all();
+        // Batch measurements in a single evaluate call to minimize IPC overhead
+        const elementsData = await page.evaluate(() => {
+          const els = Array.from(document.querySelectorAll('button, a, input, [role="button"]'))
+            .filter(el => {
+              const style = window.getComputedStyle(el);
+              return style.display !== 'none' &&
+                     style.visibility !== 'hidden' &&
+                     (el as HTMLElement).offsetWidth > 0 &&
+                     (el as HTMLElement).offsetHeight > 0;
+            });
 
-    const bboxes = [];
-    for (const el of elements) {
-      const box = await el.boundingBox();
-      if (box) {
-        bboxes.push({ box, el });
-      }
-    }
+          return els.map(el => {
+            const rect = el.getBoundingClientRect();
+            return {
+              tagName: el.tagName.toLowerCase(),
+              text: (el as HTMLElement).innerText.substring(0, 20),
+              box: {
+                x: rect.left,
+                y: rect.top,
+                width: rect.width,
+                height: rect.height
+              },
+              hasOverflow: el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight
+            };
+          });
+        });
 
-    for (let i = 0; i < bboxes.length; i++) {
-      const b1 = bboxes[i].box;
-      const el1 = bboxes[i].el;
-      const tagName1 = await el1.evaluate(node => node.tagName.toLowerCase());
-      const text1 = (await el1.innerText()).substring(0, 20);
+        for (let i = 0; i < elementsData.length; i++) {
+          const e1 = elementsData[i];
+          const b1 = e1.box;
 
-      // Check for small touch targets (less than 44x44)
-      if (b1.width < 44 || b1.height < 44) {
-        const msg = `Small touch target detected: <${tagName1}> "${text1}" is ${b1.width}x${b1.height} at (${b1.x}, ${b1.y})`;
-        expect.soft(b1.width, msg).toBeGreaterThanOrEqual(44);
-        expect.soft(b1.height, msg).toBeGreaterThanOrEqual(44);
-      }
+          // Check for small touch targets (less than 44x44)
+          if (b1.width < 44 || b1.height < 44) {
+            const msg = `Small touch target on ${pageInfo.name}: <${e1.tagName}> "${e1.text}" is ${b1.width}x${b1.height} at (${b1.x}, ${b1.y})`;
+            expect.soft(b1.width, msg).toBeGreaterThanOrEqual(44);
+            expect.soft(b1.height, msg).toBeGreaterThanOrEqual(44);
+          }
 
-      // Check for text overflow
-      const hasOverflow = await el1.evaluate(node => {
-        const el = node as HTMLElement;
-        return el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight;
-      });
-      if (hasOverflow) {
-        const msg = `Potential text overflow in <${tagName1}>: "${text1}..."`;
-        expect.soft(hasOverflow, msg).toBeFalsy();
-      }
+          // Check for text overflow
+          if (e1.hasOverflow) {
+            const msg = `Potential text overflow on ${pageInfo.name} in <${e1.tagName}>: "${e1.text}..."`;
+            expect.soft(e1.hasOverflow, msg).toBeFalsy();
+          }
 
-      for (let j = i + 1; j < bboxes.length; j++) {
-        const b2 = bboxes[j].box;
-        const el2 = bboxes[j].el;
-        const tagName2 = await el2.evaluate(node => node.tagName.toLowerCase());
-        const text2 = (await el2.innerText()).substring(0, 20);
+          for (let j = i + 1; j < elementsData.length; j++) {
+            const e2 = elementsData[j];
+            const b2 = e2.box;
 
-        // Intersection Check
-        const intersectionX = Math.max(0, Math.min(b1.x + b1.width, b2.x + b2.width) - Math.max(b1.x, b2.x));
-        const intersectionY = Math.max(0, Math.min(b1.y + b1.height, b2.y + b2.height) - Math.max(b1.y, b2.y));
-        const intersectionArea = intersectionX * intersectionY;
+            // Intersection Check
+            const intersectionX = Math.max(0, Math.min(b1.x + b1.width, b2.x + b2.width) - Math.max(b1.x, b2.x));
+            const intersectionY = Math.max(0, Math.min(b1.y + b1.height, b2.y + b2.height) - Math.max(b1.y, b2.y));
+            const intersectionArea = intersectionX * intersectionY;
 
-        if (intersectionArea > 0) {
-          const area1 = b1.width * b1.height;
-          const area2 = b2.width * b2.height;
-          const overlapPercent = intersectionArea / Math.min(area1, area2);
+            if (intersectionArea > 0) {
+              const area1 = b1.width * b1.height;
+              const area2 = b2.width * b2.height;
+              const overlapPercent = intersectionArea / Math.min(area1, area2);
 
-          if (overlapPercent > 0.5) { // If 50% of the smaller element is covered
-             const msg = `Significant element overlap detected (${Math.round(overlapPercent * 100)}%) between <${tagName1}> "${text1}" and <${tagName2}> "${text2}"`;
-             expect.soft(overlapPercent, msg).toBeLessThanOrEqual(0.5);
+              if (overlapPercent > 0.5) { // If 50% of the smaller element is covered
+                const msg = `Significant overlap (${Math.round(overlapPercent * 100)}%) on ${pageInfo.name} between <${e1.tagName}> "${e1.text}" and <${e2.tagName}> "${e2.text}"`;
+                expect.soft(overlapPercent, msg).toBeLessThanOrEqual(0.5);
+              }
+            }
+
+            // Misalignment check (elements close horizontally but slightly offset vertically)
+            const verticalDiff = Math.abs(b1.y - b2.y);
+            const horizontalGap = b1.x < b2.x ? b2.x - (b1.x + b1.width) : b1.x - (b2.x + b2.width);
+
+            if (horizontalGap < 50 && verticalDiff > 0 && verticalDiff < 5) {
+              const msg = `Potential misalignment on ${pageInfo.name}: <${e1.tagName}> and <${e2.tagName}> are vertically offset by ${verticalDiff}px`;
+              expect.soft(verticalDiff, msg).toBe(0);
+            }
           }
         }
-
-        // Misalignment check (elements close horizontally but slightly offset vertically)
-        const verticalDiff = Math.abs(b1.y - b2.y);
-        const horizontalGap = b1.x < b2.x ? b2.x - (b1.x + b1.width) : b1.x - (b2.x + b2.width);
-
-        if (horizontalGap < 50 && verticalDiff > 0 && verticalDiff < 5) {
-           const msg = `Potential misalignment: <${tagName1}> and <${tagName2}> are vertically offset by ${verticalDiff}px`;
-           expect.soft(verticalDiff, msg).toBe(0);
-        }
-      }
+      });
     }
   });
 });

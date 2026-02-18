@@ -10,6 +10,9 @@ const COLOR_FIX_MAP: Record<string, string> = {
   '#3b82f7': 'hsl(var(--primary))',
   '#ffffff': 'hsl(var(--background))',
   '#000000': 'hsl(var(--foreground))',
+  '#fff': 'hsl(var(--background))',
+  '#000': 'hsl(var(--foreground))',
+  '#ccc': 'hsl(var(--muted-foreground))',
 };
 
 interface UIIssue {
@@ -21,6 +24,19 @@ interface UIIssue {
   autoFixable: boolean;
   offset?: number;
   originalText?: string;
+}
+
+interface PlaywrightSuite {
+  suites?: PlaywrightSuite[];
+  specs?: {
+    title: string;
+    tests: {
+      results: {
+        status: string;
+        errors?: { message: string }[];
+      }[];
+    }[];
+  }[];
 }
 
 /**
@@ -94,6 +110,55 @@ function scanMissingAriaLabels(): UIIssue[] {
     }
   } catch (e) {
     console.error('Error scanning for missing aria-labels:', e);
+  }
+  return issues;
+}
+
+/**
+ * Scans for missing accessible labels on form elements
+ */
+function scanMissingFormLabels(): UIIssue[] {
+  const issues: UIIssue[] = [];
+  try {
+    const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+      // Look for input, select, textarea
+      const formRegex = /<(input|select|textarea)([^>]*?)(\/?>)/g;
+      let match;
+      while ((match = formRegex.exec(content)) !== null) {
+        const tag = match[1];
+        const attributes = match[2];
+
+        // Skip hidden inputs
+        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
+
+        const idMatch = attributes.match(/id=["']([^"']+)["']/);
+        const id = idMatch ? idMatch[1] : null;
+        const hasAriaLabel = attributes.includes('aria-label') || attributes.includes('aria-labelledby');
+        const hasAssociatedLabel = id && (content.includes(`htmlFor="${id}"`) || content.includes(`htmlFor='${id}'`) || content.includes(`for="${id}"`) || content.includes(`for='${id}'`));
+
+        if (!hasAriaLabel && !hasAssociatedLabel) {
+            // Check if it's wrapped in a <label> (simple lookback heuristic)
+            const beforeTag = content.substring(Math.max(0, match.index - 200), match.index);
+            const isNestedInLabel = beforeTag.includes('<label') && !beforeTag.includes('</label>');
+
+            if (!isNestedInLabel) {
+                const lineNum = content.substring(0, match.index).split('\n').length;
+                issues.push({
+                    type: 'accessibility',
+                    severity: 'high',
+                    description: `Form element <${tag}> missing accessible label (aria-label or associated <label>)`,
+                    file,
+                    line: lineNum,
+                    autoFixable: false
+                });
+            }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error scanning for missing form labels:', e);
   }
   return issues;
 }
@@ -177,18 +242,18 @@ function scanHardcodedColors(): UIIssue[] {
   try {
     const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
     for (const file of files) {
-      if (file.includes('constants.ts') || file.includes('utils.ts')) continue;
+      if (file.includes('constants.ts') || file.includes('utils.ts') || file.includes('chart.tsx')) continue;
 
       const content = fs.readFileSync(file, 'utf8');
-      const hexRegex = /#[0-9a-fA-F]{6}/g;
+      const hexRegex = /#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}/g;
       let match;
       while ((match = hexRegex.exec(content)) !== null) {
         const hex = match[0];
         const lineNum = content.substring(0, match.index).split('\n').length;
 
-        // Skip if it's already a theme variable
+        // Skip if it's already a theme variable or part of a CSS attribute selector
         const lineContent = content.split('\n')[lineNum - 1];
-        if (lineContent.includes('var(')) continue;
+        if (lineContent.includes('var(') || lineContent.includes(`[stroke='${hex}']`) || lineContent.includes(`[fill='${hex}']`)) continue;
 
         let canFix = false;
         if (COLOR_FIX_MAP[hex.toLowerCase()]) {
@@ -227,7 +292,7 @@ function runRuntimeAudit(): UIIssue[] {
     if (fs.existsSync(resultsPath)) {
       const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
 
-      const processSuite = (suite: any) => {
+      const processSuite = (suite: PlaywrightSuite) => {
         for (const spec of suite.specs || []) {
           for (const test of spec.tests || []) {
             for (const result of test.results || []) {
@@ -313,7 +378,46 @@ function applyAutoFixes(issues: UIIssue[]) {
 }
 
 /**
- * Sends Slack notification via webhook
+ * Generates a human-readable Markdown report
+ */
+function generateMarkdownReport(issues: UIIssue[]) {
+  const criticalCount = issues.filter(i => i.severity === 'critical').length;
+  const highCount = issues.filter(i => i.severity === 'high').length;
+  const mediumCount = issues.filter(i => i.severity === 'medium').length;
+  const lowCount = issues.filter(i => i.severity === 'low').length;
+
+  let md = `# UI/UX Maintenance Audit Report\n\n`;
+  md += `Generated on: ${new Date().toLocaleString()}\n\n`;
+  md += `## Summary\n\n`;
+  md += `- **Total Issues:** ${issues.length}\n`;
+  md += `- **Critical:** ${criticalCount}\n`;
+  md += `- **High:** ${highCount}\n`;
+  md += `- **Medium:** ${mediumCount}\n`;
+  md += `- **Low:** ${lowCount}\n\n`;
+
+  md += `## Issues by Severity\n\n`;
+
+  const severities: ('critical' | 'high' | 'medium' | 'low')[] = ['critical', 'high', 'medium', 'low'];
+  for (const sev of severities) {
+    const sevIssues = issues.filter(i => i.severity === sev);
+    if (sevIssues.length > 0) {
+      md += `### ${sev.toUpperCase()}\n\n`;
+      md += `| Type | Description | File | Line |\n`;
+      md += `| --- | --- | --- | --- |\n`;
+      for (const issue of sevIssues) {
+        md += `| ${issue.type} | ${issue.description} | \`${issue.file || 'runtime'}\` | ${issue.line || '-'} |\n`;
+      }
+      md += `\n`;
+    }
+  }
+
+  const reportPath = path.join(process.cwd(), 'UI_MAINTENANCE_REPORT.md');
+  fs.writeFileSync(reportPath, md);
+  console.log(`Markdown report saved to ${reportPath}`);
+}
+
+/**
+ * Sends Slack notification via webhook to #ui-maintenance
  */
 async function sendSlackNotification(issues: UIIssue[]) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -334,7 +438,7 @@ async function sendSlackNotification(issues: UIIssue[]) {
   const prText = prUrl ? `\n\n*View Pull Request:* ${prUrl}` : '\n\n_Note: No automated PR was created for this run._';
 
   const message = {
-    text: `🖌️ *Daily UI/UX Quality Audit Report* - ${new Date().toLocaleDateString()}`,
+    text: `🖌️ *Daily UI/UX Quality Audit Report for #ui-maintenance* - ${new Date().toLocaleDateString()}`,
     attachments: [
       {
         color: criticalIssues.length > 0 ? '#ef4444' : (issues.length > 0 ? '#3b82f6' : '#10b981'),
@@ -355,7 +459,7 @@ async function sendSlackNotification(issues: UIIssue[]) {
     if (!response.ok) {
       throw new Error(`Slack API responded with ${response.status}`);
     }
-    console.log('Slack notification sent successfully.');
+    console.log('Slack notification sent successfully to #ui-maintenance.');
   } catch (error) {
     console.error('Failed to send Slack notification:', error);
   }
@@ -366,11 +470,12 @@ async function main() {
 
   const altIssues = scanMissingAlt();
   const ariaIssues = scanMissingAriaLabels();
+  const formIssues = scanMissingFormLabels();
   const colorIssues = scanHardcodedColors();
   const buttonIssues = scanInconsistentButtons();
   const styleIssues = scanInconsistentStyles();
 
-  let allIssues = [...altIssues, ...ariaIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
+  let allIssues = [...altIssues, ...ariaIssues, ...formIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
@@ -400,11 +505,13 @@ async function main() {
     issues: allIssues.map(i => ({ ...i, offset: undefined, originalText: undefined })) // Strip internal fields for report
   }, null, 2));
 
+  generateMarkdownReport(allIssues);
+
   if (process.argv.includes('--notify')) {
     await sendSlackNotification(allIssues);
   }
 
-  console.log(`Audit completed. Report saved to ${reportPath}`);
+  console.log(`Audit completed. Report saved to ${reportPath} and UI_MAINTENANCE_REPORT.md`);
 }
 
 main().catch(console.error);
