@@ -555,8 +555,7 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
   };
 
   logs.unshift(summary);
-  // Keep only the last 2 sweep summaries to avoid repository bloat
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 2), null, 2));
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
@@ -671,6 +670,8 @@ async function main() {
   const regressionIssues = detectRegressions(beforeBenchmarks);
 
   const allIssues = [...n1Issues, ...nestedLoopIssues, ...indexIssues, ...memoIssues, ...mergeIssues, ...regressionIssues];
+
+  const beforeBenchmarks = await runBenchmarks();
 
   if (APPLY_FIXES && allIssues.length > 0) {
       applyFixes(allIssues);
