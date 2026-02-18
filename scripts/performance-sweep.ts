@@ -400,12 +400,22 @@ function applyFixes(optimizations: OptimizationResult[]) {
 
                 if (column) {
                     const sqlFile = 'supabase/migrations/performance_indexes_suggestion.sql';
-                    const sql = `-- Suggested index for performance optimization\n-- File: ${opt.file}\n-- Context: Found filter on "${column}" in table "${tableName}"\nCREATE INDEX IF NOT EXISTS idx_${tableName}_${column} ON ${tableName} (${column});\n\n`;
+                    const indexName = `idx_${tableName}_${column}`;
+                    const sql = `-- Suggested index for performance optimization\n-- File: ${opt.file}\n-- Context: Found filter on "${column}" in table "${tableName}"\nCREATE INDEX IF NOT EXISTS ${indexName} ON ${tableName} (${column});\n\n`;
+
                     if (!fs.existsSync(path.dirname(sqlFile))) {
                         fs.mkdirSync(path.dirname(sqlFile), { recursive: true });
                     }
-                    fs.appendFileSync(sqlFile, sql);
-                    console.log(`✅ Generated index suggestion for "${column}" in ${sqlFile}`);
+
+                    let existingSql = '';
+                    if (fs.existsSync(sqlFile)) {
+                        existingSql = fs.readFileSync(sqlFile, 'utf8');
+                    }
+
+                    if (!existingSql.includes(indexName)) {
+                        fs.appendFileSync(sqlFile, sql);
+                        console.log(`✅ Generated index suggestion for "${column}" in ${sqlFile}`);
+                    }
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('used in list mapping')) {
                 console.log(`Recommendation: Wrap component <${opt.description.match(/<(\w+)>/)?.[1]}> in memo() in ${opt.file}`);
