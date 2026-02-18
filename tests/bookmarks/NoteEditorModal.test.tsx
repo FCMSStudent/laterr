@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { createSupabaseMock } from "../helpers/mockSupabase";
 import { createItemFixture } from "../helpers/itemFixtures";
 import { NoteEditorModal } from "@/features/bookmarks/components/NoteEditorModal";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 const supabaseMock = createSupabaseMock();
 const toast = vi.hoisted(() => ({

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from "@/shared/components/ui";
 import { ChecklistItem } from './ChecklistItem';
 import { BulletItem } from './BulletItem';
@@ -46,6 +46,19 @@ export const RichNotesEditor = ({
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [commandSearch, setCommandSearch] = useState('');
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+
+  // Memoized mapping for numbered list indexing to prevent O(n^2) during render
+  const numberedIndices = useMemo(() => {
+    const indices: Record<string, number> = {};
+    let count = 0;
+    notesData.blocks.forEach(block => {
+      if (block.type === 'numbered') {
+        count++;
+        indices[block.id] = count;
+      }
+    });
+    return indices;
+  }, [notesData.blocks]);
 
   // Sync with external value changes
   useEffect(() => {
@@ -374,26 +387,18 @@ export const RichNotesEditor = ({
                 );
 
               case 'numbered':
-              {
-                // Calculate the index for numbered items
-                const numberedIndex = notesData.blocks
-                  .slice(0, index)
-                  .filter(b => b.type === 'numbered')
-                  .length + 1;
-
                 return (
                   <NumberedItem
                     key={key}
                     id={block.id}
                     content={block.content}
-                    index={numberedIndex}
+                    index={numberedIndices[block.id] || 0}
                     onContentChange={handleBlockContentChange}
                     onDelete={handleDeleteBlock}
                     onEnterPress={handleEnterPress}
                     autoFocus={autoFocus}
                   />
                 );
-              }
 
               default:
                 return null;
