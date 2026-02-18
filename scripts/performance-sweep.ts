@@ -52,10 +52,6 @@ function scanForNestedLoops(): OptimizationResult[] {
             suggestedFix: 'Pre-calculate or memoize the inner calculation'
         });
     });
-
-    // Detect nested loops via indentation heuristic (simplified)
-    const nestedLoops = execSync('grep -rnE "(for|while|map)\\(" src/ -A 5 | grep -E "^[^:]+:[0-9]+-?\\s+(for|while|map)\\(" || true').toString();
-    // This is hard to parse correctly with just grep, but we can try to find files with multiple loops
   } catch (e) {
     console.error('Error scanning for nested loops:', e);
   }
@@ -559,7 +555,8 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
   };
 
   logs.unshift(summary);
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
+  // Keep only the last 2 sweep summaries to avoid repository bloat
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 2), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
