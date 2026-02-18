@@ -35,6 +35,34 @@ function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
 }
 
 /**
+ * Scans for nested loops or O(n^2) patterns
+ */
+function scanForNestedLoops(): OptimizationResult[] {
+  const results: OptimizationResult[] = [];
+  try {
+    // Look for .map( followed by .filter, .find, or .map within the same chain or block
+    runGrep("\\.map\\(.*=>.*\\.(filter|find|map|reduce)\\(").forEach(line => {
+        const [file, lineNum] = line.split(':');
+        results.push({
+            category: 'frontend_react',
+            description: 'Detected potential O(n^2) pattern (nested array method)',
+            impact: 'Performance degrades quadratically with list size',
+            file,
+            line: lineNum,
+            suggestedFix: 'Pre-calculate or memoize the inner calculation'
+        });
+    });
+
+    // Detect nested loops via indentation heuristic (simplified)
+    const nestedLoops = execSync('grep -rnE "(for|while|map)\\(" src/ -A 5 | grep -E "^[^:]+:[0-9]+-?\\s+(for|while|map)\\(" || true').toString();
+    // This is hard to parse correctly with just grep, but we can try to find files with multiple loops
+  } catch (e) {
+    console.error('Error scanning for nested loops:', e);
+  }
+  return results;
+}
+
+/**
  * Scans for N+1 queries (async calls in loops)
  */
 function scanForN1Queries(): OptimizationResult[] {
@@ -133,6 +161,25 @@ function scanForN1Queries(): OptimizationResult[] {
         });
     });
 
+    // 5. Select(*) queries
+    const selectStarPatterns = [
+        "\\.select\\('\\*'\\)",
+        "\\.select\\(\"\\*\"\\)"
+    ];
+    selectStarPatterns.forEach(pattern => {
+        runGrep(pattern).forEach(line => {
+            const [file, lineNum] = line.split(':');
+            results.push({
+                category: 'database',
+                description: 'Detected select("*") query',
+                impact: 'Fetches unnecessary columns, increasing payload size and potentially bypassing indexes',
+                file,
+                line: lineNum,
+                suggestedFix: 'Specify only the required columns'
+            });
+        });
+    });
+
   } catch (e) {
     console.error('Error scanning for N+1:', e);
   }
@@ -148,7 +195,7 @@ function scanForMissingIndexes(): OptimizationResult[] {
 
     try {
         // Look for .eq('column', ...), .in('column', ...), etc.
-        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\(\'[a-zA-Z0-9_]+\'").forEach(line => {
+        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\('[a-zA-Z0-9_]+'").forEach(line => {
             // regex to extract file, line and column name
             const match = line.match(/^([^:]+):([0-9]+):.*?\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\('([a-zA-Z0-9_]+)'/);
             if (match) {
@@ -168,7 +215,9 @@ function scanForMissingIndexes(): OptimizationResult[] {
                              break;
                          }
                      }
-                } catch (e) {}
+                } catch (e) {
+                    // Ignore read errors
+                }
 
                 results.push({
                     category: 'database',
@@ -272,7 +321,9 @@ function scanForMissingMemo(): OptimizationResult[] {
                         }
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                // Ignore resolve/import errors
+            }
 
             if (!isMemoized) {
                 results.push({
@@ -562,6 +613,36 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
   }
 }
 
+/**
+ * Detects performance regressions by comparing with previous logs
+ */
+function detectRegressions(currentBenchmarks: Record<string, unknown>): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    const logPath = path.join(process.cwd(), 'performance-logs.json');
+    if (!fs.existsSync(logPath)) return results;
+
+    try {
+        const logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
+        if (logs.length === 0) return results;
+
+        const prev = logs[0].benchmarks;
+        const prevLatency = (prev.after?.apiLatencyMs || prev.apiLatencyMs) as number;
+        const currentLatency = currentBenchmarks.apiLatencyMs as number;
+
+        if (prevLatency > 0 && currentLatency > prevLatency * 1.15 && currentLatency > API_RESPONSE_THRESHOLD_MS) {
+            results.push({
+                category: 'regression',
+                description: `API Latency regression detected: ${prevLatency}ms → ${currentLatency}ms`,
+                impact: 'Response time increased by more than 15% and exceeds SLA',
+                suggestedFix: 'Review recent changes to database queries and Edge Functions'
+            });
+        }
+    } catch (e) {
+        // Ignore log parsing errors
+    }
+    return results;
+}
+
 async function main() {
   if (process.env.SEND_NOTIFICATION_ONLY) {
     if (!fs.existsSync('performance-summary.json')) return;
@@ -572,14 +653,17 @@ async function main() {
 
   console.log('Starting nightly performance sweep...');
 
+  const beforeBenchmarks = await runBenchmarks();
+
   const n1Issues = scanForN1Queries();
+  const nestedLoopIssues = scanForNestedLoops();
   const indexIssues = scanForMissingIndexes();
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
 
-  const allIssues = [...n1Issues, ...indexIssues, ...memoIssues, ...mergeIssues];
+  const regressionIssues = detectRegressions(beforeBenchmarks);
 
-  const beforeBenchmarks = await runBenchmarks();
+  const allIssues = [...n1Issues, ...nestedLoopIssues, ...indexIssues, ...memoIssues, ...mergeIssues, ...regressionIssues];
 
   if (APPLY_FIXES && allIssues.length > 0) {
       applyFixes(allIssues);
