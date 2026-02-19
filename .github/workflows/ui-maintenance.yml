@@ -45,7 +45,7 @@ jobs:
           body: |
             Automated UI/UX improvements and consistency fixes found during nightly sweep.
 
-            Check `ui-maintenance-report.json` for details.
+            Check `UI_MAINTENANCE_REPORT.md` and `ui-maintenance-report.json` for details.
           branch: ui/nightly-maintenance
           base: main
           delete-branch: true

@@ -10,6 +10,9 @@ const COLOR_FIX_MAP: Record<string, string> = {
   '#3b82f7': 'hsl(var(--primary))',
   '#ffffff': 'hsl(var(--background))',
   '#000000': 'hsl(var(--foreground))',
+  '#fff': 'hsl(var(--background))',
+  '#000': 'hsl(var(--foreground))',
+  '#ccc': 'hsl(var(--muted-foreground))',
 };
 
 interface UIIssue {
@@ -21,6 +24,19 @@ interface UIIssue {
   autoFixable: boolean;
   offset?: number;
   originalText?: string;
+}
+
+interface PlaywrightSuite {
+  specs?: {
+    title: string;
+    tests: {
+      results: {
+        status: string;
+        errors?: { message: string }[];
+      }[];
+    }[];
+  }[];
+  suites?: PlaywrightSuite[];
 }
 
 /**
@@ -170,6 +186,65 @@ function scanInconsistentStyles(): UIIssue[] {
 }
 
 /**
+ * Scans for form elements missing accessible labels
+ */
+function scanMissingFormLabels(): UIIssue[] {
+  const issues: UIIssue[] = [];
+  try {
+    const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+      // Look for input, select, textarea
+      const formRegex = /<(input|select|textarea)([^>]*?)(\/?>)/g;
+      let match;
+      while ((match = formRegex.exec(content)) !== null) {
+        const tag = match[1];
+        const attributes = match[2];
+
+        // Skip hidden inputs
+        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
+
+        const hasAriaLabel = attributes.includes('aria-label') || attributes.includes('aria-labelledby');
+        const hasId = /id=["'](.+?)["']/.exec(attributes);
+
+        let hasLabel = hasAriaLabel;
+
+        if (!hasLabel && hasId) {
+          const id = hasId[1];
+          const labelRegex = new RegExp(`<label[^>]*?for=["']${id}["']`, 'g');
+          if (labelRegex.test(content)) {
+            hasLabel = true;
+          }
+        }
+
+        if (!hasLabel) {
+          // Check if nested in label - this is complex with regex, but we can look back a bit
+          const preceding = content.substring(Math.max(0, match.index - 500), match.index);
+          if (preceding.includes('<label') && !preceding.includes('</label')) {
+            hasLabel = true;
+          }
+        }
+
+        if (!hasLabel) {
+          const lineNum = content.substring(0, match.index).split('\n').length;
+          issues.push({
+            type: 'accessibility',
+            severity: 'high',
+            description: `Form element <${tag}> missing accessible label`,
+            file,
+            line: lineNum,
+            autoFixable: false
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error scanning for missing form labels:', e);
+  }
+  return issues;
+}
+
+/**
  * Scans for hardcoded hex colors that should potentially be theme variables
  */
 function scanHardcodedColors(): UIIssue[] {
@@ -177,10 +252,10 @@ function scanHardcodedColors(): UIIssue[] {
   try {
     const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
     for (const file of files) {
-      if (file.includes('constants.ts') || file.includes('utils.ts')) continue;
+      if (file.includes('constants.ts') || file.includes('utils.ts') || file.includes('chart.tsx')) continue;
 
       const content = fs.readFileSync(file, 'utf8');
-      const hexRegex = /#[0-9a-fA-F]{6}/g;
+      const hexRegex = /#([0-9a-fA-F]{3}){1,2}\b/g;
       let match;
       while ((match = hexRegex.exec(content)) !== null) {
         const hex = match[0];
@@ -189,6 +264,10 @@ function scanHardcodedColors(): UIIssue[] {
         // Skip if it's already a theme variable
         const lineContent = content.split('\n')[lineNum - 1];
         if (lineContent.includes('var(')) continue;
+
+        // Skip if it's inside a stroke or fill attribute
+        const precedingText = content.substring(Math.max(0, match.index - 10), match.index);
+        if (precedingText.includes('stroke=') || precedingText.includes('fill=')) continue;
 
         let canFix = false;
         if (COLOR_FIX_MAP[hex.toLowerCase()]) {
@@ -227,7 +306,7 @@ function runRuntimeAudit(): UIIssue[] {
     if (fs.existsSync(resultsPath)) {
       const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
 
-      const processSuite = (suite: any) => {
+      const processSuite = (suite: PlaywrightSuite) => {
         for (const spec of suite.specs || []) {
           for (const test of spec.tests || []) {
             for (const result of test.results || []) {
@@ -313,6 +392,49 @@ function applyAutoFixes(issues: UIIssue[]) {
 }
 
 /**
+ * Generates a human-readable Markdown report
+ */
+function generateMarkdownReport(issues: UIIssue[]): string {
+  const timestamp = new Date().toLocaleString();
+  const critical = issues.filter(i => i.severity === 'critical').length;
+  const high = issues.filter(i => i.severity === 'high').length;
+  const medium = issues.filter(i => i.severity === 'medium').length;
+  const low = issues.filter(i => i.severity === 'low').length;
+  const fixable = issues.filter(i => i.autoFixable).length;
+
+  let report = `# UI Maintenance Audit Report\n\n`;
+  report += `**Run Date:** ${timestamp}\n\n`;
+
+  report += `## Executive Summary\n\n`;
+  report += `| Severity | Count |\n`;
+  report += `| :--- | :--- |\n`;
+  report += `| 🔴 Critical | ${critical} |\n`;
+  report += `| 🟠 High | ${high} |\n`;
+  report += `| 🟡 Medium | ${medium} |\n`;
+  report += `| 🔵 Low | ${low} |\n`;
+  report += `| **Total** | **${issues.length}** |\n\n`;
+
+  report += `**Auto-fixable issues:** ${fixable} / ${issues.length}\n\n`;
+
+  report += `## Detailed Issues\n\n`;
+  report += `| Severity | Type | Description | File | Line |\n`;
+  report += `| :--- | :--- | :--- | :--- | :--- |\n`;
+
+  for (const issue of issues) {
+    const severityIcon = issue.severity === 'critical' ? '🔴' : (issue.severity === 'high' ? '🟠' : (issue.severity === 'medium' ? '🟡' : '🔵'));
+    report += `| ${severityIcon} ${issue.severity} | ${issue.type} | ${issue.description} | \`${issue.file || 'runtime'}\` | ${issue.line || '-'} |\n`;
+  }
+
+  if (issues.length === 0) {
+    report += `\nNo issues found. Everything looks great! ✨\n`;
+  }
+
+  const reportPath = path.join(process.cwd(), 'UI_MAINTENANCE_REPORT.md');
+  fs.writeFileSync(reportPath, report);
+  return reportPath;
+}
+
+/**
  * Sends Slack notification via webhook
  */
 async function sendSlackNotification(issues: UIIssue[]) {
@@ -366,11 +488,12 @@ async function main() {
 
   const altIssues = scanMissingAlt();
   const ariaIssues = scanMissingAriaLabels();
+  const formIssues = scanMissingFormLabels();
   const colorIssues = scanHardcodedColors();
   const buttonIssues = scanInconsistentButtons();
   const styleIssues = scanInconsistentStyles();
 
-  let allIssues = [...altIssues, ...ariaIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
+  let allIssues = [...altIssues, ...ariaIssues, ...formIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
@@ -382,6 +505,8 @@ async function main() {
   }
 
   console.log(`Total issues identified: ${allIssues.length}`);
+
+  generateMarkdownReport(allIssues);
 
   const reportPath = path.join(process.cwd(), 'ui-maintenance-report.json');
   fs.writeFileSync(reportPath, JSON.stringify({
