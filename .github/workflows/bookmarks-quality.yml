@@ -5,7 +5,7 @@ on:
     paths:
       - "src/features/bookmarks/**"
       - "src/shared/lib/supabase-utils.ts"
-      - "src/lib/supabase/client.ts"
+      - "src/integrations/supabase/client.ts"
       - "tests/bookmarks/**"
       - "tests/cards-overlays.spec.ts"
       - "tests/trash-flow.spec.ts"
@@ -14,7 +14,6 @@ on:
       - "vitest.config.ts"
       - "playwright.config.ts"
       - "package.json"
-      - "pnpm-lock.yaml"
   workflow_dispatch:
 
 jobs:
@@ -35,10 +34,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
