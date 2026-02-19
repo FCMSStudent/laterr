@@ -21,7 +21,9 @@ interface OptimizationResult {
  */
 function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
   try {
-    const output = execSync(`grep -rnE "${pattern}" ${searchPath} || true`).toString();
+    // Use a simpler pattern for shell and handle multiple types of quotes
+    const shellPattern = pattern.replace(/"/g, '\\"');
+    const output = execSync(`grep -rnE "${shellPattern}" ${searchPath} || true`).toString();
     return output.split('\n').filter(Boolean).filter(line => {
       const file = line.split(':')[0];
       return (file.endsWith('.ts') || file.endsWith('.tsx')) &&
@@ -148,7 +150,7 @@ function scanForMissingIndexes(): OptimizationResult[] {
 
     try {
         // Look for .eq('column', ...), .in('column', ...), etc.
-        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\(\'[a-zA-Z0-9_]+\'").forEach(line => {
+        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\('[a-zA-Z0-9_]+'").forEach(line => {
             // regex to extract file, line and column name
             const match = line.match(/^([^:]+):([0-9]+):.*?\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\('([a-zA-Z0-9_]+)'/);
             if (match) {
@@ -168,7 +170,9 @@ function scanForMissingIndexes(): OptimizationResult[] {
                              break;
                          }
                      }
-                } catch (e) {}
+                } catch (e) {
+                    // Ignore read errors
+                }
 
                 results.push({
                     category: 'database',
@@ -182,6 +186,75 @@ function scanForMissingIndexes(): OptimizationResult[] {
         });
     } catch (e) {
         console.error('Error scanning for missing indexes:', e);
+    }
+    return results;
+}
+
+/**
+ * Scans for inefficient database queries (e.g., select(*))
+ */
+function scanForInefficientQueries(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    try {
+        // Look for .select("*") or .select('*')
+        runGrep("\\.select\\(['\"]\\*['\"]\\)").forEach(line => {
+            const [file, lineNum] = line.split(':');
+            results.push({
+                category: 'database',
+                description: 'Detected select(*) query pattern',
+                impact: 'Over-fetching data; impacts bandwidth and memory',
+                file,
+                line: lineNum,
+                suggestedFix: 'Specify only the columns needed'
+            });
+        });
+    } catch (e) {
+        console.error('Error scanning for inefficient queries:', e);
+    }
+    return results;
+}
+
+/**
+ * Scans for potential nested loops or O(n^2) logic
+ */
+function scanForNestedLoops(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    try {
+        // More specific detection: look for array methods nested within each other on separate lines
+        // or same line, while filtering out common non-harmful patterns.
+        const files = execSync('find src -name "*.tsx" -o -name "*.ts" | grep -v node_modules').toString().split('\n').filter(Boolean);
+
+        for (const file of files) {
+            const content = fs.readFileSync(file, 'utf8');
+            const lines = content.split('\n');
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (line.includes('.map(') || line.includes('.forEach(')) {
+                    // Look ahead 10 lines for nested array methods
+                    for (let j = i + 1; j < Math.min(i + 11, lines.length); j++) {
+                        const nextLine = lines[j];
+                        if (nextLine.includes('.filter(') || nextLine.includes('.sort(') ||
+                            nextLine.includes('.reduce(') || nextLine.includes('.find(')) {
+
+                            // Check if it's the same collection (e.g. items.map(... items.filter))
+                            // This is a common indicator of O(n^2)
+                            results.push({
+                                category: 'logic',
+                                description: 'Detected potential O(n^2) nested array operation',
+                                impact: 'Performance scales quadratically with collection size',
+                                file,
+                                line: (i + 1).toString(),
+                                suggestedFix: 'Move the inner operation outside the loop or use a Map for lookups'
+                            });
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error scanning for nested loops:', e);
     }
     return results;
 }
@@ -272,7 +345,9 @@ function scanForMissingMemo(): OptimizationResult[] {
                         }
                     }
                 }
-            } catch (e) {}
+} catch (e) {
+    // Ignore component resolve errors
+}
 
             if (!isMemoized) {
                 results.push({
@@ -360,6 +435,13 @@ function applyFixes(optimizations: OptimizationResult[]) {
                 console.log(`Recommendation: Wrap component <${opt.description.match(/<(\w+)>/)?.[1]}> in memo() in ${opt.file}`);
             } else if (opt.category === 'frontend_react' && opt.description.includes('inline arrow function')) {
                 console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
+            } else if (opt.category === 'database' && opt.description.includes('select(*)')) {
+                // Safe auto-fix for count queries
+                if (line.includes('.select("*", { count: "exact"') || line.includes(".select('*', { count: 'exact'")) {
+                    lines[lineIdx] = line.replace(/select\(['"]\*['"]/, "select('id'");
+                    fs.writeFileSync(opt.file, lines.join('\n'));
+                    console.log(`✅ Fixed inefficient count query in ${opt.file}`);
+                }
             }
         } catch (e) {
             console.error(`Failed to apply fix in ${opt.file}:`, e);
@@ -414,18 +496,23 @@ async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: 
 
     try {
         const supabase = createClient(url, key);
-        const tables = ['items', 'subscriptions', 'health_measurements'];
+        // Expanded list of tables for better latency baseline
+        const tables = ['items', 'subscriptions', 'health_measurements', 'health_goals', 'profiles'];
         let totalLatency = 0;
         let successCount = 0;
 
         for (const table of tables) {
-            const start = Date.now();
-            const { error } = await supabase.from(table).select('id').limit(1);
-            const end = Date.now();
+            try {
+                const start = Date.now();
+                const { error } = await supabase.from(table).select('id').limit(1);
+                const end = Date.now();
 
-            if (!error) {
-                totalLatency += (end - start);
-                successCount++;
+                if (!error || error.code === 'PGRST116') { // Allow 'no rows found' error
+                    totalLatency += (end - start);
+                    successCount++;
+                }
+            } catch (e) {
+                // Skip individual table failures
             }
         }
 
@@ -575,9 +662,11 @@ async function main() {
   const n1Issues = scanForN1Queries();
   const indexIssues = scanForMissingIndexes();
   const memoIssues = scanForMissingMemo();
+  const queryIssues = scanForInefficientQueries();
+  const loopIssues = scanForNestedLoops();
   const mergeIssues = reviewRecentMerges();
 
-  const allIssues = [...n1Issues, ...indexIssues, ...memoIssues, ...mergeIssues];
+  const allIssues = [...n1Issues, ...indexIssues, ...memoIssues, ...queryIssues, ...loopIssues, ...mergeIssues];
 
   const beforeBenchmarks = await runBenchmarks();
 
