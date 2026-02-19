@@ -13,11 +13,6 @@ jobs:
         with:
           fetch-depth: 0 # Needed for git log checks
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -25,10 +20,14 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
+
+      - name: Build
+        run: npm run build
+        continue-on-error: true
 
       - name: Run performance sweep
-        run: pnpm exec tsx scripts/performance-sweep.ts --apply-fixes
+        run: npx tsx scripts/performance-sweep.ts --apply-fixes
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
@@ -37,41 +36,12 @@ jobs:
         id: pr_body
         if: success()
         run: |
-          if [ -f performance-summary.json ]; then
-            LATENCY_BEFORE=$(jq -r '.benchmarks.before.apiLatencyMs // .benchmarks.apiLatencyMs' performance-summary.json)
-            LATENCY_AFTER=$(jq -r '.benchmarks.after.apiLatencyMs // .benchmarks.apiLatencyMs' performance-summary.json)
-            BSIZE_BEFORE=$(jq -r '.benchmarks.before.bundleSizeKB // .benchmarks.bundleSizeKB' performance-summary.json)
-            BSIZE_AFTER=$(jq -r '.benchmarks.after.bundleSizeKB // .benchmarks.bundleSizeKB' performance-summary.json)
-            OPTIMIZATIONS=$(jq -r '.optimizations | length' performance-summary.json)
-
-            echo "body<<EOF" >> $GITHUB_OUTPUT
-            echo "## 🚀 Nightly Performance Sweep Report" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            echo "Automated performance optimizations found and applied." >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            echo "### 📊 Metrics Comparison" >> $GITHUB_OUTPUT
-            echo "| Metric | Before | After | Delta |" >> $GITHUB_OUTPUT
-            echo "| --- | --- | --- | --- |" >> $GITHUB_OUTPUT
-
-            # Handle potential nulls or missing values
-            LATENCY_BEFORE=${LATENCY_BEFORE:-0}
-            LATENCY_AFTER=${LATENCY_AFTER:-0}
-            BSIZE_BEFORE=${BSIZE_BEFORE:-0}
-            BSIZE_AFTER=${BSIZE_AFTER:-0}
-
-            DELTA_LATENCY=$((LATENCY_AFTER - LATENCY_BEFORE))
-            DELTA_BSIZE=$((BSIZE_AFTER - BSIZE_BEFORE))
-
-            echo "| API Latency | ${LATENCY_BEFORE}ms | ${LATENCY_AFTER}ms | ${DELTA_LATENCY}ms |" >> $GITHUB_OUTPUT
-            echo "| Bundle Size | ${BSIZE_BEFORE}KB | ${BSIZE_AFTER}KB | ${DELTA_BSIZE}KB |" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            echo "- **Optimizations Applied:** ${OPTIMIZATIONS}" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            echo "Check \`performance-logs.json\` for a full breakdown of changes." >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            echo "body=Automated performance optimizations found during nightly sweep." >> $GITHUB_OUTPUT
-          fi
+          npx tsx scripts/performance-sweep.ts --generate-pr-body
+          {
+            echo 'body<<EOF'
+            cat performance-pr-body.md
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request
         if: success()
@@ -88,8 +58,9 @@ jobs:
 
       - name: Send Slack Notification
         if: always()
-        run: pnpm exec tsx scripts/performance-sweep.ts
+        run: npx tsx scripts/performance-sweep.ts
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SEND_NOTIFICATION_ONLY: "true"
           PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
+          BACKEND_LEAD_SLACK_ID: ${{ secrets.BACKEND_LEAD_SLACK_ID }}
