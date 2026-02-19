@@ -230,24 +230,46 @@ function scanForNestedLoops(): OptimizationResult[] {
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
+                // Look for common array methods that take a callback
                 if (line.includes('.map(') || line.includes('.forEach(')) {
-                    // Look ahead 10 lines for nested array methods
-                    for (let j = i + 1; j < Math.min(i + 11, lines.length); j++) {
-                        const nextLine = lines[j];
-                        if (nextLine.includes('.filter(') || nextLine.includes('.sort(') ||
-                            nextLine.includes('.reduce(') || nextLine.includes('.find(')) {
-
-                            // Check if it's the same collection (e.g. items.map(... items.filter))
-                            // This is a common indicator of O(n^2)
-                            results.push({
-                                category: 'logic',
-                                description: 'Detected potential O(n^2) nested array operation',
-                                impact: 'Performance scales quadratically with collection size',
-                                file,
-                                line: (i + 1).toString(),
-                                suggestedFix: 'Move the inner operation outside the loop or use a Map for lookups'
-                            });
+                    // Look for arrow function indicator => in the same or next few lines
+                    let hasCallback = false;
+                    for (let k = i; k < Math.min(i + 3, lines.length); k++) {
+                        if (lines[k].includes('=>')) {
+                            hasCallback = true;
                             break;
+                        }
+                    }
+
+                    if (hasCallback) {
+                        // Check if there is an open brace for the callback
+                        let braceLevel = 0;
+                        for (let k = i; k < lines.length; k++) {
+                            const l = lines[k];
+                            braceLevel += (l.match(/\{/g) || []).length;
+                            braceLevel -= (l.match(/\}/g) || []).length;
+
+                            if (k > i) {
+                                if (l.includes('.filter(') || l.includes('.sort(') ||
+                                    l.includes('.reduce(') || l.includes('.find(') ||
+                                    l.includes('.map(')) {
+
+                                    results.push({
+                                        category: 'logic',
+                                        description: 'Detected potential O(n^2) nested array operation',
+                                        impact: 'Performance scales quadratically with collection size',
+                                        file,
+                                        line: (i + 1).toString(),
+                                        suggestedFix: 'Move the inner operation outside the loop or use a Map for lookups'
+                                    });
+                                    break;
+                                }
+                            }
+
+                            // If we reached back to level 0 or below, the callback ended
+                            if (braceLevel <= 0 && k > i) break;
+                            // Limit search to 15 lines for performance
+                            if (k - i > 15) break;
                         }
                     }
                 }
