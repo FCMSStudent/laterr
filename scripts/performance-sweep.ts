@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createClient } from '@supabase/supabase-js';
@@ -21,7 +21,8 @@ interface OptimizationResult {
  */
 function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
   try {
-    const output = execSync(`grep -rnE "${pattern}" ${searchPath} || true`).toString();
+    const result = spawnSync('grep', ['-rnE', pattern, searchPath]);
+    const output = result.stdout.toString();
     return output.split('\n').filter(Boolean).filter(line => {
       const file = line.split(':')[0];
       return (file.endsWith('.ts') || file.endsWith('.tsx')) &&
@@ -182,6 +183,102 @@ function scanForMissingIndexes(): OptimizationResult[] {
         });
     } catch (e) {
         console.error('Error scanning for missing indexes:', e);
+    }
+    return results;
+}
+
+/**
+ * Scans for inefficient Supabase queries (e.g., select(*))
+ */
+function scanForInefficientQueries(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    try {
+        runGrep("\\.select\\(['\"]\\*['\"]\\)").forEach(line => {
+            const [file, lineNum] = line.split(':');
+            results.push({
+                category: 'database',
+                description: 'Detected .select("*") query',
+                impact: 'Over-fetching data; increases bandwidth and memory usage',
+                file,
+                line: lineNum,
+                suggestedFix: 'Select only required columns'
+            });
+        });
+
+        // Also detect .select() with no arguments as it defaults to *
+        runGrep("\\.select\\(\\)").forEach(line => {
+            const [file, lineNum] = line.split(':');
+            results.push({
+                category: 'database',
+                description: 'Detected .select() with no arguments (defaults to "*")',
+                impact: 'Over-fetching data; increases bandwidth and memory usage',
+                file,
+                line: lineNum,
+                suggestedFix: 'Select only required columns'
+            });
+        });
+    } catch (e) {
+        console.error('Error scanning for inefficient queries:', e);
+    }
+    return results;
+}
+
+/**
+ * Scans for potential O(n^2) logic (nested loops) using a line-by-line look-ahead
+ */
+function scanForNestedLoops(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    try {
+        // Find all source files
+        const files = execSync('find src -name "*.ts" -o -name "*.tsx"').toString().split('\n').filter(Boolean);
+
+        files.forEach(file => {
+            if (file.includes('node_modules') || file.includes('.test.')) return;
+
+            const content = fs.readFileSync(file, 'utf8');
+            const lines = content.split('\n');
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                // Check for start of a loop/iteration
+                if (line.includes('.map(') || line.includes('.forEach(') || line.includes('.filter(')) {
+                    const currentIndent = line.search(/\S/);
+
+                    // Look ahead for a nested loop within the next 15 lines
+                    for (let j = i + 1; j < Math.min(i + 15, lines.length); j++) {
+                        const nextLine = lines[j];
+
+                        // If we see a nested loop with deeper indentation
+                        if (nextLine.includes('.map(') || nextLine.includes('.forEach(') ||
+                            nextLine.includes('.filter(') || nextLine.includes('.find(')) {
+                            const nextIndent = nextLine.search(/\S/);
+
+                            if (nextIndent > currentIndent) {
+                                results.push({
+                                    category: 'logic',
+                                    description: `Potential nested loop detected (O(n^2) pattern)`,
+                                    impact: 'May lead to performance degradation on large datasets',
+                                    file,
+                                    line: (i + 1).toString()
+                                });
+                                i = j; // Skip to the next loop to avoid redundant reports
+                                break;
+                            }
+                        }
+
+                        // Heuristic: if we see a return or a closing brace at same or lower indent,
+                        // the outer loop might have ended.
+                        const nextLineIndent = nextLine.search(/\S/);
+                        if (nextLine.trim() === '}' || nextLine.trim() === ');' ||
+                            (nextLine.trim() && nextLineIndent <= currentIndent && j > i + 1)) {
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error scanning for nested loops:', e);
     }
     return results;
 }
@@ -576,8 +673,17 @@ async function main() {
   const indexIssues = scanForMissingIndexes();
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
+  const inefficientQueries = scanForInefficientQueries();
+  const nestedLoops = scanForNestedLoops();
 
-  const allIssues = [...n1Issues, ...indexIssues, ...memoIssues, ...mergeIssues];
+  const allIssues = [
+    ...n1Issues,
+    ...indexIssues,
+    ...memoIssues,
+    ...mergeIssues,
+    ...inefficientQueries,
+    ...nestedLoops
+  ];
 
   const beforeBenchmarks = await runBenchmarks();
 
