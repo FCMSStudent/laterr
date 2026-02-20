@@ -15,7 +15,7 @@
     "playwright:install": "playwright install",
     "test:bookmarks:unit": "vitest run --config vitest.config.ts",
     "test:bookmarks:e2e": "VITE_OPTIMIZE_DEPS_ENTRIES=index.html playwright test tests/cards-overlays.spec.ts tests/trash-flow.spec.ts --project=chromium --reporter=line",
-    "test:bookmarks": "pnpm run lint:bookmarks && pnpm run test:bookmarks:unit && pnpm run test:bookmarks:e2e"
+    "test:bookmarks": "npm run lint:bookmarks && npm run test:bookmarks:unit && npm run test:bookmarks:e2e"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
