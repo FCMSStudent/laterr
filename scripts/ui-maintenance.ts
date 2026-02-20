@@ -435,7 +435,7 @@ async function sendSlackNotification(issues: UIIssue[]) {
   const fixableCount = issues.filter(i => i.autoFixable).length;
 
   const mentionLeads = criticalIssues.length > 0
-    ? '\n<!channel> 🚨 *Attention needed:* @Design-Lead @QA-Lead - Critical UI/Accessibility issues detected!'
+    ? '\n<!channel> 🚨 *Attention needed:* <@Design-Lead> <@QA-Lead> - Critical UI/Accessibility issues detected!'
     : '';
 
   const prText = prUrl ? `\n\n*View Pull Request:* ${prUrl}` : '\n\n_Note: No automated PR was created for this run._';

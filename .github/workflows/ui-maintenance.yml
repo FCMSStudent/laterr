@@ -38,7 +38,8 @@ jobs:
           commit-message: 'chore(ui): weekly design consistency and accessibility sweep including auto-fixes'
           title: 'chore(ui): weekly design consistency and accessibility sweep including auto-fixes'
           body: |
-            Automated UI/UX improvements and consistency fixes found during nightly sweep.
+            ## 🎨 Weekly UI Maintenance Report
+            Automated UI/UX improvements and consistency fixes found during weekly sweep.
 
             Check `UI_MAINTENANCE_REPORT.md` and `ui-maintenance-report.json` for details.
           branch: ui/weekly-maintenance
