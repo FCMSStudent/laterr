@@ -9,22 +9,22 @@ This runbook documents the bookmark-focused hybrid gate:
 
 ```bash
 # Build baseline
-pnpm build
+npm run build
 
 # Lint only bookmark-relevant scope
-pnpm run lint:bookmarks
+npm run lint:bookmarks
 
 # Bookmark unit/component tests
-pnpm run test:bookmarks:unit
+npm run test:bookmarks:unit
 
 # Bookmark unit/component tests with coverage
-pnpm run test:bookmarks:unit -- --coverage
+npm run test:bookmarks:unit -- --coverage
 
 # Bookmark E2E gate (includes cards-overlays + trash-flow)
-pnpm run test:bookmarks:e2e
+npm run test:bookmarks:e2e
 
 # Full local bookmark gate
-pnpm run test:bookmarks
+npm run test:bookmarks
 ```
 
 ## Guest Mode Verification Flow
@@ -58,7 +58,7 @@ Bookmark E2E uses resilient expectations:
 - Confirm the auth page still renders a guest button matching `Continue as Guest`.
 - Re-run a single spec in headed mode:
 ```bash
-pnpm exec playwright test tests/cards-overlays.spec.ts --project=chromium --headed
+npx playwright test tests/cards-overlays.spec.ts --project=chromium --headed
 ```
 
 ### 2. Unit tests fail with browser API gaps
@@ -81,5 +81,5 @@ After failures:
 
 Open HTML report:
 ```bash
-pnpm exec playwright show-report
+npx playwright show-report
 ```
