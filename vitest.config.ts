@@ -25,7 +25,7 @@ export default defineConfig({
       include: [
         "src/features/bookmarks/**/*.{ts,tsx}",
         "src/shared/lib/supabase-utils.ts",
-        "src/lib/supabase/client.ts",
+        "src/integrations/supabase/client.ts",
       ],
       exclude: [
         "src/features/bookmarks/index.ts",

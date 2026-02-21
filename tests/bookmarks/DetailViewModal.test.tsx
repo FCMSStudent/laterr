@@ -43,7 +43,7 @@ const toast = vi.hoisted(() => ({
   error: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/client", () => ({
+vi.mock("@/integrations/supabase/client", () => ({
   supabase: supabaseMock.supabase,
 }));
 

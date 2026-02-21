@@ -19,7 +19,7 @@ const supabaseMock = vi.hoisted(() => {
   };
 });
 
-vi.mock("@/lib/supabase/client", () => ({
+vi.mock("@/integrations/supabase/client", () => ({
   supabase: supabaseMock.supabase,
 }));
 

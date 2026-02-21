@@ -3,9 +3,13 @@ import { injectAxe, checkA11y } from 'axe-playwright';
 
 test.describe('UI Accessibility Audit', () => {
   const pages = [
+    { name: 'Landing', path: '/' },
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Bookmarks', path: '/bookmarks' },
+    { name: 'Subscriptions', path: '/subscriptions' },
     { name: 'Health', path: '/health' },
+    { name: 'Settings', path: '/settings' },
+    { name: 'Auth', path: '/auth' },
     { name: 'Components Showcase', path: '/components' },
   ];
 
@@ -117,7 +121,7 @@ test.describe('UI Accessibility Audit', () => {
         const horizontalGap = b1.x < b2.x ? b2.x - (b1.x + b1.width) : b1.x - (b2.x + b2.width);
 
         if (horizontalGap < 50 && verticalDiff > 0 && verticalDiff < 5) {
-           const msg = `Potential misalignment: <${tagName1}> and <${tagName2}> are vertically offset by ${verticalDiff}px`;
+         const msg = `Potential misalignment: <${tagName1}> "${text1}" and <${tagName2}> "${text2}" are vertically offset by ${verticalDiff}px at y=${b1.y}`;
            expect.soft(verticalDiff, msg).toBe(0);
         }
       }

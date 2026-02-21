@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { createSupabaseMock } from "../helpers/mockSupabase";
 import { AddItemModal } from "@/features/bookmarks/components/AddItemModal";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 const supabaseMock = createSupabaseMock();
 const toast = vi.hoisted(() => ({
