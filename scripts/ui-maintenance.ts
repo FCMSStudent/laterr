@@ -9,7 +9,13 @@ const COLOR_FIX_MAP: Record<string, string> = {
   '#f59e0b': 'hsl(var(--warning))',
   '#3b82f7': 'hsl(var(--primary))',
   '#ffffff': 'hsl(var(--background))',
+  '#fff': 'hsl(var(--background))',
   '#000000': 'hsl(var(--foreground))',
+  '#000': 'hsl(var(--foreground))',
+  '#ccc': 'hsl(var(--muted))',
+  '#4caf50': 'hsl(var(--success))',
+  '#ff9800': 'hsl(var(--warning))',
+  '#2196f3': 'hsl(var(--info))',
 };
 
 interface UIIssue {
@@ -21,6 +27,25 @@ interface UIIssue {
   autoFixable: boolean;
   offset?: number;
   originalText?: string;
+}
+
+interface PlaywrightSuite {
+  specs?: Array<{
+    title: string;
+    tests?: Array<{
+      results?: Array<{
+        status: string;
+        errors?: Array<{
+          message: string;
+        }>;
+      }>;
+    }>;
+  }>;
+  suites?: PlaywrightSuite[];
+}
+
+interface PlaywrightResult {
+  suites?: PlaywrightSuite[];
 }
 
 /**
@@ -58,15 +83,16 @@ function scanMissingAlt(): UIIssue[] {
 }
 
 /**
- * Scans for missing aria-labels on icon-only buttons
+ * Scans for missing aria-labels or labels on form elements
  */
-function scanMissingAriaLabels(): UIIssue[] {
+function scanInaccessibleFormElements(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
     const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf8');
-      // Look for Button or button tags
+
+      // 1. Scan for buttons (existing logic expanded)
       const buttonRegex = /<(Button|button)([^>]*?)>([\s\S]*?)<\/\1>/g;
       let match;
       while ((match = buttonRegex.exec(content)) !== null) {
@@ -74,7 +100,6 @@ function scanMissingAriaLabels(): UIIssue[] {
         const children = match[3];
 
         if (!attributes.includes('aria-label') && !attributes.includes('aria-labelledby')) {
-          // Check if children contain an icon (Lucide common icons) but no obvious text
           const hasIcon = children.includes('Icon') || /<[A-Z][a-zA-Z]+/.test(children);
           const textContent = children.replace(/<[^>]*>?/gm, '').trim();
 
@@ -91,9 +116,36 @@ function scanMissingAriaLabels(): UIIssue[] {
           }
         }
       }
+
+      // 2. Scan for inputs/selects/textareas missing labels
+      const formElementRegex = /<(input|select|textarea|Input|Select|Textarea)([^>]*?)\/?>/g;
+      while ((match = formElementRegex.exec(content)) !== null) {
+        const tag = match[1];
+        const attributes = match[2];
+
+        if (attributes.includes('type="hidden"') || attributes.includes('type="submit"') || attributes.includes('type="button"')) continue;
+
+        const hasLabel = attributes.includes('aria-label') ||
+                         attributes.includes('aria-labelledby') ||
+                         attributes.includes('id='); // Assuming if it has an ID, it MIGHT have a <label htmlFor="..."> elsewhere
+
+        // More robust check for <label> association would require full AST parsing,
+        // but we can check if 'id' exists at least.
+        if (!hasLabel) {
+          const lineNum = content.substring(0, match.index).split('\n').length;
+          issues.push({
+            type: 'accessibility',
+            severity: 'high',
+            description: `Form element <${tag}> missing accessible label (aria-label, aria-labelledby, or id for association)`,
+            file,
+            line: lineNum,
+            autoFixable: false
+          });
+        }
+      }
     }
   } catch (e) {
-    console.error('Error scanning for missing aria-labels:', e);
+    console.error('Error scanning for inaccessible form elements:', e);
   }
   return issues;
 }
@@ -128,12 +180,12 @@ function scanInconsistentButtons(): UIIssue[] {
 }
 
 /**
- * Scans for hardcoded pixel values or fonts in Tailwind classes
+ * Scans for hardcoded pixel values, fonts, or paddings in Tailwind classes
  */
 function scanInconsistentStyles(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
-    const pixelOutput = execSync('grep -rn "\\[[0-9]\\+px\\]" src/ --include="*.tsx" || true').toString();
+    const pixelOutput = execSync('grep -rnE "(p|m|gap|w|h|top|left|right|bottom)-\\[[0-9]+px\\]" src/ --include="*.tsx" || true').toString();
     if (pixelOutput) {
       pixelOutput.split('\n').filter(Boolean).forEach(line => {
         const [file, lineNum, ...rest] = line.split(':');
@@ -180,7 +232,8 @@ function scanHardcodedColors(): UIIssue[] {
       if (file.includes('constants.ts') || file.includes('utils.ts')) continue;
 
       const content = fs.readFileSync(file, 'utf8');
-      const hexRegex = /#[0-9a-fA-F]{6}/g;
+      // Support 3 and 6 digit hex codes
+      const hexRegex = /#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g;
       let match;
       while ((match = hexRegex.exec(content)) !== null) {
         const hex = match[0];
@@ -225,9 +278,9 @@ function runRuntimeAudit(): UIIssue[] {
     execSync(`npx playwright test tests/ui-audit.spec.ts --reporter=json > ${resultsPath} 2>/dev/null || true`);
 
     if (fs.existsSync(resultsPath)) {
-      const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+      const results: PlaywrightResult = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
 
-      const processSuite = (suite: any) => {
+      const processSuite = (suite: PlaywrightSuite) => {
         for (const spec of suite.specs || []) {
           for (const test of spec.tests || []) {
             for (const result of test.results || []) {
@@ -365,12 +418,12 @@ async function main() {
   console.log('Starting UI/UX maintenance audit...');
 
   const altIssues = scanMissingAlt();
-  const ariaIssues = scanMissingAriaLabels();
+  const formIssues = scanInaccessibleFormElements();
   const colorIssues = scanHardcodedColors();
   const buttonIssues = scanInconsistentButtons();
   const styleIssues = scanInconsistentStyles();
 
-  let allIssues = [...altIssues, ...ariaIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
+  let allIssues = [...altIssues, ...formIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
