@@ -3,9 +3,12 @@ import { injectAxe, checkA11y } from 'axe-playwright';
 
 test.describe('UI Accessibility Audit', () => {
   const pages = [
+    { name: 'Landing', path: '/' },
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Bookmarks', path: '/bookmarks' },
     { name: 'Health', path: '/health' },
+    { name: 'Settings', path: '/settings' },
+    { name: 'Auth', path: '/auth' },
     { name: 'Components Showcase', path: '/components' },
   ];
 
@@ -56,22 +59,42 @@ test.describe('UI Accessibility Audit', () => {
     await page.goto('/components');
     await page.waitForLoadState('networkidle');
 
-    // Filter for visible elements only
-    const elements = await page.locator('button:visible, a:visible, input:visible, [role="button"]:visible').all();
+    const viewport = page.viewportSize();
 
-    const bboxes = [];
-    for (const el of elements) {
-      const box = await el.boundingBox();
-      if (box) {
-        bboxes.push({ box, el });
+    // Fetch all necessary data in one go to optimize performance
+    const elementsData = await page.evaluate(() => {
+      const els = Array.from(document.querySelectorAll('button, a, input, [role="button"]'))
+        .filter(el => {
+          const style = window.getComputedStyle(el);
+          return style.display !== 'none' && style.visibility !== 'hidden' && el.getBoundingClientRect().width > 0;
+        });
+
+      return els.map(el => {
+        const rect = el.getBoundingClientRect();
+        return {
+          tagName: el.tagName.toLowerCase(),
+          text: (el as HTMLElement).innerText?.substring(0, 20) || '',
+          box: {
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height
+          },
+          hasOverflow: el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight
+        };
+      });
+    });
+
+    for (let i = 0; i < elementsData.length; i++) {
+      const b1 = elementsData[i].box;
+      const tagName1 = elementsData[i].tagName;
+      const text1 = elementsData[i].text;
+
+      // Check for elements extending beyond the viewport width
+      if (viewport && b1.x + b1.width > viewport.width) {
+        const msg = `Element extends beyond viewport width: <${tagName1}> "${text1}" is at x=${b1.x} with width=${b1.width} (viewport width=${viewport.width})`;
+        expect.soft(b1.x + b1.width, msg).toBeLessThanOrEqual(viewport.width);
       }
-    }
-
-    for (let i = 0; i < bboxes.length; i++) {
-      const b1 = bboxes[i].box;
-      const el1 = bboxes[i].el;
-      const tagName1 = await el1.evaluate(node => node.tagName.toLowerCase());
-      const text1 = (await el1.innerText()).substring(0, 20);
 
       // Check for small touch targets (less than 44x44)
       if (b1.width < 44 || b1.height < 44) {
@@ -81,20 +104,15 @@ test.describe('UI Accessibility Audit', () => {
       }
 
       // Check for text overflow
-      const hasOverflow = await el1.evaluate(node => {
-        const el = node as HTMLElement;
-        return el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight;
-      });
-      if (hasOverflow) {
+      if (elementsData[i].hasOverflow) {
         const msg = `Potential text overflow in <${tagName1}>: "${text1}..."`;
-        expect.soft(hasOverflow, msg).toBeFalsy();
+        expect.soft(elementsData[i].hasOverflow, msg).toBeFalsy();
       }
 
-      for (let j = i + 1; j < bboxes.length; j++) {
-        const b2 = bboxes[j].box;
-        const el2 = bboxes[j].el;
-        const tagName2 = await el2.evaluate(node => node.tagName.toLowerCase());
-        const text2 = (await el2.innerText()).substring(0, 20);
+      for (let j = i + 1; j < elementsData.length; j++) {
+        const b2 = elementsData[j].box;
+        const tagName2 = elementsData[j].tagName;
+        const text2 = elementsData[j].text;
 
         // Intersection Check
         const intersectionX = Math.max(0, Math.min(b1.x + b1.width, b2.x + b2.width) - Math.max(b1.x, b2.x));

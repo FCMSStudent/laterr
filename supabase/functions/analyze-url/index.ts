@@ -256,6 +256,40 @@ async function retryWithBackoff<T>(
   throw lastError;
 }
 
+/**
+ * Heuristic check for product/e-commerce signals in URL and page content
+ */
+function checkProductSignals(url: string, htmlOrText: string): boolean {
+  const lowerUrl = url.toLowerCase();
+  const hostname = new URL(url).hostname.toLowerCase();
+
+  // Known e-commerce domains
+  const ecommerceDomains = [
+    'amazon.', 'amzn.', 'ebay.', 'etsy.', 'walmart.', 'aliexpress.',
+    'shopify.', 'target.', 'bestbuy.', 'costco.', 'homedepot.',
+    'wayfair.', 'newegg.', 'overstock.', 'zappos.', 'macys.',
+    'nordstrom.', 'ikea.', 'shein.', 'temu.', 'wish.',
+    'mercadolibre.', 'flipkart.', 'lazada.', 'rakuten.',
+  ];
+  if (ecommerceDomains.some(d => hostname.includes(d))) return true;
+
+  // URL path patterns typical of product pages
+  const productPathPatterns = [
+    /\/product[s]?\//i, /\/item[s]?\//i, /\/dp\//i, /\/listing[s]?\//i,
+    /\/p\//i, /\/buy\//i, /\/shop\//i, /\/gp\/product/i,
+  ];
+  if (productPathPatterns.some(p => p.test(lowerUrl))) return true;
+
+  // HTML/text signals (og:type=product, schema.org Product, price patterns)
+  const lowerContent = htmlOrText.toLowerCase();
+  if (lowerContent.includes('og:type') && lowerContent.includes('product')) return true;
+  if (lowerContent.includes('"@type"') && lowerContent.includes('"product"')) return true;
+  if (lowerContent.includes('add to cart') || lowerContent.includes('add to bag')) return true;
+  if (lowerContent.includes('buy now') && (lowerContent.includes('$') || lowerContent.includes('price'))) return true;
+
+  return false;
+}
+
 serve(async (req) => {
   const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
   const startTime = Date.now();
@@ -611,7 +645,8 @@ Rules:
 4. Confidence should reflect how much content was available (0.9+ if full content, 0.5-0.8 if limited)
 5. Keep tags lowercase and use hyphens instead of spaces
 6. Make the title informative but concise (max 100 chars)
-7. Summary should capture the essence without speculation`;
+7. Summary should capture the essence without speculation
+8. IMPORTANT: Classify e-commerce and shopping pages as category "product" and contentType "product". Product indicators include: prices, "Add to Cart"/"Buy Now" buttons, product specifications, reviews/ratings, SKU/ASIN numbers, shipping info, seller details, and product images. Sites like Amazon, eBay, Etsy, Walmart, AliExpress, and any online store selling items should always be classified as "product".`;
 
     const userPrompt = platform 
       ? `Analyze this ${platform} video:
@@ -708,10 +743,12 @@ Provide comprehensive metadata in JSON format.`;
       category: result.category || fallback.category
     });
 
-    // Determine tag based on content type
+    // Determine tag based on content type (with product heuristic fallback)
+    const isProductByAI = result.contentType === 'product' || result.category === 'product';
+    const isProductBySignals = checkProductSignals(url, cleanText);
     const primaryTag = platform 
       ? 'watch later' 
-      : (result.contentType === 'product' ? 'wishlist' : 'read later');
+      : (isProductByAI || isProductBySignals) ? 'wishlist' : 'read later';
 
     console.log('✅ Metadata extraction complete:', {
       title: finalMetadata.title?.substring(0, 50),
