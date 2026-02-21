@@ -21,7 +21,9 @@ interface OptimizationResult {
  */
 function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
   try {
-    const output = execSync(`grep -rnE "${pattern}" ${searchPath} || true`).toString();
+    // Escape double quotes for the shell command
+    const escapedPattern = pattern.replace(/"/g, '\\"');
+    const output = execSync(`grep -rnE "${escapedPattern}" ${searchPath} || true`).toString();
     return output.split('\n').filter(Boolean).filter(line => {
       const file = line.split(':')[0];
       return (file.endsWith('.ts') || file.endsWith('.tsx')) &&
@@ -37,6 +39,30 @@ function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
 /**
  * Scans for N+1 queries (async calls in loops)
  */
+/**
+ * Scans for inefficient Supabase queries (e.g., select(*) for counts)
+ */
+function scanForInefficientQueries(): OptimizationResult[] {
+  const results: OptimizationResult[] = [];
+  try {
+    // 1. .select('*', { count: ... })
+    runGrep("\\.select\\(['\"]\\*['\"],\\s*\\{[^}]*count:").forEach(line => {
+      const [file, lineNum] = line.split(':');
+      results.push({
+        category: 'backend_api',
+        description: 'Detected .select("*") with count option',
+        impact: 'Unnecessary bandwidth/performance overhead; use .select("id") instead',
+        file,
+        line: lineNum,
+        suggestedFix: 'Use .select("id", { count: ... })'
+      });
+    });
+  } catch (e) {
+    console.error('Error scanning for inefficient queries:', e);
+  }
+  return results;
+}
+
 function scanForN1Queries(): OptimizationResult[] {
   const results: OptimizationResult[] = [];
   try {
@@ -148,7 +174,7 @@ function scanForMissingIndexes(): OptimizationResult[] {
 
     try {
         // Look for .eq('column', ...), .in('column', ...), etc.
-        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\(\'[a-zA-Z0-9_]+\'").forEach(line => {
+        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\('[a-zA-Z0-9_]+'").forEach(line => {
             // regex to extract file, line and column name
             const match = line.match(/^([^:]+):([0-9]+):.*?\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\('([a-zA-Z0-9_]+)'/);
             if (match) {
@@ -168,7 +194,9 @@ function scanForMissingIndexes(): OptimizationResult[] {
                              break;
                          }
                      }
-                } catch (e) {}
+                } catch (e) {
+                    // Ignore error when reading table name
+                }
 
                 results.push({
                     category: 'database',
@@ -281,7 +309,9 @@ function scanForMissingMemo(): OptimizationResult[] {
                         }
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                // Ignore errors during import resolution
+            }
 
             if (!isMemoized) {
                 results.push({
@@ -348,44 +378,15 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     fs.writeFileSync(opt.file, lines.join('\n'));
                     console.log(`✅ Fixed N+1 storage removal in ${opt.file}`);
                 }
-            } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                // Automated useMemo for simple filters
-                const filterMatch = line.match(/\bconst\s+(\w+)\s*=\s*(.+)\.filter\(/);
-                if (filterMatch) {
-                    const [, varName, expr] = filterMatch;
-                    const dependency = expr.split('.')[0]; // Heuristic for dependency
-                    if (!line.includes('useMemo')) {
-                        // 1. Add useMemo import if missing
-                        let fileContent = fs.readFileSync(opt.file, 'utf8');
-                        if (!fileContent.includes('useMemo') && fileContent.includes('from \'react\'')) {
-                            fileContent = fileContent.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => {
-                                if (p1.includes('useMemo')) return m;
-                                return `import { ${p1.trim()}, useMemo } from 'react'`;
-                            });
-                            fs.writeFileSync(opt.file, fileContent);
-                        }
-
-                        // Re-read after potential import update
-                        const currentLines = fs.readFileSync(opt.file, 'utf8').split('\n');
-                        const currentLine = currentLines[lineIdx];
-
-                        // Use a more robust replacement that handles indentation
-                        const filterRegex = new RegExp(`(const\\s+${varName}\\s*=\\s*)(.+\\.filter\\()`);
-                        if (filterRegex.test(currentLine)) {
-                            currentLines[lineIdx] = currentLine.replace(filterRegex, `$1useMemo(() => $2`);
-
-                            // Add closing bracket and dependency array - assuming one line for simplicity in auto-fix
-                            if (currentLines[lineIdx].trim().endsWith(');')) {
-                                const lastIndex = currentLines[lineIdx].lastIndexOf(');');
-                                currentLines[lineIdx] = currentLines[lineIdx].slice(0, lastIndex) + `), [${dependency}]);`;
-                                fs.writeFileSync(opt.file, currentLines.join('\n'));
-                                console.log(`✅ Applied useMemo to ${varName} in ${opt.file}`);
-                            }
-                        }
-                    }
-                } else {
-                    console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+            } else if (opt.category === 'backend_api' && opt.description.includes('select("*") with count option')) {
+                const match = line.match(/\.select\((["'])\*(\1),\s*(\{[^}]*count:[^}]*\})\)/);
+                if (match) {
+                    lines[lineIdx] = line.replace(match[0], `.select(${match[1]}id${match[1]}, ${match[3]})`);
+                    fs.writeFileSync(opt.file, lines.join('\n'));
+                    console.log(`✅ Fixed inefficient count query in ${opt.file}`);
                 }
+            } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
+                console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
             } else if (opt.category === 'database' && opt.description.includes('Potential missing index')) {
                 const columnMatch = opt.description.match(/column "([^"]+)"/);
                 const tableMatch = opt.description.match(/table "([^"]+)"/);
@@ -648,7 +649,8 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
   const optimizations = summary.optimizations;
   const slaExceeded = summary.benchmarks.apiLatencyMs > API_RESPONSE_THRESHOLD_MS;
 
-  const backendLeadTag = "<@backend-lead>";
+  const backendLeadId = process.env.BACKEND_LEAD_SLACK_ID || "backend-lead";
+  const backendLeadTag = `<@${backendLeadId}>`;
 
   let text = `🚀 *Nightly Performance Sweep Report* - ${new Date().toLocaleDateString()}\n`;
   if (summary.benchmarks.beforeLatencyMs) {
@@ -764,13 +766,21 @@ async function main() {
 
   console.log('Starting nightly performance sweep...');
 
+  const inefficientQueries = scanForInefficientQueries();
   const n1Issues = scanForN1Queries();
   const indexIssues = scanForMissingIndexes();
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
   const logicIssues = scanForNestedLoops();
 
-  const allIssues = [...n1Issues, ...indexIssues, ...memoIssues, ...mergeIssues, ...logicIssues];
+  const allIssues = [
+    ...inefficientQueries,
+    ...n1Issues,
+    ...indexIssues,
+    ...memoIssues,
+    ...mergeIssues,
+    ...logicIssues
+  ];
 
   const beforeBenchmarks = await runBenchmarks();
 
