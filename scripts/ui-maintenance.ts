@@ -230,6 +230,8 @@ function scanHardcodedColors(): UIIssue[] {
     const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
     for (const file of files) {
       if (file.includes('constants.ts') || file.includes('utils.ts')) continue;
+      // Skip chart.tsx for color auto-fixes as it uses hex for Recharts config
+      const isChartFile = file.includes('chart.tsx');
 
       const content = fs.readFileSync(file, 'utf8');
       // Support 3 and 6 digit hex codes
@@ -244,8 +246,14 @@ function scanHardcodedColors(): UIIssue[] {
         if (lineContent.includes('var(')) continue;
 
         let canFix = false;
-        if (COLOR_FIX_MAP[hex.toLowerCase()]) {
-          canFix = true;
+        if (!isChartFile && COLOR_FIX_MAP[hex.toLowerCase()]) {
+          // Check if it's part of a CSS attribute selector (like [stroke='#ccc'])
+          const context = content.substring(Math.max(0, match.index - 10), match.index + hex.length + 2);
+          const isCssSelector = /stroke=['"]#|fill=['"]#/.test(context);
+
+          if (!isCssSelector) {
+            canFix = true;
+          }
         }
 
         issues.push({
@@ -264,6 +272,88 @@ function scanHardcodedColors(): UIIssue[] {
     console.error('Error scanning for hardcoded colors:', e);
   }
   return issues;
+}
+
+/**
+ * Scans for form elements missing accessible labels
+ */
+function scanMissingFormLabels(): UIIssue[] {
+  const issues: UIIssue[] = [];
+  try {
+    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+      const formRegex = /<(input|select|textarea)([^>]*?)>/g;
+      let match;
+      while ((match = formRegex.exec(content)) !== null) {
+        const tag = match[1];
+        const attributes = match[2];
+
+        // Skip hidden inputs or self-closing tags that might be components (though the regex is simple)
+        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
+
+        const hasAriaLabel = attributes.includes('aria-label=') || attributes.includes('aria-labelledby=');
+        const idMatch = attributes.match(/id=["'](.*?)["']/);
+        const id = idMatch ? idMatch[1] : null;
+
+        let hasLabel = false;
+        if (id) {
+          const labelRegex = new RegExp(`<(label|Label)[^>]*htmlFor=["']${id}["']`, 'i');
+          if (labelRegex.test(content)) {
+            hasLabel = true;
+          }
+        }
+
+        // Check if input is nested within a label
+        if (!hasLabel) {
+          const beforeContent = content.substring(0, match.index);
+          const lastLabelOpen = beforeContent.lastIndexOf('<label');
+          if (lastLabelOpen !== -1) {
+            const afterLabelOpen = content.substring(lastLabelOpen);
+            const nextLabelClose = afterLabelOpen.indexOf('</label>');
+            const nextLabelOpen = afterLabelOpen.indexOf('<label', 1);
+
+            // If </label> exists and comes before the next <label
+            if (nextLabelClose !== -1 && (nextLabelOpen === -1 || nextLabelClose < nextLabelOpen)) {
+              // Check if our match is between <label and </label>
+              const relativeIndex = match.index - lastLabelOpen;
+              if (relativeIndex < nextLabelClose) {
+                hasLabel = true;
+              }
+            }
+          }
+        }
+
+        if (!hasAriaLabel && !hasLabel) {
+          const lineNum = content.substring(0, match.index).split('\n').length;
+          issues.push({
+            type: 'accessibility',
+            severity: 'high',
+            description: `Form element <${tag}> missing accessible label (label, aria-label, or aria-labelledby)`,
+            file,
+            line: lineNum,
+            autoFixable: false
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error scanning for missing form labels:', e);
+  }
+  return issues;
+}
+
+interface PlaywrightSuite {
+  specs?: {
+    title: string;
+    tests: {
+      results: {
+        status: string;
+        errors?: { message: string }[];
+      }[];
+    }[];
+  }[];
+  suites?: PlaywrightSuite[];
 }
 
 /**
@@ -381,7 +471,7 @@ async function sendSlackNotification(issues: UIIssue[]) {
   const fixableCount = issues.filter(i => i.autoFixable).length;
 
   const mentionLeads = criticalIssues.length > 0
-    ? '\n<!channel> 🚨 *Attention needed:* @Design-Lead @QA-Lead - Critical UI/Accessibility issues detected!'
+    ? '\n🚨 *Critical Design/Accessibility Blockers Found!* tagging @Design-Lead and @QA-Lead'
     : '';
 
   const prText = prUrl ? `\n\n*View Pull Request:* ${prUrl}` : '\n\n_Note: No automated PR was created for this run._';
@@ -422,6 +512,7 @@ async function main() {
   const colorIssues = scanHardcodedColors();
   const buttonIssues = scanInconsistentButtons();
   const styleIssues = scanInconsistentStyles();
+  const formIssues = scanMissingFormLabels();
 
   let allIssues = [...altIssues, ...formIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
 
