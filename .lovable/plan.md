@@ -1,61 +1,40 @@
 
-# Fix: Production Build Failures Causing Blank Page
+# Fix: Route Products to "Wishlist" Instead of "Read Later"
 
-## Problems Found
+## What's Happening Now
 
-The `agentation` package is already removed from `App.tsx` — that's not the issue. After deeper investigation, here are the **actual remaining problems**:
+When you save a product URL (e.g., from Amazon, eBay, Etsy), the AI analyzes the page and assigns a `contentType`. If it returns `"product"`, the tag is set to "wishlist". But if the AI doesn't confidently classify it as a product, it falls through to the default "read later" tag.
 
-### Problem 1: `process.env.NODE_ENV` in Vite project
-**File:** `src/app/routes.tsx` (line 33)
+## Changes
 
-```tsx
-{process.env.NODE_ENV === "development" && (
-  <Route path="/viewer-loading-test" element={<ViewerLoadingTestPage />} />
-)}
+### 1. Improve AI prompt to better detect products
+**File:** `supabase/functions/analyze-url/index.ts` (~line 595-614)
+
+Add explicit guidance in the AI system prompt telling it to classify e-commerce and shopping pages as `product` contentType. Add examples of product indicators (price, add-to-cart, buy buttons, product specs).
+
+### 2. Add URL-based product detection as fallback
+**File:** `supabase/functions/analyze-url/index.ts` (~line 711-714)
+
+Add a domain-based heuristic check: if the URL belongs to known shopping sites (amazon, ebay, etsy, shopify stores, aliexpress, walmart, etc.) OR the page HTML contains strong product signals (price patterns, add-to-cart elements), override the tag to "wishlist" even if the AI didn't classify it as a product.
+
+Updated logic:
+```
+const isProductUrl = checkProductSignals(url, htmlContent);
+const primaryTag = platform
+  ? 'watch later'
+  : (result.contentType === 'product' || isProductUrl) ? 'wishlist' : 'read later';
 ```
 
-Vite does **not** define `process.env` in production builds. This will throw a `ReferenceError: process is not defined` at runtime, crashing the entire app before it renders anything.
+### 3. Also use the AI `category` field
+**File:** `supabase/functions/analyze-url/index.ts` (~line 711-714)
 
-**Fix:** Replace with Vite's equivalent:
-```tsx
-{import.meta.env.DEV && (
-  <Route path="/viewer-loading-test" element={<ViewerLoadingTestPage />} />
-)}
-```
+If the AI returns `category: "product"` (even if `contentType` differs), treat it as a product and assign "wishlist".
 
-### Problem 2: Duplicate Supabase client with `process.env` references
-**File:** `src/lib/supabase/client.ts`
+## Technical Details
 
-This is a **manually created duplicate** of the auto-generated `src/integrations/supabase/client.ts`. It references `process.env` (lines 14-16), which will also crash in Vite production builds. Worse, **28 files** import from this duplicate instead of the official auto-generated client.
+A new helper function `checkProductSignals(url, html)` will be added that checks:
+- Known e-commerce domains (amazon, ebay, etsy, walmart, aliexpress, shopify, etc.)
+- HTML signals: `og:type` = `product`, price-related meta tags, schema.org Product markup
+- URL path patterns containing `/product/`, `/item/`, `/dp/`, `/listing/`
 
-**Fix (two parts):**
-1. **Delete** `src/lib/supabase/client.ts` and `src/lib/supabase/types.ts`
-2. **Update all 28 files** that import from `@/lib/supabase/client` to import from `@/integrations/supabase/client` instead
-
-Affected files include:
-- `src/features/bookmarks/pages/BookmarksPage.tsx`
-- `src/features/bookmarks/components/AddItemModal.tsx`
-- `src/features/dashboard/pages/DashboardPage.tsx`
-- `src/features/health/pages/HealthPage.tsx`
-- `src/features/settings/pages/SettingsPage.tsx`
-- `src/features/subscriptions/components/EditSubscriptionModal.tsx`
-- `src/shared/hooks/useDashboardStats.ts`
-- `src/shared/lib/supabase-utils.ts`
-- ...and ~20 more files
-
-### Problem 3: `agentation` package still in `package.json`
-Even though it's no longer imported, the `agentation` package (v1.3.2) is still listed as a dependency. It should be removed from `package.json` to keep the bundle clean and avoid any side-effect issues during tree-shaking.
-
-## Summary of Changes
-
-| File | Action |
-|------|--------|
-| `src/app/routes.tsx` | Replace `process.env.NODE_ENV` with `import.meta.env.DEV` |
-| `src/lib/supabase/client.ts` | Delete |
-| `src/lib/supabase/types.ts` | Delete |
-| 28 source files | Change import path from `@/lib/supabase/client` to `@/integrations/supabase/client` |
-| `package.json` | Remove `agentation` dependency |
-
-## After the Fix
-
-Click **Publish > Update** to deploy. The site should load correctly on all devices.
+This ensures products get tagged as "wishlist" reliably, with multiple layers of detection (AI classification + URL heuristics + HTML signals).
