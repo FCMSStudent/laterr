@@ -4,13 +4,32 @@ import * as path from 'path';
 
 const COLOR_FIX_MAP: Record<string, string> = {
   '#3b82f6': 'hsl(var(--primary))',
-  '#ef4444': 'hsl(var(--destructive))',
-  '#10b981': 'hsl(var(--success))',
-  '#f59e0b': 'hsl(var(--warning))',
   '#3b82f7': 'hsl(var(--primary))',
+  '#2563eb': 'hsl(var(--primary))',
+  '#ef4444': 'hsl(var(--destructive))',
+  '#dc2626': 'hsl(var(--destructive))',
+  '#10b981': 'hsl(var(--success))',
+  '#059669': 'hsl(var(--success))',
+  '#f59e0b': 'hsl(var(--warning))',
+  '#d97706': 'hsl(var(--warning))',
   '#ffffff': 'hsl(var(--background))',
   '#000000': 'hsl(var(--foreground))',
+  '#f8fafc': 'hsl(var(--muted))',
+  '#64748b': 'hsl(var(--muted-foreground))',
 };
+
+interface PlaywrightSuite {
+  specs?: {
+    title: string;
+    tests: {
+      results: {
+        status: string;
+        errors?: { message: string }[];
+      }[];
+    }[];
+  }[];
+  suites?: PlaywrightSuite[];
+}
 
 interface UIIssue {
   type: 'accessibility' | 'styling' | 'consistency';
@@ -21,6 +40,67 @@ interface UIIssue {
   autoFixable: boolean;
   offset?: number;
   originalText?: string;
+}
+
+/**
+ * Scans for missing form labels on input, select, and textarea elements
+ */
+function scanMissingFormLabels(): UIIssue[] {
+  const issues: UIIssue[] = [];
+  try {
+    const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+
+      // Heuristic for finding form elements
+      const formElementRegex = /<(input|select|textarea)([^>]*?)(\/?>)/g;
+      let match;
+      while ((match = formElementRegex.exec(content)) !== null) {
+        const tag = match[1];
+        const attributes = match[2];
+
+        // Skip hidden inputs
+        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
+
+        const hasAriaLabel = attributes.includes('aria-label=') || attributes.includes('aria-labelledby=');
+        const hasId = attributes.match(/id=["'](.+?)["']/);
+
+        let hasLabel = false;
+        if (hasId) {
+          const id = hasId[1];
+          const labelRegex = new RegExp(`<label[^>]*?(?:htmlFor|for)=["']${id}["'][^>]*?>`, 'g');
+          if (labelRegex.test(content)) {
+            hasLabel = true;
+          }
+        }
+
+        // Heuristic: Check if it's wrapped in a <label>
+        const lookBack = content.substring(Math.max(0, match.index - 100), match.index);
+        if (lookBack.includes('<label')) {
+            const lastOpenLabel = lookBack.lastIndexOf('<label');
+            const lastCloseLabel = lookBack.lastIndexOf('</label>');
+            if (lastOpenLabel > lastCloseLabel) {
+                hasLabel = true;
+            }
+        }
+
+        if (!hasAriaLabel && !hasLabel) {
+          const lineNum = content.substring(0, match.index).split('\n').length;
+          issues.push({
+            type: 'accessibility',
+            severity: 'high',
+            description: `Form element <${tag}> missing accessible label (label, aria-label, or aria-labelledby)`,
+            file,
+            line: lineNum,
+            autoFixable: false
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error scanning for missing form labels:', e);
+  }
+  return issues;
 }
 
 /**
@@ -227,7 +307,7 @@ function runRuntimeAudit(): UIIssue[] {
     if (fs.existsSync(resultsPath)) {
       const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
 
-      const processSuite = (suite: any) => {
+      const processSuite = (suite: PlaywrightSuite) => {
         for (const spec of suite.specs || []) {
           for (const test of spec.tests || []) {
             for (const result of test.results || []) {
@@ -328,7 +408,7 @@ async function sendSlackNotification(issues: UIIssue[]) {
   const fixableCount = issues.filter(i => i.autoFixable).length;
 
   const mentionLeads = criticalIssues.length > 0
-    ? '\n<!channel> 🚨 *Attention needed:* @Design-Lead @QA-Lead - Critical UI/Accessibility issues detected!'
+    ? '\n<!channel> 🚨 *Attention needed:* <@Design-Lead> <@QA-Lead> - Critical UI/Accessibility issues detected!'
     : '';
 
   const prText = prUrl ? `\n\n*View Pull Request:* ${prUrl}` : '\n\n_Note: No automated PR was created for this run._';
@@ -364,13 +444,14 @@ async function sendSlackNotification(issues: UIIssue[]) {
 async function main() {
   console.log('Starting UI/UX maintenance audit...');
 
+  const formIssues = scanMissingFormLabels();
   const altIssues = scanMissingAlt();
   const ariaIssues = scanMissingAriaLabels();
   const colorIssues = scanHardcodedColors();
   const buttonIssues = scanInconsistentButtons();
   const styleIssues = scanInconsistentStyles();
 
-  let allIssues = [...altIssues, ...ariaIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
+  let allIssues = [...formIssues, ...altIssues, ...ariaIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
@@ -383,28 +464,60 @@ async function main() {
 
   console.log(`Total issues identified: ${allIssues.length}`);
 
+  // JSON Report
   const reportPath = path.join(process.cwd(), 'ui-maintenance-report.json');
+  const summary = {
+    total: allIssues.length,
+    fixable: allIssues.filter(i => i.autoFixable).length,
+    unfixable: allIssues.filter(i => !i.autoFixable).length,
+    severities: {
+      critical: allIssues.filter(i => i.severity === 'critical').length,
+      high: allIssues.filter(i => i.severity === 'high').length,
+      medium: allIssues.filter(i => i.severity === 'medium').length,
+      low: allIssues.filter(i => i.severity === 'low').length,
+    }
+  };
+
   fs.writeFileSync(reportPath, JSON.stringify({
     timestamp: new Date().toISOString(),
-    summary: {
-      total: allIssues.length,
-      fixable: allIssues.filter(i => i.autoFixable).length,
-      unfixable: allIssues.filter(i => !i.autoFixable).length,
-      severities: {
-        critical: allIssues.filter(i => i.severity === 'critical').length,
-        high: allIssues.filter(i => i.severity === 'high').length,
-        medium: allIssues.filter(i => i.severity === 'medium').length,
-        low: allIssues.filter(i => i.severity === 'low').length,
-      }
-    },
-    issues: allIssues.map(i => ({ ...i, offset: undefined, originalText: undefined })) // Strip internal fields for report
+    summary,
+    issues: allIssues.map(i => ({ ...i, offset: undefined, originalText: undefined }))
   }, null, 2));
+
+  // Markdown Report
+  const mdReportPath = path.join(process.cwd(), 'UI_MAINTENANCE_REPORT.md');
+  const mdContent = `
+# 🖌️ UI/UX Maintenance Report
+**Date:** ${new Date().toLocaleDateString()}
+**Status:** ${summary.critical > 0 ? '🔴 CRITICAL ISSUES FOUND' : (summary.total > 0 ? '🟡 IMPROVEMENTS NEEDED' : '🟢 ALL CLEAR')}
+
+## 📊 Summary
+- **Total Issues:** ${summary.total}
+- **Auto-fixable:** ${summary.fixable}
+- **Unfixable:** ${summary.unfixable}
+
+### Severities
+- **Critical:** ${summary.severities.critical}
+- **High:** ${summary.severities.high}
+- **Medium:** ${summary.severities.medium}
+- **Low:** ${summary.severities.low}
+
+## 🚨 Top Issues
+${allIssues.slice(0, 20).map(i => `- **[${i.severity.toUpperCase()}]** ${i.description}
+  - **File:** \`${i.file || 'runtime'}\`${i.line ? `:${i.line}` : ''}`).join('\n')}
+
+${allIssues.length > 20 ? `\n*...and ${allIssues.length - 20} more issues found in the JSON report.*` : ''}
+
+---
+_Generated by automated UI maintenance script._
+`;
+  fs.writeFileSync(mdReportPath, mdContent.trim());
 
   if (process.argv.includes('--notify')) {
     await sendSlackNotification(allIssues);
   }
 
-  console.log(`Audit completed. Report saved to ${reportPath}`);
+  console.log(`Audit completed. Reports saved to ${reportPath} and ${mdReportPath}`);
 }
 
 main().catch(console.error);
