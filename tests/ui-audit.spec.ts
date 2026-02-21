@@ -44,6 +44,8 @@ test.describe('UI Accessibility Audit', () => {
         });
       } catch (e) {
         console.error(`Accessibility issues found on ${pageInfo.name}`);
+        // We catch and log but don't necessarily fail here if we want to continue,
+        // but standard test behavior is to throw.
         throw e;
       }
 
@@ -128,17 +130,44 @@ test.describe('UI Accessibility Audit', () => {
              const msg = `Significant element overlap detected (${Math.round(overlapPercent * 100)}%) between <${tagName1}> "${text1}" and <${tagName2}> "${text2}"`;
              expect.soft(overlapPercent, msg).toBeLessThanOrEqual(0.5);
           }
-        }
 
-        // Misalignment check (elements close horizontally but slightly offset vertically)
-        const verticalDiff = Math.abs(b1.y - b2.y);
-        const horizontalGap = b1.x < b2.x ? b2.x - (b1.x + b1.width) : b1.x - (b2.x + b2.width);
+          // Check for text overflow
+          if (e1.hasOverflow) {
+            const msg = `Potential text overflow on ${pageInfo.name} in <${e1.tagName}>: "${e1.text}..."`;
+            expect.soft(e1.hasOverflow, msg).toBeFalsy();
+          }
 
-        if (horizontalGap < 50 && verticalDiff > 0 && verticalDiff < 5) {
-           const msg = `Potential misalignment: <${tagName1}> and <${tagName2}> are vertically offset by ${verticalDiff}px`;
-           expect.soft(verticalDiff, msg).toBe(0);
+          for (let j = i + 1; j < elementsData.length; j++) {
+            const e2 = elementsData[j];
+            const b2 = e2.box;
+
+            // Intersection Check
+            const intersectionX = Math.max(0, Math.min(b1.x + b1.width, b2.x + b2.width) - Math.max(b1.x, b2.x));
+            const intersectionY = Math.max(0, Math.min(b1.y + b1.height, b2.y + b2.height) - Math.max(b1.y, b2.y));
+            const intersectionArea = intersectionX * intersectionY;
+
+            if (intersectionArea > 0) {
+              const area1 = b1.width * b1.height;
+              const area2 = b2.width * b2.height;
+              const overlapPercent = intersectionArea / Math.min(area1, area2);
+
+              if (overlapPercent > 0.5) { // If 50% of the smaller element is covered
+                const msg = `Significant overlap (${Math.round(overlapPercent * 100)}%) on ${pageInfo.name} between <${e1.tagName}> "${e1.text}" and <${e2.tagName}> "${e2.text}"`;
+                expect.soft(overlapPercent, msg).toBeLessThanOrEqual(0.5);
+              }
+            }
+
+            // Misalignment check (elements close horizontally but slightly offset vertically)
+            const verticalDiff = Math.abs(b1.y - b2.y);
+            const horizontalGap = b1.x < b2.x ? b2.x - (b1.x + b1.width) : b1.x - (b2.x + b2.width);
+
+            if (horizontalGap < 50 && verticalDiff > 0 && verticalDiff < 5) {
+              const msg = `Potential misalignment on ${pageInfo.name}: <${e1.tagName}> and <${e2.tagName}> are vertically offset by ${verticalDiff}px`;
+              expect.soft(verticalDiff, msg).toBe(0);
+            }
+          }
         }
-      }
+      });
     }
   });
 });

@@ -29,6 +29,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run UI maintenance audit and auto-fix
+        # Runs the custom maintenance script to detect and fix UI/UX issues
         run: pnpm exec tsx scripts/ui-maintenance.ts --fix --runtime
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -45,7 +46,7 @@ jobs:
           body: |
             Automated UI/UX improvements and consistency fixes found during nightly sweep.
 
-            Check `ui-maintenance-report.json` for details.
+            Check `ui-maintenance-report.json` and `UI_MAINTENANCE_REPORT.md` for details.
           branch: ui/nightly-maintenance
           base: main
           delete-branch: true
