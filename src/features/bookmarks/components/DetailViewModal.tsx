@@ -35,14 +35,6 @@ const areTagsEqual = (a: string[], b: string[]) => {
   const B = [...b].map(normalizeTag).sort();
   return A.length === B.length && A.every((v, i) => v === B[i]);
 };
-const safeParseUrl = (value: string | null | undefined) => {
-  if (!value) return null;
-  try {
-    return new URL(value);
-  } catch {
-    return null;
-  }
-};
 interface DetailViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -320,24 +312,6 @@ export const DetailViewModal = ({
     setTags(newTags);
     handleSave(userNotes, newTags, true);
     handleCancelEditTag();
-  };
-  const handleKeyDownTag = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    } else if (e.key === 'Escape') {
-      setIsAddingTag(false);
-      setNewTagInput("");
-    }
-  };
-  const handleKeyDownEditTag = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleCommitEditTag();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      handleCancelEditTag();
-    }
   };
   const handleDelete = useCallback(async () => {
     if (!item) return;
