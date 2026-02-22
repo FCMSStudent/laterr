@@ -1,40 +1,45 @@
 
-# Fix: Route Products to "Wishlist" Instead of "Read Later"
 
-## What's Happening Now
+# Fix: Consistent Navigation Header and Build Error
 
-When you save a product URL (e.g., from Amazon, eBay, Etsy), the AI analyzes the page and assigns a `contentType`. If it returns `"product"`, the tag is set to "wishlist". But if the AI doesn't confidently classify it as a product, it falls through to the default "read later" tag.
+## Problem
+
+Two issues need fixing:
+
+1. **Inconsistent header**: The Bookmarks page has its own custom inline header (lines 535-680 in BookmarksPage.tsx) that duplicates all the NavigationHeader logic (sign out confirmation, settings button, theme toggle, overflow menu) but with completely different styling:
+   - Bookmarks uses plain `border-border/50 bg-muted/20` inputs
+   - Other pages (Dashboard, Health, Subscriptions) use the shared `NavigationHeader` with glass-style inputs
+   - The duplicated code also means any future header changes need to be made in two places
+
+2. **Build error**: `HealthChartPanel.tsx` uses `useCallback` but doesn't import it (line 1 imports `useState, useMemo` but not `useCallback`)
 
 ## Changes
 
-### 1. Improve AI prompt to better detect products
-**File:** `supabase/functions/analyze-url/index.ts` (~line 595-614)
+### 1. Fix HealthChartPanel build error
+**File:** `src/features/health/components/HealthChartPanel.tsx`
 
-Add explicit guidance in the AI system prompt telling it to classify e-commerce and shopping pages as `product` contentType. Add examples of product indicators (price, add-to-cart, buy buttons, product specs).
+Add `useCallback` to the existing React imports on line 1.
 
-### 2. Add URL-based product detection as fallback
-**File:** `supabase/functions/analyze-url/index.ts` (~line 711-714)
+### 2. Refactor BookmarksPage to use the shared NavigationHeader
+**File:** `src/features/bookmarks/pages/BookmarksPage.tsx`
 
-Add a domain-based heuristic check: if the URL belongs to known shopping sites (amazon, ebay, etsy, shopify stores, aliexpress, walmart, etc.) OR the page HTML contains strong product signals (price patterns, add-to-cart elements), override the tag to "wishlist" even if the AI didn't classify it as a product.
+- Remove the entire custom inline header block (lines 535-680) including the duplicated sign-out dialog, settings button, theme toggle, and overflow menu
+- Remove now-unused imports: `Settings`, `LogOut`, `MoreVertical`, `Sun`, `AlertDialog*`, `DropdownMenu*`, `ThemeToggle`, `LoadingSpinner`, `useTheme`, `AuthError`, `AUTH_ERRORS`, `signingOut` state, `handleSignOut`, `handleToggleTheme`
+- Replace with the shared `NavigationHeader` component, passing:
+  - `title="Bookmarks"`
+  - `searchValue` / `onSearchChange` for the inline search
+  - `onAddClick` for the Add button (hidden in trash view)
+  - `filterButton` with the existing `MobileFilterSortButton`
 
-Updated logic:
-```
-const isProductUrl = checkProductSignals(url, htmlContent);
-const primaryTag = platform
-  ? 'watch later'
-  : (result.contentType === 'product' || isProductUrl) ? 'wishlist' : 'read later';
-```
+### 3. Add All/Trash toggle as a custom element alongside the header
+**File:** `src/features/bookmarks/pages/BookmarksPage.tsx`
 
-### 3. Also use the AI `category` field
-**File:** `supabase/functions/analyze-url/index.ts` (~line 711-714)
+The All/Trash pill toggle is Bookmarks-specific, so it will be placed just below the `NavigationHeader` or passed via the `overflowExtra` prop, keeping the header itself clean and consistent with other pages.
 
-If the AI returns `category: "product"` (even if `contentType` differs), treat it as a product and assign "wishlist".
+## Result
 
-## Technical Details
+- All pages will share the same header component with consistent glass styling, button sizes, and behavior
+- The All/Trash toggle remains as a Bookmarks-specific UI element
+- The build error is fixed
+- ~100 lines of duplicated code removed from BookmarksPage
 
-A new helper function `checkProductSignals(url, html)` will be added that checks:
-- Known e-commerce domains (amazon, ebay, etsy, walmart, aliexpress, shopify, etc.)
-- HTML signals: `og:type` = `product`, price-related meta tags, schema.org Product markup
-- URL path patterns containing `/product/`, `/item/`, `/dp/`, `/listing/`
-
-This ensures products get tagged as "wishlist" reliably, with multiple layers of detection (AI classification + URL heuristics + HTML signals).
