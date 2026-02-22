@@ -141,17 +141,22 @@ export async function getRecommendations(
       return [];
     }
 
-    // Get similar items for each recent item
+    // Get similar items for each recent item in parallel
     const allSimilar: Map<string, Item & { similarity: number }> = new Map();
     
-    for (const item of recentItems) {
-      const similar = await findSimilarItems(item.id, limit, 0.7);
+    // We already have embeddings for recentItems, so we could theoretically call RPC directly
+    // but findSimilarItems also handles error cases and reference item filtering.
+    // Parallelizing the calls to findSimilarItems to avoid sequential await bottleneck.
+    const similarPromises = recentItems.map(item => findSimilarItems(item.id, limit, 0.7));
+    const results = await Promise.all(similarPromises);
+
+    results.forEach(similar => {
       similar.forEach(s => {
         if (!allSimilar.has(s.id) || (allSimilar.get(s.id)!.similarity < s.similarity)) {
           allSimilar.set(s.id, s);
         }
       });
-    }
+    });
 
     // Sort by similarity and return top results
     return Array.from(allSimilar.values())

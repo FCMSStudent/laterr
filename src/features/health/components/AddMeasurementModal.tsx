@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/components/ui";
 import { Button } from "@/shared/components/ui";
@@ -64,27 +64,27 @@ export const AddMeasurementModal = ({
     setTagInput("");
   };
 
-  const handleAddTag = () => {
+  const handleAddTag = useCallback(() => {
     const trimmedTag = tagInput.trim().toLowerCase();
     if (trimmedTag && !tags.includes(trimmedTag)) {
-      setTags([...tags, trimmedTag]);
+      setTags(prev => [...prev, trimmedTag]);
       setTagInput("");
     }
-  };
+  }, [tagInput, tags]);
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(t => t !== tagToRemove));
-  };
+  const handleRemoveTag = useCallback((tagToRemove: string) => {
+    setTags(prev => prev.filter(t => t !== tagToRemove));
+  }, []);
 
-  const handleQuickTime = (type: 'now' | 'yesterday') => {
+  const handleQuickTime = useCallback((type: 'now' | 'yesterday') => {
     if (type === 'now') {
       setMeasuredAt(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     } else {
       setMeasuredAt(format(subDays(new Date(), 1), "yyyy-MM-dd'T'HH:mm"));
     }
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!measurementType) {
       toast.error("Please select a measurement type");
       return;
@@ -136,14 +136,14 @@ export const AddMeasurementModal = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [measurementType, isBloodPressure, systolic, diastolic, value, selectedTypeInfo, measuredAt, notes, tags, onOpenChange, onMeasurementAdded]);
 
-  const FormContent = () => (
+  const formContent = (
     <div className="space-y-4 mt-4">
       {/* Measurement Type */}
       <div className="space-y-2">
         <Label htmlFor="type">Measurement Type *</Label>
-        <Select value={measurementType} onValueChange={(v) => /* @perf-check */ setMeasurementType(v as MeasurementType)}>
+        <Select value={measurementType} onValueChange={(v) => setMeasurementType(v as MeasurementType)}>
           <SelectTrigger>
             <SelectValue placeholder="Select type..." />
           </SelectTrigger>
@@ -157,142 +157,142 @@ export const AddMeasurementModal = ({
         </Select>
       </div>
 
-          {/* Value Input - Different for Blood Pressure */}
-          {isBloodPressure ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="systolic">Systolic *</Label>
-                <Input
-                  id="systolic"
-                  type="number"
-                  placeholder="120"
-                  value={systolic}
-                  onChange={(e) => setSystolic(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="diastolic">Diastolic *</Label>
-                <Input
-                  id="diastolic"
-                  type="number"
-                  placeholder="80"
-                  value={diastolic}
-                  onChange={(e) => setDiastolic(e.target.value)}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="value">
-                Value * {selectedTypeInfo && `(${selectedTypeInfo.unit})`}
-              </Label>
-              <Input
-                id="value"
-                type="number"
-                step="0.01"
-                placeholder="Enter value..."
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* Date/Time */}
+      {/* Value Input - Different for Blood Pressure */}
+      {isBloodPressure ? (
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="measuredAt">Date & Time *</Label>
-            <div className="flex gap-2">
-              <Input
-                id="measuredAt"
-                type="datetime-local"
-                value={measuredAt}
-                onChange={(e) => setMeasuredAt(e.target.value)}
-                className="flex-1"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickTime('now')}
-              >
-                <Clock className="w-3 h-3 mr-1" />
-                Log Now
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickTime('yesterday')}
-              >
-                <Calendar className="w-3 h-3 mr-1" />
-                Yesterday
-              </Button>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
-            <div className="flex gap-2">
-              <Input
-                id="tags"
-                placeholder="Add tag..."
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-              />
-              <Button type="button" variant="secondary" onClick={handleAddTag}>
-                Add
-              </Button>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="gap-1">
-                    #{tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any additional notes..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="resize-none"
-              rows={3}
+            <Label htmlFor="systolic">Systolic *</Label>
+            <Input
+              id="systolic"
+              type="number"
+              placeholder="120"
+              value={systolic}
+              onChange={(e) => setSystolic(e.target.value)}
             />
           </div>
-
-          {/* Submit */}
-          <LoadingButton
-            onClick={handleSubmit}
-            loading={loading}
-            disabled={!measurementType}
-            className="w-full"
-          >
-            Log Measurement
-          </LoadingButton>
+          <div className="space-y-2">
+            <Label htmlFor="diastolic">Diastolic *</Label>
+            <Input
+              id="diastolic"
+              type="number"
+              placeholder="80"
+              value={diastolic}
+              onChange={(e) => setDiastolic(e.target.value)}
+            />
+          </div>
         </div>
-      );
+      ) : (
+        <div className="space-y-2">
+          <Label htmlFor="value">
+            Value * {selectedTypeInfo && `(${selectedTypeInfo.unit})`}
+          </Label>
+          <Input
+            id="value"
+            type="number"
+            step="0.01"
+            placeholder="Enter value..."
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </div>
+      )}
+
+      {/* Date/Time */}
+      <div className="space-y-2">
+        <Label htmlFor="measuredAt">Date & Time *</Label>
+        <div className="flex gap-2">
+          <Input
+            id="measuredAt"
+            type="datetime-local"
+            value={measuredAt}
+            onChange={(e) => setMeasuredAt(e.target.value)}
+            className="flex-1"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handleQuickTime('now')}
+          >
+            <Clock className="w-3 h-3 mr-1" />
+            Log Now
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handleQuickTime('yesterday')}
+          >
+            <Calendar className="w-3 h-3 mr-1" />
+            Yesterday
+          </Button>
+        </div>
+      </div>
+
+      {/* Tags */}
+      <div className="space-y-2">
+        <Label htmlFor="tags">Tags</Label>
+        <div className="flex gap-2">
+          <Input
+            id="tags"
+            placeholder="Add tag..."
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddTag();
+              }
+            }}
+          />
+          <Button type="button" variant="secondary" onClick={handleAddTag}>
+            Add
+          </Button>
+        </div>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="gap-1">
+                #{tag}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="ml-1 hover:text-destructive"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Notes */}
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          placeholder="Any additional notes..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="resize-none"
+          rows={3}
+        />
+      </div>
+
+      {/* Submit */}
+      <LoadingButton
+        onClick={handleSubmit}
+        loading={loading}
+        disabled={!measurementType}
+        className="w-full"
+      >
+        Log Measurement
+      </LoadingButton>
+    </div>
+  );
 
   return isMobile ? (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -306,7 +306,7 @@ export const AddMeasurementModal = ({
           </DrawerDescription>
         </DrawerHeader>
         <div className="overflow-y-auto px-4 pb-4">
-          <FormContent />
+          {formContent}
         </div>
       </DrawerContent>
     </Drawer>
@@ -321,7 +321,7 @@ export const AddMeasurementModal = ({
             Record a new health measurement
           </DialogDescription>
         </DialogHeader>
-        <FormContent />
+        {formContent}
       </DialogContent>
     </Dialog>
   );

@@ -35,7 +35,7 @@ export async function backfillAllEmbeddings(
     // Get count of items without embeddings
     const { count, error: countError } = await supabase
       .from('items')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .is('embedding', null);
 
@@ -164,7 +164,7 @@ export async function countItemsNeedingEmbeddings(): Promise<number> {
 
     const { count, error } = await supabase
       .from('items')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .is('embedding', null);
 

@@ -33,14 +33,14 @@ export const useDashboardStats = () => {
         // Fetch bookmarks count
         const { count: bookmarksCount, error: bookmarksError } = await supabase
           .from(SUPABASE_ITEMS_TABLE)
-          .select('*', { count: 'exact', head: true });
+          .select('id', { count: 'exact', head: true });
 
         if (bookmarksError) throw bookmarksError;
 
         // Fetch active subscriptions count
         const { count: subscriptionsCount, error: subscriptionsError } = await supabase
           .from(SUBSCRIPTION_TABLES.SUBSCRIPTIONS)
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('status', 'active');
 
         if (subscriptionsError) throw subscriptionsError;
@@ -51,7 +51,7 @@ export const useDashboardStats = () => {
 
         const { count: measurementsCount, error: measurementsError } = await supabase
           .from('health_measurements')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .gte('measured_at', sevenDaysAgo.toISOString());
 
         if (measurementsError) throw measurementsError;
@@ -59,7 +59,7 @@ export const useDashboardStats = () => {
         // Fetch goals progress (active goals)
         const { count: goalsCount, error: goalsError } = await supabase
           .from('health_goals')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('status', 'active');
 
         if (goalsError) throw goalsError;

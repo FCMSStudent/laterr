@@ -45,18 +45,29 @@ const Subscriptions = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const isMobile = useIsMobile();
 
-  // Calculate stats
-  const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
-  const totalMonthly = activeSubscriptions.reduce((sum, s) => sum + calculateMonthlyCost(s.amount, s.billing_cycle as SubscriptionBillingCycle), 0);
-  const totalYearly = activeSubscriptions.reduce((sum, s) => sum + calculateAnnualCost(s.amount, s.billing_cycle as SubscriptionBillingCycle), 0);
-  const upcomingRenewals = activeSubscriptions.filter(s => {
-    const nextBillingDate = parseSubscriptionDate(s.next_billing_date);
-    if (!nextBillingDate) {
-      return false;
-    }
-    const daysUntil = differenceInDays(nextBillingDate, new Date());
-    return daysUntil >= 0 && daysUntil <= 7;
-  }).length;
+  // Calculate stats using memoization to avoid redundant calculations on every render
+  const { activeSubscriptions, totalMonthly, totalYearly, upcomingRenewals } = useMemo(() => {
+    const active = subscriptions.filter(s => s.status === 'active');
+    const monthly = active.reduce((sum, s) => sum + calculateMonthlyCost(s.amount, s.billing_cycle as SubscriptionBillingCycle), 0);
+    const yearly = active.reduce((sum, s) => sum + calculateAnnualCost(s.amount, s.billing_cycle as SubscriptionBillingCycle), 0);
+
+    const now = new Date();
+    const upcoming = active.filter(s => {
+      const nextBillingDate = parseSubscriptionDate(s.next_billing_date);
+      if (!nextBillingDate) {
+        return false;
+      }
+      const daysUntil = differenceInDays(nextBillingDate, now);
+      return daysUntil >= 0 && daysUntil <= 7;
+    }).length;
+
+    return {
+      activeSubscriptions: active,
+      totalMonthly: monthly,
+      totalYearly: yearly,
+      upcomingRenewals: upcoming
+    };
+  }, [subscriptions]);
 
   // Extract unique tags from all subscriptions
   const availableTags = useMemo(() => {
