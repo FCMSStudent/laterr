@@ -4,17 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { BookmarkCard } from "@/features/bookmarks/components/BookmarkCard";
 import { ItemListRow } from "@/features/bookmarks/components/ItemListRow";
 import { ItemCardSkeleton } from "@/features/bookmarks/components/ItemCardSkeleton";
-import { Button, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/components/ui";
-import { Sparkles, Plus, Loader2, Search, Settings, LogOut, MoreVertical, Sun } from "lucide-react";
+import { Button } from "@/shared/components/ui";
+import { Sparkles, Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/shared/hooks/useToast";
 import { useDebounce } from "@/shared/hooks/useDebounce";
-import { useIsMobile } from "@/shared/hooks/useMobile";
+
 import { useProgressiveDisclosure } from "@/shared/hooks/useProgressiveDisclosure";
-import { ThemeToggle } from "@/shared/components/ThemeToggle";
-import { LoadingSpinner } from "@/shared/components/ui";
-import { useTheme } from "next-themes";
-import { AuthError } from "@/shared/types/errors";
-import { AUTH_ERRORS } from "@/shared/lib/error-messages";
+import { NavigationHeader } from "@/shared/components/NavigationHeader";
 import { FilterBar, MobileFilterSortButton, type SortOption, type ViewMode } from "@/features/bookmarks/components/FilterBar";
 import { BulkActionsBar } from "@/features/bookmarks/components/BulkActionsBar";
 import { useInfiniteScroll } from "@/features/bookmarks/hooks/useInfiniteScroll";
@@ -85,30 +81,7 @@ type OpenItemEventDetail = {
   const {
     toast
   } = useToast();
-  const { theme, setTheme } = useTheme();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const isMobile = useIsMobile();
-  const [signingOut, setSigningOut] = useState(false);
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      const authError = new AuthError(AUTH_ERRORS.SIGN_OUT_FAILED.message, error instanceof Error ? error : undefined);
-      toast({
-        title: AUTH_ERRORS.SIGN_OUT_FAILED.title,
-        description: authError.message,
-        variant: "destructive"
-      });
-      setSigningOut(false);
-    } else {
-      navigate('/');
-    }
-  };
-
-  const handleToggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   // Persist view mode
   useEffect(() => {
@@ -532,13 +505,28 @@ type OpenItemEventDetail = {
 
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       {/* Unified Header Bar */}
-      <header className="flex items-center gap-3 py-2 mb-4">
-        {/* Title */}
-        <h1 className="text-lg font-semibold text-foreground shrink-0">
-          Bookmarks
-        </h1>
+      <NavigationHeader
+        title="Bookmarks"
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search..."
+        onAddClick={isTrashView ? undefined : () => setShowAddModal(true)}
+        addLabel="Add"
+        filterButton={
+          <MobileFilterSortButton
+            selectedTag={selectedTag}
+            selectedTypeFilter={typeFilter}
+            selectedSort={sortOption}
+            onTagSelect={setSelectedTag}
+            onTypeFilterChange={setTypeFilter}
+            onSortChange={setSortOption}
+            onClearAll={handleClearAllFilters}
+          />
+        }
+      />
 
-        {/* All/Trash Toggle */}
+      {/* All/Trash Toggle */}
+      <div className="flex items-center gap-3 mb-4 mt-2">
         <div className="relative inline-flex items-center rounded-full border border-border/50 bg-muted/20 p-0.5 shrink-0">
           <span
             className={`absolute inset-y-0.5 w-1/2 rounded-full bg-background shadow-sm transition-transform duration-200 ${viewScope === "trash" ? "translate-x-full" : "translate-x-0"}`}
@@ -559,131 +547,7 @@ type OpenItemEventDetail = {
             Trash
           </button>
         </div>
-
-        {/* Search Input */}
-        <div className="flex-1 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search..."
-            className="w-full h-8 pl-9 pr-3 rounded-full border border-border/50 bg-muted/20 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-transparent transition-shadow"
-            data-search-input
-          />
-        </div>
-
-        {/* Filter Button (mobile) */}
-        <MobileFilterSortButton
-          selectedTag={selectedTag}
-          selectedTypeFilter={typeFilter}
-          selectedSort={sortOption}
-          onTagSelect={setSelectedTag}
-          onTypeFilterChange={setTypeFilter}
-          onSortChange={setSortOption}
-          onClearAll={handleClearAllFilters}
-        />
-
-        {/* Add Button */}
-        {!isTrashView && (
-          <Button
-            onClick={() => setShowAddModal(true)}
-            size="sm"
-            className="h-8 gap-1.5 rounded-full px-3"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add</span>
-          </Button>
-        )}
-
-        {/* Settings & Actions */}
-        <AlertDialog>
-          {!isMobile && (
-            <>
-              <Button
-                onClick={() => navigate("/settings")}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground/80 hover:text-foreground shrink-0"
-                aria-label="Settings"
-              >
-                <Settings className="w-4 h-4" aria-hidden="true" />
-              </Button>
-              <div className="opacity-85 hover:opacity-100 transition-opacity">
-                <ThemeToggle />
-              </div>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground/80 hover:text-foreground shrink-0"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="w-4 h-4" aria-hidden="true" />
-                </Button>
-              </AlertDialogTrigger>
-            </>
-          )}
-
-          {isMobile && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
-                  aria-label="More options"
-                >
-                  <MoreVertical className="w-[18px] h-[18px]" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px]">
-                <DropdownMenuItem onSelect={() => /* @perf-check */ navigate("/settings")}>
-                  <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={handleToggleTheme}>
-                  <Sun className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Toggle theme
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-destructive focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Sign out
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Sign out?</AlertDialogTitle>
-              <AlertDialogDescription>
-                You'll need to sign in again to access your data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={signingOut}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleSignOut}
-                disabled={signingOut}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {signingOut ? (
-                  <>
-                    <LoadingSpinner size="sm" className="mr-2" />
-                    Signing out...
-                  </>
-                ) : (
-                  "Sign Out"
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </header>
+      </div>
 
 
 
