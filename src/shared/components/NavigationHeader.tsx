@@ -28,8 +28,9 @@ interface NavigationHeaderProps {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
-  // Filter button for mobile inline display (combined filter & sort)
   filterButton?: ReactNode;
+  /** Inline element rendered right after the title (e.g. All/Trash toggle) */
+  titleExtra?: ReactNode;
   showOverflowMenu?: boolean;
   overflowExtra?: ReactNode;
 }
@@ -42,6 +43,7 @@ export const NavigationHeader = ({
   onSearchChange,
   searchPlaceholder = "Search",
   filterButton,
+  titleExtra,
   showOverflowMenu = true,
   overflowExtra
 }: NavigationHeaderProps) => {
@@ -112,6 +114,7 @@ export const NavigationHeader = ({
       <h1 className="nav-title text-base md:text-lg font-semibold text-foreground leading-none truncate max-w-[180px] md:max-w-[320px]">
         {title}
       </h1>
+      {titleExtra}
 
       {/* Module navigation tabs - desktop only */}
       {!hideNavigation && !isMobile && <nav aria-label="Module navigation" className="flex items-center ml-3">
@@ -128,7 +131,7 @@ export const NavigationHeader = ({
 
     {/* Center cluster */}
     <div className="flex items-center gap-3 flex-1 min-w-0">
-      {showInlineSearch && <div className="flex-1 relative min-w-[140px] max-w-[560px]">
+      {showInlineSearch && <div className="flex-1 relative min-w-[120px] max-w-[380px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input type="search" value={searchValue || ""} onChange={e => onSearchChange?.(e.target.value)} placeholder={searchPlaceholder} className="h-9 md:h-10 pl-9 pr-3 rounded-full glass-input text-xs md:text-sm" data-search-input />
         </div>}

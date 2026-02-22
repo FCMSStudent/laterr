@@ -512,6 +512,28 @@ type OpenItemEventDetail = {
         searchPlaceholder="Search..."
         onAddClick={isTrashView ? undefined : () => setShowAddModal(true)}
         addLabel="Add"
+        titleExtra={
+          <div className="relative inline-flex items-center rounded-full border border-border/50 bg-muted/20 p-0.5 shrink-0">
+            <span
+              className={`absolute inset-y-0.5 w-1/2 rounded-full bg-background shadow-sm transition-transform duration-200 ${viewScope === "trash" ? "translate-x-full" : "translate-x-0"}`}
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              className={`relative z-10 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${viewScope === "active" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setViewScope("active")}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              className={`relative z-10 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${viewScope === "trash" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setViewScope("trash")}
+            >
+              Trash
+            </button>
+          </div>
+        }
         filterButton={
           <MobileFilterSortButton
             selectedTag={selectedTag}
@@ -524,30 +546,6 @@ type OpenItemEventDetail = {
           />
         }
       />
-
-      {/* All/Trash Toggle */}
-      <div className="flex items-center gap-3 mb-4 mt-2">
-        <div className="relative inline-flex items-center rounded-full border border-border/50 bg-muted/20 p-0.5 shrink-0">
-          <span
-            className={`absolute inset-y-0.5 w-1/2 rounded-full bg-background shadow-sm transition-transform duration-200 ${viewScope === "trash" ? "translate-x-full" : "translate-x-0"}`}
-            aria-hidden="true"
-          />
-          <button
-            type="button"
-            className={`relative z-10 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${viewScope === "active" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            onClick={() => setViewScope("active")}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            className={`relative z-10 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${viewScope === "trash" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            onClick={() => setViewScope("trash")}
-          >
-            Trash
-          </button>
-        </div>
-      </div>
 
 
 
