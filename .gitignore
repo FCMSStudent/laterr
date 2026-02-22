@@ -38,4 +38,5 @@ ui-maintenance-report.json
 UI_MAINTENANCE_REPORT.md
 playwright-results.json
 performance-logs.json
+internal-performance-logs.json
 performance-summary.json
