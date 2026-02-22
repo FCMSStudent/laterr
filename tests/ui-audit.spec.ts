@@ -6,6 +6,7 @@ test.describe('UI Accessibility Audit', () => {
     { name: 'Landing', path: '/' },
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Bookmarks', path: '/bookmarks' },
+    { name: 'Subscriptions', path: '/subscriptions' },
     { name: 'Health', path: '/health' },
     { name: 'Settings', path: '/settings' },
     { name: 'Auth', path: '/auth' },

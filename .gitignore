@@ -35,4 +35,5 @@ playwright/.auth/
 *.sln
 *.sw?
 ui-maintenance-report.json
+UI_MAINTENANCE_REPORT.md
 playwright-results.json

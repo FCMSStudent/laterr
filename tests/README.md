@@ -49,7 +49,7 @@ Bookmark E2E uses resilient expectations:
 ## Runtime and Env Notes
 
 - Unit tests run in `jsdom` with setup from `tests/setup/vitest.setup.ts`.
-- Supabase client is test-runtime-safe (`src/lib/supabase/client.ts`) and won’t crash when `import.meta.env` is unavailable.
+- Supabase client is test-runtime-safe (`src/integrations/supabase/client.ts`) and won’t crash when `import.meta.env` is unavailable.
 - Playwright relies on the local web server configured in `playwright.config.ts`.
 
 ## Troubleshooting
