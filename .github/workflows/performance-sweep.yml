@@ -62,7 +62,7 @@ jobs:
             echo "" >> $GITHUB_OUTPUT
             echo "- **Optimizations Applied:** ${OPTIMIZATIONS}" >> $GITHUB_OUTPUT
             echo "" >> $GITHUB_OUTPUT
-            echo "Check \`performance-logs.json\` for a full breakdown of changes." >> $GITHUB_OUTPUT
+            echo "Check \`internal-performance-logs.json\` for a full breakdown of changes." >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
             echo "body=Automated performance optimizations found during nightly sweep." >> $GITHUB_OUTPUT
