@@ -86,5 +86,6 @@ jobs:
         run: npx tsx scripts/performance-sweep.ts
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          BACKEND_LEAD_SLACK_ID: ${{ secrets.BACKEND_LEAD_SLACK_ID }}
           SEND_NOTIFICATION_ONLY: "true"
           PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
