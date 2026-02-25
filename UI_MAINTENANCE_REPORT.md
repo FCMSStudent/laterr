@@ -1,242 +1,33 @@
 # UI/UX Maintenance Audit Report
 
-Generated on: 2/18/2026, 1:25:12 AM
+Generated on: 2/25/2026, 1:16:27 AM
 
 ## Summary
 
-- **Total Issues:** 335
-- **Critical:** 191
-- **High:** 25
+- **Total Issues:** 114
+- **Critical:** 0
+- **High:** 12
 - **Medium:** 0
-- **Low:** 119
+- **Low:** 102
 
 ## Issues by Severity
-
-### CRITICAL
-
-| Type | Description | File | Line |
-| --- | --- | --- | --- |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "" is 36x36 at (1228, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "" is 36x36 at (1228, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Dashboard between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "" is 16x16 at (795, 390) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "" is 16x16 at (795, 390) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "Forgot password?" is 98.1875x16 at (457, 436) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Dashboard in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Dashboard in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "Don't have an accoun" is 204.734375x20 at (457, 617) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "" is 36x36 at (1228, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "" is 36x36 at (1228, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Bookmarks between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "" is 16x16 at (795, 390) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "" is 16x16 at (795, 390) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "Forgot password?" is 98.1875x16 at (457, 436) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Bookmarks in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Bookmarks in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "Don't have an accoun" is 204.734375x20 at (457, 617) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "" is 36x36 at (1228, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "" is 36x36 at (1228, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Health between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "" is 16x16 at (795, 390) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "" is 16x16 at (795, 390) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "Forgot password?" is 98.1875x16 at (457, 436) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Health in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Health in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "Don't have an accoun" is 204.734375x20 at (457, 617) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Dashboard" is 80.421875x28 at (168.765625, 343.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Bookmarks" is 81.421875x28 at (249.1875, 343.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 560x40 at (351.609375, 337.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Add Item" is 108.59375x32 at (986.40625, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (1107, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (1107, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Components Showcase: <button> and <button> are vertically offset by 2px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 36x36 at (1151, 339.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 36x36 at (1151, 339.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Components Showcase: <button> and <button> are vertically offset by 2px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (1199, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (1199, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (57, 1039.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (57, 1039.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Home" is 55.296875x32 at (121, 1039.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Documents" is 93.421875x32 at (208.296875, 1039.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "$245/mo • 8 active •" is 1140x24 at (70, 1424.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 3105.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 3193.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Components Showcase between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (1195, 3205.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (1195, 3205.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 3281.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 3369.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 3483.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 3695.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 3783.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 4571.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 1166x40 at (57, 4687.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4895.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4895.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4919.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4919.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4943.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4943.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 44x24 at (57, 5099.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 5139.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 5139.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 5171.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 5171.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Components Showcase in <button>: "..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Open Dialog" is 123.078125x40 at (57, 5416.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Open Drawer" is 131.078125x40 at (57, 5596.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Delete Account" is 142.546875x40 at (57, 5776.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Open Sheet (Right)" is 168.84375x40 at (57, 5956.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Open Popover" is 138.890625x40 at (57, 6136.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "@username" is 121.421875x40 at (57, 6316.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Hover for Tooltip" is 156.015625x40 at (57, 6496.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Show PageLoading" is 170.1875x40 at (57, 7352.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Account" is 88.78125x36 at (63, 7971.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Password" is 99.59375x36 at (151.78125, 7971.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Settings" is 87.59375x36 at (251.375, 7971.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Dashboard between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Dashboard: <input> and <button> are vertically offset by 2px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Dashboard in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Dashboard in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Bookmarks between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Bookmarks: <input> and <button> are vertically offset by 2px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Bookmarks in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Bookmarks in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Health between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Health: <input> and <button> are vertically offset by 2px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Health in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Health in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 140x36 at (146.125, 430.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (71%) on Components Showcase between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Components Showcase: <input> and <button> are vertically offset by 4px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Components Showcase: <input> and <button> are vertically offset by 4px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 4199.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 4284.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (91%) on Components Showcase between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Components Showcase: <input> and <button> are vertically offset by 2px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 4369.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 4454.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 4565.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 4774.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 4859.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 5716.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 279x40 at (57, 5829.390625) | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Dashboard": Error: browserType.launch: Executable doesn't exist at /home/jules/.cache/ms-playwright/webkit-2248/pw_run.sh | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Bookmarks": Error: browserType.launch: Executable doesn't exist at /home/jules/.cache/ms-playwright/webkit-2248/pw_run.sh | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Health": Error: browserType.launch: Executable doesn't exist at /home/jules/.cache/ms-playwright/webkit-2248/pw_run.sh | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Components Showcase": Error: browserType.launch: Executable doesn't exist at /home/jules/.cache/ms-playwright/webkit-2248/pw_run.sh | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: browserType.launch: Executable doesn't exist at /home/jules/.cache/ms-playwright/webkit-2248/pw_run.sh | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "" is 36x36 at (972, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "" is 36x36 at (972, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Dashboard between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "" is 16x16 at (667, 713) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "" is 16x16 at (667, 713) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "Forgot password?" is 98.1875x16 at (329, 759) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Dashboard in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Dashboard in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Dashboard: <button> "Don't have an accoun" is 204.734375x20 at (329, 940) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "" is 36x36 at (972, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "" is 36x36 at (972, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Bookmarks between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "" is 16x16 at (667, 713) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "" is 16x16 at (667, 713) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "Forgot password?" is 98.1875x16 at (329, 759) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Bookmarks in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Bookmarks in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Bookmarks: <button> "Don't have an accoun" is 204.734375x20 at (329, 940) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "" is 36x36 at (972, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "" is 36x36 at (972, 16) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Health between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "" is 16x16 at (667, 713) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "" is 16x16 at (667, 713) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "Forgot password?" is 98.1875x16 at (329, 759) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Health in <button>: "Sign In..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Health in <button>: "Continue as Guest (A..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Health: <button> "Don't have an accoun" is 204.734375x20 at (329, 940) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Dashboard" is 80.421875x28 at (168.765625, 343.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Bookmarks" is 81.421875x28 at (249.1875, 343.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 362.796875x40 at (351.609375, 337.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Components Showcase: <input> and <button> are vertically offset by 4px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Add Item" is 108.59375x32 at (730.40625, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (851, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (851, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Components Showcase: <button> and <button> are vertically offset by 2px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 36x36 at (895, 339.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 36x36 at (895, 339.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential misalignment on Components Showcase: <button> and <button> are vertically offset by 2px | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (943, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (943, 341.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (57, 1039.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 32x32 at (57, 1039.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Home" is 55.296875x32 at (121, 1039.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Documents" is 93.421875x32 at (208.296875, 1039.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "$245/mo • 8 active •" is 884x24 at (70, 1424.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 3105.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 3193.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Significant overlap (100%) on Components Showcase between <input> "" and <button> "" | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (939, 3205.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (939, 3205.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 3281.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 3369.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 3483.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 3695.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 3783.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 4571.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <input> "" is 910x40 at (57, 4687.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4895.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4895.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4919.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4919.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4943.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 4943.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 44x24 at (57, 5099.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 5139.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 5139.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 5171.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "" is 16x16 at (57, 5171.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Potential text overflow on Components Showcase in <button>: "..." | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Open Dialog" is 123.078125x40 at (57, 5416.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Open Drawer" is 131.078125x40 at (57, 5596.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Delete Account" is 142.546875x40 at (57, 5776.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Open Sheet (Right)" is 168.84375x40 at (57, 5956.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Open Popover" is 138.890625x40 at (57, 6136.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "@username" is 121.421875x40 at (57, 6316.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Hover for Tooltip" is 156.015625x40 at (57, 6496.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Show PageLoading" is 170.1875x40 at (57, 7352.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Account" is 88.78125x36 at (63, 7971.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Password" is 99.59375x36 at (151.78125, 7971.59375) | `runtime` | - |
-| accessibility | Runtime audit failure in "Check for overlapping and misaligned elements across all pages": Error: Small touch target on Components Showcase: <button> "Settings" is 87.59375x36 at (251.375, 7971.59375) | `runtime` | - |
 
 ### HIGH
 
 | Type | Description | File | Line |
 | --- | --- | --- | --- |
+| accessibility | Form element <input> missing accessible label (label, aria-label, or aria-labelledby) | `src/features/bookmarks/components/ChecklistItem.tsx` | 58 |
+| accessibility | Form element <input> missing accessible label (label, aria-label, or aria-labelledby) | `src/features/bookmarks/components/RichNotesEditor.tsx` | 323 |
+| accessibility | Form element <input> missing accessible label (label, aria-label, or aria-labelledby) | `src/features/bookmarks/components/BulletItem.tsx` | 51 |
+| accessibility | Form element <input> missing accessible label (label, aria-label, or aria-labelledby) | `src/features/bookmarks/components/NumberedItem.tsx` | 53 |
+| accessibility | Form element <input> missing accessible label (label, aria-label, or aria-labelledby) | `src/features/bookmarks/components/HeadingItem.tsx` | 59 |
+| accessibility | Form element <input> missing accessible label (label, aria-label, or aria-labelledby) | `src/features/health/components/AddHealthDocumentModal.tsx` | 395 |
+| accessibility | Form element <input> missing accessible label (label, aria-label, or aria-labelledby) | `src/features/core/pages/ViewerLoadingTestPage.tsx` | 33 |
+| accessibility | Form element <input> missing accessible label (label, aria-label, or aria-labelledby) | `src/features/core/pages/ViewerLoadingTestPage.tsx` | 67 |
 | accessibility | Icon-only button missing aria-label | `src/features/bookmarks/components/DetailViewModal.tsx` | 535 |
 | accessibility | Icon-only button missing aria-label | `src/features/health/components/HealthChatPanel.tsx` | 180 |
 | accessibility | Icon-only button missing aria-label | `src/features/health/components/HealthDocumentCard.tsx` | 61 |
 | accessibility | Icon-only button missing aria-label | `src/features/health/components/MeasurementCard.tsx` | 91 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/bookmarks/components/ChecklistItem.tsx` | 58 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/bookmarks/components/RichNotesEditor.tsx` | 310 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/bookmarks/components/BulletItem.tsx` | 51 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/bookmarks/components/NumberedItem.tsx` | 53 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/bookmarks/components/HeadingItem.tsx` | 59 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/bookmarks/pages/BookmarksPage.tsx` | 562 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/health/components/AddHealthDocumentModal.tsx` | 395 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/core/pages/ViewerLoadingTestPage.tsx` | 33 |
-| accessibility | Form element <input> missing accessible label (aria-label or associated <label>) | `src/features/core/pages/ViewerLoadingTestPage.tsx` | 67 |
-| accessibility | Runtime audit failure in "Full audit for Dashboard": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Bookmarks": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Health": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Components Showcase": AssertionError: 7 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Dashboard": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Bookmarks": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Health": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Components Showcase": AssertionError: 7 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Dashboard": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Bookmarks": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Health": AssertionError: 3 accessibility violations were detected | `runtime` | - |
-| accessibility | Runtime audit failure in "Full audit for Components Showcase": AssertionError: 7 accessibility violations were detected | `runtime` | - |
 
 ### LOW
 
@@ -250,8 +41,8 @@ Generated on: 2/18/2026, 1:25:12 AM
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/features/bookmarks/components/CardDetailRightPanel.tsx` | 261 |
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/features/bookmarks/components/EditItemModal.tsx` | 143 |
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/features/bookmarks/components/BookmarkCard.tsx` | 398 |
-| consistency | Raw <button> tag used; consider using the standard Button component | `src/features/bookmarks/pages/BookmarksPage.tsx` | 543 |
-| consistency | Raw <button> tag used; consider using the standard Button component | `src/features/bookmarks/pages/BookmarksPage.tsx` | 550 |
+| consistency | Raw <button> tag used; consider using the standard Button component | `src/features/bookmarks/pages/BookmarksPage.tsx` | 521 |
+| consistency | Raw <button> tag used; consider using the standard Button component | `src/features/bookmarks/pages/BookmarksPage.tsx` | 528 |
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/features/health/components/AddHealthDocumentModal.tsx` | 431 |
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/features/health/components/AddMeasurementModal.tsx` | 259 |
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/features/health/components/InlineHealthStats.tsx` | 63 |
@@ -263,14 +54,12 @@ Generated on: 2/18/2026, 1:25:12 AM
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/shared/components/CollapsibleSummary.tsx` | 66 |
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/shared/components/RecentlyViewedSection.tsx` | 30 |
 | consistency | Raw <button> tag used; consider using the standard Button component | `src/shared/components/MobileBottomNav.tsx` | 53 |
-| styling | Hardcoded pixel value found in Tailwind class: <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title..." className="text-lg font-semibold glass-input focus-visible:ring-0 focus-visible:ring-offset-0 p-0 px-[16px] py-[16px] rounded-xl" maxLength={200} /> | `src/features/bookmarks/components/NoteEditorModal.tsx` | 99 |
 | styling | Hardcoded pixel value found in Tailwind class: <DialogContent className="w-[600px] max-w-[90vw] h-[600px] max-h-[80vh] border-0 bg-muted/20 backdrop-blur-md rounded-2xl flex flex-col p-0"> | `src/features/bookmarks/components/NoteEditorModal.tsx` | 125 |
 | styling | Hardcoded pixel value found in Tailwind class: <AlertDialogCancel className="glass-input min-h-[44px]">Cancel</AlertDialogCancel> | `src/features/bookmarks/components/NoteEditorModal.tsx` | 145 |
 | styling | Hardcoded pixel value found in Tailwind class: <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]"> | `src/features/bookmarks/components/NoteEditorModal.tsx` | 146 |
-| styling | Hardcoded pixel value found in Tailwind class: <div className="space-y-1 min-h-[200px] p-3 rounded-xl glass-input flex-1 overflow-y-auto"> | `src/features/bookmarks/components/RichNotesEditor.tsx` | 293 |
+| styling | Hardcoded pixel value found in Tailwind class: <div className="space-y-1 min-h-[200px] p-3 rounded-xl glass-input flex-1 overflow-y-auto"> | `src/features/bookmarks/components/RichNotesEditor.tsx` | 306 |
 | styling | Hardcoded pixel value found in Tailwind class: <div className="flex-1 overflow-auto glass-heavy rounded-xl p-6 min-h-[300px]"> | `src/features/bookmarks/components/DOCXPreview.tsx` | 84 |
 | styling | Hardcoded pixel value found in Tailwind class: <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center"> | `src/features/bookmarks/components/PDFPreview.tsx` | 118 |
-| styling | Hardcoded pixel value found in Tailwind class: {activeFilterCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[10px]"> | `src/features/bookmarks/components/FilterBar.tsx` | 61 |
 | styling | Hardcoded pixel value found in Tailwind class: <Button variant={!selectedTag ? "default" : "outline"} size="sm" onClick={() => onTagSelect(null)} className="min-h-[44px]"> | `src/features/bookmarks/components/FilterBar.tsx` | 75 |
 | styling | Hardcoded pixel value found in Tailwind class: {CATEGORY_OPTIONS.map(category => <Button key={category.value} variant={selectedTag === category.value ? "default" : "outline"} size="sm" onClick={() => onTagSelect(category.value)} className="min-h-[44px]"> | `src/features/bookmarks/components/FilterBar.tsx` | 78 |
 | styling | Hardcoded pixel value found in Tailwind class: <Button variant={!selectedTypeFilter ? "default" : "outline"} size="sm" onClick={() => onTypeFilterChange(null)} className="min-h-[44px]"> | `src/features/bookmarks/components/FilterBar.tsx` | 88 |
@@ -281,12 +70,8 @@ Generated on: 2/18/2026, 1:25:12 AM
 | styling | Hardcoded pixel value found in Tailwind class: }].map(option => <Button key={option.value} variant={selectedSort === option.value ? "default" : "outline"} size="sm" onClick={() => onSortChange(option.value)} className="min-h-[44px] justify-start"> | `src/features/bookmarks/components/FilterBar.tsx` | 129 |
 | styling | Hardcoded pixel value found in Tailwind class: {hasActiveFilters && <Button variant="destructive" size="sm" onClick={onClearAll} className="w-full min-h-[44px]"> | `src/features/bookmarks/components/FilterBar.tsx` | 136 |
 | styling | Hardcoded pixel value found in Tailwind class: <div className="glass-card rounded-2xl p-5 md:p-7 min-h-[280px] md:min-h-[320px]"> | `src/features/bookmarks/components/ItemCardSkeleton.tsx` | 5 |
-| styling | Hardcoded pixel value found in Tailwind class: <div className="flex items-center gap-1.5 text-[11px] text-primary-foreground"> | `src/features/bookmarks/components/CardDetailRightPanel.tsx` | 184 |
 | styling | Hardcoded pixel value found in Tailwind class: <a href={item.content} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors truncate max-w-[120px]"> | `src/features/bookmarks/components/CardDetailRightPanel.tsx` | 191 |
 | styling | Hardcoded pixel value found in Tailwind class: className="min-h-[100px] max-h-[100px] resize-none glass-input rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50" | `src/features/bookmarks/components/CardDetailRightPanel.tsx` | 213 |
-| styling | Hardcoded pixel value found in Tailwind class: <Button variant="ghost" size="sm" onClick={onRestore} className="h-8 text-xs font-medium hover:bg-primary/10 text-primary-foreground px-[16px]"> | `src/features/bookmarks/components/CardDetailRightPanel.tsx` | 276 |
-| styling | Hardcoded pixel value found in Tailwind class: <Button variant="ghost" size="sm" onClick={onPermanentDelete} className="h-8 text-xs font-medium hover:bg-destructive/10 text-primary-foreground px-[16px]"> | `src/features/bookmarks/components/CardDetailRightPanel.tsx` | 282 |
-| styling | Hardcoded pixel value found in Tailwind class: <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 text-xs font-medium hover:bg-destructive/5 text-primary-foreground px-[16px]"> | `src/features/bookmarks/components/CardDetailRightPanel.tsx` | 289 |
 | styling | Hardcoded pixel value found in Tailwind class: className="glass-input border-0 h-12 md:h-10 min-h-[44px]" | `src/features/bookmarks/components/EditItemModal.tsx` | 103 |
 | styling | Hardcoded pixel value found in Tailwind class: className="glass-input border-0 min-h-[100px] resize-none" | `src/features/bookmarks/components/EditItemModal.tsx` | 117 |
 | styling | Hardcoded pixel value found in Tailwind class: className="glass-input border-0 h-12 md:h-10 min-h-[44px]" | `src/features/bookmarks/components/EditItemModal.tsx` | 132 |
@@ -303,9 +88,6 @@ Generated on: 2/18/2026, 1:25:12 AM
 | styling | Hardcoded pixel value found in Tailwind class: {isMobile ? tags.length > 2 && <Badge variant="outline" className="text-xs font-medium min-h-[32px] px-3 cursor-pointer" aria-label={expandedTags ? 'Show less tags' : `${tags.length - 2} more tags`} onClick={e => { | `src/features/bookmarks/components/ItemCard.tsx` | 299 |
 | styling | Hardcoded pixel value found in Tailwind class: </Badge> : !showAllTags && tags.length > 3 && <Badge variant="outline" className="text-xs font-medium min-h-[32px] px-3" aria-label={`${tags.length - 3} more tags`}> | `src/features/bookmarks/components/ItemCard.tsx` | 304 |
 | styling | Hardcoded pixel value found in Tailwind class: <div className="p-5 flex flex-col justify-between min-h-[220px]"> | `src/features/bookmarks/components/BookmarkCard.tsx` | 372 |
-| styling | Hardcoded pixel value found in Tailwind class: <span className={cn("text-[10px] font-semibold uppercase tracking-[0.12em] block", labelClass)}> | `src/features/bookmarks/components/BookmarkCard.tsx` | 551 |
-| styling | Hardcoded pixel value found in Tailwind class: <p className={cn("text-[13px] leading-relaxed line-clamp-2 font-light", summaryClass)} style={{ textShadow }}> | `src/features/bookmarks/components/BookmarkCard.tsx` | 562 |
-| styling | Hardcoded pixel value found in Tailwind class: <span className={cn("text-[11px] font-medium tracking-wide", sourceClass)}> | `src/features/bookmarks/components/BookmarkCard.tsx` | 580 |
 | styling | Hardcoded pixel value found in Tailwind class: <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground smooth-transition min-h-[44px] md:min-h-0"> | `src/features/bookmarks/components/AddItemModal.tsx` | 548 |
 | styling | Hardcoded pixel value found in Tailwind class: <TabsTrigger value="note" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground smooth-transition min-h-[44px] md:min-h-0"> | `src/features/bookmarks/components/AddItemModal.tsx` | 552 |
 | styling | Hardcoded pixel value found in Tailwind class: <TabsTrigger value="image" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground smooth-transition min-h-[44px] md:min-h-0"> | `src/features/bookmarks/components/AddItemModal.tsx` | 556 |
@@ -318,8 +100,6 @@ Generated on: 2/18/2026, 1:25:12 AM
 | styling | Hardcoded pixel value found in Tailwind class: className="w-full min-h-[48px]" | `src/features/bookmarks/components/AddItemModal.tsx` | 664 |
 | styling | Hardcoded pixel value found in Tailwind class: const modalSizeClasses = "w-[min(95vw,1100px)] max-w-[1100px] h-[min(85vh,720px)] overflow-hidden"; | `src/features/bookmarks/components/DetailViewModal.tsx` | 438 |
 | styling | Hardcoded pixel value found in Tailwind class: <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" readOnly={isTrashed} /> | `src/features/bookmarks/components/DetailViewModal.tsx` | 528 |
-| styling | Hardcoded pixel value found in Tailwind class: <MoreVertical className="w-[18px] h-[18px]" aria-hidden="true" /> | `src/features/bookmarks/pages/BookmarksPage.tsx` | 633 |
-| styling | Hardcoded pixel value found in Tailwind class: <DropdownMenuContent align="end" className="min-w-[180px]"> | `src/features/bookmarks/pages/BookmarksPage.tsx` | 636 |
 | styling | Hardcoded pixel value found in Tailwind class: <DialogContent className="sm:max-w-[500px]"> | `src/features/health/components/EmbeddingBackfillDialog.tsx` | 107 |
 | styling | Hardcoded pixel value found in Tailwind class: className="w-full max-h-[500px] object-contain" | `src/features/health/components/HealthDocumentDetailModal.tsx` | 221 |
 | styling | Hardcoded pixel value found in Tailwind class: <ScrollArea className="max-h-[300px]"> | `src/features/health/components/HealthDocumentDetailModal.tsx` | 315 |
@@ -329,7 +109,6 @@ Generated on: 2/18/2026, 1:25:12 AM
 | styling | Hardcoded pixel value found in Tailwind class: <div className="h-[500px] border border-border rounded-xl"> | `src/features/core/pages/ViewerLoadingTestPage.tsx` | 46 |
 | styling | Hardcoded pixel value found in Tailwind class: <div className="h-[500px] border border-border rounded-xl"> | `src/features/core/pages/ViewerLoadingTestPage.tsx` | 80 |
 | styling | Hardcoded pixel value found in Tailwind class: className="glass-input border-0 min-h-[80px] resize-none" | `src/features/subscriptions/components/EditSubscriptionModal.tsx` | 379 |
-| styling | Hardcoded pixel value found in Tailwind class: className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[10px]" | `src/features/subscriptions/components/SubscriptionFilterBar.tsx` | 56 |
 | styling | Hardcoded pixel value found in Tailwind class: className="min-h-[44px]" | `src/features/subscriptions/components/SubscriptionFilterBar.tsx` | 76 |
 | styling | Hardcoded pixel value found in Tailwind class: className="min-h-[44px]" | `src/features/subscriptions/components/SubscriptionFilterBar.tsx` | 86 |
 | styling | Hardcoded pixel value found in Tailwind class: className="min-h-[44px]" | `src/features/subscriptions/components/SubscriptionFilterBar.tsx` | 103 |
@@ -338,14 +117,12 @@ Generated on: 2/18/2026, 1:25:12 AM
 | styling | Hardcoded pixel value found in Tailwind class: className="w-full min-h-[44px]" | `src/features/subscriptions/components/SubscriptionFilterBar.tsx` | 154 |
 | styling | Hardcoded pixel value found in Tailwind class: className="glass-input border-0 min-h-[80px] resize-none" | `src/features/subscriptions/components/AddSubscriptionModal.tsx` | 424 |
 | styling | Hardcoded pixel value found in Tailwind class: className="glass-input h-10 md:h-11 text-base font-medium rounded-2xl shadow-md focus:shadow-lg min-h-[44px] w-full" | `src/shared/components/SearchBar.tsx` | 15 |
-| styling | Hardcoded pixel value found in Tailwind class: <ArrowLeft className="w-[18px] h-[18px] md:w-4 md:h-4" aria-hidden="true" /> | `src/shared/components/NavigationHeader.tsx` | 110 |
-| styling | Hardcoded pixel value found in Tailwind class: <h1 className="nav-title text-base md:text-lg font-semibold text-foreground leading-none truncate max-w-[180px] md:max-w-[320px]"> | `src/shared/components/NavigationHeader.tsx` | 112 |
-| styling | Hardcoded pixel value found in Tailwind class: return <Button key={item.path} onClick={() => navigate(item.path)} variant="ghost" size="sm" className={cn("h-7 px-3 text-[11px] font-medium rounded-full transition-colors", isActive ? "bg-white/70 text-foreground shadow-sm" : "text-muted-foreground/80 hover:text-foreground hover:bg-transparent")}> | `src/shared/components/NavigationHeader.tsx` | 121 |
-| styling | Hardcoded pixel value found in Tailwind class: {showInlineSearch && <div className="flex-1 relative min-w-[140px] max-w-[560px]"> | `src/shared/components/NavigationHeader.tsx` | 131 |
-| styling | Hardcoded pixel value found in Tailwind class: <Plus className="w-[18px] h-[18px]" aria-hidden="true" /> | `src/shared/components/NavigationHeader.tsx` | 142 |
-| styling | Hardcoded pixel value found in Tailwind class: </Button> : <Button onClick={onAddClick} size="sm" className="h-8 gap-2 rounded-full text-primary-foreground bg-primary px-[12px] py-0" aria-label={`${addLabel} new item`}> | `src/shared/components/NavigationHeader.tsx` | 143 |
-| styling | Hardcoded pixel value found in Tailwind class: <MoreVertical className="w-[18px] h-[18px]" aria-hidden="true" /> | `src/shared/components/NavigationHeader.tsx` | 166 |
-| styling | Hardcoded pixel value found in Tailwind class: <DropdownMenuContent align="end" className="min-w-[180px]"> | `src/shared/components/NavigationHeader.tsx` | 169 |
+| styling | Hardcoded pixel value found in Tailwind class: <ArrowLeft className="w-[18px] h-[18px] md:w-4 md:h-4" aria-hidden="true" /> | `src/shared/components/NavigationHeader.tsx` | 112 |
+| styling | Hardcoded pixel value found in Tailwind class: <h1 className="nav-title text-base md:text-lg font-semibold text-foreground leading-none truncate max-w-[180px] md:max-w-[320px]"> | `src/shared/components/NavigationHeader.tsx` | 114 |
+| styling | Hardcoded pixel value found in Tailwind class: {showInlineSearch && <div className="flex-1 relative min-w-[120px] max-w-[380px]"> | `src/shared/components/NavigationHeader.tsx` | 134 |
+| styling | Hardcoded pixel value found in Tailwind class: <Plus className="w-[18px] h-[18px]" aria-hidden="true" /> | `src/shared/components/NavigationHeader.tsx` | 145 |
+| styling | Hardcoded pixel value found in Tailwind class: <MoreVertical className="w-[18px] h-[18px]" aria-hidden="true" /> | `src/shared/components/NavigationHeader.tsx` | 169 |
+| styling | Hardcoded pixel value found in Tailwind class: <DropdownMenuContent align="end" className="min-w-[180px]"> | `src/shared/components/NavigationHeader.tsx` | 172 |
 | styling | Hardcoded pixel value found in Tailwind class: return <textarea className={cn("flex min-h-[80px] w-full rounded-lg border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 shadow-sm focus-visible:shadow-md", className)} ref={ref} {...props} />; | `src/shared/components/ui/input/textarea.tsx` | 11 |
 | styling | Hardcoded pixel value found in Tailwind class: const textareaClasses = cn("flex min-h-[80px] w-full rounded-lg border bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 shadow-sm focus-visible:shadow-md", showError && "border-destructive focus-visible:ring-destructive", showSuccess && "border-success focus-visible:ring-success", className); | `src/shared/components/ui/input/textarea.tsx` | 53 |
 | styling | Hardcoded pixel value found in Tailwind class: className={cn("shrink-0 bg-border", orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]", className)} | `src/shared/components/ui/layout/separator.tsx` | 14 |
@@ -353,11 +130,8 @@ Generated on: 2/18/2026, 1:25:12 AM
 | styling | Hardcoded pixel value found in Tailwind class: orientation === "horizontal" && "h-2.5 flex-col border-t border-t-transparent p-[1px]", | `src/shared/components/ui/layout/scroll-area.tsx` | 28 |
 | styling | Hardcoded pixel value found in Tailwind class: "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]", | `src/shared/components/ui/feedback/toast.tsx` | 17 |
 | styling | Hardcoded pixel value found in Tailwind class: className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" | `src/shared/components/ui/advanced/navigation-menu.tsx` | 48 |
-| styling | Hardcoded pixel value found in Tailwind class: className={cn("shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]", { | `src/shared/components/ui/advanced/chart.tsx` | 185 |
-| styling | Hardcoded pixel value found in Tailwind class: className="h-2 w-2 shrink-0 rounded-[2px]" | `src/shared/components/ui/advanced/chart.tsx` | 262 |
 | styling | Hardcoded pixel value found in Tailwind class: "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] group-data-[side=left]:-right-4 group-data-[side=right]:left-0 hover:after:bg-sidebar-border sm:flex", | `src/shared/components/ui/advanced/sidebar.tsx` | 238 |
 | styling | Hardcoded pixel value found in Tailwind class: className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)} | `src/shared/components/ui/advanced/command.tsx` | 63 |
 | styling | Hardcoded pixel value found in Tailwind class: <div className="mx-auto mt-4 h-1.5 w-[80px] rounded-full bg-foreground/20" /> | `src/shared/components/ui/modal/drawer.tsx` | 39 |
 | styling | Hardcoded pixel value found in Tailwind class: <div className="flex items-center justify-around h-[72px] px-1"> | `src/shared/components/MobileBottomNav.tsx` | 46 |
 | styling | Hardcoded pixel value found in Tailwind class: "flex flex-col items-center justify-center min-w-[64px] min-h-[56px] px-3 py-2 rounded-2xl transition-all duration-200", | `src/shared/components/MobileBottomNav.tsx` | 57 |
-| styling | Hardcoded pixel value found in Tailwind class: "text-[11px] font-medium mt-0.5 transition-colors", | `src/shared/components/MobileBottomNav.tsx` | 76 |
