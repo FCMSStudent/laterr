@@ -194,6 +194,12 @@ const Health = () => {
     return calculateTrend(typeMeasurements);
   };
 
+  const selectedMeasurementType = selectedMeasurement?.measurement_type;
+  const filteredMeasurementsForDetail = useMemo(() => {
+    if (!selectedMeasurementType) return [];
+    return measurements.filter(m => m.measurement_type === selectedMeasurementType);
+  }, [measurements, selectedMeasurementType]);
+
   if (!user) return null;
 
   return (
@@ -334,7 +340,7 @@ const Health = () => {
             open={showMeasurementDetailModal}
             onOpenChange={setShowMeasurementDetailModal}
             measurement={selectedMeasurement}
-            allMeasurements={measurements.filter(m => m.measurement_type === selectedMeasurement.measurement_type)}
+            allMeasurements={filteredMeasurementsForDetail}
             onUpdate={fetchMeasurements}
             onDelete={handleDeleteMeasurement}
           />

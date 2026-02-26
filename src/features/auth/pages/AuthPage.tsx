@@ -308,7 +308,7 @@ export default function Auth() {
   };
 
   // Guest mode handler for agent testing
-  const handleGuestAccess = async () => {
+  const handleGuestAccess = useCallback(async () => {
     setLoading(true);
     try {
       const {
@@ -330,7 +330,26 @@ export default function Auth() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate, toast]);
+
+  const handleBackToLoginFromSignup = useCallback(() => {
+    setSignupSuccess(false);
+    setMode('login');
+    resetForm();
+  }, []);
+
+  const handleBackToLoginFromReset = useCallback(() => {
+    setResetEmailSent(false);
+    setMode('login');
+    resetForm();
+  }, []);
+
+  const handleBackToLoginFromSuccess = useCallback(() => {
+    setPasswordResetSuccess(false);
+    setMode('login');
+    resetForm();
+    navigate('/auth');
+  }, [navigate]);
 
   // Visual illustration component (returns null - no illustration)
 
@@ -356,11 +375,7 @@ export default function Auth() {
                 We've sent a confirmation email to your inbox. Click the link to activate your account.
               </p>
               
-              <LoadingButton onClick={() => /* @perf-check */ {
-              setSignupSuccess(false);
-              setMode('login');
-              resetForm();
-            }} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
+              <LoadingButton onClick={handleBackToLoginFromSignup} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
                 Continue to Sign In
               </LoadingButton>
               
@@ -393,11 +408,7 @@ export default function Auth() {
                 We've sent you a password reset link. Click it to set a new password.
               </p>
               
-              <LoadingButton onClick={() => /* @perf-check */ {
-              setResetEmailSent(false);
-              setMode('login');
-              resetForm();
-            }} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
+              <LoadingButton onClick={handleBackToLoginFromReset} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
                 Back to Sign In
               </LoadingButton>
             </div>
@@ -422,12 +433,7 @@ export default function Auth() {
                 Your password has been successfully updated. You can now sign in with your new password.
               </p>
               
-              <LoadingButton onClick={() => /* @perf-check */ {
-              setPasswordResetSuccess(false);
-              setMode('login');
-              resetForm();
-              navigate('/auth');
-            }} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
+              <LoadingButton onClick={handleBackToLoginFromSuccess} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl premium-transition hover:scale-[1.02]">
                 Continue to Sign In
               </LoadingButton>
             </div>
