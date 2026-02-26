@@ -541,9 +541,13 @@ export const AddItemModal = ({
     }
   };
 
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value as typeof activeTab);
+  }, []);
+
   // Shared content for both Dialog and Drawer
   const ModalContent = () => (
-    <Tabs value={activeTab} onValueChange={(value) => /* @perf-check */ setActiveTab(value as typeof activeTab)} className="w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <TabsList className="grid w-full grid-cols-3 bg-muted rounded-xl">
         <TabsTrigger value="url" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground smooth-transition min-h-[44px] md:min-h-0">
           <Link2 className="h-4 w-4" />

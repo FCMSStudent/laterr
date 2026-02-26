@@ -36,10 +36,14 @@ export const HealthDocumentCard = ({
   const typeInfo = DOCUMENT_TYPES[docType];
   const icon = DOCUMENT_ICONS[docType] || <FileText className="h-5 w-5" />;
 
-  const handleMenuAction = (e: React.MouseEvent, action: () => void) => {
+  const handleMenuAction = useCallback((e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
-  };
+  }, []);
+
+  const handleTriggerClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
 
   // Check if file is an image for preview
   const isImage = document.file_type?.startsWith('image/');
@@ -57,7 +61,7 @@ export const HealthDocumentCard = ({
       {/* Actions menu */}
       <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 premium-transition">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => /* @perf-check */ e.stopPropagation()}>
+          <DropdownMenuTrigger asChild onClick={handleTriggerClick}>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full glass-light hover:shadow-md">
               <MoreVertical className="h-4 w-4" />
             </Button>

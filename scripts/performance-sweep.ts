@@ -609,10 +609,10 @@ async function runBenchmarks() {
 }
 
 /**
- * Logs the results to performance-logs.json
+ * Logs the results to internal-performance-logs.json
  */
 function logResults(optimizations: OptimizationResult[], benchmarks: Record<string, unknown>) {
-  const logPath = path.join(process.cwd(), 'performance-logs.json');
+  const logPath = path.join(process.cwd(), 'internal-performance-logs.json');
   let logs = [];
   if (fs.existsSync(logPath)) {
     try {
