@@ -25,7 +25,7 @@ jobs:
 
       - name: Run UI maintenance audit and auto-fix
         # Runs the custom maintenance script to detect and fix UI/UX issues
-        run: pnpm exec tsx scripts/ui-maintenance.ts --fix --runtime
+        run: npx tsx scripts/ui-maintenance.ts --fix --runtime
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
@@ -52,7 +52,7 @@ jobs:
             Automated UI/UX improvements and consistency fixes found during nightly sweep.
 
             Check `ui-maintenance-report.json` and `UI_MAINTENANCE_REPORT.md` for details.
-          branch: ui/nightly-maintenance
+          branch: ui/weekly-maintenance
           base: main
           delete-branch: true
 
