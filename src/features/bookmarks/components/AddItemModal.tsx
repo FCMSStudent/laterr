@@ -152,7 +152,9 @@ export const AddItemModal = ({
       let embedding: number[] | null = null;
       try {
         setStatusStep('generating embeddings');
-        const embeddingTags = data.tags || (data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS]);
+        const embPrimaryTag = data.tag || DEFAULT_ITEM_TAG;
+        const embDescriptiveTags = data.tags || (data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS]);
+        const embeddingTags = embDescriptiveTags.includes(embPrimaryTag) ? embDescriptiveTags : [embPrimaryTag, ...embDescriptiveTags];
         const {
           data: embeddingData,
           error: embeddingError
@@ -193,7 +195,11 @@ export const AddItemModal = ({
         title: data.title,
         content: urlResult.data,
         summary: data.summary,
-        tags: data.tags || (data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS]),
+        tags: (() => {
+          const primaryTag = data.tag || DEFAULT_ITEM_TAG;
+          const descriptiveTags = data.tags || (data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS]);
+          return descriptiveTags.includes(primaryTag) ? descriptiveTags : [primaryTag, ...descriptiveTags];
+        })(),
         category: data.category || suggestedCategory || DEFAULT_ITEM_TAG,
         preview_image_url: data.previewImageUrl,
         metadata: {

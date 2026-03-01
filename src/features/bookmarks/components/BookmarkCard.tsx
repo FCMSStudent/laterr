@@ -89,6 +89,11 @@ const TYPE_FALLBACK_BADGES: Record<string, CategoryConfig> = {
     label: 'Watch Later',
     icon: Play,
     color: 'bg-violet-500/80 text-white'
+  },
+  url: {
+    label: 'Read Later',
+    icon: BookOpen,
+    color: 'bg-amber-500/80 text-white'
   }
 };
 
