@@ -1,45 +1,57 @@
 
 
-# Fix: Consistent Navigation Header and Build Error
+# Fix: Product Cards Showing "ITEM" Instead of "Wishlist"
 
-## Problem
+## Root Cause
 
-Two issues need fixing:
+The "ITEM" badge appears because of a tag mismatch between the backend and frontend:
 
-1. **Inconsistent header**: The Bookmarks page has its own custom inline header (lines 535-680 in BookmarksPage.tsx) that duplicates all the NavigationHeader logic (sign out confirmation, settings button, theme toggle, overflow menu) but with completely different styling:
-   - Bookmarks uses plain `border-border/50 bg-muted/20` inputs
-   - Other pages (Dashboard, Health, Subscriptions) use the shared `NavigationHeader` with glass-style inputs
-   - The duplicated code also means any future header changes need to be made in two places
+1. **Backend** (`analyze-url`): Correctly detects products and sets `tag: "wishlist"`, but the AI also returns a `tags` array with descriptive tags like `["beauty-of-joseon", "sunscreen", "spf50+"]` -- without "wishlist" in it.
 
-2. **Build error**: `HealthChartPanel.tsx` uses `useCallback` but doesn't import it (line 1 imports `useState, useMemo` but not `useCallback`)
+2. **Frontend** (`AddItemModal`): On line 196, saves `data.tags || [data.tag]`. Since `data.tags` is truthy (has descriptive tags), `data.tag` ("wishlist") is never used. So the saved item has tags like `["beauty-of-joseon", "sunscreen"]` but no "wishlist".
+
+3. **Card display** (`BookmarkCard`): The badge logic checks tags for "wishlist", "read later", or "watch later". None match, so it falls through to the default: "Item".
 
 ## Changes
 
-### 1. Fix HealthChartPanel build error
-**File:** `src/features/health/components/HealthChartPanel.tsx`
+### 1. Ensure "wishlist" tag is always included for products
+**File:** `src/features/bookmarks/components/AddItemModal.tsx`
 
-Add `useCallback` to the existing React imports on line 1.
+When saving a URL item, if `data.tag` is "wishlist" (or "watch later"), prepend it to the `data.tags` array so the category tag is always present alongside descriptive tags.
 
-### 2. Refactor BookmarksPage to use the shared NavigationHeader
-**File:** `src/features/bookmarks/pages/BookmarksPage.tsx`
+```
+// Before:
+tags: data.tags || (data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS])
 
-- Remove the entire custom inline header block (lines 535-680) including the duplicated sign-out dialog, settings button, theme toggle, and overflow menu
-- Remove now-unused imports: `Settings`, `LogOut`, `MoreVertical`, `Sun`, `AlertDialog*`, `DropdownMenu*`, `ThemeToggle`, `LoadingSpinner`, `useTheme`, `AuthError`, `AUTH_ERRORS`, `signingOut` state, `handleSignOut`, `handleToggleTheme`
-- Replace with the shared `NavigationHeader` component, passing:
-  - `title="Bookmarks"`
-  - `searchValue` / `onSearchChange` for the inline search
-  - `onAddClick` for the Add button (hidden in trash view)
-  - `filterButton` with the existing `MobileFilterSortButton`
+// After: always include the primary category tag
+const primaryTag = data.tag || DEFAULT_ITEM_TAG;
+const descriptiveTags = data.tags || [...DEFAULT_ITEM_TAGS];
+const finalTags = descriptiveTags.includes(primaryTag) 
+  ? descriptiveTags 
+  : [primaryTag, ...descriptiveTags];
+// then use finalTags
+```
 
-### 3. Add All/Trash toggle as a custom element alongside the header
-**File:** `src/features/bookmarks/pages/BookmarksPage.tsx`
+### 2. Fix the same issue for embeddings
+**File:** `src/features/bookmarks/components/AddItemModal.tsx`
 
-The All/Trash pill toggle is Bookmarks-specific, so it will be placed just below the `NavigationHeader` or passed via the `overflowExtra` prop, keeping the header itself clean and consistent with other pages.
+Apply the same logic on line 155 where embedding tags are computed, so embeddings also reflect the correct category.
+
+### 3. Add "url" fallback to BookmarkCard type badges
+**File:** `src/features/bookmarks/components/BookmarkCard.tsx`
+
+Add a `url` entry to `TYPE_FALLBACK_BADGES` so that even if a URL item has no category tag at all, it shows "Read Later" (or "Link") instead of the generic "Item".
+
+```typescript
+url: {
+  label: 'Read Later',
+  icon: BookOpen,
+  color: 'bg-amber-500/80 text-white'
+}
+```
 
 ## Result
 
-- All pages will share the same header component with consistent glass styling, button sizes, and behavior
-- The All/Trash toggle remains as a Bookmarks-specific UI element
-- The build error is fixed
-- ~100 lines of duplicated code removed from BookmarksPage
-
+- Product URLs will always have "wishlist" in their tags, so cards show the green "Wishlist" badge
+- Regular URLs without special tags show "Read Later" instead of "Item"
+- Existing items with the wrong tags can be fixed by re-saving or editing them
