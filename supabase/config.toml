@@ -1,4 +1,4 @@
-project_id = "opzypedbkufjiprbhogl"
+project_id = "mgaqyxnzhirgmfcsvdqj"
 
 [functions.analyze-url]
 verify_jwt = true
@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.process-image]
 verify_jwt = true
+
+[functions.health-check]
+verify_jwt = false

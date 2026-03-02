@@ -13,6 +13,8 @@ dist-ssr
 *.local
 .env
 tmp
+supabase/.temp/
+supabase/.branches/
 
 # Playwright
 test-results/
