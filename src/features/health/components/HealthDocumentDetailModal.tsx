@@ -314,7 +314,7 @@ export const HealthDocumentDetailModal = ({
                 </div>
                 <ScrollArea className="max-h-[300px]">
                   <ExtractedHealthDataDisplay
-                    data={(document.extracted_data as any) || {}}
+                    data={(document.extracted_data as Record<string, unknown>) || {}}
                   />
                 </ScrollArea>
               </TabsContent>

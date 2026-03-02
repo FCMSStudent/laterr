@@ -10,7 +10,7 @@ import { uploadFileToStorageWithSignedUrl } from '@/shared/lib/supabase-utils';
 export interface StructuredError {
   message: string;
   code?: string;
-  details?: any;
+  details?: unknown;
 }
 
 interface UseHealthDocumentsState {
@@ -31,7 +31,8 @@ export const useHealthDocuments = () => {
       return { message: err.message };
     }
     if (typeof err === 'object' && err !== null && 'message' in err) {
-      return { message: (err as any).message, code: (err as any).code };
+      const typedError = err as { message?: string; code?: string };
+      return { message: typedError.message ?? 'An unexpected error occurred', code: typedError.code };
     }
     return { message: 'An unexpected error occurred' };
   };

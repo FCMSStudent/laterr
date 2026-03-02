@@ -187,7 +187,19 @@ export async function getEdgeFunctionErrorDetails(
   let requestId: string | undefined;
 
   if (typeof error === 'object' && error !== null) {
-    const err = error as any;
+    const err = error as {
+      status?: number;
+      code?: string;
+      message?: string;
+      error_code?: string;
+      error_description?: string;
+      requestId?: string;
+      request_id?: string;
+      context?: unknown;
+      json?: () => Promise<unknown>;
+      clone?: () => Response;
+      headers?: Headers;
+    };
 
     // Handle Supabase FunctionsHttpError shape (often has a 'context' property)
     const context = err.context;
@@ -233,7 +245,7 @@ export async function getEdgeFunctionErrorDetails(
       }
     }
     // Handle direct Response object passed as error (HealthChatPanel case)
-    else if (typeof (err as any).json === 'function') {
+    else if (typeof err.json === 'function') {
       try {
         const clone = (err as Response).clone();
         const data = await clone.json();
@@ -246,7 +258,9 @@ export async function getEdgeFunctionErrorDetails(
         }
         status = err.status;
         requestId = getRequestId(err);
-      } catch (e) { }
+      } catch (_e) {
+        // Non-JSON error body; continue with fallback extraction below.
+      }
     }
 
     // 3. Fallback to top-level properties if not found yet
@@ -366,4 +380,3 @@ export function getToastForEdgeFunctionError(
 // For clean refactor, I will remove the specific exports if they are not used elsewhere.
 // But better to leave them as aliases for now or just replace them.
 // Given strict instructions to avoid breakage, I'll remove them as I am updating all call sites.
-
