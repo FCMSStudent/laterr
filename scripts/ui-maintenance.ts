@@ -22,28 +22,8 @@ const COLOR_FIX_MAP: Record<string, string> = {
   '#2196f3': 'hsl(var(--info))',
 };
 
-interface PlaywrightSuite {
-  specs?: {
-    title: string;
-    tests: {
-      results: {
-        status: string;
-        errors?: { message: string }[];
-      }[];
-    }[];
-  }[];
+interface PlaywrightResult {
   suites?: PlaywrightSuite[];
-}
-
-interface UIIssue {
-  type: 'accessibility' | 'styling' | 'consistency';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  description: string;
-  file?: string;
-  line?: number;
-  autoFixable: boolean;
-  offset?: number;
-  originalText?: string;
 }
 
 interface PlaywrightSuite {
@@ -61,80 +41,28 @@ interface PlaywrightSuite {
   suites?: PlaywrightSuite[];
 }
 
-interface PlaywrightResult {
-  suites?: PlaywrightSuite[];
+interface UIIssue {
+  type: 'accessibility' | 'styling' | 'consistency';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  file?: string;
+  line?: number;
+  autoFixable: boolean;
+  offset?: number;
+  originalText?: string;
 }
 
 /**
- * Scans for missing form labels on input, select, and textarea elements
+ * Scans for accessibility issues in form elements and buttons
  */
-function scanMissingFormLabels(): UIIssue[] {
+function scanAccessibility(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
     const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf8');
 
-      // Heuristic for finding form elements
-      const formElementRegex = /<(input|select|textarea)([^>]*?)(\/?>)/g;
-      let match;
-      while ((match = formElementRegex.exec(content)) !== null) {
-        const tag = match[1];
-        const attributes = match[2];
-
-        // Skip hidden inputs
-        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
-
-        const hasAriaLabel = attributes.includes('aria-label=') || attributes.includes('aria-labelledby=');
-        const hasId = attributes.match(/id=["'](.+?)["']/);
-
-        let hasLabel = false;
-        if (hasId) {
-          const id = hasId[1];
-          const labelRegex = new RegExp(`<label[^>]*?(?:htmlFor|for)=["']${id}["'][^>]*?>`, 'g');
-          if (labelRegex.test(content)) {
-            hasLabel = true;
-          }
-        }
-
-        // Heuristic: Check if it's wrapped in a <label>
-        const lookBack = content.substring(Math.max(0, match.index - 100), match.index);
-        if (lookBack.includes('<label')) {
-            const lastOpenLabel = lookBack.lastIndexOf('<label');
-            const lastCloseLabel = lookBack.lastIndexOf('</label>');
-            if (lastOpenLabel > lastCloseLabel) {
-                hasLabel = true;
-            }
-        }
-
-        if (!hasAriaLabel && !hasLabel) {
-          const lineNum = content.substring(0, match.index).split('\n').length;
-          issues.push({
-            type: 'accessibility',
-            severity: 'high',
-            description: `Form element <${tag}> missing accessible label (label, aria-label, or aria-labelledby)`,
-            file,
-            line: lineNum,
-            autoFixable: false
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error scanning for missing form labels:', e);
-  }
-  return issues;
-}
-
-/**
- * Scans for missing alt attributes in images
- */
-function scanMissingAlt(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
+      // 1. Scan for missing alt attributes in images
       const imgRegex = /<img[\s\S]*?>/g;
       let match;
       while ((match = imgRegex.exec(content)) !== null) {
@@ -153,26 +81,9 @@ function scanMissingAlt(): UIIssue[] {
           });
         }
       }
-    }
-  } catch (e) {
-    console.error('Error scanning for missing alt:', e);
-  }
-  return issues;
-}
 
-/**
- * Scans for missing aria-labels or labels on form elements
- */
-function scanInaccessibleFormElements(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
-
-      // 1. Scan for buttons (existing logic expanded)
+      // 2. Scan for buttons missing aria-label (icon-only buttons)
       const buttonRegex = /<(Button|button)([^>]*?)>([\s\S]*?)<\/\1>/g;
-      let match;
       while ((match = buttonRegex.exec(content)) !== null) {
         const attributes = match[2];
         const children = match[3];
@@ -195,120 +106,14 @@ function scanInaccessibleFormElements(): UIIssue[] {
         }
       }
 
-      // 2. Scan for inputs/selects/textareas missing labels
-      const formElementRegex = /<(input|select|textarea|Input|Select|Textarea)([^>]*?)\/?>/g;
-      while ((match = formElementRegex.exec(content)) !== null) {
+      // 3. Scan for form elements missing accessible labels
+      const formRegex = /<(input|select|textarea|Input|Select|Textarea)([^>]*?)(\/?>)/g;
+      while ((match = formRegex.exec(content)) !== null) {
         const tag = match[1];
         const attributes = match[2];
 
+        // Skip hidden inputs, submits, and generic buttons
         if (attributes.includes('type="hidden"') || attributes.includes('type="submit"') || attributes.includes('type="button"')) continue;
-
-        const hasLabel = attributes.includes('aria-label') ||
-                         attributes.includes('aria-labelledby') ||
-                         attributes.includes('id='); // Assuming if it has an ID, it MIGHT have a <label htmlFor="..."> elsewhere
-
-        // More robust check for <label> association would require full AST parsing,
-        // but we can check if 'id' exists at least.
-        if (!hasLabel) {
-          const lineNum = content.substring(0, match.index).split('\n').length;
-          issues.push({
-            type: 'accessibility',
-            severity: 'high',
-            description: `Form element <${tag}> missing accessible label (aria-label, aria-labelledby, or id for association)`,
-            file,
-            line: lineNum,
-            autoFixable: false
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error scanning for inaccessible form elements:', e);
-  }
-  return issues;
-}
-
-/**
- * Scans for missing accessible labels on form elements
- */
-function scanMissingFormLabels(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
-
-      // Basic check for input, select, textarea
-      const formRegex = /<(input|select|textarea)([^>]*?)\/?>/g;
-      let match;
-      while ((match = formRegex.exec(content)) !== null) {
-        const tag = match[1];
-        const attributes = match[2];
-
-        // Skip hidden inputs
-        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
-
-        const hasAriaLabel = attributes.includes('aria-label=') || attributes.includes('aria-labelledby=');
-        const hasId = attributes.match(/id=["'](.+?)["']/);
-
-        let isLabeled = hasAriaLabel;
-
-        if (!isLabeled && hasId) {
-          const id = hasId[1];
-          // Check if there is a <label htmlFor="id"> or <label for="id"> in the same file
-          const labelRegex = new RegExp(`<(label|Label)[^>]*?(htmlFor|for)=["']${id}["']`, 'g');
-          if (labelRegex.test(content)) {
-            isLabeled = true;
-          }
-        }
-
-        // Also check if it's nested inside a <label>
-        if (!isLabeled) {
-          const textBefore = content.substring(0, match.index);
-          const lastLabelOpen = Math.max(textBefore.lastIndexOf('<label'), textBefore.lastIndexOf('<Label'));
-          const lastLabelClose = Math.max(textBefore.lastIndexOf('</label>'), textBefore.lastIndexOf('</Label>'));
-          if (lastLabelOpen !== -1 && (lastLabelClose === -1 || lastLabelOpen > lastLabelClose)) {
-            isLabeled = true;
-          }
-        }
-
-        if (!isLabeled) {
-          const lineNum = content.substring(0, match.index).split('\n').length;
-          issues.push({
-            type: 'accessibility',
-            severity: 'high',
-            description: `Form element <${tag}> missing accessible label`,
-            file,
-            line: lineNum,
-            autoFixable: false
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error scanning for missing form labels:', e);
-  }
-  return issues;
-}
-
-/**
- * Scans for missing accessible labels on form elements
- */
-function scanMissingFormLabels(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
-      // Look for input, select, textarea
-      const formRegex = /<(input|select|textarea)([^>]*?)(\/?>)/g;
-      let match;
-      while ((match = formRegex.exec(content)) !== null) {
-        const tag = match[1];
-        const attributes = match[2];
-
-        // Skip hidden inputs
-        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
 
         const idMatch = attributes.match(/id=["']([^"']+)["']/);
         const id = idMatch ? idMatch[1] : null;
@@ -318,7 +123,8 @@ function scanMissingFormLabels(): UIIssue[] {
         if (!hasAriaLabel && !hasAssociatedLabel) {
             // Check if it's wrapped in a <label> (simple lookback heuristic)
             const beforeTag = content.substring(Math.max(0, match.index - 200), match.index);
-            const isNestedInLabel = beforeTag.includes('<label') && !beforeTag.includes('</label>');
+            const isNestedInLabel = (beforeTag.includes('<label') && !beforeTag.includes('</label>')) ||
+                                    (beforeTag.includes('<Label') && !beforeTag.includes('</Label>'));
 
             if (!isNestedInLabel) {
                 const lineNum = content.substring(0, match.index).split('\n').length;
@@ -335,7 +141,7 @@ function scanMissingFormLabels(): UIIssue[] {
       }
     }
   } catch (e) {
-    console.error('Error scanning for missing form labels:', e);
+    console.error('Error scanning for accessibility issues:', e);
   }
   return issues;
 }
@@ -378,8 +184,13 @@ function scanInconsistentStyles(): UIIssue[] {
     const pixelOutput = execSync('grep -rnE "(p|m|gap|w|h|top|left|right|bottom)-\\[[0-9]+px\\]" src/ --include="*.tsx" || true').toString();
     if (pixelOutput) {
       pixelOutput.split('\n').filter(Boolean).forEach(line => {
-        const [file, lineNum, ...rest] = line.split(':');
-        const description = rest.join(':').trim();
+        const parts = line.split(':');
+        const file = parts.shift() || '';
+        const lineNum = parts.shift() || '0';
+        const description = parts.join(':').trim();
+
+        if (file.includes('src/shared/components/ui')) return;
+
         issues.push({
           type: 'styling',
           severity: 'low',
@@ -394,11 +205,16 @@ function scanInconsistentStyles(): UIIssue[] {
     const fontOutput = execSync('grep -rn "font-\\[" src/ --include="*.tsx" || true').toString();
     if (fontOutput) {
       fontOutput.split('\n').filter(Boolean).forEach(line => {
-        const [file, lineNum, ...rest] = line.split(':');
+        const parts = line.split(':');
+        const file = parts.shift() || '';
+        const lineNum = parts.shift() || '0';
+
+        if (file.includes('src/shared/components/ui')) return;
+
         issues.push({
           type: 'styling',
           severity: 'low',
-          description: `Hardcoded font found: ${rest.join(':').trim()}`,
+          description: `Hardcoded font found: ${parts.join(':').trim()}`,
           file,
           line: parseInt(lineNum),
           autoFixable: false
@@ -465,88 +281,6 @@ function scanHardcodedColors(): UIIssue[] {
 }
 
 /**
- * Scans for form elements missing accessible labels
- */
-function scanMissingFormLabels(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
-      const formRegex = /<(input|select|textarea)([^>]*?)>/g;
-      let match;
-      while ((match = formRegex.exec(content)) !== null) {
-        const tag = match[1];
-        const attributes = match[2];
-
-        // Skip hidden inputs or self-closing tags that might be components (though the regex is simple)
-        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
-
-        const hasAriaLabel = attributes.includes('aria-label=') || attributes.includes('aria-labelledby=');
-        const idMatch = attributes.match(/id=["'](.*?)["']/);
-        const id = idMatch ? idMatch[1] : null;
-
-        let hasLabel = false;
-        if (id) {
-          const labelRegex = new RegExp(`<(label|Label)[^>]*htmlFor=["']${id}["']`, 'i');
-          if (labelRegex.test(content)) {
-            hasLabel = true;
-          }
-        }
-
-        // Check if input is nested within a label
-        if (!hasLabel) {
-          const beforeContent = content.substring(0, match.index);
-          const lastLabelOpen = beforeContent.lastIndexOf('<label');
-          if (lastLabelOpen !== -1) {
-            const afterLabelOpen = content.substring(lastLabelOpen);
-            const nextLabelClose = afterLabelOpen.indexOf('</label>');
-            const nextLabelOpen = afterLabelOpen.indexOf('<label', 1);
-
-            // If </label> exists and comes before the next <label
-            if (nextLabelClose !== -1 && (nextLabelOpen === -1 || nextLabelClose < nextLabelOpen)) {
-              // Check if our match is between <label and </label>
-              const relativeIndex = match.index - lastLabelOpen;
-              if (relativeIndex < nextLabelClose) {
-                hasLabel = true;
-              }
-            }
-          }
-        }
-
-        if (!hasAriaLabel && !hasLabel) {
-          const lineNum = content.substring(0, match.index).split('\n').length;
-          issues.push({
-            type: 'accessibility',
-            severity: 'high',
-            description: `Form element <${tag}> missing accessible label (label, aria-label, or aria-labelledby)`,
-            file,
-            line: lineNum,
-            autoFixable: false
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error scanning for missing form labels:', e);
-  }
-  return issues;
-}
-
-interface PlaywrightSuite {
-  specs?: {
-    title: string;
-    tests: {
-      results: {
-        status: string;
-        errors?: { message: string }[];
-      }[];
-    }[];
-  }[];
-  suites?: PlaywrightSuite[];
-}
-
-/**
  * Runs the Playwright UI audit and returns issues found
  */
 function runRuntimeAudit(): UIIssue[] {
@@ -567,11 +301,14 @@ function runRuntimeAudit(): UIIssue[] {
               if (result.status === 'failed') {
                 const failures = result.errors || [];
                 for (const fail of failures) {
-                  const failureMessage = fail.message || 'Unknown failure';
+                  const rawMessage = fail.message || 'Unknown failure';
+                  // Sanitize message by removing absolute paths and keeping only the first line
+                  const failureMessage = rawMessage.split('\n')[0].replace(/(\/[\w\.-]+)+/g, '[PATH]');
+
                   issues.push({
                     type: 'accessibility',
                     severity: failureMessage.toLowerCase().includes('accessibility') ? 'high' : 'critical',
-                    description: `Runtime audit failure in "${spec.title}": ${failureMessage.split('\n')[0]}`,
+                    description: `Runtime audit failure in "${spec.title}": ${failureMessage}`,
                     autoFixable: false
                   });
                 }
@@ -584,8 +321,10 @@ function runRuntimeAudit(): UIIssue[] {
         }
       };
 
-      for (const suite of results.suites || []) {
-        processSuite(suite);
+      if (results.suites) {
+        for (const suite of results.suites) {
+          processSuite(suite);
+        }
       }
     }
   } catch (e) {
@@ -699,8 +438,11 @@ async function sendSlackNotification(issues: UIIssue[]) {
   const criticalIssues = issues.filter(i => i.severity === 'critical' || i.severity === 'high');
   const fixableCount = issues.filter(i => i.autoFixable).length;
 
+  const designLead = process.env.DESIGN_LEAD_SLACK_ID || '@Design-Lead';
+  const qaLead = process.env.QA_LEAD_SLACK_ID || '@QA-Lead';
+
   const mentionLeads = criticalIssues.length > 0
-    ? '\n🚨 *Critical Design/Accessibility Blockers Found!* tagging @Design-Lead and @QA-Lead'
+    ? `\n🚨 *Critical Design/Accessibility Blockers Found!* tagging <${designLead}> and <${qaLead}>`
     : '';
 
   const prText = prUrl ? `\n\n*View Pull Request:* ${prUrl}` : '\n\n_Note: No automated PR was created for this run._';
@@ -736,15 +478,12 @@ async function sendSlackNotification(issues: UIIssue[]) {
 async function main() {
   console.log('Starting UI/UX maintenance audit...');
 
-  const formIssues = scanMissingFormLabels();
-  const altIssues = scanMissingAlt();
-  const formIssues = scanInaccessibleFormElements();
+  const accessibilityIssues = scanAccessibility();
   const colorIssues = scanHardcodedColors();
   const buttonIssues = scanInconsistentButtons();
   const styleIssues = scanInconsistentStyles();
-  const formIssues = scanMissingFormLabels();
 
-  let allIssues = [...altIssues, ...formIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
+  let allIssues = [...accessibilityIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
