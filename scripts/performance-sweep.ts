@@ -17,6 +17,77 @@ interface OptimizationResult {
 }
 
 /**
+ * Finds the index of the matching closing brace for a given opening brace.
+ */
+function findClosingBrace(content: string, startIdx: number): number {
+  let depth = 0;
+  for (let i = startIdx; i < content.length; i++) {
+    if (content[i] === '{') depth++;
+    else if (content[i] === '}') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Determines if the current line is inside a React hook by looking back for hook signatures.
+ */
+function isInsideHook(lines: string[], lineIdx: number): boolean {
+  let braceCount = 0;
+  let parenCount = 0;
+
+  for (let i = lineIdx; i >= 0; i--) {
+    const line = lines[i];
+    // Simple character scanning for boundary detection
+    for (let j = line.length - 1; j >= 0; j--) {
+      if (line[j] === '}') braceCount++;
+      if (line[j] === '{') braceCount--;
+      if (line[j] === ')') parenCount++;
+      if (line[j] === '(') parenCount--;
+
+      // If we hit a hook definition at zero or negative depth, we are inside it
+      if (braceCount <= 0) {
+        const lookback = line.substring(0, j + 1);
+        if (lookback.match(/\b(useMemo|useCallback|useEffect|useLayoutEffect|useDashboardStats|useHealthDocuments|useIsMobile|useToast|useDebounce)\s*\(/)) {
+          return true;
+        }
+      }
+    }
+    // Safety break if we go too far back without finding component/hook boundary
+    if (line.includes('export const') || line.match(/^function\s+[A-Z]/) || line.includes('class ')) {
+      break;
+    }
+  }
+  return false;
+}
+
+/**
+ * Checks if the current line is inside a React component.
+ */
+function isInsideComponent(lines: string[], lineIdx: number): boolean {
+  for (let i = lineIdx; i >= Math.max(0, lineIdx - 100); i--) {
+    const line = lines[i];
+    // Look for capitalized function names or const assignments that look like components
+    // Use word boundaries and ensure it's not an ALL_CAPS constant
+    const match = line.match(/(export\s+)?(const|function)\s+\b([A-Z][a-zA-Z0-9]+)\b\s*(=|\()/);
+    if (match) {
+      const name = match[3];
+      if (name === name.toUpperCase() && name.includes('_')) return false; // Skip UPPER_SNAKE_CASE
+      // Ensure we're not inside the component's return statement (JSX)
+      for (let j = i + 1; j <= lineIdx; j++) {
+        if (lines[j].includes('return (') || lines[j].trim().startsWith('return ')) {
+           if (j <= lineIdx) return false; // Found a return before our target line
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Helper to run grep and filter for logic files only
  */
 function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
@@ -230,28 +301,27 @@ function scanForMissingMemo(): OptimizationResult[] {
         const lineIdx = parseInt(lineNum) - 1;
         if (isNaN(lineIdx) || lineIdx < 0) return;
 
+        // Skip trivial operations like .filter(Boolean) on simple arrays
+        const currentLine = lines[lineIdx];
+        if (currentLine.includes('.filter(Boolean)') && currentLine.match(/\[.*\]\.filter\(Boolean\)/)) {
+            return;
+        }
+
         // Look back up to find if we are inside a hook or the return statement
-        let isInsideHook = false;
+        const isInsideHookResult = isInsideHook(lines, lineIdx);
         let isInsideReturn = false;
 
-        for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
+        for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 20); i--) {
             const l = lines[i];
-
             if (l.includes('return (') || l.trim().startsWith('return ')) {
                 isInsideReturn = true;
-            }
-
-            if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
-                isInsideHook = true;
-                break;
-            }
-
-            if (l.includes('export const') || l.includes('function ')) {
                 break;
             }
         }
 
-        if (!isInsideHook) {
+        const isInsideComponentResult = isInsideComponent(lines, lineIdx);
+
+        if (!isInsideHookResult && !isInsideReturn && isInsideComponentResult) {
             // Check if it's an assignment
             let actualLineIdx = lineIdx;
             let varName = '';
@@ -386,7 +456,38 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     console.log(`✅ Fixed inefficient count query in ${opt.file}`);
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+                // Automated useMemo wrapping for simple assignments
+                const assignmentMatch = line.match(/(const|let|var)\s+(\w+)\s*=\s*(.*)/);
+                if (assignmentMatch) {
+                    const [, decl, varName, expression] = assignmentMatch;
+                    // Check if dependencies are obvious (e.g., data, items)
+                    const depsMatch = expression.match(/\b(data|items|list|records|measurements|subscriptions)\b/g);
+                    const deps = depsMatch ? [...new Set(depsMatch)].join(', ') : '';
+
+                    // 1. Add import if missing
+                    let def = fs.readFileSync(opt.file, 'utf8');
+                    if (!def.includes('useMemo') || !def.includes('react')) {
+                        if (def.includes('from \'react\'') || def.includes('from "react"')) {
+                             def = def.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, useMemo } from 'react'`);
+                        } else {
+                             def = `import { useMemo } from 'react';\n` + def;
+                        }
+                    }
+
+                    // Extract dependencies from expression more robustly
+                    const availableVars = content.split('\n').slice(0, lineIdx).join('\n').match(/\b(const|let|var|function)\s+(\w+)\b/g)?.map(m => m.split(/\s+/)[1]) || [];
+                    const foundDeps = expression.match(/\b\w+\b/g)?.filter(w => availableVars.includes(w)) || [];
+                    const depsToUse = [...new Set([...foundDeps, ... (deps ? deps.split(', ') : [])])].filter(d => d !== varName).join(', ');
+
+                    const fixedLine = `  const ${varName} = useMemo(() => ${expression.trim().replace(/;$/, '')}, [${depsToUse}]);`;
+                    // Replace the line specifically by matching indentation
+                    const indent = line.match(/^\s*/)?.[0] || '';
+                    def = def.replace(line, indent + fixedLine.trim());
+                    fs.writeFileSync(opt.file, def);
+                    console.log(`✅ Automatically wrapped ${varName} in useMemo() in ${opt.file}`);
+                } else {
+                    console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+                }
             } else if (opt.category === 'database' && opt.description.includes('Potential missing index')) {
                 const columnMatch = opt.description.match(/column "([^"]+)"/);
                 const tableMatch = opt.description.match(/table "([^"]+)"/);
@@ -481,15 +582,56 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     }
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('inline arrow function')) {
+                // Skip if already in a useCallback (safety check)
+                if (line.includes('useCallback')) return;
+
                 // Automated useCallback for simple setter patterns: onClick={() => setOpen(false)}
                 const setterMatch = line.match(/(\w+)\s*=\s*\{\(\)\s*=>\s*(\w+)\(([^)]*)\)\}/);
                 if (setterMatch) {
                     const [fullMatch, propName, setterName, setterVal] = setterMatch;
                     const handlerName = `handle${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
 
-                    // This requires inserting a useCallback hook in the component body
-                    // Too complex for simple regex without knowing component structure
-                    console.log(`Recommendation: Move ${fullMatch} to a useCallback named ${handlerName} in ${opt.file}`);
+                    let def = fs.readFileSync(opt.file, 'utf8');
+                    const lines = def.split('\n');
+                    const lineIdx = parseInt(opt.line!) - 1;
+
+                    // 1. Add useCallback import if missing
+                    if (!def.includes('useCallback') || !def.includes('react')) {
+                        if (def.includes('from \'react\'') || def.includes('from "react"')) {
+                             def = def.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, useCallback } from 'react'`);
+                        } else {
+                             def = `import { useCallback } from 'react';\n` + def;
+                        }
+                    }
+
+                    // 2. Insert useCallback hook in component body
+                    // Find start of component (look back for function/const)
+                    let componentStartIdx = -1;
+                    for (let i = lineIdx; i >= 0; i--) {
+                        if (lines[i].match(/(export\s+)?(const|function)\s+[A-Z][a-zA-Z0-9]*\s*(=|\()/)) {
+                            componentStartIdx = i;
+                            break;
+                        }
+                    }
+
+                    if (componentStartIdx !== -1) {
+                        const hookCode = `  const ${handlerName} = useCallback(() => ${setterName}(${setterVal}), [${setterName}]);\n`;
+                        // Insert after the component signature or first few hooks
+                        let insertIdx = componentStartIdx + 1;
+                        while (insertIdx < lines.length && (lines[insertIdx].includes('use') || lines[insertIdx].trim() === '')) {
+                            insertIdx++;
+                        }
+
+                        if (!def.includes(`const ${handlerName} =`)) {
+                            const newLines = def.split('\n');
+                            newLines.splice(insertIdx, 0, hookCode);
+                            // 3. Replace inline handler with new handler
+                            newLines[lineIdx + 1] = newLines[lineIdx + 1].replace(fullMatch, `${propName}={${handlerName}}`);
+                            def = newLines.join('\n');
+                            fs.writeFileSync(opt.file, def);
+                            console.log(`✅ Automatically refactored inline ${propName} to useCallback ${handlerName} in ${opt.file}`);
+                        }
+                    }
                 } else {
                     console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
                 }
