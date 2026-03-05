@@ -37,6 +37,117 @@ function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
 }
 
 /**
+ * Finds the closing brace for a given opening brace position
+ */
+function findClosingBrace(content: string, startIdx: number): number {
+    let depth = 0;
+    let inString = false;
+    let stringChar = '';
+    let inComment = false;
+    let inLineComment = false;
+    let templateLiteralDepth = 0;
+
+    for (let i = startIdx; i < content.length; i++) {
+        const char = content[i];
+        const nextChar = content[i + 1];
+        const prevChar = content[i - 1];
+        const isEscaped = prevChar === '\\' && content[i - 2] !== '\\';
+
+        if (inLineComment) {
+            if (char === '\n') inLineComment = false;
+            continue;
+        }
+        if (inComment) {
+            if (char === '*' && nextChar === '/') {
+                inComment = false;
+                i++;
+            }
+            continue;
+        }
+        if (inString) {
+            if (stringChar === '`' && char === '$' && nextChar === '{' && !isEscaped) {
+                templateLiteralDepth++;
+                // We don't exit inString, because we are still inside the backticks,
+                // but the brace counting will now pick up the ${} block.
+            }
+            if (char === stringChar && !isEscaped) inString = false;
+            continue;
+        }
+
+        if (char === '/' && nextChar === '/' && !isEscaped) {
+            inLineComment = true;
+            i++;
+        } else if (char === '/' && nextChar === '*' && !isEscaped) {
+            inComment = true;
+            i++;
+        } else if ((char === "'" || char === '"' || char === '`') && !isEscaped) {
+            inString = true;
+            stringChar = char;
+        } else if (char === '{') {
+            depth++;
+        } else if (char === '}') {
+            if (templateLiteralDepth > 0 && depth === 0) {
+                // This closes a ${} block inside a template literal, not the main block
+                templateLiteralDepth--;
+            } else {
+                depth--;
+                if (depth === 0) return i;
+            }
+        }
+    }
+    return -1;
+}
+
+/**
+ * Get the character offset of the start of a specific line
+ */
+function getLineOffset(content: string, lineIdx: number): number {
+    const lines = content.split('\n');
+    let offset = 0;
+    for (let i = 0; i < lineIdx; i++) {
+        offset += lines[i].length + 1; // +1 for \n
+    }
+    return offset;
+}
+
+/**
+ * Heuristic to check if a line is inside a React hook
+ */
+function isInsideHook(content: string, lineIdx: number): boolean {
+    const lines = content.split('\n');
+    const currentLineStartOffset = getLineOffset(content, lineIdx);
+
+    for (let i = lineIdx; i >= 0; i--) {
+        const line = lines[i];
+        if (line.includes('useMemo') || line.includes('useCallback') || line.includes('useEffect') || line.includes('useQuery')) {
+            const hookLineStartOffset = getLineOffset(content, i);
+            const openBraceIdx = content.indexOf('{', hookLineStartOffset);
+            if (openBraceIdx !== -1) {
+                const closeBraceIdx = findClosingBrace(content, openBraceIdx);
+                if (currentLineStartOffset < closeBraceIdx) return true;
+            }
+        }
+        if (line.includes('export const') || line.includes('function ')) break;
+    }
+    return false;
+}
+
+/**
+ * Heuristic to check if a line is inside a React component
+ */
+function isInsideComponent(content: string, lineIdx: number): boolean {
+    const lines = content.split('\n');
+    for (let i = lineIdx; i >= 0; i--) {
+        const line = lines[i];
+        // Match capitalized function names or const assignments that look like components
+        const componentMatch = line.match(/(?:export\s+)?(?:const|function)\s+([A-Z][a-zA-Z0-9]*)/);
+        if (componentMatch) return true;
+        if (line.includes('export default')) return true;
+    }
+    return false;
+}
+
+/**
  * Scans for N+1 queries (async calls in loops)
  */
 /**
@@ -94,26 +205,31 @@ function scanForN1Queries(): OptimizationResult[] {
     });
 
     // 2b. Await inside for/while loops
-    const awaitInLoops = execSync('grep -rnE "(for|while)\\s*\\(" src/ -A 10 | grep "await" || true').toString();
-    if (awaitInLoops) {
-        const lines = awaitInLoops.split('\n');
-        lines.forEach(rawLine => {
-            const line = rawLine.trim();
-            if (!line) return;
-            const match = line.match(/^([^:]+):([0-9]+):/);
-            if (!match) return;
-            const [, file, lineNum] = match;
-            if ((!file.endsWith('.ts') && !file.endsWith('.tsx')) || file.includes('node_modules') || file.includes('.test.')) return;
+    const loopStarts = runGrep("(for|while)\\s*\\(");
+    loopStarts.forEach(line => {
+        const [file, lineNum] = line.split(':');
+        const content = fs.readFileSync(file, 'utf8');
+        const startLineIdx = parseInt(lineNum) - 1;
+        const lineOffset = getLineOffset(content, startLineIdx);
 
-            results.push({
-                category: 'backend_api',
-                description: 'Detected await inside for/while loop (Potential N+1)',
-                impact: 'Sequential execution of async operations; consider batching',
-                file,
-                line: lineNum
-            });
-        });
-    }
+        // Find loop body
+        const braceIdx = content.indexOf('{', lineOffset);
+        if (braceIdx !== -1) {
+            const closeBraceIdx = findClosingBrace(content, braceIdx);
+            if (closeBraceIdx !== -1) {
+                const loopBody = content.substring(braceIdx, closeBraceIdx);
+                if (loopBody.includes('await ')) {
+                    results.push({
+                        category: 'backend_api',
+                        description: 'Detected await inside for/while loop (Potential N+1)',
+                        impact: 'Sequential execution of async operations; consider batching',
+                        file,
+                        line: lineNum
+                    });
+                }
+            }
+        }
+    });
 
     // 2c. createSignedUrl in loops specifically
     runGrep("\\.map\\(.*createSignedUrl").forEach(line => {
@@ -231,27 +347,9 @@ function scanForMissingMemo(): OptimizationResult[] {
         if (isNaN(lineIdx) || lineIdx < 0) return;
 
         // Look back up to find if we are inside a hook or the return statement
-        let isInsideHook = false;
-        let isInsideReturn = false;
+        const insideHook = isInsideHook(content, lineIdx);
 
-        for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
-            const l = lines[i];
-
-            if (l.includes('return (') || l.trim().startsWith('return ')) {
-                isInsideReturn = true;
-            }
-
-            if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
-                isInsideHook = true;
-                break;
-            }
-
-            if (l.includes('export const') || l.includes('function ')) {
-                break;
-            }
-        }
-
-        if (!isInsideHook) {
+        if (!insideHook) {
             // Check if it's an assignment
             let actualLineIdx = lineIdx;
             let varName = '';
@@ -379,6 +477,7 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     console.log(`✅ Fixed N+1 storage removal in ${opt.file}`);
                 }
             } else if (opt.category === 'backend_api' && opt.description.includes('select("*") with count option')) {
+                // Support both single and double quotes
                 const match = line.match(/\.select\((["'])\*(\1),\s*(\{[^}]*count:[^}]*\})\)/);
                 if (match) {
                     lines[lineIdx] = line.replace(match[0], `.select(${match[1]}id${match[1]}, ${match[3]})`);
@@ -429,50 +528,67 @@ function applyFixes(optimizations: OptimizationResult[]) {
                         if (resolvedPath && fs.existsSync(resolvedPath)) {
                             let def = fs.readFileSync(resolvedPath, 'utf8');
                             if (!def.includes('memo(') && !def.includes('React.memo(')) {
-                                // 1. Add import if missing
-                                if (!def.includes('import {') || !def.includes('react')) {
-                                     def = `import { memo } from 'react';\n` + def;
-                                } else if (!def.includes('memo')) {
-                                     def = def.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, memo } from 'react'`);
+                                // 1. Add import if missing or update existing react import
+                                if (!def.includes('memo') || !def.includes('react')) {
+                                    const reactImportMatch = def.match(/import\s+([\w\s,{}*]+)\s+from\s+['"]react['"]/);
+                                    if (reactImportMatch) {
+                                        const importContent = reactImportMatch[1];
+                                        if (!importContent.includes('memo')) {
+                                            if (importContent.includes('{')) {
+                                                // Add to existing named imports
+                                                const updatedImport = reactImportMatch[0].replace('{', '{ memo, ');
+                                                def = def.replace(reactImportMatch[0], updatedImport);
+                                            } else {
+                                                // Convert to include named import
+                                                const updatedImport = `import { memo }, ${importContent} from 'react'`;
+                                                def = def.replace(reactImportMatch[0], updatedImport);
+                                            }
+                                        }
+                                    } else {
+                                        def = `import { memo } from 'react';\n` + def;
+                                    }
                                 }
 
-                                // 2. Wrap definition
-                                const exportMatch = def.match(/export const (\w+)\s*=\s*\(([^)]*)\)\s*=>\s*\{/);
-                                if (exportMatch && exportMatch[1] === componentName) {
-                                    const lines = def.split('\n');
-                                    let endIdx = -1;
-                                    // Heuristic: find the last }; or the one that likely closes the component
-                                    for (let i = lines.length - 1; i >= 0; i--) {
-                                        if (lines[i].trim() === '};' || lines[i].trim() === '})' || lines[i].trim() === '};') {
-                                            endIdx = i;
-                                            break;
+                                // 2. Wrap definition (Arrow function)
+                                const arrowExportMatch = def.match(/export const (\w+)\s*=\s*\(([^)]*)\)\s*=>\s*\{/);
+                                if (arrowExportMatch && arrowExportMatch[1] === componentName) {
+                                    const startIdx = def.indexOf(arrowExportMatch[0]);
+                                    const openBraceIdx = def.indexOf('{', startIdx);
+                                    const closeBraceIdx = findClosingBrace(def, openBraceIdx);
+
+                                    if (closeBraceIdx !== -1) {
+                                        const componentBody = def.substring(startIdx, closeBraceIdx + 1);
+                                        // Replace the closing brace with });
+                                        const newComponentBody = componentBody.replace(/}\s*;?$/, '});');
+                                        const finalBody = newComponentBody.replace(`export const ${componentName} = (`, `export const ${componentName} = memo((`);
+
+                                        def = def.substring(0, startIdx) + finalBody + def.substring(closeBraceIdx + 1);
+
+                                        if (!def.includes(`${componentName}.displayName`)) {
+                                            def += `\n\n${componentName}.displayName = "${componentName}";\n`;
                                         }
+                                        console.log(`✅ Automatically wrapping ${componentName} (arrow) in memo() in ${resolvedPath}`);
+                                        fs.writeFileSync(resolvedPath, def);
                                     }
+                                } else {
+                                    // Try traditional function
+                                    const funcExportMatch = def.match(/export function (\w+)\s*\(([^)]*)\)\s*\{/);
+                                    if (funcExportMatch && funcExportMatch[1] === componentName) {
+                                        const startIdx = def.indexOf(funcExportMatch[0]);
+                                        const openBraceIdx = def.indexOf('{', startIdx);
+                                        const closeBraceIdx = findClosingBrace(def, openBraceIdx);
 
-                                    if (endIdx !== -1) {
-                                        def = def.replace(`export const ${componentName} = (`, `export const ${componentName} = memo((`);
-                                        const newLines = def.split('\n');
-                                        // Find where the definition started in the new string to be safe
-                                        const startIdx = newLines.findIndex(l => l.includes(`export const ${componentName} = memo(`));
-                                        if (startIdx !== -1) {
-                                            // Re-verify endIdx in newLines
-                                            let currentEndIdx = -1;
-                                            for (let i = newLines.length - 1; i >= startIdx; i--) {
-                                                if (newLines[i].trim().startsWith('};')) {
-                                                    currentEndIdx = i;
-                                                    break;
-                                                }
-                                            }
-                                            if (currentEndIdx !== -1) {
-                                                newLines[currentEndIdx] = newLines[currentEndIdx].replace('};', '});');
-                                                def = newLines.join('\n');
+                                        if (closeBraceIdx !== -1) {
+                                            const componentBody = def.substring(startIdx, closeBraceIdx + 1);
+                                            const newComponentBody = `export const ${componentName} = memo(function ${componentName}(${funcExportMatch[2]}) {${def.substring(openBraceIdx + 1, closeBraceIdx)}});`;
 
-                                                if (!def.includes(`${componentName}.displayName`)) {
-                                                    def += `\n\n${componentName}.displayName = "${componentName}";\n`;
-                                                }
-                                                console.log(`✅ Automatically wrapping ${componentName} in memo() in ${resolvedPath}`);
-                                                fs.writeFileSync(resolvedPath, def);
+                                            def = def.substring(0, startIdx) + newComponentBody + def.substring(closeBraceIdx + 1);
+
+                                            if (!def.includes(`${componentName}.displayName`)) {
+                                                def += `\n\n${componentName}.displayName = "${componentName}";\n`;
                                             }
+                                            console.log(`✅ Automatically wrapping ${componentName} (function) in memo() in ${resolvedPath}`);
+                                            fs.writeFileSync(resolvedPath, def);
                                         }
                                     }
                                 }
@@ -537,7 +653,7 @@ function reviewRecentMerges(): OptimizationResult[] {
 /**
  * Benchmarks actual API response times if credentials are available
  */
-async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: string }> {
+async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: string; slowTables: string[] }> {
     const url = process.env.VITE_SUPABASE_URL;
     const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -550,29 +666,35 @@ async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: 
         const tables = ['items', 'subscriptions', 'health_measurements'];
         let totalLatency = 0;
         let successCount = 0;
+        const slowTables: string[] = [];
 
         for (const table of tables) {
             const start = Date.now();
             const { error } = await supabase.from(table).select('id').limit(1);
             const end = Date.now();
+            const latency = end - start;
 
             if (!error) {
-                totalLatency += (end - start);
+                totalLatency += latency;
                 successCount++;
+                if (latency > API_RESPONSE_THRESHOLD_MS) {
+                    slowTables.push(table);
+                }
             }
         }
 
         if (successCount === 0) {
-            return { apiResponseTimeMs: 0, status: 'failed' };
+            return { apiResponseTimeMs: 0, status: 'failed', slowTables: [] };
         }
 
         return {
             apiResponseTimeMs: Math.round(totalLatency / successCount),
-            status: 'success'
+            status: 'success',
+            slowTables
         };
     } catch (e) {
         console.error('Benchmark error:', e);
-        return { apiResponseTimeMs: 0, status: 'error' };
+        return { apiResponseTimeMs: 0, status: 'error', slowTables: [] };
     }
 }
 
@@ -588,7 +710,8 @@ async function runBenchmarks() {
     largeFilesCount: 0,
     timestamp: new Date().toISOString(),
     apiLatencyMs: apiBenchmark.apiResponseTimeMs,
-    apiStatus: apiBenchmark.status
+    apiStatus: apiBenchmark.status,
+    slowTables: apiBenchmark.slowTables
   };
 
   try {
@@ -608,10 +731,24 @@ async function runBenchmarks() {
   return metrics;
 }
 
+interface BenchmarkMetrics {
+    bundleSizeKB: number;
+    largeFilesCount: number;
+    timestamp: string;
+    apiLatencyMs: number;
+    apiStatus: string;
+    slowTables: string[];
+}
+
+interface BenchmarkSummary {
+    before: BenchmarkMetrics;
+    after?: BenchmarkMetrics;
+}
+
 /**
  * Logs the results to performance-logs.json
  */
-function logResults(optimizations: OptimizationResult[], benchmarks: Record<string, unknown>) {
+function logResults(optimizations: OptimizationResult[], benchmarks: BenchmarkSummary | BenchmarkMetrics) {
   const logPath = path.join(process.cwd(), 'performance-logs.json');
   let logs = [];
   if (fs.existsSync(logPath)) {
@@ -622,17 +759,21 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
     }
   }
 
+  const apiLatency = 'after' in benchmarks && benchmarks.after ? benchmarks.after.apiLatencyMs : (benchmarks as BenchmarkMetrics).apiLatencyMs;
+  const slaExceeded = apiLatency > API_RESPONSE_THRESHOLD_MS;
+
   const summary = {
     timestamp: new Date().toISOString(),
     type: 'nightly_sweep',
     optimizations,
     benchmarks,
-    status: optimizations.length > 0 ? 'optimizations_found' : 'healthy'
+    status: slaExceeded ? 'sla_exceeded' : (optimizations.length > 0 ? 'optimizations_found' : 'healthy'),
+    slaExceeded
   };
 
   logs.unshift(summary);
-  // Keep only the last 2 runs to avoid bloat in the repository
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 2), null, 2));
+  // Keep the last 20 runs for better history
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
@@ -698,6 +839,45 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
 }
 
 /**
+ * Scans for potential dead code (unused exports or internal variables)
+ */
+function scanForDeadCode(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    try {
+        // Look for exported constants/functions
+        const exports = runGrep("export\\s+(const|function|interface|type)\\s+([a-zA-Z0-9_]+)");
+        exports.forEach(line => {
+            const match = line.match(/export\s+(const|function|interface|type)\s+([a-zA-Z0-9_]+)/);
+            if (match) {
+                const [, type, name] = match;
+                const [file] = line.split(':');
+
+                // Skip common entry points or patterns that are likely used externally
+                if (file.includes('index.ts') || file.includes('types.ts') || name.endsWith('Props') || name === 'main') return;
+
+                // Check if this name is used anywhere else in the src directory using word boundaries
+                try {
+                    const usageCount = parseInt(execSync(`grep -rw "${name}" src/ | grep -v "${file}" | wc -l || true`).toString().trim());
+                    if (usageCount === 0) {
+                        results.push({
+                            category: 'maintenance',
+                            description: `Potential dead code: Unused export "${name}" (${type})`,
+                            impact: 'Increases bundle size and maintenance overhead',
+                            file
+                        });
+                    }
+                } catch (e) {
+                    // Ignore grep errors
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error scanning for dead code:', e);
+    }
+    return results;
+}
+
+/**
  * Scans for potential nested loops
  */
 function scanForNestedLoops(): OptimizationResult[] {
@@ -756,11 +936,33 @@ function scanForNestedLoops(): OptimizationResult[] {
     return results;
 }
 
+function generateOptimizationResultsForSlowTables(slowTables: string[]): OptimizationResult[] {
+    return slowTables.map(table => ({
+        category: 'database',
+        description: `API threshold exceeded for table "${table}"`,
+        impact: `Response time > ${API_RESPONSE_THRESHOLD_MS}ms`,
+        suggestedFix: 'Review table indexes and query patterns'
+    }));
+}
+
 async function main() {
   if (process.env.SEND_NOTIFICATION_ONLY) {
     if (!fs.existsSync('performance-summary.json')) return;
-    const summary = JSON.parse(fs.readFileSync('performance-summary.json', 'utf8'));
-    await sendSlackNotification(summary, process.env.PR_URL);
+    const rawSummary = JSON.parse(fs.readFileSync('performance-summary.json', 'utf8'));
+
+    // Normalize benchmarks for Slack notification
+    const benchmarks: { apiLatencyMs: number; beforeLatencyMs?: number } = { apiLatencyMs: 0 };
+    if (rawSummary.benchmarks.after) {
+        benchmarks.apiLatencyMs = rawSummary.benchmarks.after.apiLatencyMs;
+        benchmarks.beforeLatencyMs = rawSummary.benchmarks.before.apiLatencyMs;
+    } else {
+        benchmarks.apiLatencyMs = rawSummary.benchmarks.apiLatencyMs || 0;
+    }
+
+    await sendSlackNotification({
+        optimizations: rawSummary.optimizations,
+        benchmarks
+    }, process.env.PR_URL);
     return;
   }
 
@@ -772,6 +974,7 @@ async function main() {
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
   const logicIssues = scanForNestedLoops();
+  const deadCodeIssues = scanForDeadCode();
 
   const allIssues = [
     ...inefficientQueries,
@@ -779,10 +982,15 @@ async function main() {
     ...indexIssues,
     ...memoIssues,
     ...mergeIssues,
-    ...logicIssues
+    ...logicIssues,
+    ...deadCodeIssues
   ];
 
   const beforeBenchmarks = await runBenchmarks();
+
+  if (beforeBenchmarks.slowTables && beforeBenchmarks.slowTables.length > 0) {
+      allIssues.push(...generateOptimizationResultsForSlowTables(beforeBenchmarks.slowTables));
+  }
 
   if (APPLY_FIXES && allIssues.length > 0) {
       applyFixes(allIssues);
