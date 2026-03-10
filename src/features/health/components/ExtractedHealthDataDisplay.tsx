@@ -1,3 +1,4 @@
+import { useMemo, memo } from "react";
 import { Badge } from "@/shared/components/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui";
 import { Separator } from "@/shared/components/ui";
@@ -72,7 +73,7 @@ function StatusBadge({ status }: { status?: string }) {
   );
 }
 
-export function ExtractedHealthDataDisplay({ data, compact = false }: ExtractedHealthDataDisplayProps) {
+export const ExtractedHealthDataDisplay = memo(({ data, compact = false }: ExtractedHealthDataDisplayProps) => {
   const hasLabValues = data.lab_values && data.lab_values.length > 0;
   const hasMedications = data.medications && data.medications.length > 0;
   const hasDiagnoses = data.diagnoses && data.diagnoses.length > 0;
@@ -82,6 +83,68 @@ export function ExtractedHealthDataDisplay({ data, compact = false }: ExtractedH
   const hasProviderNotes = !!data.provider_notes;
 
   const hasAnyData = hasLabValues || hasMedications || hasDiagnoses || hasVitals || hasRecommendations || hasFollowUp || hasProviderNotes;
+
+  const memoizedLabValues = useMemo(() => data.lab_values?.map((lab, i) => (
+    <div key={i} className="flex items-center justify-between py-1.5 border-b last:border-0">
+      <div>
+        <span className="font-medium text-sm">{lab.name}</span>
+        {lab.reference_range && (
+          <span className="text-xs text-muted-foreground ml-2">
+            (ref: {lab.reference_range})
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-sm">
+          {lab.value} {lab.unit}
+        </span>
+        <StatusBadge status={lab.status} />
+      </div>
+    </div>
+  )), [data.lab_values]);
+
+  const memoizedVitals = useMemo(() => data.vitals && Object.entries(data.vitals).map(([key, value]) => (
+    <div key={key} className="p-2 rounded-lg bg-muted/50">
+      <p className="text-xs text-muted-foreground capitalize">
+        {key.replace(/_/g, ' ')}
+      </p>
+      <p className="font-medium text-sm">{value}</p>
+    </div>
+  )), [data.vitals]);
+
+  const memoizedDiagnoses = useMemo(() => data.diagnoses?.map((d, i) => (
+    <div key={i} className="flex items-center justify-between py-1.5 border-b last:border-0">
+      <span className="font-medium text-sm">{d.name}</span>
+      <div className="flex items-center gap-2">
+        {d.icd_code && (
+          <Badge variant="outline" className="text-xs font-mono">
+            {d.icd_code}
+          </Badge>
+        )}
+        {d.date && (
+          <span className="text-xs text-muted-foreground">{d.date}</span>
+        )}
+      </div>
+    </div>
+  )), [data.diagnoses]);
+
+  const memoizedMedications = useMemo(() => data.medications?.map((med, i) => (
+    <div key={i} className="py-1.5 border-b last:border-0">
+      <div className="flex items-center justify-between">
+        <span className="font-medium text-sm">{med.name}</span>
+        {med.dosage && (
+          <Badge variant="secondary" className="text-xs">
+            {med.dosage}
+          </Badge>
+        )}
+      </div>
+      {(med.frequency || med.instructions) && (
+        <p className="text-xs text-muted-foreground mt-1">
+          {[med.frequency, med.instructions].filter(Boolean).join(' • ')}
+        </p>
+      )}
+    </div>
+  )), [data.medications]);
 
   if (!hasAnyData) {
     return (
@@ -135,24 +198,7 @@ export function ExtractedHealthDataDisplay({ data, compact = false }: ExtractedH
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {data.lab_values!.map((lab, i) => (
-                <div key={i} className="flex items-center justify-between py-1.5 border-b last:border-0">
-                  <div>
-                    <span className="font-medium text-sm">{lab.name}</span>
-                    {lab.reference_range && (
-                      <span className="text-xs text-muted-foreground ml-2">
-                        (ref: {lab.reference_range})
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm">
-                      {lab.value} {lab.unit}
-                    </span>
-                    <StatusBadge status={lab.status} />
-                  </div>
-                </div>
-              ))}
+              {memoizedLabValues}
             </div>
           </CardContent>
         </Card>
@@ -169,14 +215,7 @@ export function ExtractedHealthDataDisplay({ data, compact = false }: ExtractedH
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              {Object.entries(data.vitals!).map(([key, value]) => (
-                <div key={key} className="p-2 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {key.replace(/_/g, ' ')}
-                  </p>
-                  <p className="font-medium text-sm">{value}</p>
-                </div>
-              ))}
+              {memoizedVitals}
             </div>
           </CardContent>
         </Card>
@@ -193,21 +232,7 @@ export function ExtractedHealthDataDisplay({ data, compact = false }: ExtractedH
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {data.diagnoses!.map((d, i) => (
-                <div key={i} className="flex items-center justify-between py-1.5 border-b last:border-0">
-                  <span className="font-medium text-sm">{d.name}</span>
-                  <div className="flex items-center gap-2">
-                    {d.icd_code && (
-                      <Badge variant="outline" className="text-xs font-mono">
-                        {d.icd_code}
-                      </Badge>
-                    )}
-                    {d.date && (
-                      <span className="text-xs text-muted-foreground">{d.date}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+              {memoizedDiagnoses}
             </div>
           </CardContent>
         </Card>
@@ -224,23 +249,7 @@ export function ExtractedHealthDataDisplay({ data, compact = false }: ExtractedH
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {data.medications!.map((med, i) => (
-                <div key={i} className="py-1.5 border-b last:border-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{med.name}</span>
-                    {med.dosage && (
-                      <Badge variant="secondary" className="text-xs">
-                        {med.dosage}
-                      </Badge>
-                    )}
-                  </div>
-                  {(med.frequency || med.instructions) && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {[med.frequency, med.instructions].filter(Boolean).join(' • ')}
-                    </p>
-                  )}
-                </div>
-              ))}
+              {memoizedMedications}
             </div>
           </CardContent>
         </Card>
@@ -295,4 +304,6 @@ export function ExtractedHealthDataDisplay({ data, compact = false }: ExtractedH
       )}
     </div>
   );
-}
+});
+
+ExtractedHealthDataDisplay.displayName = 'ExtractedHealthDataDisplay';

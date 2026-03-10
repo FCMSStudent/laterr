@@ -189,10 +189,10 @@ const Health = () => {
     }
   }, [deleteDocHook, toast, fetchDocuments]);
 
-  const getMeasurementTrend = (type: MeasurementType) => {
+  const getMeasurementTrend = useCallback((type: MeasurementType) => {
     const typeMeasurements = measurements.filter(m => m.measurement_type === type);
     return calculateTrend(typeMeasurements);
-  };
+  }, [measurements]);
 
   if (!user) return null;
 

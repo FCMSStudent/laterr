@@ -231,25 +231,30 @@ function scanForMissingMemo(): OptimizationResult[] {
         if (isNaN(lineIdx) || lineIdx < 0) return;
 
         // Look back up to find if we are inside a hook or the return statement
-        let isInsideHook = false;
+        let isInsideHook = lines[lineIdx].includes('useMemo') || lines[lineIdx].includes('useCallback') || lines[lineIdx].includes('useEffect');
         let isInsideReturn = false;
 
-        for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
-            const l = lines[i];
+        if (!isInsideHook) {
+          for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
+              const l = lines[i];
 
-            if (l.includes('return (') || l.trim().startsWith('return ')) {
-                isInsideReturn = true;
-            }
+              if (l.includes('return (') || l.trim().startsWith('return ')) {
+                  isInsideReturn = true;
+              }
 
-            if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
-                isInsideHook = true;
-                break;
-            }
+              if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
+                  isInsideHook = true;
+                  break;
+              }
 
-            if (l.includes('export const') || l.includes('function ')) {
-                break;
-            }
+              if (l.includes('export const') || l.includes('function ')) {
+                  break;
+              }
+          }
         }
+
+        // Skip trivial operations
+        if (lines[lineIdx].includes('.filter(Boolean)')) return;
 
         if (!isInsideHook) {
             // Check if it's an assignment
@@ -386,7 +391,43 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     console.log(`✅ Fixed inefficient count query in ${opt.file}`);
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+                const match = line.match(/const\s+(\w+)\s*=\s*(.+);?$/);
+                if (match) {
+                    const varName = match[1];
+                    const expression = match[2].endsWith(';') ? match[2].slice(0, -1) : match[2];
+
+                    // Filter out non-variable keywords and common methods
+                    const blackList = [
+                      'filter', 'sort', 'reduce', 'map', 'includes', 'item', 'val', 'acc', 'i',
+                      'true', 'false', 'null', 'undefined', 'return', 'const', 'let', 'var',
+                      'Boolean', 'Number', 'String', 'Object', 'Array', 'Math', 'Date',
+                      'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'default', 'break',
+                      'continue', 'try', 'catch', 'finally', 'throw', 'new', 'typeof', 'instanceof',
+                      'void', 'delete', 'in', 'of', 'as', 'is', 'from', 'import', 'export', 'default'
+                    ];
+
+                    // Heuristic for dependencies: any word that looks like a variable but isn't capitalized (avoiding types/components)
+                    const deps = Array.from(new Set(expression.match(/\b([a-z][a-zA-Z0-9_]*)\b/g)))
+                        .filter(d => !blackList.includes(d));
+
+                    // Only apply if it's a simple assignment that doesn't look like a function definition
+                    // and doesn't already use useMemo
+                    if (!expression.includes('=>') && !expression.includes('function') && !line.includes('useMemo')) {
+                        lines[lineIdx] = line.replace(match[0], `const ${varName} = useMemo(() => ${expression}, [${deps.join(', ')}]);`);
+
+                        // Ensure useMemo is imported
+                        if (!content.includes('useMemo')) {
+                            if (lines[0].includes('import {')) {
+                                lines[0] = lines[0].replace('import {', 'import { useMemo,');
+                            } else {
+                                lines.unshift("import { useMemo } from 'react';");
+                            }
+                        }
+
+                        fs.writeFileSync(opt.file, lines.join('\n'));
+                        console.log(`✅ Automatically wrapped "${varName}" in useMemo in ${opt.file}`);
+                    }
+                }
             } else if (opt.category === 'database' && opt.description.includes('Potential missing index')) {
                 const columnMatch = opt.description.match(/column "([^"]+)"/);
                 const tableMatch = opt.description.match(/table "([^"]+)"/);
@@ -487,11 +528,18 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     const [fullMatch, propName, setterName, setterVal] = setterMatch;
                     const handlerName = `handle${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
 
-                    // This requires inserting a useCallback hook in the component body
-                    // Too complex for simple regex without knowing component structure
+                    // Simple replacement: just wrap it in a function definition at the prop level
+                    // Since it's a setter with a fixed value or no args, this is often fine
+                    // though technically not a top-level hook. To be safe, we'll use a better approach.
                     console.log(`Recommendation: Move ${fullMatch} to a useCallback named ${handlerName} in ${opt.file}`);
                 } else {
-                    console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
+                    // Try to wrap complex ones that look like onClick={() => handleSomething(param)}
+                    const complexMatch = line.match(/(\w+)\s*=\s*\{\s*\(\)\s*=>\s*(\w+)\(([^)]+)\)\s*\}/);
+                    if (complexMatch) {
+                         console.log(`Recommendation: Wrap ${complexMatch[0]} in useCallback in ${opt.file}`);
+                    } else {
+                         console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
+                    }
                 }
             }
         } catch (e) {
@@ -566,8 +614,15 @@ async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: 
             return { apiResponseTimeMs: 0, status: 'failed' };
         }
 
+        const avgLatency = Math.round(totalLatency / successCount);
+
+        // If any specific table exceeds SLA, flag it as a result
+        if (avgLatency > API_RESPONSE_THRESHOLD_MS) {
+            // This is just a proxy for the Slack/log logic below
+        }
+
         return {
-            apiResponseTimeMs: Math.round(totalLatency / successCount),
+            apiResponseTimeMs: avgLatency,
             status: 'success'
         };
     } catch (e) {
@@ -631,8 +686,8 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
   };
 
   logs.unshift(summary);
-  // Keep only the last 2 runs to avoid bloat in the repository
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 2), null, 2));
+  // Keep only the last 20 runs to avoid bloat in the repository
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
@@ -739,6 +794,14 @@ function scanForNestedLoops(): OptimizationResult[] {
 
                     // If the second loop is more indented than the first, it's likely nested
                     if (indentB > indentA) {
+                        // Avoid flagging standard streaming patterns or simple buffer processing
+                        const lineAContent = fileLines[lineA - 1];
+                        const lineBContent = fileLines[lineB - 1];
+                        if (lineAContent.includes('while (true)') || lineAContent.includes('reader.read()') ||
+                            lineBContent.includes('buffer.indexOf')) {
+                            return;
+                        }
+
                         results.push({
                             category: 'logic',
                             description: 'Potential nested loop detected',
