@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 // Performance thresholds
 const API_RESPONSE_THRESHOLD_MS = 500;
 const APPLY_FIXES = process.argv.includes('--apply-fixes');
+const LOG_FILE = 'internal-performance-logs.json';
 
 interface OptimizationResult {
   category: string;
@@ -36,9 +37,6 @@ function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
   }
 }
 
-/**
- * Scans for N+1 queries (async calls in loops)
- */
 /**
  * Scans for inefficient Supabase queries (e.g., select(*) for counts)
  */
@@ -361,141 +359,112 @@ function applyFixes(optimizations: OptimizationResult[]) {
     if (!APPLY_FIXES) return;
 
     console.log('Applying automated fixes...');
+
+    // Group optimizations by file to batch writes
+    const fileChanges: Record<string, OptimizationResult[]> = {};
     optimizations.forEach(opt => {
-        if (!opt.file || !opt.line) return;
+        if (opt.file) {
+            if (!fileChanges[opt.file]) fileChanges[opt.file] = [];
+            fileChanges[opt.file].push(opt);
+        }
+    });
 
+    Object.entries(fileChanges).forEach(([file, opts]) => {
         try {
-            const content = fs.readFileSync(opt.file, 'utf8');
-            const lines = content.split('\n');
-            const lineIdx = parseInt(opt.line) - 1;
-            const line = lines[lineIdx];
+            if (!fs.existsSync(file)) return;
+            let content = fs.readFileSync(file, 'utf8');
+            let lines = content.split('\n');
+            let modified = false;
 
-            if (opt.category === 'backend_api' && opt.description.includes('N+1 storage removal')) {
-                const match = line.match(/(\w+)\.map\(\w+\s*=>\s*removeItemStorageObjects\(\w+\)\)/);
-                if (match) {
-                    const collectionName = match[1];
-                    lines[lineIdx] = line.replace(match[0], `removeMultipleItemsStorageObjects(${collectionName})`);
-                    fs.writeFileSync(opt.file, lines.join('\n'));
-                    console.log(`✅ Fixed N+1 storage removal in ${opt.file}`);
-                }
-            } else if (opt.category === 'backend_api' && opt.description.includes('select("*") with count option')) {
-                const match = line.match(/\.select\((["'])\*(\1),\s*(\{[^}]*count:[^}]*\})\)/);
-                if (match) {
-                    lines[lineIdx] = line.replace(match[0], `.select(${match[1]}id${match[1]}, ${match[3]})`);
-                    fs.writeFileSync(opt.file, lines.join('\n'));
-                    console.log(`✅ Fixed inefficient count query in ${opt.file}`);
-                }
-            } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
-            } else if (opt.category === 'database' && opt.description.includes('Potential missing index')) {
-                const columnMatch = opt.description.match(/column "([^"]+)"/);
-                const tableMatch = opt.description.match(/table "([^"]+)"/);
-                const column = columnMatch ? columnMatch[1] : null;
-                const tableName = tableMatch ? tableMatch[1] : 'table_name_here';
+            opts.forEach(opt => {
+                if (!opt.line) return;
+                const lineIdx = parseInt(opt.line) - 1;
+                const line = lines[lineIdx];
+                if (!line) return;
 
-                if (column) {
-                    const sqlFile = 'supabase/migrations/performance_indexes_suggestion.sql';
-                    const indexName = `idx_${tableName}_${column}`;
-                    const sqlStatement = `CREATE INDEX IF NOT EXISTS ${indexName} ON ${tableName} (${column});`;
-                    const sql = `-- Suggested index for performance optimization\n-- File: ${opt.file}\n-- Context: Found filter on "${column}" in table "${tableName}"\n${sqlStatement}\n\n`;
-
-                    if (!fs.existsSync(path.dirname(sqlFile))) {
-                        fs.mkdirSync(path.dirname(sqlFile), { recursive: true });
+                if (opt.category === 'backend_api' && opt.description.includes('N+1 storage removal')) {
+                    const match = line.match(/(\w+)\.map\(\w+\s*=>\s*removeItemStorageObjects\(\w+\)\)/);
+                    if (match) {
+                        const collectionName = match[1];
+                        lines[lineIdx] = line.replace(match[0], `removeMultipleItemsStorageObjects(${collectionName})`);
+                        modified = true;
+                        console.log(`✅ Fixed N+1 storage removal in ${file}`);
                     }
-
-                    let existingSql = '';
-                    if (fs.existsSync(sqlFile)) {
-                        existingSql = fs.readFileSync(sqlFile, 'utf8');
+                } else if (opt.category === 'backend_api' && opt.description.includes('select("*") with count option')) {
+                    const match = line.match(/\.select\((["'])\*(\1),\s*(\{[^}]*count:[^}]*\})\)/);
+                    if (match) {
+                        lines[lineIdx] = line.replace(match[0], `.select(${match[1]}id${match[1]}, ${match[3]})`);
+                        modified = true;
+                        console.log(`✅ Fixed inefficient count query in ${file}`);
                     }
+                } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
+                    // Only automate VERY simple top-level assignments to avoid hook rule violations
+                    // We check if the line starts with minimal indentation and is a 'const' assignment
+                    const match = line.match(/^(\s{2})const\s+(\w+)\s*=\s*([^.]+)\.(filter|sort)\((.+)\);?/);
+                    if (match) {
+                        const [, indent, varName, collection, op, callback] = match;
+                        const deps = [collection];
+                        if (content.includes('debouncedSearchQuery')) deps.push('debouncedSearchQuery');
 
-                    if (!existingSql.includes(sqlStatement)) {
-                        fs.appendFileSync(sqlFile, sql);
-                        console.log(`✅ Generated index suggestion for "${column}" in ${sqlFile}`);
+                        lines[lineIdx] = `${indent}const ${varName} = useMemo(() => ${collection}.${op}(${callback}), [${deps.join(', ')}]);`;
+                        modified = true;
+
+                        // Add useMemo to imports if needed
+                        if (!lines.slice(0, 20).join('\n').includes('useMemo')) {
+                             const reactImportLine = lines.findIndex(l => (l.includes("from 'react'") || l.includes('from "react"')) && l.includes('import'));
+                             if (reactImportLine !== -1) {
+                                 lines[reactImportLine] = lines[reactImportLine].replace(/import\s+\{([^}]+)\}\s+from\s+["']react["']/, (m, p1) => {
+                                     if (p1.includes('useMemo')) return m;
+                                     return `import { ${p1.trim()}, useMemo } from 'react'`;
+                                 });
+                             }
+                        }
+                        console.log(`✅ Automatically wrapped "${varName}" in useMemo in ${file}`);
+                    } else {
+                        console.log(`Recommendation: Wrap expensive operation in useMemo in ${file}:${opt.line}`);
                     }
-                }
-            } else if (opt.category === 'frontend_react' && opt.description.includes('used in list mapping')) {
-                // Automated memo() wrapping for components
-                const componentName = opt.description.match(/<(\w+)>/)?.[1];
-                if (componentName) {
-                    // Try to find the component definition file
-                    const importLine = execSync(`grep -rnE "import.*${componentName}.*from" ${opt.file} || true`).toString();
-                    const pathMatch = importLine.match(/from\s+["'](.+)["']/);
-                    if (pathMatch) {
-                        const importPath = pathMatch[1];
-                        let resolvedPath: string | null = null;
-                        if (importPath.startsWith('@/')) resolvedPath = importPath.replace('@/', 'src/') + '.tsx';
-                        else if (importPath.startsWith('.')) resolvedPath = path.join(path.dirname(opt.file), importPath) + '.tsx';
+                } else if (opt.category === 'database' && opt.description.includes('Potential missing index')) {
+                    const columnMatch = opt.description.match(/column "([^"]+)"/);
+                    const tableMatch = opt.description.match(/table "([^"]+)"/);
+                    const column = columnMatch ? columnMatch[1] : null;
+                    const tableName = tableMatch ? tableMatch[1] : 'table_name_here';
 
-                        if (resolvedPath && fs.existsSync(resolvedPath)) {
-                            let def = fs.readFileSync(resolvedPath, 'utf8');
-                            if (!def.includes('memo(') && !def.includes('React.memo(')) {
-                                // 1. Add import if missing
-                                if (!def.includes('import {') || !def.includes('react')) {
-                                     def = `import { memo } from 'react';\n` + def;
-                                } else if (!def.includes('memo')) {
-                                     def = def.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, memo } from 'react'`);
-                                }
+                    if (column) {
+                        const sqlFile = 'supabase/migrations/performance_indexes_suggestion.sql';
+                        const indexName = `idx_${tableName}_${column}`;
+                        const sqlStatement = `CREATE INDEX IF NOT EXISTS ${indexName} ON ${tableName} (${column});`;
+                        const sql = `-- Suggested index for performance optimization\n-- File: ${file}\n-- Context: Found filter on "${column}" in table "${tableName}"\n${sqlStatement}\n\n`;
 
-                                // 2. Wrap definition
-                                const exportMatch = def.match(/export const (\w+)\s*=\s*\(([^)]*)\)\s*=>\s*\{/);
-                                if (exportMatch && exportMatch[1] === componentName) {
-                                    const lines = def.split('\n');
-                                    let endIdx = -1;
-                                    // Heuristic: find the last }; or the one that likely closes the component
-                                    for (let i = lines.length - 1; i >= 0; i--) {
-                                        if (lines[i].trim() === '};' || lines[i].trim() === '})' || lines[i].trim() === '};') {
-                                            endIdx = i;
-                                            break;
-                                        }
-                                    }
+                        if (!fs.existsSync(path.dirname(sqlFile))) {
+                            fs.mkdirSync(path.dirname(sqlFile), { recursive: true });
+                        }
 
-                                    if (endIdx !== -1) {
-                                        def = def.replace(`export const ${componentName} = (`, `export const ${componentName} = memo((`);
-                                        const newLines = def.split('\n');
-                                        // Find where the definition started in the new string to be safe
-                                        const startIdx = newLines.findIndex(l => l.includes(`export const ${componentName} = memo(`));
-                                        if (startIdx !== -1) {
-                                            // Re-verify endIdx in newLines
-                                            let currentEndIdx = -1;
-                                            for (let i = newLines.length - 1; i >= startIdx; i--) {
-                                                if (newLines[i].trim().startsWith('};')) {
-                                                    currentEndIdx = i;
-                                                    break;
-                                                }
-                                            }
-                                            if (currentEndIdx !== -1) {
-                                                newLines[currentEndIdx] = newLines[currentEndIdx].replace('};', '});');
-                                                def = newLines.join('\n');
+                        let existingSql = '';
+                        if (fs.existsSync(sqlFile)) {
+                            existingSql = fs.readFileSync(sqlFile, 'utf8');
+                        }
 
-                                                if (!def.includes(`${componentName}.displayName`)) {
-                                                    def += `\n\n${componentName}.displayName = "${componentName}";\n`;
-                                                }
-                                                console.log(`✅ Automatically wrapping ${componentName} in memo() in ${resolvedPath}`);
-                                                fs.writeFileSync(resolvedPath, def);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        if (!existingSql.includes(sqlStatement)) {
+                            fs.appendFileSync(sqlFile, sql);
+                            console.log(`✅ Generated index suggestion for "${column}" in ${sqlFile}`);
                         }
                     }
+                } else if (opt.category === 'frontend_react' && opt.description.includes('used in list mapping')) {
+                    // Automated memo() wrapping for components
+                    const componentName = opt.description.match(/<(\w+)>/)?.[1];
+                    if (componentName) {
+                        // Heuristic: only auto-memoize if it's a simple export const Component = ...
+                        // This is handled by a separate logic that reads the definition file
+                        console.log(`Recommendation: Wrap <${componentName}> in memo()`);
+                    }
                 }
-            } else if (opt.category === 'frontend_react' && opt.description.includes('inline arrow function')) {
-                // Automated useCallback for simple setter patterns: onClick={() => setOpen(false)}
-                const setterMatch = line.match(/(\w+)\s*=\s*\{\(\)\s*=>\s*(\w+)\(([^)]*)\)\}/);
-                if (setterMatch) {
-                    const [fullMatch, propName, setterName, setterVal] = setterMatch;
-                    const handlerName = `handle${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
+            });
 
-                    // This requires inserting a useCallback hook in the component body
-                    // Too complex for simple regex without knowing component structure
-                    console.log(`Recommendation: Move ${fullMatch} to a useCallback named ${handlerName} in ${opt.file}`);
-                } else {
-                    console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
-                }
+            if (modified) {
+                fs.writeFileSync(file, lines.join('\n'));
             }
         } catch (e) {
-            console.error(`Failed to apply fix in ${opt.file}:`, e);
+            console.error(`Failed to apply fixes in ${file}:`, e);
         }
     });
 }
@@ -609,10 +578,10 @@ async function runBenchmarks() {
 }
 
 /**
- * Logs the results to performance-logs.json
+ * Logs the results to internal-performance-logs.json
  */
 function logResults(optimizations: OptimizationResult[], benchmarks: Record<string, unknown>) {
-  const logPath = path.join(process.cwd(), 'performance-logs.json');
+  const logPath = path.join(process.cwd(), LOG_FILE);
   let logs = [];
   if (fs.existsSync(logPath)) {
     try {
@@ -631,8 +600,8 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
   };
 
   logs.unshift(summary);
-  // Keep only the last 2 runs to avoid bloat in the repository
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 2), null, 2));
+  // Keep only the last 10 runs to maintain history
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 10), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
@@ -652,7 +621,7 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
   const backendLeadId = process.env.BACKEND_LEAD_SLACK_ID || "backend-lead";
   const backendLeadTag = `<@${backendLeadId}>`;
 
-  let text = `🚀 *Nightly Performance Sweep Report* - ${new Date().toLocaleDateString()}\n`;
+  let text = `🚀 *Nightly Performance Sweep Report* (#performance) - ${new Date().toLocaleDateString()}\n`;
   if (summary.benchmarks.beforeLatencyMs) {
       const delta = summary.benchmarks.apiLatencyMs - summary.benchmarks.beforeLatencyMs;
       text += `⏱️ *Latency Delta:* ${summary.benchmarks.beforeLatencyMs}ms → ${summary.benchmarks.apiLatencyMs}ms (${delta >= 0 ? '+' : ''}${delta}ms)\n`;
@@ -664,7 +633,7 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
   }
 
   if (slaExceeded) {
-      text += `⚠️ *SLA THRESHOLD EXCEEDED (Latency: ${summary.benchmarks.apiLatencyMs}ms)* - cc ${backendLeadTag}\n`;
+      text += `⚠️ *SLA THRESHOLD EXCEEDED (Latency: ${summary.benchmarks.apiLatencyMs}ms)* - cc ${backendLeadTag} for triage\n`;
   }
 
   const message = {
@@ -731,7 +700,7 @@ function scanForNestedLoops(): OptimizationResult[] {
                 const lineB = lineNums[i+1];
 
                 // If two loops are within 8 lines of each other
-                if (lineB - lineA < 8) {
+                if (lineB - lineA < 8 && lineB - lineA > 0) {
                     const contentA = fileLines[lineA - 1];
                     const contentB = fileLines[lineB - 1];
                     const indentA = contentA.search(/\S/);
@@ -739,19 +708,56 @@ function scanForNestedLoops(): OptimizationResult[] {
 
                     // If the second loop is more indented than the first, it's likely nested
                     if (indentB > indentA) {
-                        results.push({
-                            category: 'logic',
-                            description: 'Potential nested loop detected',
-                            impact: 'May lead to O(n^2) complexity',
-                            file,
-                            line: lineA.toString()
-                        });
+                        const context = fileLines.slice(lineA - 1, lineB + 1).join(' ');
+                        const isBatching = context.includes('chunk') || context.includes('batch') || context.includes('Promise.all') || context.includes('slice');
+
+                        if (!isBatching) {
+                            results.push({
+                                category: 'logic',
+                                description: 'Potential nested loop detected',
+                                impact: 'May lead to O(n^2) complexity',
+                                file,
+                                line: lineA.toString()
+                            });
+                        }
                     }
                 }
             }
         });
     } catch (e) {
         console.error('Error scanning for nested loops:', e);
+    }
+    return results;
+}
+
+/**
+ * Scans for dead code (unused internal functions)
+ */
+function scanForDeadCode(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    try {
+        runGrep("const \\w+ = \\(.*\\) =>").forEach(line => {
+            const match = line.match(/^([^:]+):([0-9]+):\s*const (\w+)\s*=/);
+            if (match) {
+                const [file, lineNum, funcName] = match.slice(1);
+                const content = fs.readFileSync(file, 'utf8');
+                const count = (content.match(new RegExp(`\\b${funcName}\\b`, 'g')) || []).length;
+
+                // If count is 1, it's only the definition (unused within the file)
+                if (count === 1 && !content.includes(`export const ${funcName}`)) {
+                    results.push({
+                        category: 'logic',
+                        description: `Potential dead code: unused internal function "${funcName}"`,
+                        impact: 'Increases bundle size and complexity',
+                        file,
+                        line: lineNum,
+                        suggestedFix: 'Remove unused function'
+                    });
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error scanning for dead code:', e);
     }
     return results;
 }
@@ -771,7 +777,10 @@ async function main() {
   const indexIssues = scanForMissingIndexes();
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
-  const logicIssues = scanForNestedLoops();
+  const logicIssues = [
+      ...scanForNestedLoops(),
+      ...scanForDeadCode()
+  ];
 
   const allIssues = [
     ...inefficientQueries,

@@ -31,16 +31,6 @@ export const DynamicBackground = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const getGradient = (p: TimePhase) => {
-        switch (p) {
-            case "dawn": return "var(--gradient-dawn)";
-            case "day": return "var(--gradient-day)";
-            case "dusk": return "var(--gradient-dusk)";
-            case "night": return "var(--gradient-night)";
-            default: return "var(--gradient-day)";
-        }
-    };
-
     return (
         <div
             className={`fixed inset-0 -z-10 bg-transition pointer-events-none gradient-bg theme-${phase}`}

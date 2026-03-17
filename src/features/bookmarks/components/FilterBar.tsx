@@ -179,22 +179,6 @@ export const FilterBar = memo(({
   const hasActiveFilters = selectedTag || selectedTypeFilter;
   const activeFilterCount = (selectedTag ? 1 : 0) + (selectedTypeFilter ? 1 : 0);
   const isMobile = useIsMobile();
-  const getSortLabel = (sort: SortOption) => {
-    switch (sort) {
-      case "date-desc":
-        return "Newest First";
-      case "date-asc":
-        return "Oldest First";
-      case "title-asc":
-        return "Title (A-Z)";
-      case "title-desc":
-        return "Title (Z-A)";
-      case "type":
-        return "By Type";
-      default:
-        return "Sort";
-    }
-  };
   const getTypeIcon = (type: ItemType) => {
     switch (type) {
       case "url":
@@ -206,15 +190,6 @@ export const FilterBar = memo(({
       case "image":
         return <ImageIcon className="h-3 w-3" />;
     }
-  };
-  const getSelectedTagLabel = () => {
-    if (!selectedTag) return "All Tags";
-    const category = CATEGORY_OPTIONS.find(cat => cat.value === selectedTag);
-    return category ? category.label : selectedTag;
-  };
-  const getTypeLabel = (type: ItemType | null) => {
-    if (!type) return "Type";
-    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   // On mobile, if controls are in header, only show active filter pills

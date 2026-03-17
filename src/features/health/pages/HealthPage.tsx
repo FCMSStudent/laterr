@@ -148,6 +148,11 @@ const Health = () => {
     }, {} as Record<string, HealthMeasurement[]>);
   }, [filteredMeasurements]);
 
+  const selectedTypeMeasurements = useMemo(() => {
+    if (!selectedMeasurement) return [];
+    return measurements.filter(m => m.measurement_type === selectedMeasurement.measurement_type);
+  }, [measurements, selectedMeasurement]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user) {
@@ -188,11 +193,6 @@ const Health = () => {
       fetchDocuments();
     }
   }, [deleteDocHook, toast, fetchDocuments]);
-
-  const getMeasurementTrend = (type: MeasurementType) => {
-    const typeMeasurements = measurements.filter(m => m.measurement_type === type);
-    return calculateTrend(typeMeasurements);
-  };
 
   if (!user) return null;
 
@@ -334,7 +334,7 @@ const Health = () => {
             open={showMeasurementDetailModal}
             onOpenChange={setShowMeasurementDetailModal}
             measurement={selectedMeasurement}
-            allMeasurements={measurements.filter(m => m.measurement_type === selectedMeasurement.measurement_type)}
+                allMeasurements={selectedTypeMeasurements}
             onUpdate={fetchMeasurements}
             onDelete={handleDeleteMeasurement}
           />
