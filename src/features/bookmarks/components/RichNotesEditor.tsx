@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button } from "@/shared/components/ui";
 import { ChecklistItem } from './ChecklistItem';
 import { BulletItem } from './BulletItem';
