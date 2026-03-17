@@ -261,7 +261,7 @@ export const AddHealthDocumentModal = ({
 
       // Insert document record
       setStatusStep('saving');
-      const { error: insertError } = await supabase.from(HEALTH_TABLES.DOCUMENTS).insert({
+      const { error: insertError } = await (supabase.from as any)(HEALTH_TABLES.DOCUMENTS).insert({
         user_id: user.id,
         document_type: documentType,
         title: title.trim(),

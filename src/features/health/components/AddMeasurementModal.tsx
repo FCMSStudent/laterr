@@ -114,7 +114,7 @@ export const AddMeasurementModal = ({
         ? { systolic: parseFloat(systolic), diastolic: parseFloat(diastolic) }
         : { value: parseFloat(value) };
 
-      const { error } = await supabase.from(HEALTH_TABLES.MEASUREMENTS).insert({
+      const { error } = await (supabase.from as any)(HEALTH_TABLES.MEASUREMENTS).insert({
         user_id: user.id,
         measurement_type: measurementType,
         value: valueObj,
