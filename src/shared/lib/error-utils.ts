@@ -253,7 +253,7 @@ export async function getEdgeFunctionErrorDetails(
           message = data?.message || data?.error;
         }
         status = err.status;
-        requestId = getRequestId(err);
+        requestId = getRequestId(err as unknown as Response);
       } catch (_e) {
         // Non-JSON error body; continue with fallback extraction below.
       }

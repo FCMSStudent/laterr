@@ -47,8 +47,8 @@ export class ValidationError extends Error {
   ) {
     super(message);
     this.name = 'ValidationError';
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ValidationError);
+    if (typeof (Error as any).captureStackTrace === 'function') {
+      (Error as any).captureStackTrace(this, ValidationError);
     }
   }
 }
