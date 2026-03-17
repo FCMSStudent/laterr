@@ -11,8 +11,8 @@ export class AuthError extends Error {
     super(message);
     this.name = 'AuthError';
     // Maintains proper stack trace for where our error was thrown (only available on V8)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, AuthError);
+    if (typeof (Error as any).captureStackTrace === 'function') {
+      (Error as any).captureStackTrace(this, AuthError);
     }
   }
 }
