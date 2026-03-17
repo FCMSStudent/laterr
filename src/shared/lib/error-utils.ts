@@ -202,14 +202,12 @@ export async function getEdgeFunctionErrorDetails(
     };
 
     // Handle Supabase FunctionsHttpError shape (often has a 'context' property)
-    const context = err.context;
+    const context = err.context as Record<string, any> | undefined;
 
     if (context) {
       // 1. Try treating context as a Response object
       if (typeof context.clone === 'function' && typeof context.json === 'function') {
         try {
-          // We clone the response to avoid consuming the body if it's needed elsewhere
-          // although properly we should probably consume it here.
           const clone = context.clone();
           const data = await clone.json();
 
@@ -218,14 +216,13 @@ export async function getEdgeFunctionErrorDetails(
             message = data.error.message;
             requestId = data.error.requestId || data.error.request_id;
           } else {
-            // Sometimes error is the body itself or flattened
             code = data?.code;
             message = data?.message || data?.error;
             requestId = data?.requestId || data?.request_id;
           }
 
           status = context.status;
-          requestId = requestId || getRequestId(context);
+          requestId = requestId || getRequestId(context as Response);
         } catch (e) {
           // JSON parsing failed, maybe it's not JSON
         }
@@ -234,10 +231,9 @@ export async function getEdgeFunctionErrorDetails(
       else if (typeof context === 'object') {
         status = context.status ?? status;
 
-        // Check for nested body/json properties which AddItemModal handled
         const body = context.body || context.json;
         if (body) {
-          const errBody = body.error || body; // sometimes error is nested
+          const errBody = body.error || body;
           code = errBody?.code ?? code;
           message = errBody?.message ?? errBody?.error ?? message;
           requestId = errBody?.requestId ?? errBody?.request_id ?? requestId;
