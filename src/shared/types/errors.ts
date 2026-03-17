@@ -29,8 +29,8 @@ export class NetworkError extends Error {
   ) {
     super(message);
     this.name = 'NetworkError';
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, NetworkError);
+    if (typeof (Error as any).captureStackTrace === 'function') {
+      (Error as any).captureStackTrace(this, NetworkError);
     }
   }
 }
