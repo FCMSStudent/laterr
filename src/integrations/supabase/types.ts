@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
   public: {
     Tables: {
       categories: {
@@ -30,6 +35,180 @@ export type Database = {
           id?: string
           name?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      health_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          embedding: string | null
+          extracted_data: Json | null
+          file_type: string
+          file_url: string
+          id: string
+          provider_name: string | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+          visit_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          embedding?: string | null
+          extracted_data?: Json | null
+          file_type: string
+          file_url: string
+          id?: string
+          provider_name?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+          visit_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          embedding?: string | null
+          extracted_data?: Json | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          provider_name?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          visit_date?: string | null
+        }
+        Relationships: []
+      }
+      health_goals: {
+        Row: {
+          created_at: string
+          current_value: Json | null
+          goal_type: string
+          id: string
+          milestones: Json | null
+          motivation: string | null
+          start_date: string
+          status: string
+          target_date: string | null
+          target_value: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: Json | null
+          goal_type: string
+          id?: string
+          milestones?: Json | null
+          motivation?: string | null
+          start_date?: string
+          status?: string
+          target_date?: string | null
+          target_value: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: Json | null
+          goal_type?: string
+          id?: string
+          milestones?: Json | null
+          motivation?: string | null
+          start_date?: string
+          status?: string
+          target_date?: string | null
+          target_value?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      health_insights: {
+        Row: {
+          confidence_score: number | null
+          content: string
+          dismissed: boolean
+          generated_at: string
+          id: string
+          insight_type: string
+          related_documents: string[] | null
+          related_measurements: string[] | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          content: string
+          dismissed?: boolean
+          generated_at?: string
+          id?: string
+          insight_type: string
+          related_documents?: string[] | null
+          related_measurements?: string[] | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          content?: string
+          dismissed?: boolean
+          generated_at?: string
+          id?: string
+          insight_type?: string
+          related_documents?: string[] | null
+          related_measurements?: string[] | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      health_measurements: {
+        Row: {
+          created_at: string
+          id: string
+          measured_at: string
+          measurement_type: string
+          notes: string | null
+          source: string | null
+          tags: string[] | null
+          unit: string | null
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          measurement_type: string
+          notes?: string | null
+          source?: string | null
+          tags?: string[] | null
+          unit?: string | null
+          user_id: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          measurement_type?: string
+          notes?: string | null
+          source?: string | null
+          tags?: string[] | null
+          unit?: string | null
+          user_id?: string
+          value?: Json
         }
         Relationships: []
       }
@@ -217,51 +396,69 @@ export type Database = {
       subscriptions: {
         Row: {
           amount: number
+          auto_renew: boolean
           billing_cycle: string
           cancelled_at: string | null
           category: string
           created_at: string
-          deleted_at: string | null
+          currency: string
           id: string
-          is_favorite: boolean
+          logo_url: string | null
           name: string
           next_billing_date: string
+          notes: string | null
+          payment_method: string | null
           provider: string | null
+          reminder_days_before: number
           status: string
+          tags: string[] | null
           updated_at: string
           user_id: string
+          website_url: string | null
         }
         Insert: {
           amount: number
-          billing_cycle: string
+          auto_renew?: boolean
+          billing_cycle?: string
           cancelled_at?: string | null
           category: string
           created_at?: string
-          deleted_at?: string | null
+          currency?: string
           id?: string
-          is_favorite?: boolean
+          logo_url?: string | null
           name: string
           next_billing_date: string
+          notes?: string | null
+          payment_method?: string | null
           provider?: string | null
+          reminder_days_before?: number
           status?: string
+          tags?: string[] | null
           updated_at?: string
           user_id: string
+          website_url?: string | null
         }
         Update: {
           amount?: number
+          auto_renew?: boolean
           billing_cycle?: string
           cancelled_at?: string | null
           category?: string
           created_at?: string
-          deleted_at?: string | null
+          currency?: string
           id?: string
-          is_favorite?: boolean
+          logo_url?: string | null
           name?: string
           next_billing_date?: string
+          notes?: string | null
+          payment_method?: string | null
           provider?: string | null
+          reminder_days_before?: number
           status?: string
+          tags?: string[] | null
           updated_at?: string
           user_id?: string
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -291,21 +488,18 @@ export type Database = {
       }
     }
     Views: {
-      unified_activity_feed: {
-        Row: {
-          activity_date: string | null
-          activity_type: string | null
-          entity_id: string | null
-          entity_type: string | null
-          id: string | null
-          summary: string | null
-          title: string | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      calculate_subscription_analytics: {
+        Args: { p_user_id: string }
+        Returns: {
+          category: string
+          monthly_equivalent: number
+          subscription_count: number
+          total_amount: number
+        }[]
+      }
       find_similar_health_documents: {
         Args: {
           match_count?: number
@@ -318,36 +512,40 @@ export type Database = {
           title: string
         }[]
       }
-      find_similar_items:
-        | {
-            Args: {
-              match_count?: number
-              match_threshold?: number
-              query_embedding: string
-            }
-            Returns: {
-              id: string
-              similarity: number
-              title: string
-            }[]
-          }
-        | {
-            Args: {
-              match_count?: number
-              match_threshold?: number
-              query_embedding: string
-              user_id_filter?: string
-            }
-            Returns: {
-              id: string
-              preview_image_url: string
-              similarity: number
-              summary: string
-              tags: string[]
-              title: string
-              type: string
-            }[]
-          }
+      find_similar_items: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          id: string
+          similarity: number
+          title: string
+        }[]
+      }
+      get_subscription_totals: {
+        Args: { p_user_id: string }
+        Returns: {
+          active_count: number
+          total_monthly: number
+          total_yearly: number
+        }[]
+      }
+      get_upcoming_renewals: {
+        Args: { p_days_ahead?: number; p_user_id: string }
+        Returns: {
+          amount: number
+          billing_cycle: string
+          currency: string
+          days_until_renewal: number
+          id: string
+          logo_url: string
+          name: string
+          next_billing_date: string
+          status: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -480,4 +678,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

@@ -66,7 +66,7 @@ export const ItemListRow = memo(({
   const isMobile = useIsMobile();
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const SWIPE_THRESHOLD = 80;
 
   const getIcon = () => {

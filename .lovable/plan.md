@@ -1,65 +1,57 @@
 
 
-# Fix: Note Editor Focus Loss + Health Module Build Errors
+# Fix: Product Cards Showing "ITEM" Instead of "Wishlist"
 
-## Two Issues
+## Root Cause
 
-### 1. Note Editor loses focus on every keystroke
+The "ITEM" badge appears because of a tag mismatch between the backend and frontend:
 
-**Root cause**: In `RichNotesEditor.tsx` (lines 51-54), there's a `useEffect` that re-parses the `value` prop whenever it changes:
+1. **Backend** (`analyze-url`): Correctly detects products and sets `tag: "wishlist"`, but the AI also returns a `tags` array with descriptive tags like `["beauty-of-joseon", "sunscreen", "spf50+"]` -- without "wishlist" in it.
 
-```typescript
-useEffect(() => {
-  const parsed = parseNotes(value);
-  setNotesData(parsed);
-}, [value]);
+2. **Frontend** (`AddItemModal`): On line 196, saves `data.tags || [data.tag]`. Since `data.tags` is truthy (has descriptive tags), `data.tag` ("wishlist") is never used. So the saved item has tags like `["beauty-of-joseon", "sunscreen"]` but no "wishlist".
+
+3. **Card display** (`BookmarkCard`): The badge logic checks tags for "wishlist", "read later", or "watch later". None match, so it falls through to the default: "Item".
+
+## Changes
+
+### 1. Ensure "wishlist" tag is always included for products
+**File:** `src/features/bookmarks/components/AddItemModal.tsx`
+
+When saving a URL item, if `data.tag` is "wishlist" (or "watch later"), prepend it to the `data.tags` array so the category tag is always present alongside descriptive tags.
+
+```
+// Before:
+tags: data.tags || (data.tag ? [data.tag] : [...DEFAULT_ITEM_TAGS])
+
+// After: always include the primary category tag
+const primaryTag = data.tag || DEFAULT_ITEM_TAG;
+const descriptiveTags = data.tags || [...DEFAULT_ITEM_TAGS];
+const finalTags = descriptiveTags.includes(primaryTag) 
+  ? descriptiveTags 
+  : [primaryTag, ...descriptiveTags];
+// then use finalTags
 ```
 
-The cycle: User types → `handleBlockContentChange` → `emitChange` → `onChange(serialized)` → parent updates `content` state → new `value` prop flows back → `useEffect` fires → `setNotesData(parsed)` → full re-render → focus lost.
+### 2. Fix the same issue for embeddings
+**File:** `src/features/bookmarks/components/AddItemModal.tsx`
 
-**Fix**: Track whether the change originated internally using a ref. Skip the sync `useEffect` when the change came from inside the editor.
+Apply the same logic on line 155 where embedding tags are computed, so embeddings also reflect the correct category.
+
+### 3. Add "url" fallback to BookmarkCard type badges
+**File:** `src/features/bookmarks/components/BookmarkCard.tsx`
+
+Add a `url` entry to `TYPE_FALLBACK_BADGES` so that even if a URL item has no category tag at all, it shows "Read Later" (or "Link") instead of the generic "Item".
 
 ```typescript
-const isInternalChange = useRef(false);
-
-const emitChange = useCallback((data: NotesData) => {
-  isInternalChange.current = true;
-  setNotesData(data);
-  onChange(serializeNotes(data));
-}, [onChange]);
-
-useEffect(() => {
-  if (isInternalChange.current) {
-    isInternalChange.current = false;
-    return;
-  }
-  setNotesData(parseNotes(value));
-}, [value]);
+url: {
+  label: 'Read Later',
+  icon: BookOpen,
+  color: 'bg-amber-500/80 text-white'
+}
 ```
 
-### 2. Health module build errors — missing table types
+## Result
 
-**Root cause**: The auto-generated `types.ts` doesn't include `health_documents` or `health_measurements` tables, so TypeScript rejects `supabase.from('health_documents')`. The types file cannot be edited manually.
-
-**Fix**: Cast the table name to `any` at each call site across 4 files:
-- `src/features/health/hooks/useHealthDocuments.ts` — ~8 occurrences
-- `src/features/health/components/AddHealthDocumentModal.tsx` — 1 occurrence  
-- `src/features/health/components/AddMeasurementModal.tsx` — 1 occurrence
-- `src/features/health/components/HealthDocumentDetailModal.tsx` — 3 occurrences
-- `src/features/health/pages/HealthPage.tsx` — 1 occurrence
-
-Pattern: `supabase.from(HEALTH_TABLES.DOCUMENTS)` → `supabase.from(HEALTH_TABLES.DOCUMENTS as any)`
-
-And cast query results: `as HealthDocument[]` / `as HealthDocument` where needed.
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `src/features/bookmarks/components/RichNotesEditor.tsx` | Add ref guard to prevent re-render cycle |
-| `src/features/health/hooks/useHealthDocuments.ts` | Add `as any` casts to `.from()` calls |
-| `src/features/health/components/AddHealthDocumentModal.tsx` | Add `as any` cast |
-| `src/features/health/components/AddMeasurementModal.tsx` | Add `as any` cast |
-| `src/features/health/components/HealthDocumentDetailModal.tsx` | Add `as any` casts |
-| `src/features/health/pages/HealthPage.tsx` | Add `as any` cast |
-
+- Product URLs will always have "wishlist" in their tags, so cards show the green "Wishlist" badge
+- Regular URLs without special tags show "Read Later" instead of "Item"
+- Existing items with the wrong tags can be fixed by re-saving or editing them

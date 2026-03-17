@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button } from "@/shared/components/ui";
 import { ChecklistItem } from './ChecklistItem';
 import { BulletItem } from './BulletItem';
@@ -46,15 +46,21 @@ export const RichNotesEditor = ({
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [commandSearch, setCommandSearch] = useState('');
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+  const isInternalChange = useRef(false);
 
   // Sync with external value changes
   useEffect(() => {
+    if (isInternalChange.current) {
+      isInternalChange.current = false;
+      return;
+    }
     const parsed = parseNotes(value);
     setNotesData(parsed);
   }, [value]);
 
   // Emit changes
   const emitChange = useCallback((data: NotesData) => {
+    isInternalChange.current = true;
     setNotesData(data);
     onChange(serializeNotes(data));
   }, [onChange]);

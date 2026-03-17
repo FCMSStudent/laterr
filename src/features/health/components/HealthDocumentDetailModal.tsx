@@ -100,8 +100,7 @@ export const HealthDocumentDetailModal = ({
       }
 
       // Update document with new summary
-      const { error: updateError } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
+      const { error: updateError } = await (supabase.from as any)(HEALTH_TABLES.DOCUMENTS)
         .update({ summary: data.summary })
         .eq('id', document.id);
 
@@ -160,8 +159,7 @@ export const HealthDocumentDetailModal = ({
       const { extracted_data } = await response.json();
 
       // Update document with extracted data
-      const { error: updateError } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
+      const { error: updateError } = await (supabase.from as any)(HEALTH_TABLES.DOCUMENTS)
         .update({ extracted_data })
         .eq('id', document.id);
 

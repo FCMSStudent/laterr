@@ -168,7 +168,7 @@ const Health = () => {
 
   const handleDeleteMeasurement = useCallback(async (id: string) => {
     try {
-      const { error } = await supabase.from(HEALTH_TABLES.MEASUREMENTS).delete().eq('id', id);
+      const { error } = await (supabase.from as any)(HEALTH_TABLES.MEASUREMENTS).delete().eq('id', id);
       if (error) throw error;
       toast({ title: "Success", description: "Measurement deleted" });
       fetchMeasurements();

@@ -11,8 +11,8 @@ export class AuthError extends Error {
     super(message);
     this.name = 'AuthError';
     // Maintains proper stack trace for where our error was thrown (only available on V8)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, AuthError);
+    if (typeof (Error as any).captureStackTrace === 'function') {
+      (Error as any).captureStackTrace(this, AuthError);
     }
   }
 }
@@ -29,8 +29,8 @@ export class NetworkError extends Error {
   ) {
     super(message);
     this.name = 'NetworkError';
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, NetworkError);
+    if (typeof (Error as any).captureStackTrace === 'function') {
+      (Error as any).captureStackTrace(this, NetworkError);
     }
   }
 }
@@ -47,8 +47,8 @@ export class ValidationError extends Error {
   ) {
     super(message);
     this.name = 'ValidationError';
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ValidationError);
+    if (typeof (Error as any).captureStackTrace === 'function') {
+      (Error as any).captureStackTrace(this, ValidationError);
     }
   }
 }
