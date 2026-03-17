@@ -6,6 +6,8 @@ import { SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS } from '@/shared/lib/storage-c
 import type { HealthDocument, HealthDocumentFormData } from '../types';
 import { uploadFileToStorageWithSignedUrl } from '@/shared/lib/supabase-utils';
 
+// Helper to bypass strict table name typing for health tables not yet in generated types
+const healthFrom = (table: string) => (supabase.from as any)(table);
 
 export interface StructuredError {
   message: string;
@@ -37,20 +39,16 @@ export const useHealthDocuments = () => {
     return { message: 'An unexpected error occurred' };
   };
 
-  /**
-   * Fetch all health documents for current user
-   */
   const fetchDocuments = useCallback(async (): HookResult<HealthDocument[]> => {
     setState(s => ({ ...s, loading: true, error: null }));
     try {
-      const { data, error } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
+      const { data, error } = await healthFrom(HEALTH_TABLES.DOCUMENTS)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setState(s => ({ ...s, loading: false }));
-      return { data: (data ?? []) as HealthDocument[], error: null };
+      return { data: (data ?? []) as unknown as HealthDocument[], error: null };
     } catch (err) {
       const error = handleError(err);
       setState(s => ({ ...s, loading: false, error }));
@@ -58,21 +56,17 @@ export const useHealthDocuments = () => {
     }
   }, []);
 
-  /**
-   * Fetch a single health document by ID
-   */
   const fetchDocument = useCallback(async (id: string): HookResult<HealthDocument> => {
     setState(s => ({ ...s, loading: true, error: null }));
     try {
-      const { data, error } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
+      const { data, error } = await healthFrom(HEALTH_TABLES.DOCUMENTS)
         .select('*')
         .eq('id', id)
         .single();
 
       if (error) throw error;
       setState(s => ({ ...s, loading: false }));
-      return { data: data as HealthDocument, error: null };
+      return { data: data as unknown as HealthDocument, error: null };
     } catch (err) {
       const error = handleError(err);
       setState(s => ({ ...s, loading: false, error }));
@@ -86,7 +80,6 @@ export const useHealthDocuments = () => {
   ): HookResult<HealthDocument> => {
     setState(s => ({ ...s, loading: true, error: null }));
     try {
-      // Upload file
       const fileExt = formData.file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
@@ -96,14 +89,12 @@ export const useHealthDocuments = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get signed URL
       const { data: urlData } = await supabase.storage
         .from(SUPABASE_STORAGE_BUCKET_HEALTH_DOCUMENTS)
         .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
       const fileUrl = urlData?.signedUrl ?? fileName;
 
-      // Generate summary and embedding
       let summary: string | null = null;
       let embedding: number[] | null = null;
 
@@ -136,9 +127,7 @@ export const useHealthDocuments = () => {
         console.warn('AI processing failed:', aiError);
       }
 
-      // Insert document
-      const { data, error } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
+      const { data, error } = await healthFrom(HEALTH_TABLES.DOCUMENTS)
         .insert({
           user_id: userId,
           document_type: formData.document_type,
@@ -156,7 +145,7 @@ export const useHealthDocuments = () => {
 
       if (error) throw error;
       setState(s => ({ ...s, loading: false }));
-      return { data: data as HealthDocument, error: null };
+      return { data: data as unknown as HealthDocument, error: null };
     } catch (err) {
       const error = handleError(err);
       setState(s => ({ ...s, loading: false, error }));
@@ -170,8 +159,7 @@ export const useHealthDocuments = () => {
   ): HookResult<boolean> => {
     setState(s => ({ ...s, loading: true, error: null }));
     try {
-      const { error } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
+      const { error } = await healthFrom(HEALTH_TABLES.DOCUMENTS)
         .update(updates)
         .eq('id', id);
 
@@ -188,8 +176,7 @@ export const useHealthDocuments = () => {
   const deleteDocument = useCallback(async (id: string): HookResult<boolean> => {
     setState(s => ({ ...s, loading: true, error: null }));
     try {
-      const { error } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
+      const { error } = await healthFrom(HEALTH_TABLES.DOCUMENTS)
         .delete()
         .eq('id', id);
 
@@ -206,7 +193,6 @@ export const useHealthDocuments = () => {
   const searchDocuments = useCallback(async (query: string): HookResult<HealthDocument[]> => {
     setState(s => ({ ...s, loading: true, error: null }));
     try {
-      // Generate embedding for query
       const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
         body: {
           title: query,
@@ -217,19 +203,16 @@ export const useHealthDocuments = () => {
       });
 
       if (embeddingError || !embeddingData?.embedding) {
-        // Fall back to text search
-        const { data, error } = await supabase
-          .from(HEALTH_TABLES.DOCUMENTS)
+        const { data, error } = await healthFrom(HEALTH_TABLES.DOCUMENTS)
           .select('*')
           .or(`title.ilike.%${query}%,summary.ilike.%${query}%`)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
         setState(s => ({ ...s, loading: false }));
-        return { data: (data ?? []) as HealthDocument[], error: null };
+        return { data: (data ?? []) as unknown as HealthDocument[], error: null };
       }
 
-      // Use semantic search
       const { data, error } = await supabase.rpc('find_similar_health_documents', {
         query_embedding: JSON.stringify(embeddingData.embedding),
         match_threshold: 0.7,
@@ -238,21 +221,19 @@ export const useHealthDocuments = () => {
 
       if (error) throw error;
 
-      // Fetch full documents
       const ids = (data ?? []).map((d: { id: string }) => d.id);
       if (ids.length === 0) {
         setState(s => ({ ...s, loading: false }));
         return { data: [], error: null };
       }
 
-      const { data: documents, error: docsError } = await supabase
-        .from(HEALTH_TABLES.DOCUMENTS)
+      const { data: documents, error: docsError } = await healthFrom(HEALTH_TABLES.DOCUMENTS)
         .select('*')
         .in('id', ids);
 
       if (docsError) throw docsError;
       setState(s => ({ ...s, loading: false }));
-      return { data: (documents ?? []) as HealthDocument[], error: null };
+      return { data: (documents ?? []) as unknown as HealthDocument[], error: null };
     } catch (err) {
       const error = handleError(err);
       setState(s => ({ ...s, loading: false, error }));
