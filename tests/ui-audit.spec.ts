@@ -67,11 +67,16 @@ test.describe('UI Accessibility Audit', () => {
             height: rect.height,
           },
           hasOverflow: el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight,
+          isVisible: window.getComputedStyle(el).display !== 'none' &&
+                     window.getComputedStyle(el).visibility !== 'hidden' &&
+                     window.getComputedStyle(el).opacity !== '0',
         };
       });
     });
 
     for (let i = 0; i < elementsData.length; i++) {
+      expect.soft(elementsData[i].isVisible, `Element should be visible: <${elementsData[i].tagName}> "${elementsData[i].text}"`).toBeTruthy();
+
       const b1 = elementsData[i].box;
       const tagName1 = elementsData[i].tagName;
       const text1 = elementsData[i].text;
