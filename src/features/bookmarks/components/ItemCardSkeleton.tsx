@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { AspectRatio, Skeleton } from "@/shared/components/ui";
 
-export const ItemCardSkeleton = () => {
+export const ItemCardSkeleton = memo(() => {
   return (
     <div className="glass-card rounded-2xl p-5 md:p-7 min-h-[280px] md:min-h-[320px]">
       {/* Media Section */}
@@ -39,4 +40,7 @@ export const ItemCardSkeleton = () => {
       </div>
     </div>
   );
-};
+});
+
+
+ItemCardSkeleton.displayName = "ItemCardSkeleton";
