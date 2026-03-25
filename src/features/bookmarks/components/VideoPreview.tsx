@@ -42,6 +42,17 @@ export const VideoPreview = ({ url, title, className = '' }: VideoPreviewProps) 
   return (
     <ViewerShell className={className} shrinkWrap>
       <div className="relative w-full aspect-video bg-black overflow-hidden rounded-2xl">
+        {/* External link button - always visible */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleOpenExternal}
+          className="absolute top-2 left-2 glass-light hover:shadow-md text-foreground h-8 w-8 p-0 rounded-full z-20"
+          aria-label="Open video in new tab"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+
         {isPlaying && embedUrl ? (
           <iframe
             src={`${embedUrl}?autoplay=1`}
@@ -58,7 +69,6 @@ export const VideoPreview = ({ url, title, className = '' }: VideoPreviewProps) 
                 alt={title || 'Video thumbnail'}
                 className="absolute inset-0 w-full h-full object-cover"
                 onError={(e) => {
-                  // Fallback to lower quality thumbnail
                   const target = e.target as HTMLImageElement;
                   if (target.src.includes('maxresdefault')) {
                     target.src = target.src.replace('maxresdefault', 'hqdefault');
@@ -71,24 +81,12 @@ export const VideoPreview = ({ url, title, className = '' }: VideoPreviewProps) 
               </div>
             )}
 
-            {/* Smaller play button positioned in bottom-right corner */}
+            {/* Play button in bottom-right corner */}
             <div className="absolute bottom-3 right-3 opacity-90 group-hover:opacity-100 transition-opacity">
               <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                {/* Slight margin-left for visual centering of the play triangle icon */}
                 <Play className="h-5 w-5 text-primary-foreground ml-0.5" fill="currentColor" />
               </div>
             </div>
-
-            {/* External link button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleOpenExternal}
-              className="absolute top-2 right-2 glass-light hover:shadow-md text-foreground h-8 w-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
-              aria-label="Open video in new tab"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Button>
           </div>
         )}
       </div>
