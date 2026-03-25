@@ -212,7 +212,7 @@ export const CardDetailRightPanel = ({
       <div className="flex flex-wrap gap-1.5">
         {/* Visible tags */}
         {visibleTags.map((tag, index) => <div key={`${tag}-${index}`} className="group flex-shrink-0">
-          {editingTagIndex === index && !readOnly ? <div className="flex items-center h-6 glass-input border border-primary rounded-full px-3">
+          {editingTagIndex === index && !readOnly ? <div className="flex items-center h-6 bg-secondary/60 border border-border/50 rounded-full px-3">
             <Input ref={editTagInputRef} value={editingTagValue} onChange={e => onEditTagChange(e.target.value)} onKeyDown={handleKeyDownEditTag} onBlur={(e) => {
               // Use setTimeout to allow the focus event to complete first
               // This prevents stealing focus from the notes textarea
