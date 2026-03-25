@@ -507,61 +507,6 @@ export const DetailViewModal = ({
         <p>No preview available</p>
       </div>;
   };
-  const MobileDetailContent = () => <div className="space-y-6 pb-20">
-      {/* Simplified mobile view reuse logic but adapt styling */}
-      <div className={`aspect-video w-full rounded-xl overflow-hidden relative ${isVideoContent ? "bg-black" : "bg-muted"}`}>
-        {renderPreview()}
-      </div>
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold leading-tight">{item.title}</h2>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          <span>{formatDistanceToNow(new Date(item.created_at), {
-            addSuffix: true
-          })}</span>
-        </div>
-      </div>
-
-      {/* Mobile Tabs/Sections could go here, keeping it simple for now matching reference functionally */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Notes</h3>
-        <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" readOnly={isTrashed} />
-      </div>
-
-      {/* Mobile Actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 border-t glass-medium flex items-center justify-between">
-        {isTrashed ? (
-          <>
-            <Button variant="ghost" size="icon" onClick={handleRestore}><RotateCcw className="w-5 h-5" /></Button>
-            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
-          </>
-        ) : (
-          <>
-            <Button variant="ghost" size="icon" onClick={() => handleSave(userNotes, tags)}><Save className="w-5 h-5" /></Button>
-            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
-          </>
-        )}
-      </div>
-    </div>;
-  const DesktopDetailContent = () => <div className={`detail-modal-grid gap-0 ${gridLayout}`}>
-      {/* LEFT COLUMN: Preview - scroll behavior controlled by content type */}
-      <div className="detail-preview-column pr-6">
-        <div className={`${getPreviewContainerStyles()} ${isVideoContent ? "" : "flex-1 min-h-0"}`}>
-          {renderPreview()}
-        </div>
-      </div>
-
-      {/* RIGHT COLUMN: Sidebar - Unified CardDetailRightPanel */}
-      <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => /* @perf-check */ setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
-      setIsAddingTag(false);
-      setNewTagInput("");
-    }} onEditTagStart={handleStartEditTag} onEditTagChange={setEditingTagValue} onEditTagCommit={handleCommitEditTag} onEditTagCancel={handleCancelEditTag} onRemoveTag={handleRemoveTag} onCopyLink={() => {
-      if (item.content) {
-        navigator.clipboard.writeText(item.content);
-        toast.success("Link copied to clipboard");
-      }
-    }} onDelete={() => setShowDeleteAlert(true)} onRestore={handleRestore} onPermanentDelete={() => setShowDeleteAlert(true)} isTrashed={isTrashed} readOnly={isTrashed} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} className="bg-black/0" />
-    </div>;
   return <>
       {isMobile ? <Drawer open={open} onOpenChange={onOpenChange}>
           <DrawerContent className="max-h-[90vh]">
@@ -570,7 +515,37 @@ export const DetailViewModal = ({
               <DrawerDescription>Item details</DrawerDescription>
             </DrawerHeader>
             <div className="p-4 overflow-y-auto">
-              <MobileDetailContent />
+              <div className="space-y-6 pb-20">
+                <div className={`aspect-video w-full rounded-xl overflow-hidden relative ${isVideoContent ? "bg-black" : "bg-muted"}`}>
+                  {renderPreview()}
+                </div>
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold leading-tight">{item.title}</h2>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatDistanceToNow(new Date(item.created_at), {
+                      addSuffix: true
+                    })}</span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Notes</h3>
+                  <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" readOnly={isTrashed} />
+                </div>
+                <div className="fixed bottom-0 left-0 right-0 p-4 border-t glass-medium flex items-center justify-between">
+                  {isTrashed ? (
+                    <>
+                      <Button variant="ghost" size="icon" onClick={handleRestore}><RotateCcw className="w-5 h-5" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="ghost" size="icon" onClick={() => handleSave(userNotes, tags)}><Save className="w-5 h-5" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDeleteAlert(true)}><Trash2 className="w-5 h-5" /></Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </DrawerContent>
         </Drawer> : <Dialog open={open} onOpenChange={onOpenChange}>
@@ -579,7 +554,22 @@ export const DetailViewModal = ({
               <DialogTitle>{item.title}</DialogTitle>
               <DialogDescription>Item details</DialogDescription>
             </DialogHeader>
-            <DesktopDetailContent />
+            <div className={`detail-modal-grid gap-0 ${gridLayout}`}>
+              <div className="detail-preview-column pr-6">
+                <div className={`${getPreviewContainerStyles()} ${isVideoContent ? "" : "flex-1 min-h-0"}`}>
+                  {renderPreview()}
+                </div>
+              </div>
+              <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
+                setIsAddingTag(false);
+                setNewTagInput("");
+              }} onEditTagStart={handleStartEditTag} onEditTagChange={setEditingTagValue} onEditTagCommit={handleCommitEditTag} onEditTagCancel={handleCancelEditTag} onRemoveTag={handleRemoveTag} onCopyLink={() => {
+                if (item.content) {
+                  navigator.clipboard.writeText(item.content);
+                  toast.success("Link copied to clipboard");
+                }
+              }} onDelete={() => setShowDeleteAlert(true)} onRestore={handleRestore} onPermanentDelete={() => setShowDeleteAlert(true)} isTrashed={isTrashed} readOnly={isTrashed} saving={saving} tagInputRef={tagInputRef} editTagInputRef={editTagInputRef} className="bg-black/0" />
+            </div>
           </DialogContent>
         </Dialog>}
 

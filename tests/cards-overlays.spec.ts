@@ -119,6 +119,34 @@ test.describe("Card and Overlay Components", () => {
     });
   });
 
+  test.describe("DetailViewModal Notes", () => {
+    test("Notes textarea stays focused while typing on URL bookmark detail", async ({ page }) => {
+      await openPath(page, "/bookmarks");
+      await waitForBookmarksSurface(page);
+
+      const cards = page.locator("[data-testid^='bookmark-card-']");
+      test.skip((await cards.count()) === 0, "requires at least one bookmark card");
+
+      // URL items open DetailViewModal; note items open NoteEditorModal. Prefer media cards; fallback to "Read Later" URL cards without overlay.
+      const mediaCards = cards.filter({ has: page.getByTestId("bookmark-card-overlay") });
+      const urlReadLater = page.getByRole("article", { name: /^Read Later:/i });
+      const mediaCount = await mediaCards.count();
+      const readLaterCount = await urlReadLater.count();
+      if (mediaCount === 0 && readLaterCount === 0) {
+        test.skip(true, "requires a non-note URL bookmark (media card or Read Later)");
+      }
+      const targetCard = mediaCount > 0 ? mediaCards.first() : urlReadLater.first();
+      await targetCard.click();
+      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 15000 });
+
+      const notes = page.getByPlaceholder("Add your notes...");
+      await notes.waitFor({ state: "visible", timeout: 10000 });
+      await notes.click();
+      await page.keyboard.type("playwright");
+      await expect(notes).toBeFocused();
+    });
+  });
+
   test.describe("NoteEditorModal", () => {
     test("rich text block stays focused while typing when a note card exists", async ({ page }) => {
       await openPath(page, "/bookmarks");
