@@ -1,7 +1,8 @@
-import { useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { Button } from "@/shared/components/ui";
 import { Badge } from "@/shared/components/ui";
-import { Input, Textarea } from "@/shared/components/ui";
+import { Input } from "@/shared/components/ui";
+import { DetailItemNotesField } from "@/features/bookmarks/components/DetailItemNotesField";
 import { ExternalLink, Link2, Clock, Globe, Plus, X, Trash2, RotateCcw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Item } from "@/features/bookmarks/types";
@@ -109,8 +110,6 @@ export const CardDetailRightPanel = ({
   editTagInputRef,
   className
 }: CardDetailRightPanelProps) => {
-  const notesRef = useRef<HTMLTextAreaElement>(null);
-
   // Calculate visible tags and overflow count
   const {
     visibleTags,
@@ -197,24 +196,12 @@ export const CardDetailRightPanel = ({
     </div>
 
     {/* ========== NOTES: PRIMARY workspace - glass card appearance ========== */}
-    <div className="flex-shrink-0 pb-4">
-      <label htmlFor="user-notes" className="block text-xs font-semibold mb-1.5 text-primary-foreground">
-        Notes
-      </label>
-      <Textarea 
-        id="user-notes" 
-        ref={notesRef} 
-        value={userNotes} 
-        onChange={e => {
-          if (readOnly) return;
-          onNotesChange(e.target.value);
-        }} 
-        placeholder="Add your notes..." 
-        className="min-h-[100px] max-h-[100px] resize-none glass-input rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50" 
-        readOnly={readOnly}
-      />
-      {saving && !readOnly && <p className="text-xs text-muted-foreground mt-1">Saving...</p>}
-    </div>
+    <DetailItemNotesField
+      value={userNotes}
+      onChange={onNotesChange}
+      readOnly={readOnly}
+      saving={saving}
+    />
 
 
     {/* ========== TAGS: Pink accent label ========== */}

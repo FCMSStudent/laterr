@@ -10,9 +10,9 @@ import { VideoPreview } from "@/features/bookmarks/components/VideoPreview";
 import { ThumbnailPreview } from "@/features/bookmarks/components/ThumbnailPreview";
 import { NotePreview } from "@/features/bookmarks/components/NotePreview";
 import { CardDetailRightPanel } from "@/features/bookmarks/components/CardDetailRightPanel";
+import { DetailItemNotesField } from "@/features/bookmarks/components/DetailItemNotesField";
 import { Link2, FileText, Image as ImageIcon, Trash2, Save, ExternalLink, Plus, Globe, Clock, X, Edit2, RotateCcw } from "lucide-react";
 import { Badge } from "@/shared/components/ui";
-import { Input, Textarea } from "@/shared/components/ui";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -79,7 +79,6 @@ export const DetailViewModal = ({
 
   // Extract item id to avoid optional chaining in dependency arrays (not allowed by esbuild)
   const itemId = item?.id;
-  const notesRef = useRef<HTMLTextAreaElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
   const editTagInputRef = useRef<HTMLInputElement>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -528,10 +527,12 @@ export const DetailViewModal = ({
                     })}</span>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Notes</h3>
-                  <Textarea value={userNotes} onChange={e => setUserNotes(e.target.value)} placeholder="Add your notes here..." className="bg-muted/30 min-h-[120px]" readOnly={isTrashed} />
-                </div>
+                <DetailItemNotesField
+                  value={userNotes}
+                  onChange={setUserNotes}
+                  readOnly={isTrashed}
+                  saving={saving}
+                />
                 <div className="fixed bottom-0 left-0 right-0 p-4 border-t glass-medium flex items-center justify-between">
                   {isTrashed ? (
                     <>

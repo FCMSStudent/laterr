@@ -15,6 +15,7 @@ export { DOCXPreview } from './components/DOCXPreview';
 export { VideoPreview } from './components/VideoPreview';
 export { NotePreview } from './components/NotePreview';
 export { RichNotesEditor } from './components/RichNotesEditor';
+export { DetailItemNotesField } from './components/DetailItemNotesField';
 export { ChecklistItem } from './components/ChecklistItem';
 export { ChecklistProgress } from './components/ChecklistProgress';
 
