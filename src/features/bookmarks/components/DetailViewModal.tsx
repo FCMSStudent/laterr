@@ -64,6 +64,7 @@ export const DetailViewModal = ({
   const [tags, setTags] = useState<string[]>(item?.tags || []);
   const [newTagInput, setNewTagInput] = useState("");
   const [isAddingTag, setIsAddingTag] = useState(false);
+  const handleOnAddTagStart = useCallback(() => setIsAddingTag(true), [setIsAddingTag]);
   const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
   const [editingTagValue, setEditingTagValue] = useState("");
   const [saving, setSaving] = useState(false);
@@ -561,7 +562,7 @@ export const DetailViewModal = ({
                   {renderPreview()}
                 </div>
               </div>
-              <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
+              <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={handleOnAddTagStart} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
                 setIsAddingTag(false);
                 setNewTagInput("");
               }} onEditTagStart={handleStartEditTag} onEditTagChange={setEditingTagValue} onEditTagCommit={handleCommitEditTag} onEditTagCancel={handleCancelEditTag} onRemoveTag={handleRemoveTag} onCopyLink={() => {
