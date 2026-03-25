@@ -101,4 +101,31 @@ describe("NoteEditorModal", () => {
       expect(supabaseMock.queryBuilder.update).toHaveBeenCalled();
     });
   });
+
+  test("does not reset body when item reference changes for the same id", async () => {
+    const user = userEvent.setup();
+    const item = createItemFixture({
+      id: "note-stable-ref",
+      type: "note",
+      title: "T",
+      content: '{"version":1,"blocks":[]}',
+    });
+
+    const { rerender } = render(
+      <NoteEditorModal open={true} onOpenChange={vi.fn()} item={item} onUpdate={vi.fn()} />,
+    );
+
+    await user.type(screen.getByLabelText("Rich editor"), " edited");
+
+    const itemSameIdNewRef = {
+      ...item,
+      updated_at: "2026-02-01T12:00:00.000Z",
+    };
+
+    rerender(
+      <NoteEditorModal open={true} onOpenChange={vi.fn()} item={itemSameIdNewRef} onUpdate={vi.fn()} />,
+    );
+
+    expect((screen.getByLabelText("Rich editor") as HTMLTextAreaElement).value).toContain("edited");
+  });
 });

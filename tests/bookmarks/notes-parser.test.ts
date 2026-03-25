@@ -21,6 +21,22 @@ describe("notes-parser utilities", () => {
     expect(parseNotes(JSON.stringify(payload))).toEqual(payload);
   });
 
+  test("fills missing block ids in JSON payload", () => {
+    const raw = JSON.stringify({
+      version: 1,
+      blocks: [{ type: "text", content: "Hi" }],
+    });
+    const parsed = parseNotes(raw);
+    expect(parsed.blocks[0].id).toBe("missing-0");
+  });
+
+  test("plain text yields stable ids across repeated parses", () => {
+    const text = "Line one\nLine two";
+    const a = parseNotes(text);
+    const b = parseNotes(text);
+    expect(a.blocks.map((block) => block.id)).toEqual(b.blocks.map((block) => block.id));
+  });
+
   test("parses plain text syntax into block types", () => {
     const parsed = parseNotes(
       ["# Heading", "[x] Done", "[ ] Todo", "- Bullet item", "1. Numbered", "Paragraph"].join("\n"),

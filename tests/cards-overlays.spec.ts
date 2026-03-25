@@ -119,6 +119,24 @@ test.describe("Card and Overlay Components", () => {
     });
   });
 
+  test.describe("NoteEditorModal", () => {
+    test("rich text block stays focused while typing when a note card exists", async ({ page }) => {
+      await openPath(page, "/bookmarks");
+      await waitForBookmarksSurface(page);
+
+      const noteArticles = page.getByRole("article", { name: /^Note:/ });
+      const noteCount = await noteArticles.count();
+      test.skip(noteCount === 0, "requires at least one note card in the list");
+
+      await noteArticles.first().click();
+      await page.getByRole("button", { name: /^Text$/i }).click();
+      const input = page.getByPlaceholder("Text...");
+      await input.click();
+      await page.keyboard.type("hello");
+      await expect(input).toBeFocused();
+    });
+  });
+
   test.describe("Components Showcase", () => {
     test("loads component showcase page", async ({ page }) => {
       await openPath(page, "/components");

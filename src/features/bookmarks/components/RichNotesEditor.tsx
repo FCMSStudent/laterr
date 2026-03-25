@@ -46,24 +46,36 @@ export const RichNotesEditor = ({
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [commandSearch, setCommandSearch] = useState('');
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
-  const isInternalChange = useRef(false);
+  /** Last payload we emitted (canonical JSON). Skips re-parsing when parent echoes it back. */
+  const lastEmittedValueRef = useRef<string>(serializeNotes(parseNotes(value)));
 
-  // Sync with external value changes
+  // Sync with external value changes only when value differs from our last emission (or canonical form).
   useEffect(() => {
-    if (isInternalChange.current) {
-      isInternalChange.current = false;
+    const incomingCanonical = serializeNotes(parseNotes(value));
+    if (incomingCanonical === lastEmittedValueRef.current) {
       return;
     }
     const parsed = parseNotes(value);
     setNotesData(parsed);
+    lastEmittedValueRef.current = incomingCanonical;
   }, [value]);
 
   // Emit changes
   const emitChange = useCallback((data: NotesData) => {
-    isInternalChange.current = true;
+    const serialized = serializeNotes(data);
+    lastEmittedValueRef.current = serialized;
     setNotesData(data);
-    onChange(serializeNotes(data));
+    onChange(serialized);
   }, [onChange]);
+
+  // Clear new-block focus hint after mount so autoFocus does not stay stuck on one id
+  useEffect(() => {
+    if (newBlockId === null) return;
+    const id = requestAnimationFrame(() => {
+      setNewBlockId(null);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [newBlockId]);
 
   // Add new block
   const handleAddBlock = useCallback((type: NoteBlock['type'], level?: 1 | 2 | 3) => {
@@ -315,7 +327,7 @@ export const RichNotesEditor = ({
             {placeholder}
           </div>
         ) : (
-          notesData.blocks.map((block, index) => {
+          notesData.blocks.map((block) => {
             const key = block.id;
             const autoFocus = block.id === newBlockId;
 

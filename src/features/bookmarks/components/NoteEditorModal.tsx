@@ -31,13 +31,14 @@ export const NoteEditorModal = ({
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const isMobile = useIsMobile();
 
-  // Reset state when item changes
+  // Reset local state when opening or switching to a different item (not when `item` reference changes only)
   useEffect(() => {
-    if (item && open) {
-      setTitle(item.title);
-      setContent(item.content || "");
-    }
-  }, [item, open]);
+    if (!open) return;
+    setTitle(item.title);
+    setContent(item.content || "");
+    // Intentionally omit item.title/item.content from deps so a refetched row object does not wipe in-progress edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- depend on open + item.id only
+  }, [open, item.id]);
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
       toast.error("Title is required");
