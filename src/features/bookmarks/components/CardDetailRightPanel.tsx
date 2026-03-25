@@ -237,7 +237,7 @@ export const CardDetailRightPanel = ({
         </Badge>}
 
         {/* Add tag button/input - styled like a pill */}
-        {isAddingTag && !readOnly ? <div className="flex items-center h-6 glass-input border border-primary rounded-full px-3 flex-shrink-0">
+        {isAddingTag && !readOnly ? <div className="flex items-center h-6 bg-secondary/60 border border-border/50 rounded-full px-3 flex-shrink-0">
           <Input ref={tagInputRef} value={newTagInput} onChange={e => onAddTagChange(e.target.value)} onKeyDown={handleKeyDownTag} onBlur={(e) => {
             // Use setTimeout to allow the focus event to complete first
             // This prevents stealing focus from the notes textarea
