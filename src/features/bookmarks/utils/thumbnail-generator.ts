@@ -123,7 +123,7 @@ async function convertDocxToPdfBlob(file: File): Promise<Blob> {
     const canvas = await html2canvas(container, {
       scale: 2, // Higher quality
       useCORS: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: 'hsl(var(--background))'
     });
     
     // 4. Convert canvas to PDF using jspdf
@@ -150,7 +150,7 @@ async function generateDocxThumbnailFallback(file: File): Promise<Blob> {
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.convertToHtml({ arrayBuffer });
     const container = document.createElement('div');
-    container.style.cssText = 'position:absolute;left:-9999px;width:816px;padding:40px;background:white;font:14px system-ui;line-height:1.5;color:#000';
+    container.style.cssText = 'position:absolute;left:-9999px;width:816px;padding:40px;background:white;font:14px system-ui;line-height:1.5;color:hsl(var(--foreground))';
     container.innerHTML = result.value;
     document.body.appendChild(container);
     const canvas = document.createElement('canvas');
@@ -158,11 +158,11 @@ async function generateDocxThumbnailFallback(file: File): Promise<Blob> {
     if (!ctx) { document.body.removeChild(container); throw new Error('Failed'); }
     canvas.width = THUMBNAIL_WIDTH;
     canvas.height = THUMBNAIL_HEIGHT;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = 'hsl(var(--background))';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const textContent = container.innerText || '';
     const lines = textContent.split('\n').slice(0, DOCX_MAX_LINES);
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = 'hsl(var(--foreground))';
     ctx.font = '14px system-ui';
     let y = DOCX_PADDING;
     for (const line of lines) {
