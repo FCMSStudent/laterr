@@ -33,6 +33,7 @@ const normalizeTag = (t: string) => t.trim().toLowerCase();
 const areTagsEqual = (a: string[], b: string[]) => {
   const A = [...a].map(normalizeTag).sort();
   const B = [...b].map(normalizeTag).sort();
+
   return A.length === B.length && A.every((v, i) => v === B[i]);
 };
 const safeParseUrl = (value: string | null | undefined) => {
@@ -76,6 +77,8 @@ export const DetailViewModal = ({
   const isMobile = useIsMobile();
   const isTrashed = Boolean(item?.deleted_at);
   const debouncedNotes = useDebounce(userNotes, AUTO_SAVE_DELAY);
+
+  const handleOnAddTagStart = useCallback(() => setIsAddingTag(true), []);
 
   // Extract item id to avoid optional chaining in dependency arrays (not allowed by esbuild)
   const itemId = item?.id;
@@ -561,7 +564,7 @@ export const DetailViewModal = ({
                   {renderPreview()}
                 </div>
               </div>
-              <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={() => setIsAddingTag(true)} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
+              <CardDetailRightPanel item={item} userNotes={userNotes} onNotesChange={setUserNotes} tags={tags} isAddingTag={isAddingTag} newTagInput={newTagInput} editingTagIndex={editingTagIndex} editingTagValue={editingTagValue} onAddTagStart={handleOnAddTagStart} onAddTagChange={setNewTagInput} onAddTagCommit={handleAddTag} onAddTagCancel={() => {
                 setIsAddingTag(false);
                 setNewTagInput("");
               }} onEditTagStart={handleStartEditTag} onEditTagChange={setEditingTagValue} onEditTagCommit={handleCommitEditTag} onEditTagCancel={handleCancelEditTag} onRemoveTag={handleRemoveTag} onCopyLink={() => {
