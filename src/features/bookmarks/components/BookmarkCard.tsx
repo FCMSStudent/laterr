@@ -539,7 +539,7 @@ export const BookmarkCard = memo(({
 
         {/* Frosted glass text panel – mask fades the blur at top edge */}
         <div className="absolute bottom-0 left-0 right-0 z-40">
-          <div className="px-5 pb-5 pt-6 backdrop-blur-md space-y-2"
+          <div className="px-3 pb-3 pt-4 md:px-5 md:pb-5 md:pt-6 backdrop-blur-md space-y-1 md:space-y-2"
             style={{
               background: overlayColor
                 ? (
