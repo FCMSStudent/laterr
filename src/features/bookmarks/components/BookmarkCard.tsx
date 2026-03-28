@@ -374,7 +374,7 @@ export const BookmarkCard = memo(({
           </DropdownMenu>
         </div>
 
-        <div className="p-5 flex flex-col justify-between min-h-[220px]">
+        <div className="p-3 md:p-5 flex flex-col justify-between min-h-[160px] md:min-h-[220px]">
           {/* Note content preview */}
           <div className="flex-1 overflow-hidden">
             {content ? (
@@ -395,7 +395,7 @@ export const BookmarkCard = memo(({
           {/* Bottom section */}
           <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/30">
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-foreground text-base line-clamp-2 mb-1">
+              <h3 className="font-bold text-foreground text-sm md:text-base line-clamp-2 mb-1">
                 {title}
               </h3>
               <span className="text-muted-foreground text-xs">{dateText}</span>
@@ -539,7 +539,7 @@ export const BookmarkCard = memo(({
 
         {/* Frosted glass text panel – mask fades the blur at top edge */}
         <div className="absolute bottom-0 left-0 right-0 z-40">
-          <div className="px-5 pb-5 pt-6 backdrop-blur-md space-y-2"
+          <div className="px-3 pb-3 pt-4 md:px-5 md:pb-5 md:pt-6 backdrop-blur-md space-y-1 md:space-y-2"
             style={{
               background: overlayColor
                 ? (
@@ -553,18 +553,18 @@ export const BookmarkCard = memo(({
             }}
           >
             {/* Category label */}
-            <span className={cn("text-[10px] font-semibold uppercase tracking-[0.12em] block", labelClass)}>
+            <span className={cn("text-[9px] md:text-[10px] font-semibold uppercase tracking-[0.12em] block", labelClass)}>
               {categoryBadge.label}
             </span>
 
             {/* Title */}
-            <h3 className={cn("font-bold text-lg leading-tight line-clamp-2", titleClass)} style={{ textShadow }}>
+            <h3 className={cn("font-bold text-sm md:text-lg leading-tight line-clamp-2", titleClass)} style={{ textShadow }}>
               {title}
             </h3>
 
             {/* Summary/description */}
             {summary && (
-              <p className={cn("text-[13px] leading-relaxed line-clamp-2 font-light", summaryClass)} style={{ textShadow }}>
+              <p className={cn("text-[11px] md:text-[13px] leading-relaxed line-clamp-2 font-light", summaryClass)} style={{ textShadow }}>
                 {summary}
               </p>
             )}
