@@ -37,6 +37,89 @@ function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
 }
 
 /**
+ * Finds the index of the closing brace for a block starting at openingBraceIdx
+ * Handles strings and simple comments to avoid false matches
+ */
+function findClosingBrace(content: string, openingBraceIdx: number): number {
+  let count = 0;
+  let inString: string | null = null;
+  let inComment = false;
+  let inMulticomment = false;
+
+  for (let i = openingBraceIdx; i < content.length; i++) {
+    const char = content[i];
+    const nextChar = content[i + 1];
+
+    if (inComment) {
+      if (char === '\n') inComment = false;
+      continue;
+    }
+    if (inMulticomment) {
+      if (char === '*' && nextChar === '/') {
+        inMulticomment = false;
+        i++;
+      }
+      continue;
+    }
+    if (inString) {
+      if (char === inString && content[i - 1] !== '\\') inString = null;
+      continue;
+    }
+
+    if (char === '/' && nextChar === '/') {
+      inComment = true;
+      i++;
+    } else if (char === '/' && nextChar === '*') {
+      inMulticomment = true;
+      i++;
+    } else if (char === "'" || char === '"' || char === '`') {
+      inString = char;
+    } else if (char === '{') {
+      count++;
+    } else if (char === '}') {
+      count--;
+      if (count === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Heuristic to check if a position in a file is inside a React component
+ */
+function isInsideComponent(content: string, index: number): boolean {
+  const lookBack = content.substring(Math.max(0, index - 2000), index);
+  // Look for: export const ComponentName = ... or function ComponentName(...)
+  // Usually components start with a capital letter
+  return /export\s+const\s+[A-Z]\w+\s*=\s*/.test(lookBack) || /function\s+[A-Z]\w+\s*\(/.test(lookBack);
+}
+
+/**
+ * Heuristic to check if a position in a file is inside a React hook
+ */
+function isInsideHook(content: string, index: number): boolean {
+  const lookBack = content.substring(Math.max(0, index - 500), index);
+  // Simple check for useMemo, useCallback, useEffect boundaries
+  // Better implementation would track brace/parenthesis counts
+  let openCount = 0;
+  let parenCount = 0;
+  for (let i = index - 1; i >= 0 && i > index - 500; i--) {
+    if (content[i] === '}') openCount++;
+    if (content[i] === '{') openCount--;
+    if (content[i] === ')') parenCount++;
+    if (content[i] === '(') parenCount--;
+
+    if (openCount < 0 || parenCount < 0) {
+      const precedingText = content.substring(Math.max(0, i - 20), i);
+      if (/\buse(Memo|Callback|Effect|LayoutEffect|Context)\b/.test(precedingText)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Scans for N+1 queries (async calls in loops)
  */
 /**
@@ -93,26 +176,30 @@ function scanForN1Queries(): OptimizationResult[] {
       });
     });
 
-    // 2b. Await inside for/while loops
-    const awaitInLoops = execSync('grep -rnE "(for|while)\\s*\\(" src/ -A 10 | grep "await" || true').toString();
-    if (awaitInLoops) {
-        const lines = awaitInLoops.split('\n');
-        lines.forEach(rawLine => {
-            const line = rawLine.trim();
-            if (!line) return;
-            const match = line.match(/^([^:]+):([0-9]+):/);
-            if (!match) return;
-            const [, file, lineNum] = match;
-            if ((!file.endsWith('.ts') && !file.endsWith('.tsx')) || file.includes('node_modules') || file.includes('.test.')) return;
-
-            results.push({
-                category: 'backend_api',
-                description: 'Detected await inside for/while loop (Potential N+1)',
-                impact: 'Sequential execution of async operations; consider batching',
-                file,
-                line: lineNum
-            });
-        });
+    // 2b. Await inside for/while loops (more robust check)
+    const filesWithLoops = execSync('grep -rlE "(for|while)\\s*\\(" src/ --include="*.ts" --include="*.tsx" || true').toString().split('\n').filter(Boolean);
+    for (const file of filesWithLoops) {
+        if (file.includes('node_modules') || file.includes('.test.')) continue;
+        const content = fs.readFileSync(file, 'utf8');
+        const loopRegex = /(for|while)\s*\(.*?\)\s*\{/gs;
+        let match;
+        while ((match = loopRegex.exec(content)) !== null) {
+            const openingBraceIdx = content.indexOf('{', match.index);
+            const closingBraceIdx = findClosingBrace(content, openingBraceIdx);
+            if (closingBraceIdx !== -1) {
+                const innerContent = content.substring(openingBraceIdx + 1, closingBraceIdx);
+                if (innerContent.includes('await ')) {
+                    const lineNum = content.substring(0, match.index).split('\n').length;
+                    results.push({
+                        category: 'backend_api',
+                        description: 'Detected await inside for/while loop (Potential N+1)',
+                        impact: 'Sequential execution of async operations; consider batching',
+                        file,
+                        line: lineNum.toString()
+                    });
+                }
+            }
+        }
     }
 
     // 2c. createSignedUrl in loops specifically
@@ -215,6 +302,44 @@ function scanForMissingIndexes(): OptimizationResult[] {
 }
 
 /**
+ * Scans for dead code (unused local variables or unreferenced functions)
+ */
+function scanForDeadCode(): OptimizationResult[] {
+  const results: OptimizationResult[] = [];
+  try {
+    const files = execSync('find src -name "*.ts" -o -name "*.tsx" | grep -v "node_modules" | grep -v ".test."').toString().split('\n').filter(Boolean);
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf8');
+      const lines = content.split('\n');
+
+      // Simple detection for unused local const/let
+      // Skip exported variables as they might be used in other files
+      const localVars = content.match(/^(?!\s*export)\s*const\s+(\w+)\s*=/gm) || [];
+      localVars.forEach(v => {
+        const varName = v.match(/const\s+(\w+)/)?.[1];
+        if (varName) {
+          // Heuristic: check if varName appears more than once in the file
+          const occurrences = (content.match(new RegExp(`\\b${varName}\\b`, 'g')) || []).length;
+          if (occurrences === 1) {
+             const lineIdx = lines.findIndex(l => l.includes(`const ${varName}`));
+             results.push({
+               category: 'dead_code',
+               description: `Potentially unused local variable "${varName}"`,
+               impact: 'Unnecessary code bloat and potential confusion',
+               file,
+               line: (lineIdx + 1).toString()
+             });
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error scanning for dead code:', e);
+  }
+  return results;
+}
+
+/**
  * Scans for missing memoization in React components
  */
 function scanForMissingMemo(): OptimizationResult[] {
@@ -230,28 +355,12 @@ function scanForMissingMemo(): OptimizationResult[] {
         const lineIdx = parseInt(lineNum) - 1;
         if (isNaN(lineIdx) || lineIdx < 0) return;
 
-        // Look back up to find if we are inside a hook or the return statement
-        let isInsideHook = false;
-        let isInsideReturn = false;
+        // Skip trivial operations like .filter(Boolean)
+        if (lines[lineIdx].includes('.filter(Boolean)')) return;
 
-        for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
-            const l = lines[i];
+        const charIndex = content.split('\n').slice(0, lineIdx).join('\n').length + content.split('\n')[lineIdx].indexOf('.');
 
-            if (l.includes('return (') || l.trim().startsWith('return ')) {
-                isInsideReturn = true;
-            }
-
-            if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
-                isInsideHook = true;
-                break;
-            }
-
-            if (l.includes('export const') || l.includes('function ')) {
-                break;
-            }
-        }
-
-        if (!isInsideHook) {
+        if (!isInsideHook(content, charIndex) && isInsideComponent(content, charIndex)) {
             // Check if it's an assignment
             let actualLineIdx = lineIdx;
             let varName = '';
@@ -436,44 +545,27 @@ function applyFixes(optimizations: OptimizationResult[]) {
                                      def = def.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, memo } from 'react'`);
                                 }
 
-                                // 2. Wrap definition
+                                // 2. Wrap definition using brace counting
                                 const exportMatch = def.match(/export const (\w+)\s*=\s*\(([^)]*)\)\s*=>\s*\{/);
                                 if (exportMatch && exportMatch[1] === componentName) {
-                                    const lines = def.split('\n');
-                                    let endIdx = -1;
-                                    // Heuristic: find the last }; or the one that likely closes the component
-                                    for (let i = lines.length - 1; i >= 0; i--) {
-                                        if (lines[i].trim() === '};' || lines[i].trim() === '})' || lines[i].trim() === '};') {
-                                            endIdx = i;
-                                            break;
-                                        }
-                                    }
+                                    const openingBraceIdx = def.indexOf('{', exportMatch.index);
+                                    const closingBraceIdx = findClosingBrace(def, openingBraceIdx);
 
-                                    if (endIdx !== -1) {
-                                        def = def.replace(`export const ${componentName} = (`, `export const ${componentName} = memo((`);
-                                        const newLines = def.split('\n');
-                                        // Find where the definition started in the new string to be safe
-                                        const startIdx = newLines.findIndex(l => l.includes(`export const ${componentName} = memo(`));
-                                        if (startIdx !== -1) {
-                                            // Re-verify endIdx in newLines
-                                            let currentEndIdx = -1;
-                                            for (let i = newLines.length - 1; i >= startIdx; i--) {
-                                                if (newLines[i].trim().startsWith('};')) {
-                                                    currentEndIdx = i;
-                                                    break;
-                                                }
-                                            }
-                                            if (currentEndIdx !== -1) {
-                                                newLines[currentEndIdx] = newLines[currentEndIdx].replace('};', '});');
-                                                def = newLines.join('\n');
+                                    if (closingBraceIdx !== -1) {
+                                        const before = def.substring(0, exportMatch.index);
+                                        const middle = def.substring(exportMatch.index, closingBraceIdx + 1);
+                                        const after = def.substring(closingBraceIdx + 1);
 
-                                                if (!def.includes(`${componentName}.displayName`)) {
-                                                    def += `\n\n${componentName}.displayName = "${componentName}";\n`;
-                                                }
-                                                console.log(`✅ Automatically wrapping ${componentName} in memo() in ${resolvedPath}`);
-                                                fs.writeFileSync(resolvedPath, def);
-                                            }
+                                        const wrappedMiddle = middle.replace(`export const ${componentName} = (`, `export const ${componentName} = memo((`)
+                                                                  .replace(/\s*}\s*$/, (m) => m.includes(';') ? m.replace('};', '});') : m.replace('}', '})'));
+
+                                        def = before + wrappedMiddle + after;
+
+                                        if (!def.includes(`${componentName}.displayName`)) {
+                                            def += `\n\n${componentName}.displayName = "${componentName}";\n`;
                                         }
+                                        console.log(`✅ Automatically wrapping ${componentName} in memo() in ${resolvedPath}`);
+                                        fs.writeFileSync(resolvedPath, def);
                                     }
                                 }
                             }
@@ -482,14 +574,48 @@ function applyFixes(optimizations: OptimizationResult[]) {
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('inline arrow function')) {
                 // Automated useCallback for simple setter patterns: onClick={() => setOpen(false)}
+                // We only do this if we haven't already added a handler with the same name to avoid collisions
                 const setterMatch = line.match(/(\w+)\s*=\s*\{\(\)\s*=>\s*(\w+)\(([^)]*)\)\}/);
                 if (setterMatch) {
                     const [fullMatch, propName, setterName, setterVal] = setterMatch;
                     const handlerName = `handle${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
 
-                    // This requires inserting a useCallback hook in the component body
-                    // Too complex for simple regex without knowing component structure
-                    console.log(`Recommendation: Move ${fullMatch} to a useCallback named ${handlerName} in ${opt.file}`);
+                    if (content.includes(`const ${handlerName} =`)) {
+                        console.log(`Skipping automated useCallback for ${handlerName} in ${opt.file} to avoid naming collision.`);
+                        return;
+                    }
+
+                    // Attempt to insert useCallback at the top of the component
+                    const componentStartMatch = content.match(/export\s+const\s+[A-Z]\w+\s*=\s*.*?\s*=>\s*\{/);
+                    if (componentStartMatch) {
+                        const insertIdx = componentStartMatch.index! + componentStartMatch[0].length;
+
+                        // Identify dependencies - simple heuristic
+                        const deps = [setterName];
+                        if (setterVal && !/^(true|false|null|undefined|[0-9]+|'[^']*'|"[^"]*")$/.test(setterVal)) {
+                            // If it's not a literal, it's likely a variable
+                            if (/^[a-zA-Z_]\w*$/.test(setterVal)) {
+                                deps.push(setterVal);
+                            }
+                        }
+
+                        const hookCode = `\n  const ${handlerName} = useCallback(() => ${setterName}(${setterVal}), [${deps.join(', ')}]);`;
+
+                        let newContent = content.substring(0, insertIdx) + hookCode + content.substring(insertIdx);
+                        newContent = newContent.replace(fullMatch, `${propName}={${handlerName}}`);
+
+                        // Ensure useCallback is imported
+                        if (!newContent.includes('useCallback')) {
+                             if (newContent.includes('import {')) {
+                                 newContent = newContent.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, useCallback } from 'react'`);
+                             } else {
+                                 newContent = `import { useCallback } from 'react';\n` + newContent;
+                             }
+                        }
+
+                        fs.writeFileSync(opt.file, newContent);
+                        console.log(`✅ Automatically refactored inline arrow function to useCallback in ${opt.file}`);
+                    }
                 } else {
                     console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
                 }
@@ -698,58 +824,41 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
 }
 
 /**
- * Scans for potential nested loops
+ * Scans for potential nested loops using brace counting
  */
 function scanForNestedLoops(): OptimizationResult[] {
     const results: OptimizationResult[] = [];
     try {
-        const output = execSync('grep -rnE "(\\.map|\\.forEach|for\\s*\\(|while\\s*\\()" src/ || true').toString();
-        const lines = output.split('\n').filter(Boolean);
-        const fileMap: Record<string, number[]> = {};
+        const files = execSync('find src -name "*.ts" -o -name "*.tsx" | grep -v "node_modules"').toString().split('\n').filter(Boolean);
 
-        lines.forEach(line => {
-            const parts = line.split(':');
-            if (parts.length < 2) return;
-            const file = parts[0];
-            const lineNum = parts[1];
-            if (!fileMap[file]) fileMap[file] = [];
-            fileMap[file].push(parseInt(lineNum));
-        });
+        for (const file of files) {
+            const content = fs.readFileSync(file, 'utf8');
+            const loopRegex = /(\.map|\.forEach|for\s*\(|while\s*\()\s*.*\{/g;
+            let match;
 
-        const contentMap: Record<string, string[]> = {};
+            while ((match = loopRegex.exec(content)) !== null) {
+                const startIdx = match.index;
+                const openingBraceIdx = content.indexOf('{', startIdx);
+                const closingBraceIdx = findClosingBrace(content, openingBraceIdx);
 
-        Object.entries(fileMap).forEach(([file, lineNums]) => {
-            if ((!file.endsWith('.ts') && !file.endsWith('.tsx')) || file.includes('.test.') || file.includes('node_modules')) return;
-
-            if (!contentMap[file]) {
-                contentMap[file] = fs.readFileSync(file, 'utf8').split('\n');
-            }
-            const fileLines = contentMap[file];
-
-            for (let i = 0; i < lineNums.length - 1; i++) {
-                const lineA = lineNums[i];
-                const lineB = lineNums[i+1];
-
-                // If two loops are within 8 lines of each other
-                if (lineB - lineA < 8) {
-                    const contentA = fileLines[lineA - 1];
-                    const contentB = fileLines[lineB - 1];
-                    const indentA = contentA.search(/\S/);
-                    const indentB = contentB.search(/\S/);
-
-                    // If the second loop is more indented than the first, it's likely nested
-                    if (indentB > indentA) {
+                if (closingBraceIdx !== -1) {
+                    const innerContent = content.substring(openingBraceIdx + 1, closingBraceIdx);
+                    // Use a fresh regex for the inner check to avoid resetting lastIndex of the outer loop
+                    const innerLoopRegex = /(\.map|\.forEach|for\s*\(|while\s*\()\s*.*\{/g;
+                    if (innerLoopRegex.test(innerContent)) {
+                        const lineNum = content.substring(0, startIdx).split('\n').length;
                         results.push({
                             category: 'logic',
-                            description: 'Potential nested loop detected',
-                            impact: 'May lead to O(n^2) complexity',
+                            description: 'Potential nested loop detected (O(n^2))',
+                            impact: 'Performance degradation on large datasets',
                             file,
-                            line: lineA.toString()
+                            line: lineNum.toString()
                         });
                     }
+                    // No need to manually adjust lastIndex here as we didn't use the outer loopRegex for testing innerContent
                 }
             }
-        });
+        }
     } catch (e) {
         console.error('Error scanning for nested loops:', e);
     }
@@ -772,6 +881,7 @@ async function main() {
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
   const logicIssues = scanForNestedLoops();
+  const deadCodeIssues = scanForDeadCode();
 
   const allIssues = [
     ...inefficientQueries,
@@ -779,7 +889,8 @@ async function main() {
     ...indexIssues,
     ...memoIssues,
     ...mergeIssues,
-    ...logicIssues
+    ...logicIssues,
+    ...deadCodeIssues
   ];
 
   const beforeBenchmarks = await runBenchmarks();
