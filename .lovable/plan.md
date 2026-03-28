@@ -1,46 +1,33 @@
 
 
-# Fix: Video Preview External Link Button Alignment
+# Make Cards Smaller on Mobile (Pinterest-style)
 
 ## Problem
-The external link button on the video thumbnail in the detail view appears mispositioned in the top-left corner instead of top-right, and is always visible instead of showing only on hover.
+Currently on mobile, the grid is `columns-1` — a single column of full-width cards. This doesn't feel like Pinterest at all.
 
-## Root Cause
-The button at line 83-91 in `VideoPreview.tsx` is placed inside a `group cursor-pointer` div (line 54), but the button uses `absolute top-2 right-2`. The issue is that the button's parent (`div.relative.w-full.h-full.group`) is correct, but the button also has `opacity-0 group-hover:opacity-100` which may conflict with the detail view's always-visible state. Additionally, the `left` positioning from the `glass-light` class or button defaults may override `right-2`.
+## Changes
 
-## Fix
+### 1. Grid: 2 columns on mobile
+**File: `src/features/bookmarks/pages/BookmarksPage.tsx`** (lines 559 and 584)
 
-**File: `src/features/bookmarks/components/VideoPreview.tsx`**
-
-1. Move the external link button **outside** the play-state conditional (the `group` div) and place it directly inside the root `relative` container (line 44) so it always positions correctly relative to the video container
-2. Change positioning to ensure `top-2 left-2` (matching the screenshot's intended corner) or keep `right-2` — based on the design, top-left with a subtle glass background is the standard pattern for action buttons on media cards
-3. Remove `opacity-0 group-hover:opacity-100` so it's always visible in the detail view, matching the screenshot
-
-Updated button (moved to line ~44, inside the root relative div, outside the conditional):
-```tsx
-<div className="relative w-full aspect-video bg-black overflow-hidden rounded-2xl">
-  {/* External link button - always visible */}
-  <Button
-    variant="ghost"
-    size="sm"
-    onClick={handleOpenExternal}
-    className="absolute top-2 left-2 glass-light hover:shadow-md text-foreground h-8 w-8 p-0 rounded-full z-10"
-    aria-label="Open video in new tab"
-  >
-    <ExternalLink className="h-4 w-4" />
-  </Button>
-
-  {isPlaying && embedUrl ? (
-    <iframe ... />
-  ) : (
-    <div className="relative w-full h-full group cursor-pointer" onClick={handlePlayClick}>
-      {/* thumbnail + play button, no external link button here */}
-    </div>
-  )}
-</div>
+Change `columns-1 sm:columns-2` to `columns-2 sm:columns-2` so mobile always shows 2 columns. Reduce the gap on mobile:
+```
+columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 md:gap-6
 ```
 
-| File | Change |
-|------|--------|
-| `src/features/bookmarks/components/VideoPreview.tsx` | Move external link button outside conditional, fix position to top-left, always visible |
+Also update the margin-bottom on card wrappers (lines 563, 586) from `mb-5 md:mb-6` to `mb-3 md:mb-6`.
+
+### 2. Smaller card text/padding on mobile
+**File: `src/features/bookmarks/components/BookmarkCard.tsx`**
+
+- Reduce mobile padding on the text overlay area (the frosted glass panel at the bottom)
+- Shrink font sizes: title from `text-lg` to `text-sm` on mobile, category label smaller
+- Reduce badge size on mobile
+- These are minor className tweaks using responsive prefixes (`text-sm md:text-lg`, `p-3 md:p-5`, etc.)
+
+### 3. Skeleton grid matches
+**File: `src/features/bookmarks/pages/BookmarksPage.tsx`** — same column change on the skeleton loading grid (line 559).
+
+## Result
+Mobile will show a 2-column Pinterest-style masonry grid with compact cards, matching the Pinterest aesthetic the user wants.
 
