@@ -553,18 +553,18 @@ export const BookmarkCard = memo(({
             }}
           >
             {/* Category label */}
-            <span className={cn("text-[10px] font-semibold uppercase tracking-[0.12em] block", labelClass)}>
+            <span className={cn("text-[9px] md:text-[10px] font-semibold uppercase tracking-[0.12em] block", labelClass)}>
               {categoryBadge.label}
             </span>
 
             {/* Title */}
-            <h3 className={cn("font-bold text-lg leading-tight line-clamp-2", titleClass)} style={{ textShadow }}>
+            <h3 className={cn("font-bold text-sm md:text-lg leading-tight line-clamp-2", titleClass)} style={{ textShadow }}>
               {title}
             </h3>
 
             {/* Summary/description */}
             {summary && (
-              <p className={cn("text-[13px] leading-relaxed line-clamp-2 font-light", summaryClass)} style={{ textShadow }}>
+              <p className={cn("text-[11px] md:text-[13px] leading-relaxed line-clamp-2 font-light", summaryClass)} style={{ textShadow }}>
                 {summary}
               </p>
             )}
