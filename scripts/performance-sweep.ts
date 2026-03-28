@@ -3,6 +3,180 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createClient } from '@supabase/supabase-js';
 
+/**
+ * Utility to find the closing brace for a block starting at a given offset.
+ * Tracks nested braces, strings, and comments to ensure accuracy.
+ */
+function findClosingBrace(content: string, startOffset: number): number {
+  let depth = 0;
+  let inString: string | null = null;
+  let inComment: 'single' | 'multi' | null = null;
+  let isEscaped = false;
+
+  for (let i = startOffset; i < content.length; i++) {
+    const char = content[i];
+    const nextChar = content[i + 1];
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (inComment === 'single') {
+      if (char === '\n') inComment = null;
+      continue;
+    }
+
+    if (inComment === 'multi') {
+      if (char === '*' && nextChar === '/') {
+        inComment = null;
+        i++;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (char === '\\') {
+        isEscaped = true;
+      } else if (char === inString) {
+        inString = null;
+      } else if (inString === '`' && char === '$' && nextChar === '{') {
+        // Template literal interpolation: we treat this as a nested block
+        // findClosingBrace for this ${...} block then continue
+        const interpolationEnd = findClosingBrace(content, i + 1);
+        i = interpolationEnd;
+      }
+      continue;
+    }
+
+    if (char === '/' && nextChar === '/') {
+      inComment = 'single';
+      i++;
+    } else if (char === '/' && nextChar === '*') {
+      inComment = 'multi';
+      i++;
+    } else if (char === '"' || char === "'" || char === '`') {
+      inString = char;
+    } else if (char === '{') {
+      depth++;
+    } else if (char === '}') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Helper to convert line number to character offset
+ */
+function getLineOffset(content: string, lineNum: number): number {
+  const lines = content.split('\n');
+  let offset = 0;
+  for (let i = 0; i < lineNum - 1; i++) {
+    offset += lines[i].length + 1; // +1 for newline
+  }
+  return offset;
+}
+
+/**
+ * Heuristic to check if an offset is inside a React component
+ */
+function isInsideComponent(content: string, offset: number): boolean {
+  const textBefore = content.substring(0, offset);
+  // Look for component declarations: export const Component = ..., function Component(...)
+  const lastComponentDecl = Math.max(
+    textBefore.lastIndexOf('export const '),
+    textBefore.lastIndexOf('function ')
+  );
+
+  if (lastComponentDecl === -1) return false;
+
+  const declText = textBefore.substring(lastComponentDecl);
+  const nameMatch = declText.match(/(?:const|function)\s+([A-Z][a-zA-Z0-9]*)/);
+  if (!nameMatch) return false;
+
+  // Check if the component body hasn't closed yet
+  const bodyStart = content.indexOf('{', lastComponentDecl + nameMatch[0].length);
+  if (bodyStart === -1 || bodyStart > offset) return false;
+
+  const bodyEnd = findClosingBrace(content, bodyStart);
+  return bodyEnd === -1 || bodyEnd > offset;
+}
+
+/**
+ * Heuristic to check if an offset is inside a React hook
+ */
+function isInsideHook(content: string, offset: number): boolean {
+  const textBefore = content.substring(Math.max(0, offset - 500), offset);
+  // Check if we are inside useMemo, useCallback, useEffect
+  const lastHookCall = Math.max(
+    textBefore.lastIndexOf('useMemo('),
+    textBefore.lastIndexOf('useCallback('),
+    textBefore.lastIndexOf('useEffect(')
+  );
+
+  if (lastHookCall === -1) return false;
+
+  const absoluteHookOffset = offset - (textBefore.length - lastHookCall);
+  const bodyStart = content.indexOf('{', absoluteHookOffset);
+  if (bodyStart === -1 || bodyStart > offset) return false;
+
+  const bodyEnd = findClosingBrace(content, bodyStart);
+  return bodyEnd === -1 || bodyEnd > offset;
+}
+
+/**
+ * Finds the insertion point for a hook at the top of a component
+ */
+function findHookInsertionPoint(content: string, offset: number): number {
+  const textBefore = content.substring(0, offset);
+  const lastComponentDecl = Math.max(
+    textBefore.lastIndexOf('export const '),
+    textBefore.lastIndexOf('function ')
+  );
+
+  if (lastComponentDecl === -1) return -1;
+
+  const bodyStart = content.indexOf('{', lastComponentDecl);
+  if (bodyStart === -1) return -1;
+
+  // Find the first line after the opening brace that isn't a hook or variable declaration
+  const lines = content.substring(bodyStart + 1).split('\n');
+  let currentOffset = bodyStart + 1;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('const ') || trimmed.startsWith('let ') || trimmed.startsWith('use')) {
+      currentOffset += line.length + 1;
+      continue;
+    }
+    return currentOffset;
+  }
+
+  return bodyStart + 1;
+}
+
+/**
+ * Ensures required React imports exist
+ */
+function ensureReactImport(content: string, hooks: string[]): string {
+  let updatedContent = content;
+  hooks.forEach(hook => {
+    if (!updatedContent.includes(hook)) {
+      if (updatedContent.includes("import {") && updatedContent.includes("} from 'react'")) {
+        updatedContent = updatedContent.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => {
+          if (p1.includes(hook)) return m;
+          return `import { ${p1.trim()}, ${hook} } from 'react'`;
+        });
+      } else if (!updatedContent.includes("from 'react'")) {
+        updatedContent = `import { ${hook} } from 'react';\n` + updatedContent;
+      }
+    }
+  });
+  return updatedContent;
+}
+
 // Performance thresholds
 const API_RESPONSE_THRESHOLD_MS = 500;
 const APPLY_FIXES = process.argv.includes('--apply-fixes');
@@ -19,11 +193,12 @@ interface OptimizationResult {
 /**
  * Helper to run grep and filter for logic files only
  */
-function runGrep(pattern: string, searchPath: string = 'src/'): string[] {
+function runGrep(pattern: string, searchPath: string | string[] = 'src/'): string[] {
   try {
+    const paths = Array.isArray(searchPath) ? searchPath.join(' ') : searchPath;
     // Escape double quotes for the shell command
     const escapedPattern = pattern.replace(/"/g, '\\"');
-    const output = execSync(`grep -rnE "${escapedPattern}" ${searchPath} || true`).toString();
+    const output = execSync(`grep -rnE "${escapedPattern}" ${paths} || true`).toString();
     return output.split('\n').filter(Boolean).filter(line => {
       const file = line.split(':')[0];
       return (file.endsWith('.ts') || file.endsWith('.tsx')) &&
@@ -46,7 +221,7 @@ function scanForInefficientQueries(): OptimizationResult[] {
   const results: OptimizationResult[] = [];
   try {
     // 1. .select('*', { count: ... })
-    runGrep("\\.select\\(['\"]\\*['\"],\\s*\\{[^}]*count:").forEach(line => {
+    runGrep("\\.select\\(['\"]\\*['\"],\\s*\\{[^}]*count:", ['src/', 'supabase/functions/']).forEach(line => {
       const [file, lineNum] = line.split(':');
       results.push({
         category: 'backend_api',
@@ -65,9 +240,10 @@ function scanForInefficientQueries(): OptimizationResult[] {
 
 function scanForN1Queries(): OptimizationResult[] {
   const results: OptimizationResult[] = [];
+  const searchPaths = ['src/', 'supabase/functions/'];
   try {
     // 1. Storage removals in map
-    runGrep("\\.map\\(.*removeItemStorageObjects").forEach(line => {
+    runGrep("\\.map\\(.*removeItemStorageObjects", searchPaths).forEach(line => {
       const [file, lineNum] = line.split(':');
       results.push({
         category: 'backend_api',
@@ -80,7 +256,7 @@ function scanForN1Queries(): OptimizationResult[] {
     });
 
     // 2. Generic async calls in loops (map/forEach with await)
-    runGrep("\\.(map|forEach)\\(async").forEach(line => {
+    runGrep("\\.(map|forEach)\\(async", searchPaths).forEach(line => {
       const parts = line.split(':');
       if (parts.length < 2) return;
       const [file, lineNum] = parts;
@@ -94,7 +270,8 @@ function scanForN1Queries(): OptimizationResult[] {
     });
 
     // 2b. Await inside for/while loops
-    const awaitInLoops = execSync('grep -rnE "(for|while)\\s*\\(" src/ -A 10 | grep "await" || true').toString();
+    const paths = searchPaths.join(' ');
+    const awaitInLoops = execSync(`grep -rnE "(for|while)\\s*\\(" ${paths} -A 10 | grep "await" || true`).toString();
     if (awaitInLoops) {
         const lines = awaitInLoops.split('\n');
         lines.forEach(rawLine => {
@@ -116,7 +293,7 @@ function scanForN1Queries(): OptimizationResult[] {
     }
 
     // 2c. createSignedUrl in loops specifically
-    runGrep("\\.map\\(.*createSignedUrl").forEach(line => {
+    runGrep("\\.map\\(.*createSignedUrl", searchPaths).forEach(line => {
         const [file, lineNum] = line.split(':');
         results.push({
             category: 'backend_api',
@@ -130,7 +307,7 @@ function scanForN1Queries(): OptimizationResult[] {
 
     // 3. Supabase calls inside loops (Heuristic)
     const supabaseUsage: Record<string, number> = {};
-    runGrep("\\b(supabase|from)\\(").forEach(line => {
+    runGrep("\\b(supabase|from)\\(", searchPaths).forEach(line => {
       const file = line.split(':')[0];
       supabaseUsage[file] = (supabaseUsage[file] || 0) + 1;
     });
@@ -147,7 +324,7 @@ function scanForN1Queries(): OptimizationResult[] {
     });
 
     // 4. Supabase queries in map
-    runGrep("\\.map\\(.*supabase\\.(from|upsert|delete)").forEach(line => {
+    runGrep("\\.map\\(.*supabase\\.(from|upsert|delete)", searchPaths).forEach(line => {
         const [file, lineNum] = line.split(':');
         results.push({
           category: 'backend_api',
@@ -174,7 +351,7 @@ function scanForMissingIndexes(): OptimizationResult[] {
 
     try {
         // Look for .eq('column', ...), .in('column', ...), etc.
-        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\('[a-zA-Z0-9_]+'").forEach(line => {
+        runGrep("\\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\\('[a-zA-Z0-9_]+'", ['src/', 'supabase/functions/']).forEach(line => {
             // regex to extract file, line and column name
             const match = line.match(/^([^:]+):([0-9]+):.*?\.(eq|in|gt|lt|gte|lte|neq|like|ilike|match)\('([a-zA-Z0-9_]+)'/);
             if (match) {
@@ -222,36 +399,21 @@ function scanForMissingMemo(): OptimizationResult[] {
   try {
     // 1. Complex filtering/sorting in component body (not wrapped in useMemo)
     runGrep("\\.(filter|sort|reduce)\\(").forEach(line => {
-        const [file, lineNum] = line.split(':');
+        const [file, lineNumStr] = line.split(':');
+        const lineNum = parseInt(lineNumStr);
         if (!file.endsWith('.tsx')) return;
 
         const content = fs.readFileSync(file, 'utf8');
-        const lines = content.split('\n');
-        const lineIdx = parseInt(lineNum) - 1;
-        if (isNaN(lineIdx) || lineIdx < 0) return;
+        const offset = getLineOffset(content, lineNum);
 
-        // Look back up to find if we are inside a hook or the return statement
-        let isInsideHook = false;
-        let isInsideReturn = false;
+        // Skip trivial operations like .filter(Boolean) on simple arrays
+        const lineText = content.split('\n')[lineNum - 1];
+        if (lineText.includes('.filter(Boolean)') && !lineText.includes('const')) return;
 
-        for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
-            const l = lines[i];
+        if (isInsideComponent(content, offset) && !isInsideHook(content, offset)) {
+            const lines = content.split('\n');
+            const lineIdx = lineNum - 1;
 
-            if (l.includes('return (') || l.trim().startsWith('return ')) {
-                isInsideReturn = true;
-            }
-
-            if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
-                isInsideHook = true;
-                break;
-            }
-
-            if (l.includes('export const') || l.includes('function ')) {
-                break;
-            }
-        }
-
-        if (!isInsideHook) {
             // Check if it's an assignment
             let actualLineIdx = lineIdx;
             let varName = '';
@@ -370,6 +532,9 @@ function applyFixes(optimizations: OptimizationResult[]) {
             const lineIdx = parseInt(opt.line) - 1;
             const line = lines[lineIdx];
 
+            // Re-read file to get full content for offset calculations
+            const fullContent = fs.readFileSync(opt.file, 'utf8');
+
             if (opt.category === 'backend_api' && opt.description.includes('N+1 storage removal')) {
                 const match = line.match(/(\w+)\.map\(\w+\s*=>\s*removeItemStorageObjects\(\w+\)\)/);
                 if (match) {
@@ -430,50 +595,39 @@ function applyFixes(optimizations: OptimizationResult[]) {
                             let def = fs.readFileSync(resolvedPath, 'utf8');
                             if (!def.includes('memo(') && !def.includes('React.memo(')) {
                                 // 1. Add import if missing
-                                if (!def.includes('import {') || !def.includes('react')) {
-                                     def = `import { memo } from 'react';\n` + def;
-                                } else if (!def.includes('memo')) {
-                                     def = def.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, memo } from 'react'`);
-                                }
+                                def = ensureReactImport(def, ['memo']);
 
-                                // 2. Wrap definition
-                                const exportMatch = def.match(/export const (\w+)\s*=\s*\(([^)]*)\)\s*=>\s*\{/);
-                                if (exportMatch && exportMatch[1] === componentName) {
-                                    const lines = def.split('\n');
-                                    let endIdx = -1;
-                                    // Heuristic: find the last }; or the one that likely closes the component
-                                    for (let i = lines.length - 1; i >= 0; i--) {
-                                        if (lines[i].trim() === '};' || lines[i].trim() === '})' || lines[i].trim() === '};') {
-                                            endIdx = i;
-                                            break;
+                                // 2. Wrap definition (handles both arrow components and traditional functions)
+                                const arrowMatch = def.match(new RegExp(`export const ${componentName}\\s*=\\s*\\(([^)]*)\\)\\s*=>\\s*\\{`));
+                                const functionMatch = def.match(new RegExp(`export function ${componentName}\\s*\\(([^)]*)\\)\\s*\\{`));
+
+                                if (arrowMatch) {
+                                    const startIdx = arrowMatch.index!;
+                                    const bodyStart = def.indexOf('{', startIdx);
+                                    const bodyEnd = findClosingBrace(def, bodyStart);
+                                    if (bodyEnd !== -1) {
+                                        const original = def.substring(startIdx, bodyEnd + 1);
+                                        const wrapped = original.replace(`export const ${componentName} = (`, `export const ${componentName} = memo((`)
+                                                                 .replace(/\};?$/, '});');
+                                        def = def.substring(0, startIdx) + wrapped + def.substring(bodyEnd + 1);
+                                        if (!def.includes(`${componentName}.displayName`)) {
+                                            def += `\n\n${componentName}.displayName = "${componentName}";\n`;
                                         }
+                                        fs.writeFileSync(resolvedPath, def);
+                                        console.log(`✅ Wrapped arrow component ${componentName} in memo() in ${resolvedPath}`);
                                     }
-
-                                    if (endIdx !== -1) {
-                                        def = def.replace(`export const ${componentName} = (`, `export const ${componentName} = memo((`);
-                                        const newLines = def.split('\n');
-                                        // Find where the definition started in the new string to be safe
-                                        const startIdx = newLines.findIndex(l => l.includes(`export const ${componentName} = memo(`));
-                                        if (startIdx !== -1) {
-                                            // Re-verify endIdx in newLines
-                                            let currentEndIdx = -1;
-                                            for (let i = newLines.length - 1; i >= startIdx; i--) {
-                                                if (newLines[i].trim().startsWith('};')) {
-                                                    currentEndIdx = i;
-                                                    break;
-                                                }
-                                            }
-                                            if (currentEndIdx !== -1) {
-                                                newLines[currentEndIdx] = newLines[currentEndIdx].replace('};', '});');
-                                                def = newLines.join('\n');
-
-                                                if (!def.includes(`${componentName}.displayName`)) {
-                                                    def += `\n\n${componentName}.displayName = "${componentName}";\n`;
-                                                }
-                                                console.log(`✅ Automatically wrapping ${componentName} in memo() in ${resolvedPath}`);
-                                                fs.writeFileSync(resolvedPath, def);
-                                            }
-                                        }
+                                } else if (functionMatch) {
+                                    const startIdx = functionMatch.index!;
+                                    const bodyStart = def.indexOf('{', startIdx);
+                                    const bodyEnd = findClosingBrace(def, bodyStart);
+                                    if (bodyEnd !== -1) {
+                                        // Rename original function and export memoized version
+                                        const original = def.substring(startIdx, bodyEnd + 1);
+                                        const renamed = original.replace(`export function ${componentName}`, `function ${componentName}Raw`);
+                                        const memoized = `\n\nexport const ${componentName} = memo(${componentName}Raw);\n${componentName}.displayName = "${componentName}";\n`;
+                                        def = def.substring(0, startIdx) + renamed + memoized + def.substring(bodyEnd + 1);
+                                        fs.writeFileSync(resolvedPath, def);
+                                        console.log(`✅ Memoized traditional function ${componentName} in ${resolvedPath}`);
                                     }
                                 }
                             }
@@ -487,9 +641,21 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     const [fullMatch, propName, setterName, setterVal] = setterMatch;
                     const handlerName = `handle${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
 
-                    // This requires inserting a useCallback hook in the component body
-                    // Too complex for simple regex without knowing component structure
-                    console.log(`Recommendation: Move ${fullMatch} to a useCallback named ${handlerName} in ${opt.file}`);
+                    const offset = getLineOffset(fullContent, parseInt(opt.line));
+                    const insertionPoint = findHookInsertionPoint(fullContent, offset);
+
+                    if (insertionPoint !== -1) {
+                        let updated = ensureReactImport(fullContent, ['useCallback']);
+                        const hookCode = `\n  const ${handlerName} = useCallback(() => {\n    ${setterName}(${setterVal});\n  }, [${setterName}]);\n`;
+
+                        // Insert hook
+                        updated = updated.substring(0, insertionPoint) + hookCode + updated.substring(insertionPoint);
+                        // Replace inline handler
+                        updated = updated.replace(fullMatch, `${propName}={${handlerName}}`);
+
+                        fs.writeFileSync(opt.file, updated);
+                        console.log(`✅ Refactored inline ${propName} to useCallback in ${opt.file}`);
+                    }
                 } else {
                     console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
                 }
@@ -537,38 +703,44 @@ function reviewRecentMerges(): OptimizationResult[] {
 /**
  * Benchmarks actual API response times if credentials are available
  */
-async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: string }> {
+async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: string; slowTables: string[] }> {
     const url = process.env.VITE_SUPABASE_URL;
     const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
     if (!url || !key) {
-        return { apiResponseTimeMs: 0, status: 'skipped (no credentials)' };
+        return { apiResponseTimeMs: 0, status: 'skipped (no credentials)', slowTables: [] };
     }
 
     try {
         const supabase = createClient(url, key);
-        const tables = ['items', 'subscriptions', 'health_measurements'];
+        const tables = ['items', 'subscriptions', 'health_measurements', 'profiles', 'bookmarks'];
         let totalLatency = 0;
         let successCount = 0;
+        const slowTables: string[] = [];
 
         for (const table of tables) {
             const start = Date.now();
             const { error } = await supabase.from(table).select('id').limit(1);
             const end = Date.now();
+            const latency = end - start;
 
             if (!error) {
-                totalLatency += (end - start);
+                totalLatency += latency;
                 successCount++;
+                if (latency > API_RESPONSE_THRESHOLD_MS) {
+                    slowTables.push(table);
+                }
             }
         }
 
         if (successCount === 0) {
-            return { apiResponseTimeMs: 0, status: 'failed' };
+            return { apiResponseTimeMs: 0, status: 'failed', slowTables: [] };
         }
 
         return {
             apiResponseTimeMs: Math.round(totalLatency / successCount),
-            status: 'success'
+            status: 'success',
+            slowTables
         };
     } catch (e) {
         console.error('Benchmark error:', e);
@@ -588,7 +760,8 @@ async function runBenchmarks() {
     largeFilesCount: 0,
     timestamp: new Date().toISOString(),
     apiLatencyMs: apiBenchmark.apiResponseTimeMs,
-    apiStatus: apiBenchmark.status
+    apiStatus: apiBenchmark.status,
+    slowTables: apiBenchmark.slowTables
   };
 
   try {
@@ -631,40 +804,51 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
   };
 
   logs.unshift(summary);
-  // Keep only the last 2 runs to avoid bloat in the repository
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 2), null, 2));
+  // Keep only the last 20 runs to avoid bloat in the repository
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
 /**
  * Sends Slack notification via webhook
  */
-async function sendSlackNotification(summary: { optimizations: OptimizationResult[]; benchmarks: { apiLatencyMs: number; beforeLatencyMs?: number } }, prUrl?: string) {
+async function sendSlackNotification(summary: any, prUrl?: string) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) {
     console.warn('SLACK_WEBHOOK_URL not set, skipping notification.');
     return;
   }
 
-  const optimizations = summary.optimizations;
-  const slaExceeded = summary.benchmarks.apiLatencyMs > API_RESPONSE_THRESHOLD_MS;
+  const optimizations = summary.optimizations || [];
 
+  let currentLatency = 0;
+  let beforeLatency: number | undefined = undefined;
+
+  if (summary.benchmarks?.after?.apiLatencyMs !== undefined) {
+      currentLatency = summary.benchmarks.after.apiLatencyMs;
+      beforeLatency = summary.benchmarks.before?.apiLatencyMs;
+  } else if (summary.benchmarks?.apiLatencyMs !== undefined) {
+      currentLatency = summary.benchmarks.apiLatencyMs;
+  }
+
+  const slaExceeded = currentLatency > API_RESPONSE_THRESHOLD_MS;
   const backendLeadId = process.env.BACKEND_LEAD_SLACK_ID || "backend-lead";
   const backendLeadTag = `<@${backendLeadId}>`;
 
   let text = `🚀 *Nightly Performance Sweep Report* - ${new Date().toLocaleDateString()}\n`;
-  if (summary.benchmarks.beforeLatencyMs) {
-      const delta = summary.benchmarks.apiLatencyMs - summary.benchmarks.beforeLatencyMs;
-      text += `⏱️ *Latency Delta:* ${summary.benchmarks.beforeLatencyMs}ms → ${summary.benchmarks.apiLatencyMs}ms (${delta >= 0 ? '+' : ''}${delta}ms)\n`;
+  if (beforeLatency !== undefined) {
+      const delta = currentLatency - beforeLatency;
+      text += `⏱️ *Latency Delta:* ${beforeLatency}ms → ${currentLatency}ms (${delta >= 0 ? '+' : ''}${delta}ms)\n`;
   } else {
-      text += `⏱️ *Current Latency:* ${summary.benchmarks.apiLatencyMs}ms\n`;
+      text += `⏱️ *Current Latency:* ${currentLatency}ms\n`;
   }
+
   if (prUrl) {
       text += `📦 *Pull Request:* ${prUrl}\n`;
   }
 
   if (slaExceeded) {
-      text += `⚠️ *SLA THRESHOLD EXCEEDED (Latency: ${summary.benchmarks.apiLatencyMs}ms)* - cc ${backendLeadTag}\n`;
+      text += `⚠️ *SLA THRESHOLD EXCEEDED (Latency: ${currentLatency}ms)* - cc ${backendLeadTag}\n`;
   }
 
   const message = {
@@ -675,7 +859,7 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
         title: 'Optimization Summary',
         text: optimizations.length > 0
           ? `Found ${optimizations.length} potential optimizations.\n` +
-            optimizations.slice(0, 8).map(o => `• [${o.category}] ${o.description} in ${o.file}`).join('\n') +
+            optimizations.slice(0, 8).map((o: any) => `• [${o.category}] ${o.description} in ${o.file || 'multiple locations'}`).join('\n') +
             (optimizations.length > 8 ? `\n...and ${optimizations.length - 8} more.` : '')
           : 'No major performance regressions detected. System is within SLA thresholds.'
       }
@@ -702,8 +886,10 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
  */
 function scanForNestedLoops(): OptimizationResult[] {
     const results: OptimizationResult[] = [];
+    const searchPaths = ['src/', 'supabase/functions/'];
+    const paths = searchPaths.join(' ');
     try {
-        const output = execSync('grep -rnE "(\\.map|\\.forEach|for\\s*\\(|while\\s*\\()" src/ || true').toString();
+        const output = execSync(`grep -rnE "(\\.map|\\.forEach|for\\s*\\(|while\\s*\\()" ${paths} || true`).toString();
         const lines = output.split('\n').filter(Boolean);
         const fileMap: Record<string, number[]> = {};
 
@@ -739,6 +925,10 @@ function scanForNestedLoops(): OptimizationResult[] {
 
                     // If the second loop is more indented than the first, it's likely nested
                     if (indentB > indentA) {
+                        // Ignore standard streaming buffer and processing patterns
+                        if (contentA.includes('chunk') || contentA.includes('buffer') ||
+                            contentB.includes('chunk') || contentB.includes('buffer')) continue;
+
                         results.push({
                             category: 'logic',
                             description: 'Potential nested loop detected',
@@ -752,6 +942,68 @@ function scanForNestedLoops(): OptimizationResult[] {
         });
     } catch (e) {
         console.error('Error scanning for nested loops:', e);
+    }
+    return results;
+}
+
+/**
+ * Scans for unused local variables (dead code)
+ */
+function scanForDeadCode(): OptimizationResult[] {
+    const results: OptimizationResult[] = [];
+    const searchPaths = ['src/', 'supabase/functions/'];
+    try {
+        // Find all const/let declarations
+        const decls = runGrep("(const|let)\\s+(\\w+)\\s*=", searchPaths);
+        const fileToDecls: Record<string, {name: string, line: string}[]> = {};
+
+        decls.forEach(line => {
+            const parts = line.split(':');
+            if (parts.length < 3) return;
+            const file = parts[0];
+            const lineNum = parts[1];
+            const content = parts.slice(2).join(':');
+
+            const match = content.match(/(const|let)\s+(\w+)\s*=/);
+            if (match) {
+                const name = match[2];
+                // Skip common iterators and short names
+                if (['i', 'j', 'k', 'index', 'err', 'error', 'req', 'res', 'val', 'key', 'item'].includes(name)) return;
+                if (!fileToDecls[file]) fileToDecls[file] = [];
+                fileToDecls[file].push({ name, line: lineNum });
+            }
+        });
+
+        Object.entries(fileToDecls).forEach(([file, items]) => {
+            try {
+                const content = fs.readFileSync(file, 'utf8');
+                // Basic heuristic: strip comments before counting usage
+                const cleanContent = content.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+                items.forEach(item => {
+                    const escapedName = item.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const usageRegex = new RegExp(`\\b${escapedName}\\b`, 'g');
+                    const matches = cleanContent.match(usageRegex);
+
+                    if (matches && matches.length === 1) {
+                        // Double check it's not exported
+                        if (!content.includes(`export const ${item.name}`) &&
+                            !content.includes(`export let ${item.name}`) &&
+                            !content.includes(`export { ${item.name}`)) {
+                            results.push({
+                                category: 'dead_code',
+                                description: `Potential unused variable "${item.name}"`,
+                                impact: 'Unnecessary code bloat',
+                                file,
+                                line: item.line
+                            });
+                        }
+                    }
+                });
+            } catch (e) {}
+        });
+    } catch (e) {
+        console.error('Error scanning for dead code:', e);
     }
     return results;
 }
@@ -772,6 +1024,7 @@ async function main() {
   const memoIssues = scanForMissingMemo();
   const mergeIssues = reviewRecentMerges();
   const logicIssues = scanForNestedLoops();
+  const deadCodeIssues = scanForDeadCode();
 
   const allIssues = [
     ...inefficientQueries,
@@ -779,10 +1032,22 @@ async function main() {
     ...indexIssues,
     ...memoIssues,
     ...mergeIssues,
-    ...logicIssues
+    ...logicIssues,
+    ...deadCodeIssues
   ];
 
   const beforeBenchmarks = await runBenchmarks();
+
+  // Inject slow table results into allIssues if they exceed SLA
+  if (beforeBenchmarks.slowTables && beforeBenchmarks.slowTables.length > 0) {
+      beforeBenchmarks.slowTables.forEach(table => {
+          allIssues.push({
+              category: 'backend_api',
+              description: `API Latency SLA exceeded for table "${table}"`,
+              impact: `Response time > ${API_RESPONSE_THRESHOLD_MS}ms`
+          });
+      });
+  }
 
   if (APPLY_FIXES && allIssues.length > 0) {
       applyFixes(allIssues);
