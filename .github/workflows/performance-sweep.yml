@@ -27,6 +27,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          BACKEND_LEAD_SLACK_ID: ${{ secrets.BACKEND_LEAD_SLACK_ID }}
 
       - name: Prepare PR Body
         id: pr_body
