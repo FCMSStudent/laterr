@@ -556,11 +556,11 @@ type OpenItemEventDetail = {
         </div>
 
 
-        {loading ? <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 md:gap-6 pb-12">
+        {loading ? <div className="columns-2 lg:columns-3 xl:columns-4 gap-3 md:gap-6 pb-12">
           {Array.from({
             length: 8
           }).map((_, index) => (
-            <div key={index} className="break-inside-avoid mb-5 md:mb-6">
+            <div key={index} className="break-inside-avoid mb-3 md:mb-6">
               <ItemCardSkeleton />
             </div>
           ))}
