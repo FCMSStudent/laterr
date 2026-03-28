@@ -20,20 +20,9 @@ const COLOR_FIX_MAP: Record<string, string> = {
   '#4caf50': 'hsl(var(--success))',
   '#ff9800': 'hsl(var(--warning))',
   '#2196f3': 'hsl(var(--info))',
+  '#f44336': 'hsl(var(--destructive))',
+  '#9e9e9e': 'hsl(var(--muted))',
 };
-
-interface PlaywrightSuite {
-  specs?: {
-    title: string;
-    tests: {
-      results: {
-        status: string;
-        errors?: { message: string }[];
-      }[];
-    }[];
-  }[];
-  suites?: PlaywrightSuite[];
-}
 
 interface UIIssue {
   type: 'accessibility' | 'styling' | 'consistency';
@@ -44,6 +33,7 @@ interface UIIssue {
   autoFixable: boolean;
   offset?: number;
   originalText?: string;
+  replacement?: string;
 }
 
 interface PlaywrightSuite {
@@ -66,75 +56,17 @@ interface PlaywrightResult {
 }
 
 /**
- * Scans for missing form labels on input, select, and textarea elements
+ * Scans for various accessibility issues: missing alt attributes, icon-only buttons without labels,
+ * and form elements missing accessible labels.
  */
-function scanMissingFormLabels(): UIIssue[] {
+function scanAccessibilityIssues(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
     const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf8');
 
-      // Heuristic for finding form elements
-      const formElementRegex = /<(input|select|textarea)([^>]*?)(\/?>)/g;
-      let match;
-      while ((match = formElementRegex.exec(content)) !== null) {
-        const tag = match[1];
-        const attributes = match[2];
-
-        // Skip hidden inputs
-        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
-
-        const hasAriaLabel = attributes.includes('aria-label=') || attributes.includes('aria-labelledby=');
-        const hasId = attributes.match(/id=["'](.+?)["']/);
-
-        let hasLabel = false;
-        if (hasId) {
-          const id = hasId[1];
-          const labelRegex = new RegExp(`<label[^>]*?(?:htmlFor|for)=["']${id}["'][^>]*?>`, 'g');
-          if (labelRegex.test(content)) {
-            hasLabel = true;
-          }
-        }
-
-        // Heuristic: Check if it's wrapped in a <label>
-        const lookBack = content.substring(Math.max(0, match.index - 100), match.index);
-        if (lookBack.includes('<label')) {
-            const lastOpenLabel = lookBack.lastIndexOf('<label');
-            const lastCloseLabel = lookBack.lastIndexOf('</label>');
-            if (lastOpenLabel > lastCloseLabel) {
-                hasLabel = true;
-            }
-        }
-
-        if (!hasAriaLabel && !hasLabel) {
-          const lineNum = content.substring(0, match.index).split('\n').length;
-          issues.push({
-            type: 'accessibility',
-            severity: 'high',
-            description: `Form element <${tag}> missing accessible label (label, aria-label, or aria-labelledby)`,
-            file,
-            line: lineNum,
-            autoFixable: false
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error scanning for missing form labels:', e);
-  }
-  return issues;
-}
-
-/**
- * Scans for missing alt attributes in images
- */
-function scanMissingAlt(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
+      // 1. Missing alt attributes on <img>
       const imgRegex = /<img[\s\S]*?>/g;
       let match;
       while ((match = imgRegex.exec(content)) !== null) {
@@ -149,30 +81,14 @@ function scanMissingAlt(): UIIssue[] {
             line: lineNum,
             autoFixable: true,
             offset: match.index,
-            originalText: tag
+            originalText: tag,
+            replacement: tag.replace('<img', '<img alt=""')
           });
         }
       }
-    }
-  } catch (e) {
-    console.error('Error scanning for missing alt:', e);
-  }
-  return issues;
-}
 
-/**
- * Scans for missing aria-labels or labels on form elements
- */
-function scanInaccessibleFormElements(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
-
-      // 1. Scan for buttons (existing logic expanded)
+      // 2. Icon-only buttons missing aria-label
       const buttonRegex = /<(Button|button)([^>]*?)>([\s\S]*?)<\/\1>/g;
-      let match;
       while ((match = buttonRegex.exec(content)) !== null) {
         const attributes = match[2];
         const children = match[3];
@@ -195,120 +111,13 @@ function scanInaccessibleFormElements(): UIIssue[] {
         }
       }
 
-      // 2. Scan for inputs/selects/textareas missing labels
-      const formElementRegex = /<(input|select|textarea|Input|Select|Textarea)([^>]*?)\/?>/g;
-      while ((match = formElementRegex.exec(content)) !== null) {
+      // 3. Form elements (input, select, textarea) missing labels
+      const formRegex = /<(input|select|textarea|Input|Select|Textarea)([^>]*?)\/?>/g;
+      while ((match = formRegex.exec(content)) !== null) {
         const tag = match[1];
         const attributes = match[2];
 
         if (attributes.includes('type="hidden"') || attributes.includes('type="submit"') || attributes.includes('type="button"')) continue;
-
-        const hasLabel = attributes.includes('aria-label') ||
-                         attributes.includes('aria-labelledby') ||
-                         attributes.includes('id='); // Assuming if it has an ID, it MIGHT have a <label htmlFor="..."> elsewhere
-
-        // More robust check for <label> association would require full AST parsing,
-        // but we can check if 'id' exists at least.
-        if (!hasLabel) {
-          const lineNum = content.substring(0, match.index).split('\n').length;
-          issues.push({
-            type: 'accessibility',
-            severity: 'high',
-            description: `Form element <${tag}> missing accessible label (aria-label, aria-labelledby, or id for association)`,
-            file,
-            line: lineNum,
-            autoFixable: false
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error scanning for inaccessible form elements:', e);
-  }
-  return issues;
-}
-
-/**
- * Scans for missing accessible labels on form elements
- */
-function scanMissingFormLabels(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
-
-      // Basic check for input, select, textarea
-      const formRegex = /<(input|select|textarea)([^>]*?)\/?>/g;
-      let match;
-      while ((match = formRegex.exec(content)) !== null) {
-        const tag = match[1];
-        const attributes = match[2];
-
-        // Skip hidden inputs
-        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
-
-        const hasAriaLabel = attributes.includes('aria-label=') || attributes.includes('aria-labelledby=');
-        const hasId = attributes.match(/id=["'](.+?)["']/);
-
-        let isLabeled = hasAriaLabel;
-
-        if (!isLabeled && hasId) {
-          const id = hasId[1];
-          // Check if there is a <label htmlFor="id"> or <label for="id"> in the same file
-          const labelRegex = new RegExp(`<(label|Label)[^>]*?(htmlFor|for)=["']${id}["']`, 'g');
-          if (labelRegex.test(content)) {
-            isLabeled = true;
-          }
-        }
-
-        // Also check if it's nested inside a <label>
-        if (!isLabeled) {
-          const textBefore = content.substring(0, match.index);
-          const lastLabelOpen = Math.max(textBefore.lastIndexOf('<label'), textBefore.lastIndexOf('<Label'));
-          const lastLabelClose = Math.max(textBefore.lastIndexOf('</label>'), textBefore.lastIndexOf('</Label>'));
-          if (lastLabelOpen !== -1 && (lastLabelClose === -1 || lastLabelOpen > lastLabelClose)) {
-            isLabeled = true;
-          }
-        }
-
-        if (!isLabeled) {
-          const lineNum = content.substring(0, match.index).split('\n').length;
-          issues.push({
-            type: 'accessibility',
-            severity: 'high',
-            description: `Form element <${tag}> missing accessible label`,
-            file,
-            line: lineNum,
-            autoFixable: false
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error scanning for missing form labels:', e);
-  }
-  return issues;
-}
-
-/**
- * Scans for missing accessible labels on form elements
- */
-function scanMissingFormLabels(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
-      // Look for input, select, textarea
-      const formRegex = /<(input|select|textarea)([^>]*?)(\/?>)/g;
-      let match;
-      while ((match = formRegex.exec(content)) !== null) {
-        const tag = match[1];
-        const attributes = match[2];
-
-        // Skip hidden inputs
-        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
 
         const idMatch = attributes.match(/id=["']([^"']+)["']/);
         const id = idMatch ? idMatch[1] : null;
@@ -316,26 +125,26 @@ function scanMissingFormLabels(): UIIssue[] {
         const hasAssociatedLabel = id && (content.includes(`htmlFor="${id}"`) || content.includes(`htmlFor='${id}'`) || content.includes(`for="${id}"`) || content.includes(`for='${id}'`));
 
         if (!hasAriaLabel && !hasAssociatedLabel) {
-            // Check if it's wrapped in a <label> (simple lookback heuristic)
-            const beforeTag = content.substring(Math.max(0, match.index - 200), match.index);
-            const isNestedInLabel = beforeTag.includes('<label') && !beforeTag.includes('</label>');
+          // Check if it's wrapped in a <label> (simple lookback heuristic)
+          const beforeTag = content.substring(Math.max(0, match.index - 200), match.index);
+          const isNestedInLabel = (beforeTag.toLowerCase().includes('<label') && !beforeTag.toLowerCase().includes('</label>'));
 
-            if (!isNestedInLabel) {
-                const lineNum = content.substring(0, match.index).split('\n').length;
-                issues.push({
-                    type: 'accessibility',
-                    severity: 'high',
-                    description: `Form element <${tag}> missing accessible label (aria-label or associated <label>)`,
-                    file,
-                    line: lineNum,
-                    autoFixable: false
-                });
-            }
+          if (!isNestedInLabel) {
+            const lineNum = content.substring(0, match.index).split('\n').length;
+            issues.push({
+              type: 'accessibility',
+              severity: 'high',
+              description: `Form element <${tag}> missing accessible label (aria-label or associated <label>)`,
+              file,
+              line: lineNum,
+              autoFixable: false
+            });
+          }
         }
       }
     }
   } catch (e) {
-    console.error('Error scanning for missing form labels:', e);
+    console.error('Error scanning for accessibility issues:', e);
   }
   return issues;
 }
@@ -375,15 +184,14 @@ function scanInconsistentButtons(): UIIssue[] {
 function scanInconsistentStyles(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
-    const pixelOutput = execSync('grep -rnE "(p|m|gap|w|h|top|left|right|bottom)-\\[[0-9]+px\\]" src/ --include="*.tsx" || true').toString();
+    const pixelOutput = execSync('grep -rnE "(p|m|gap|w|h|top|left|right|bottom)-\\[[0-9]+px\\]" src/ --include="*.tsx" | grep -v "src/shared/components/ui" || true').toString();
     if (pixelOutput) {
       pixelOutput.split('\n').filter(Boolean).forEach(line => {
         const [file, lineNum, ...rest] = line.split(':');
-        const description = rest.join(':').trim();
         issues.push({
           type: 'styling',
           severity: 'low',
-          description: `Hardcoded pixel value found in Tailwind class: ${description}`,
+          description: `Hardcoded pixel value found in Tailwind class: ${rest.join(':').trim()}`,
           file,
           line: parseInt(lineNum),
           autoFixable: false
@@ -391,7 +199,7 @@ function scanInconsistentStyles(): UIIssue[] {
       });
     }
 
-    const fontOutput = execSync('grep -rn "font-\\[" src/ --include="*.tsx" || true').toString();
+    const fontOutput = execSync('grep -rn "font-\\[" src/ --include="*.tsx" | grep -v "src/shared/components/ui" || true').toString();
     if (fontOutput) {
       fontOutput.split('\n').filter(Boolean).forEach(line => {
         const [file, lineNum, ...rest] = line.split(':');
@@ -417,32 +225,29 @@ function scanInconsistentStyles(): UIIssue[] {
 function scanHardcodedColors(): UIIssue[] {
   const issues: UIIssue[] = [];
   try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
+    const files = execSync('find src -name "*.tsx" | grep -v "src/shared/components/ui"').toString().split('\n').filter(Boolean);
     for (const file of files) {
       if (file.includes('constants.ts') || file.includes('utils.ts')) continue;
-      // Skip chart.tsx for color auto-fixes as it uses hex for Recharts config
       const isChartFile = file.includes('chart.tsx');
 
       const content = fs.readFileSync(file, 'utf8');
-      // Support 3 and 6 digit hex codes
       const hexRegex = /#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g;
       let match;
       while ((match = hexRegex.exec(content)) !== null) {
         const hex = match[0];
         const lineNum = content.substring(0, match.index).split('\n').length;
-
-        // Skip if it's already a theme variable or part of a CSS attribute selector
         const lineContent = content.split('\n')[lineNum - 1];
+
         if (lineContent.includes('var(') || lineContent.includes(`[stroke='${hex}']`) || lineContent.includes(`[fill='${hex}']`)) continue;
 
         let canFix = false;
+        let replacement = '';
         if (!isChartFile && COLOR_FIX_MAP[hex.toLowerCase()]) {
-          // Check if it's part of a CSS attribute selector (like [stroke='#ccc'])
           const context = content.substring(Math.max(0, match.index - 10), match.index + hex.length + 2);
           const isCssSelector = /stroke=['"]#|fill=['"]#/.test(context);
-
           if (!isCssSelector) {
             canFix = true;
+            replacement = COLOR_FIX_MAP[hex.toLowerCase()];
           }
         }
 
@@ -454,7 +259,8 @@ function scanHardcodedColors(): UIIssue[] {
           line: lineNum,
           autoFixable: canFix,
           offset: match.index,
-          originalText: hex
+          originalText: hex,
+          replacement
         });
       }
     }
@@ -462,88 +268,6 @@ function scanHardcodedColors(): UIIssue[] {
     console.error('Error scanning for hardcoded colors:', e);
   }
   return issues;
-}
-
-/**
- * Scans for form elements missing accessible labels
- */
-function scanMissingFormLabels(): UIIssue[] {
-  const issues: UIIssue[] = [];
-  try {
-    const files = execSync('find src -name "*.tsx"').toString().split('\n').filter(Boolean);
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
-      const formRegex = /<(input|select|textarea)([^>]*?)>/g;
-      let match;
-      while ((match = formRegex.exec(content)) !== null) {
-        const tag = match[1];
-        const attributes = match[2];
-
-        // Skip hidden inputs or self-closing tags that might be components (though the regex is simple)
-        if (attributes.includes('type="hidden"') || attributes.includes("type='hidden'")) continue;
-
-        const hasAriaLabel = attributes.includes('aria-label=') || attributes.includes('aria-labelledby=');
-        const idMatch = attributes.match(/id=["'](.*?)["']/);
-        const id = idMatch ? idMatch[1] : null;
-
-        let hasLabel = false;
-        if (id) {
-          const labelRegex = new RegExp(`<(label|Label)[^>]*htmlFor=["']${id}["']`, 'i');
-          if (labelRegex.test(content)) {
-            hasLabel = true;
-          }
-        }
-
-        // Check if input is nested within a label
-        if (!hasLabel) {
-          const beforeContent = content.substring(0, match.index);
-          const lastLabelOpen = beforeContent.lastIndexOf('<label');
-          if (lastLabelOpen !== -1) {
-            const afterLabelOpen = content.substring(lastLabelOpen);
-            const nextLabelClose = afterLabelOpen.indexOf('</label>');
-            const nextLabelOpen = afterLabelOpen.indexOf('<label', 1);
-
-            // If </label> exists and comes before the next <label
-            if (nextLabelClose !== -1 && (nextLabelOpen === -1 || nextLabelClose < nextLabelOpen)) {
-              // Check if our match is between <label and </label>
-              const relativeIndex = match.index - lastLabelOpen;
-              if (relativeIndex < nextLabelClose) {
-                hasLabel = true;
-              }
-            }
-          }
-        }
-
-        if (!hasAriaLabel && !hasLabel) {
-          const lineNum = content.substring(0, match.index).split('\n').length;
-          issues.push({
-            type: 'accessibility',
-            severity: 'high',
-            description: `Form element <${tag}> missing accessible label (label, aria-label, or aria-labelledby)`,
-            file,
-            line: lineNum,
-            autoFixable: false
-          });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error scanning for missing form labels:', e);
-  }
-  return issues;
-}
-
-interface PlaywrightSuite {
-  specs?: {
-    title: string;
-    tests: {
-      results: {
-        status: string;
-        errors?: { message: string }[];
-      }[];
-    }[];
-  }[];
-  suites?: PlaywrightSuite[];
 }
 
 /**
@@ -555,38 +279,43 @@ function runRuntimeAudit(): UIIssue[] {
   const issues: UIIssue[] = [];
 
   try {
-    execSync(`npx playwright test tests/ui-audit.spec.ts --reporter=json > ${resultsPath} 2>/dev/null || true`);
+    // Suppress ANSI colors and parse the first valid JSON block
+    const output = execSync(`npx playwright test tests/ui-audit.spec.ts --project=chromium --reporter=json 2>/dev/null || true`).toString();
+    const jsonStartIndex = output.indexOf('{');
+    if (jsonStartIndex === -1) {
+        console.error('No valid JSON output from Playwright audit.');
+        return issues;
+    }
 
-    if (fs.existsSync(resultsPath)) {
-      const results: PlaywrightResult = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+    const cleanJson = output.substring(jsonStartIndex);
+    const results: PlaywrightResult = JSON.parse(cleanJson);
 
-      const processSuite = (suite: PlaywrightSuite) => {
-        for (const spec of suite.specs || []) {
-          for (const test of spec.tests || []) {
-            for (const result of test.results || []) {
-              if (result.status === 'failed') {
-                const failures = result.errors || [];
-                for (const fail of failures) {
-                  const failureMessage = fail.message || 'Unknown failure';
-                  issues.push({
-                    type: 'accessibility',
-                    severity: failureMessage.toLowerCase().includes('accessibility') ? 'high' : 'critical',
-                    description: `Runtime audit failure in "${spec.title}": ${failureMessage.split('\n')[0]}`,
-                    autoFixable: false
-                  });
-                }
+    const processSuite = (suite: PlaywrightSuite) => {
+      for (const spec of suite.specs || []) {
+        for (const test of spec.tests || []) {
+          for (const result of test.results || []) {
+            if (result.status === 'failed') {
+              const failures = result.errors || [];
+              for (const fail of failures) {
+                const failureMessage = (fail.message || 'Unknown failure').replace(/\x1b\[[0-9;]*m/g, ''); /* eslint-disable-line no-control-regex */
+                issues.push({
+                  type: 'accessibility',
+                  severity: failureMessage.toLowerCase().includes('accessibility') || failureMessage.toLowerCase().includes('axe') ? 'high' : 'critical',
+                  description: `Runtime audit failure in "${spec.title}": ${failureMessage.split('\n')[0]}`,
+                  autoFixable: false
+                });
               }
             }
           }
         }
-        for (const childSuite of suite.suites || []) {
-          processSuite(childSuite);
-        }
-      };
-
-      for (const suite of results.suites || []) {
-        processSuite(suite);
       }
+      for (const childSuite of suite.suites || []) {
+        processSuite(childSuite);
+      }
+    };
+
+    for (const suite of results.suites || []) {
+      processSuite(suite);
     }
   } catch (e) {
     console.error('Failed to run or parse runtime audit:', e);
@@ -599,7 +328,7 @@ function runRuntimeAudit(): UIIssue[] {
  */
 function applyAutoFixes(issues: UIIssue[]) {
   console.log('Applying auto-fixes...');
-  const fixableIssues = issues.filter(i => i.autoFixable && i.offset !== undefined);
+  const fixableIssues = issues.filter(i => i.autoFixable && i.offset !== undefined && i.replacement);
 
   const fileGroups: Record<string, UIIssue[]> = {};
   for (const issue of fixableIssues) {
@@ -614,25 +343,18 @@ function applyAutoFixes(issues: UIIssue[]) {
       let content = fs.readFileSync(file, 'utf8');
       let modified = false;
 
+      // Sort by offset descending to avoid shifting indices
       const sortedIssues = [...fileIssues].sort((a, b) => (b.offset || 0) - (a.offset || 0));
 
       for (const issue of sortedIssues) {
         const offset = issue.offset!;
         const originalText = issue.originalText!;
+        const replacement = issue.replacement!;
 
         if (content.substring(offset, offset + originalText.length) === originalText) {
-          let replacement = '';
-          if (issue.description.includes('Missing alt attribute')) {
-            replacement = originalText.replace('<img', '<img alt=""');
-          } else if (issue.description.includes('Hardcoded hex color found')) {
-            replacement = COLOR_FIX_MAP[originalText.toLowerCase()] || originalText;
-          }
-
-          if (replacement && replacement !== originalText) {
-            content = content.substring(0, offset) + replacement + content.substring(offset + originalText.length);
-            modified = true;
-            console.log(`Fixed issue at ${file}:${issue.line}`);
-          }
+          content = content.substring(0, offset) + replacement + content.substring(offset + originalText.length);
+          modified = true;
+          console.log(`Fixed issue at ${file}:${issue.line}`);
         }
       }
 
@@ -672,8 +394,24 @@ function generateMarkdownReport(issues: UIIssue[]) {
       md += `### ${sev.toUpperCase()}\n\n`;
       md += `| Type | Description | File | Line |\n`;
       md += `| --- | --- | --- | --- |\n`;
+
+      // Group identical issues to reduce noise
+      const groupedIssues: Record<string, UIIssue[]> = {};
       for (const issue of sevIssues) {
-        md += `| ${issue.type} | ${issue.description} | \`${issue.file || 'runtime'}\` | ${issue.line || '-'} |\n`;
+        const key = `${issue.type}|${issue.description}`;
+        if (!groupedIssues[key]) groupedIssues[key] = [];
+        groupedIssues[key].push(issue);
+      }
+
+      for (const group of Object.values(groupedIssues)) {
+        const first = group[0];
+        if (group.length > 5) {
+          md += `| ${first.type} | ${first.description} | *Multiple (${group.length} files)* | - |\n`;
+        } else {
+          for (const issue of group) {
+            md += `| ${issue.type} | ${issue.description} | \`${issue.file || 'runtime'}\` | ${issue.line || '-'} |\n`;
+          }
+        }
       }
       md += `\n`;
     }
@@ -690,6 +428,8 @@ function generateMarkdownReport(issues: UIIssue[]) {
 async function sendSlackNotification(issues: UIIssue[]) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   const prUrl = process.env.PULL_REQUEST_URL;
+  const designLeadId = process.env.DESIGN_LEAD_SLACK_ID;
+  const qaLeadId = process.env.QA_LEAD_SLACK_ID;
 
   if (!webhookUrl) {
     console.warn('SLACK_WEBHOOK_URL not set, skipping notification.');
@@ -699,9 +439,12 @@ async function sendSlackNotification(issues: UIIssue[]) {
   const criticalIssues = issues.filter(i => i.severity === 'critical' || i.severity === 'high');
   const fixableCount = issues.filter(i => i.autoFixable).length;
 
-  const mentionLeads = criticalIssues.length > 0
-    ? '\n🚨 *Critical Design/Accessibility Blockers Found!* tagging @Design-Lead and @QA-Lead'
-    : '';
+  let mentionLeads = '';
+  if (criticalIssues.length > 0) {
+    const designTag = designLeadId ? `<@${designLeadId}>` : '@Design-Lead';
+    const qaTag = qaLeadId ? `<@${qaLeadId}>` : '@QA-Lead';
+    mentionLeads = `\n🚨 *Critical Design/Accessibility Blockers Found!* tagging ${designTag} and ${qaTag}`;
+  }
 
   const prText = prUrl ? `\n\n*View Pull Request:* ${prUrl}` : '\n\n_Note: No automated PR was created for this run._';
 
@@ -736,18 +479,19 @@ async function sendSlackNotification(issues: UIIssue[]) {
 async function main() {
   console.log('Starting UI/UX maintenance audit...');
 
-  const formIssues = scanMissingFormLabels();
-  const altIssues = scanMissingAlt();
-  const formIssues = scanInaccessibleFormElements();
-  const colorIssues = scanHardcodedColors();
-  const buttonIssues = scanInconsistentButtons();
-  const styleIssues = scanInconsistentStyles();
-  const formIssues = scanMissingFormLabels();
+  const performScan = () => [
+    ...scanAccessibilityIssues(),
+    ...scanInconsistentButtons(),
+    ...scanInconsistentStyles(),
+    ...scanHardcodedColors()
+  ];
 
-  let allIssues = [...altIssues, ...formIssues, ...colorIssues, ...buttonIssues, ...styleIssues];
+  let allIssues = performScan();
 
   if (process.argv.includes('--fix')) {
     applyAutoFixes(allIssues);
+    // Re-scan after fixes to have accurate report
+    allIssues = performScan();
   }
 
   if (process.argv.includes('--runtime')) {
@@ -774,7 +518,7 @@ async function main() {
   fs.writeFileSync(reportPath, JSON.stringify({
     timestamp: new Date().toISOString(),
     summary,
-    issues: allIssues.map(i => ({ ...i, offset: undefined, originalText: undefined }))
+    issues: allIssues.map(i => ({ ...i, offset: undefined, originalText: undefined, replacement: undefined }))
   }, null, 2));
 
   generateMarkdownReport(allIssues);
