@@ -3,6 +3,89 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createClient } from '@supabase/supabase-js';
 
+/**
+ * Finds the closing brace for a given opening brace in a string,
+ * accounting for nested braces, strings, and comments.
+ */
+/**
+ * Finds the insertion point for a new hook in a component body.
+ */
+function findHookInsertionPoint(content: string, componentName: string): number {
+    const arrowMatch = content.match(new RegExp(`const\\s+${componentName}\\s*=\\s*\\([^)]*\\)\\s*=>\\s*\\{`));
+    const functionMatch = content.match(new RegExp(`function\\s+${componentName}\\s*\\([^)]*\\)\\s*\\{`));
+
+    const match = arrowMatch || functionMatch;
+    if (match) {
+        return match.index! + match[0].length;
+    }
+    return -1;
+}
+
+function findClosingBrace(content: string, startPos: number): number {
+    let depth = 0;
+    let inString: string | null = null;
+    let inComment: 'single' | 'multi' | null = null;
+    let isEscaped = false;
+
+    for (let i = startPos; i < content.length; i++) {
+        const char = content[i];
+        const nextChar = content[i + 1];
+
+        if (isEscaped) {
+            isEscaped = false;
+            continue;
+        }
+
+        if (char === '\\') {
+            isEscaped = true;
+            continue;
+        }
+
+        if (inComment === 'single') {
+            if (char === '\n') inComment = null;
+            continue;
+        }
+
+        if (inComment === 'multi') {
+            if (char === '*' && nextChar === '/') {
+                inComment = null;
+                i++;
+            }
+            continue;
+        }
+
+        if (inString) {
+            if (char === inString) inString = null;
+            continue;
+        }
+
+        if (char === '/' && nextChar === '/') {
+            inComment = 'single';
+            i++;
+            continue;
+        }
+
+        if (char === '/' && nextChar === '*') {
+            inComment = 'multi';
+            i++;
+            continue;
+        }
+
+        if (char === "'" || char === '"' || char === '`') {
+            inString = char;
+            continue;
+        }
+
+        if (char === '{') {
+            depth++;
+        } else if (char === '}') {
+            depth--;
+            if (depth === 0) return i;
+        }
+    }
+    return -1;
+}
+
 // Performance thresholds
 const API_RESPONSE_THRESHOLD_MS = 500;
 const APPLY_FIXES = process.argv.includes('--apply-fixes');
@@ -231,27 +314,31 @@ function scanForMissingMemo(): OptimizationResult[] {
         if (isNaN(lineIdx) || lineIdx < 0) return;
 
         // Look back up to find if we are inside a hook or the return statement
-        let isInsideHook = false;
+        let isInsideHook = lines[lineIdx].includes('useMemo') ||
+                           lines[lineIdx].includes('useCallback') ||
+                           lines[lineIdx].includes('useEffect');
         let isInsideReturn = false;
 
-        for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
-            const l = lines[i];
+        if (!isInsideHook) {
+            for (let i = lineIdx - 1; i >= Math.max(0, lineIdx - 100); i--) {
+                const l = lines[i];
 
-            if (l.includes('return (') || l.trim().startsWith('return ')) {
-                isInsideReturn = true;
-            }
+                if (l.includes('return (') || l.trim().startsWith('return ')) {
+                    isInsideReturn = true;
+                }
 
-            if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
-                isInsideHook = true;
-                break;
-            }
+                if (l.includes('useMemo') || l.includes('useCallback') || l.includes('useEffect')) {
+                    isInsideHook = true;
+                    break;
+                }
 
-            if (l.includes('export const') || l.includes('function ')) {
-                break;
+                if (l.includes('export const') || l.includes('function ')) {
+                    break;
+                }
             }
         }
 
-        if (!isInsideHook) {
+        if (!isInsideHook && !isInsideReturn) {
             // Check if it's an assignment
             let actualLineIdx = lineIdx;
             let varName = '';
@@ -361,7 +448,14 @@ function applyFixes(optimizations: OptimizationResult[]) {
     if (!APPLY_FIXES) return;
 
     console.log('Applying automated fixes...');
-    optimizations.forEach(opt => {
+
+    // Sort optimizations by file and then by line in descending order to prevent line-shifting issues
+    const sortedOptimizations = [...optimizations].sort((a, b) => {
+        if (a.file !== b.file) return (a.file || '').localeCompare(b.file || '');
+        return parseInt(b.line || '0') - parseInt(a.line || '0');
+    });
+
+    sortedOptimizations.forEach(opt => {
         if (!opt.file || !opt.line) return;
 
         try {
@@ -386,7 +480,31 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     console.log(`✅ Fixed inefficient count query in ${opt.file}`);
                 }
             } else if (opt.category === 'frontend_react' && opt.description.includes('outside useMemo')) {
-                console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+                // Automated useMemo wrapping for simple variable assignments
+                const match = line.match(/const\s+(\w+)\s*=\s*(.*?\.(filter|sort|reduce)\(.*\))/);
+                if (match) {
+                    const [, varName, operation] = match;
+                    // Heuristic to extract potential dependencies: any variable-like word that isn't a method or keyword
+                    const potentialDeps = operation.match(/\b(?!(filter|sort|reduce|map|Boolean|items|item|acc|curr|i|index|data|dataKey|payload|config|payloadPayload|nameKey|labelKey|tooltipLabel|itemConfig|val|v|k|e|result|res)\b)[a-zA-Z_]\w*\b/g) || [];
+                    const uniqueDeps = [...new Set(potentialDeps)];
+
+                    lines[lineIdx] = line.replace(operation, `useMemo(() => ${operation}, [${uniqueDeps.join(', ')}])`);
+
+                    // Ensure useMemo is imported
+                    let newContent = lines.join('\n');
+                    if (!newContent.includes('useMemo') && newContent.includes("from 'react'")) {
+                        newContent = newContent.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => {
+                            return p1.includes('useMemo') ? m : `import { ${p1.trim()}, useMemo } from 'react'`;
+                        });
+                    } else if (!newContent.includes('useMemo') && !newContent.includes("from 'react'")) {
+                        newContent = `import { useMemo } from 'react';\n` + newContent;
+                    }
+
+                    fs.writeFileSync(opt.file, newContent);
+                    console.log(`✅ Automatically wrapping "${varName}" in useMemo in ${opt.file}`);
+                } else {
+                    console.log(`Recommendation: Wrap expensive operation in useMemo in ${opt.file}:${opt.line}`);
+                }
             } else if (opt.category === 'database' && opt.description.includes('Potential missing index')) {
                 const columnMatch = opt.description.match(/column "([^"]+)"/);
                 const tableMatch = opt.description.match(/table "([^"]+)"/);
@@ -436,7 +554,7 @@ function applyFixes(optimizations: OptimizationResult[]) {
                                      def = def.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => `import { ${p1.trim()}, memo } from 'react'`);
                                 }
 
-                                // 2. Wrap definition
+                                // 2. Wrap definition (Arrow function)
                                 const exportMatch = def.match(/export const (\w+)\s*=\s*\(([^)]*)\)\s*=>\s*\{/);
                                 if (exportMatch && exportMatch[1] === componentName) {
                                     const lines = def.split('\n');
@@ -475,6 +593,25 @@ function applyFixes(optimizations: OptimizationResult[]) {
                                             }
                                         }
                                     }
+                                } else {
+                                    // 2b. Wrap definition (Function keyword)
+                                    const functionMatch = def.match(/export function (\w+)\s*\(([^)]*)\)\s*\{/);
+                                    if (functionMatch && functionMatch[1] === componentName) {
+                                        const openingBraceIdx = def.indexOf('{', functionMatch.index! + functionMatch[0].length - 1);
+                                        const closingBraceIdx = findClosingBrace(def, openingBraceIdx);
+
+                                        if (closingBraceIdx !== -1) {
+                                            const body = def.substring(functionMatch.index!, closingBraceIdx + 1);
+                                            const wrapped = `export const ${componentName} = memo(${body.replace('export ', '')});`;
+                                            def = def.substring(0, functionMatch.index!) + wrapped + def.substring(closingBraceIdx + 1);
+
+                                            if (!def.includes(`${componentName}.displayName`)) {
+                                                def += `\n\n${componentName}.displayName = "${componentName}";\n`;
+                                            }
+                                            console.log(`✅ Automatically wrapping function ${componentName} in memo() in ${resolvedPath}`);
+                                            fs.writeFileSync(resolvedPath, def);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -487,9 +624,44 @@ function applyFixes(optimizations: OptimizationResult[]) {
                     const [fullMatch, propName, setterName, setterVal] = setterMatch;
                     const handlerName = `handle${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
 
-                    // This requires inserting a useCallback hook in the component body
-                    // Too complex for simple regex without knowing component structure
-                    console.log(`Recommendation: Move ${fullMatch} to a useCallback named ${handlerName} in ${opt.file}`);
+                    // Attempt to find component name to insert hook
+                    let componentName = '';
+                    for (let i = lineIdx; i >= 0; i--) {
+                        const m = lines[i].match(/(?:function|const)\s+([A-Z]\w+)/);
+                        if (m) {
+                            componentName = m[1];
+                            break;
+                        }
+                    }
+
+                    if (componentName) {
+                        const insertionPoint = findHookInsertionPoint(content, componentName);
+                        if (insertionPoint !== -1) {
+                            // Find the last useState/useReducer hook to insert after
+                            const lastHookMatch = [...content.slice(0, content.indexOf('return', insertionPoint)).matchAll(/(?:const|let)\s+\[[^\]]+\]\s*=\s*use(?:State|Reducer)/g)].pop();
+                            const actualInsertionPoint = lastHookMatch ? lastHookMatch.index! + lastHookMatch[0].length + (content.slice(lastHookMatch.index! + lastHookMatch[0].length).indexOf(';') + 1 || 0) : insertionPoint;
+
+                            const hook = `\n  const ${handlerName} = useCallback(() => ${setterName}(${setterVal}), [${setterName}]);`;
+                            const newContent = content.slice(0, actualInsertionPoint) + hook + content.slice(actualInsertionPoint);
+                            const updatedLines = newContent.split('\n');
+                            // Adjust lineIdx because we added lines
+                            const newLine = updatedLines[lineIdx + hook.split('\n').length - 1].replace(fullMatch, `${propName}={${handlerName}}`);
+                            updatedLines[lineIdx + hook.split('\n').length - 1] = newLine;
+
+                            // Ensure useCallback is imported
+                            let finalContent = updatedLines.join('\n');
+                            if (!finalContent.includes('useCallback') && finalContent.includes("from 'react'")) {
+                                finalContent = finalContent.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (m, p1) => {
+                                    return p1.includes('useCallback') ? m : `import { ${p1.trim()}, useCallback } from 'react'`;
+                                });
+                            } else if (!finalContent.includes('useCallback') && !finalContent.includes("from 'react'")) {
+                                finalContent = `import { useCallback } from 'react';\n` + finalContent;
+                            }
+
+                            fs.writeFileSync(opt.file, finalContent);
+                            console.log(`✅ Automatically replaced inline arrow function with ${handlerName} in ${opt.file}`);
+                        }
+                    }
                 } else {
                     console.log(`Recommendation: Wrap inline arrow function in useCallback in ${opt.file}:${opt.line}`);
                 }
@@ -537,7 +709,7 @@ function reviewRecentMerges(): OptimizationResult[] {
 /**
  * Benchmarks actual API response times if credentials are available
  */
-async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: string }> {
+async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: string; tableMetrics?: Record<string, number> }> {
     const url = process.env.VITE_SUPABASE_URL;
     const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -547,18 +719,21 @@ async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: 
 
     try {
         const supabase = createClient(url, key);
-        const tables = ['items', 'subscriptions', 'health_measurements'];
+        const tables = ['items', 'subscriptions', 'health_measurements', 'tags', 'categories'];
         let totalLatency = 0;
         let successCount = 0;
+        const tableMetrics: Record<string, number> = {};
 
         for (const table of tables) {
             const start = Date.now();
             const { error } = await supabase.from(table).select('id').limit(1);
             const end = Date.now();
+            const latency = end - start;
 
             if (!error) {
-                totalLatency += (end - start);
+                totalLatency += latency;
                 successCount++;
+                tableMetrics[table] = latency;
             }
         }
 
@@ -568,7 +743,8 @@ async function runApiBenchmarks(): Promise<{ apiResponseTimeMs: number; status: 
 
         return {
             apiResponseTimeMs: Math.round(totalLatency / successCount),
-            status: 'success'
+            status: 'success',
+            tableMetrics
         };
     } catch (e) {
         console.error('Benchmark error:', e);
@@ -631,15 +807,15 @@ function logResults(optimizations: OptimizationResult[], benchmarks: Record<stri
   };
 
   logs.unshift(summary);
-  // Keep only the last 2 runs to avoid bloat in the repository
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 2), null, 2));
+  // Keep only the last 20 runs to provide historical tracking
+  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 20), null, 2));
   fs.writeFileSync('performance-summary.json', JSON.stringify(summary));
 }
 
 /**
  * Sends Slack notification via webhook
  */
-async function sendSlackNotification(summary: { optimizations: OptimizationResult[]; benchmarks: { apiLatencyMs: number; beforeLatencyMs?: number } }, prUrl?: string) {
+async function sendSlackNotification(summary: { optimizations: OptimizationResult[]; benchmarks: { apiLatencyMs: number; beforeLatencyMs?: number; tableMetrics?: Record<string, number> } }, prUrl?: string) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) {
     console.warn('SLACK_WEBHOOK_URL not set, skipping notification.');
@@ -647,7 +823,9 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
   }
 
   const optimizations = summary.optimizations;
-  const slaExceeded = summary.benchmarks.apiLatencyMs > API_RESPONSE_THRESHOLD_MS;
+  const tableMetrics = summary.benchmarks.tableMetrics || {};
+  const slowTables = Object.entries(tableMetrics).filter(([, latency]) => (latency as number) > API_RESPONSE_THRESHOLD_MS);
+  const slaExceeded = summary.benchmarks.apiLatencyMs > API_RESPONSE_THRESHOLD_MS || slowTables.length > 0;
 
   const backendLeadId = process.env.BACKEND_LEAD_SLACK_ID || "backend-lead";
   const backendLeadTag = `<@${backendLeadId}>`;
@@ -659,12 +837,20 @@ async function sendSlackNotification(summary: { optimizations: OptimizationResul
   } else {
       text += `⏱️ *Current Latency:* ${summary.benchmarks.apiLatencyMs}ms\n`;
   }
+
+  if (Object.keys(tableMetrics).length > 0) {
+      text += `📊 *Table Metrics:* ${Object.entries(tableMetrics).map(([t, l]) => `${t}: ${l}ms`).join(', ')}\n`;
+  }
+
   if (prUrl) {
       text += `📦 *Pull Request:* ${prUrl}\n`;
   }
 
   if (slaExceeded) {
-      text += `⚠️ *SLA THRESHOLD EXCEEDED (Latency: ${summary.benchmarks.apiLatencyMs}ms)* - cc ${backendLeadTag}\n`;
+      const slowInfo = slowTables.length > 0
+        ? `Slow tables: ${slowTables.map(([t, l]) => `${t} (${l}ms)`).join(', ')}`
+        : `Overall latency: ${summary.benchmarks.apiLatencyMs}ms`;
+      text += `⚠️ *SLA THRESHOLD EXCEEDED* (${slowInfo}) - cc ${backendLeadTag}\n`;
   }
 
   const message = {
@@ -734,6 +920,12 @@ function scanForNestedLoops(): OptimizationResult[] {
                 if (lineB - lineA < 8) {
                     const contentA = fileLines[lineA - 1];
                     const contentB = fileLines[lineB - 1];
+
+                    // Ignore common patterns that are often false positives
+                    if (contentB.includes('buffer') || contentB.includes('processing') || contentB.includes('Uint8Array')) {
+                        continue;
+                    }
+
                     const indentA = contentA.search(/\S/);
                     const indentB = contentB.search(/\S/);
 
