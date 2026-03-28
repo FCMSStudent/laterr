@@ -62,3 +62,5 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           PULL_REQUEST_URL: ${{ steps.cpr.outputs.pull-request-url }}
+          DESIGN_LEAD_SLACK_ID: ${{ secrets.DESIGN_LEAD_SLACK_ID }}
+          QA_LEAD_SLACK_ID: ${{ secrets.QA_LEAD_SLACK_ID }}
