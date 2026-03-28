@@ -374,7 +374,7 @@ export const BookmarkCard = memo(({
           </DropdownMenu>
         </div>
 
-        <div className="p-5 flex flex-col justify-between min-h-[220px]">
+        <div className="p-3 md:p-5 flex flex-col justify-between min-h-[160px] md:min-h-[220px]">
           {/* Note content preview */}
           <div className="flex-1 overflow-hidden">
             {content ? (
