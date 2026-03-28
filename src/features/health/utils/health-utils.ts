@@ -67,7 +67,7 @@ export function calculateBMI(weightKg: number, heightCm: number): number {
  */
 export function getBMICategory(bmi: number): { label: string; color: string } {
   const category = BMI_CATEGORIES.find(c => bmi >= c.min && bmi < c.max);
-  return category || { label: 'Unknown', color: '#9E9E9E' };
+  return category || { label: 'Unknown', color: 'hsl(var(--muted-foreground))' };
 }
 
 /**
