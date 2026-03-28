@@ -40,10 +40,32 @@ export const MobileBottomNav = () => {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-heavy pb-safe border-t border-white/15 shadow-[0_-8px_24px_rgba(0,0,0,0.15)]"
+      className="fixed bottom-4 left-4 right-4 z-50 md:hidden rounded-[22px] border border-white/20 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.18),0_2px_8px_rgba(0,0,0,0.08)]"
+      style={{
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        background: 'rgba(255,255,255,0.55)',
+      }}
       aria-label="Mobile navigation"
     >
-      <div className="flex items-center justify-around h-[72px] px-1">
+      {/* Dark mode override */}
+      <style>{`
+        @media (prefers-color-scheme: dark) {
+          [data-liquid-nav] {
+            background: rgba(30,30,30,0.55) !important;
+          }
+        }
+        .dark [data-liquid-nav] {
+          background: rgba(30,30,30,0.55) !important;
+        }
+      `}</style>
+      <div data-liquid-nav className="flex items-center justify-around h-[64px] px-1 rounded-[22px]"
+        style={{
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          background: 'rgba(255,255,255,0.55)',
+        }}
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -54,7 +76,7 @@ export const MobileBottomNav = () => {
               key={item.path}
               onClick={() => handlePress(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center min-w-[64px] min-h-[56px] px-3 py-2 rounded-2xl transition-all duration-200",
+                "flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-3 py-1.5 rounded-2xl transition-all duration-200",
                 active
                   ? "text-primary"
                   : "text-muted-foreground active:text-foreground",
@@ -64,16 +86,16 @@ export const MobileBottomNav = () => {
               aria-current={active ? "page" : undefined}
             >
               <div className={cn(
-                "flex items-center justify-center w-12 h-8 rounded-full transition-all duration-200",
+                "flex items-center justify-center w-10 h-7 rounded-full transition-all duration-200",
                 active && "bg-primary/15"
               )}>
                 <Icon className={cn(
-                  "w-5 h-5 transition-transform duration-200",
+                  "w-[22px] h-[22px] transition-transform duration-200",
                   active && "scale-110"
                 )} aria-hidden="true" />
               </div>
               <span className={cn(
-                "text-[11px] font-medium mt-0.5 transition-colors",
+                "text-[10px] font-semibold mt-0.5 transition-colors",
                 active && "text-primary"
               )}>{item.label}</span>
             </button>
