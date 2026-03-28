@@ -52,7 +52,7 @@ jobs:
             Automated UI/UX improvements and consistency fixes found during nightly sweep.
 
             Check `ui-maintenance-report.json` and `UI_MAINTENANCE_REPORT.md` for details.
-          branch: ui/nightly-maintenance
+          branch: ui/weekly-maintenance
           base: main
           delete-branch: true
 
@@ -62,3 +62,5 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           PULL_REQUEST_URL: ${{ steps.cpr.outputs.pull-request-url }}
+          DESIGN_LEAD_SLACK_ID: ${{ secrets.DESIGN_LEAD_SLACK_ID }}
+          QA_LEAD_SLACK_ID: ${{ secrets.QA_LEAD_SLACK_ID }}
