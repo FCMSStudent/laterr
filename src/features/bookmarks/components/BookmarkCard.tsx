@@ -395,7 +395,7 @@ export const BookmarkCard = memo(({
           {/* Bottom section */}
           <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/30">
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-foreground text-base line-clamp-2 mb-1">
+              <h3 className="font-bold text-foreground text-sm md:text-base line-clamp-2 mb-1">
                 {title}
               </h3>
               <span className="text-muted-foreground text-xs">{dateText}</span>
