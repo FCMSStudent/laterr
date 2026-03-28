@@ -43,13 +43,14 @@ test.describe('UI Accessibility Audit', () => {
     });
   }
 
-  test('Check for overlapping and misaligned elements', async ({ page }) => {
-    await page.goto('/components');
-    await page.waitForLoadState('networkidle');
+  for (const pageInfo of pages) {
+    test(`Check for overlapping and misaligned elements on ${pageInfo.name}`, async ({ page }) => {
+      await page.goto(pageInfo.path);
+      await page.waitForLoadState('networkidle');
 
-    const viewport = page.viewportSize();
+      const viewport = page.viewportSize();
 
-    const elementsData = await page.evaluate(() => {
+      const elementsData = await page.evaluate(() => {
       const els = Array.from(document.querySelectorAll('button, a, input, [role="button"]')).filter((el) => {
         const style = window.getComputedStyle(el);
         return style.display !== 'none' && style.visibility !== 'hidden' && el.getBoundingClientRect().width > 0;
@@ -118,7 +119,8 @@ test.describe('UI Accessibility Audit', () => {
             expect.soft(verticalDiff, msg).toBe(0);
           }
         }
+        }
       }
-    }
-  });
+    });
+  }
 });
